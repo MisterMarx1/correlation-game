@@ -302,8 +302,8 @@
               style={{borderRadius:4,display:"flex",alignItems:"center",justifyContent:"center",
                 userSelect:"none",WebkitUserSelect:"none",position:"relative",overflow:"hidden",
                 background:e>0?getGradient(dp, e, locked):"rgba(15,23,42,0.3)",
-                border:isSel?"2px solid #fff":isDet?`2px solid ${EB[e]}77`:isDragSource?"2px solid #fff":isDragHover?`2px solid ${EB[e]}77`:locked?"2px solid rgba(128,128,128,0.5)":e>0?"none":"1px solid rgba(255,255,255,0.03)",
-                boxShadow:isSel?`0 0 20px ${EG[e]},inset 0 0 12px rgba(255,255,255,0.15)`:isDragSource?`0 0 20px ${EG[e]},inset 0 0 12px rgba(255,255,255,0.15)`:isDragHover?`0 0 12px ${EG[e]},inset 0 0 8px rgba(255,255,255,0.1)`:e>0&&!locked?`0 0 6px ${EG[e]}`:locked?"0 0 6px rgba(128,128,128,0.3)":"none",
+                border:isSel?"2px solid #fff":isDragSource?"2px solid #fff":isDragHover?"2px solid #fff":isDet?`2px solid ${EB[e]}77`:locked?"2px solid rgba(128,128,128,0.5)":e>0?"none":"1px solid rgba(255,255,255,0.03)",
+                boxShadow:isSel?`0 0 20px ${EG[e]},inset 0 0 12px rgba(255,255,255,0.15)`:isDragSource?`0 0 20px ${EG[e]},inset 0 0 12px rgba(255,255,255,0.15)`:isDragHover?`0 0 20px rgba(255,255,255,0.35),inset 0 0 12px rgba(255,255,255,0.12)`:e>0&&!locked?`0 0 6px ${EG[e]}`:locked?"0 0 6px rgba(128,128,128,0.3)":"none",
                 transform:isSel?"scale(1.08)":isDragSource?"scale(1.05)":isDragHover?"scale(1.03)":"scale(1)",cursor:locked?"not-allowed":e>0?"pointer":"default",
                 filter:locked?"grayscale(100%)":"none",
                 opacity:locked?0.7:isDragHover?0.9:1,
@@ -352,6 +352,12 @@
           const[combo,setCombo]=useState(0);
           const[transitionHistory,setTransitionHistory]=useState([]);
           const[isLevelingUp,setIsLevelingUp]=useState(false);
+          const [interactionMode, setInteractionMode] = useState("idle"); 
+          // "idle" | "armed" | "dragging"
+
+          const [pointerDown, setPointerDown] = useState(false);
+          const [lastSelectionTime, setLastSelectionTime] = useState(0);
+          const DRAG_THRESHOLD = 8;
           const[isDragging,setIsDragging]=useState(false);
           const[dragStart,setDragStart]=useState(null);
           const[dragEnd,setDragEnd]=useState(null);
@@ -393,9 +399,9 @@
               ctx.lineCap="round";
               
               // Draw animated white lightning if dragging or when selected and hovering
-              if((dragStart && dragEnd) || (sel && dragHover)){
+              if ((interactionMode === "dragging" && dragStart && dragEnd) || (interactionMode === "armed" && sel && dragHover)){
                 let sp, dp;
-                if(dragStart && dragEnd){
+                if(interactionMode === "dragging" && dragStart && dragEnd){
                     // Drag mode
                     sp = cellPos(dragStart.x,dragStart.y);
                     dp = cellPos(dragEnd.x,dragEnd.y);
@@ -659,155 +665,206 @@
             setInfo({type:"ok",dE,r,mom,prob:corrProb(r),combo:nc,time:now});setSel(null);
           },[grid,combo,cellPos,fireBolt,firePart,level]);
 
-          const processCellSelection=useCallback((x,y)=>{
-            if(phase!=="play"||paused)return;
-            const cell=grid[y][x];
+          const commitSourceSelection = useCallback((x, y) => {
+            const cell = grid[y][x];
+            if (phase !== "play" || paused) return;
+            if (cell.e <= 0 || cell.locked) return;
 
-            if(sel&&sel.x===x&&sel.y===y){
-              setSel(null);
-              return;
-            }
+            const now = Date.now();
 
-            if(!sel){
-              if(cell.e>0 && !cell.locked){
-                setSel({x,y});
-                SoundManager.play('select');
-                const now=Date.now();
-                setGrid(prev=>{
-                  const ng=prev.map(row=>row.map(c=>({...c})));
-                  if(ng[y][x].e>0){
-                    ng[y][x].born=now;
-                    ng[y][x].decay=now+Math.max(DECAY_MIN,DECAY_BASE-level*500);
-                  }
-                  return ng;
-                });
+            setSel({ x, y });
+            setInteractionMode("armed");
+            setLastSelectionTime(now);
+
+            setGrid(prev => {
+              const ng = prev.map(row => row.map(c => ({ ...c })));
+              if (ng[y][x].e > 0) {
+                ng[y][x].born = now;
+                ng[y][x].decay = now + Math.max(DECAY_MIN, DECAY_BASE - level * 500);
+              }
+              return ng;
+            });
+
+            SoundManager.play("select");
+          }, [grid, phase, paused, level]);
+
+          const clearDragState = useCallback(() => {
+            setPointerDown(false);
+            setIsDragging(false);
+            setDragStart(null);
+            setDragEnd(null);
+            setDragHover(null);
+          }, []);
+
+          const cancelSelection = useCallback(() => {
+            setSel(null);
+            setInteractionMode("idle");
+            clearDragState();
+          }, [clearDragState]);
+
+          const processCellSelection = useCallback((x, y) => {
+            if (phase !== "play" || paused) return;
+
+            const cell = grid[y][x];
+
+            // No source yet: first click commits source
+            if (!sel || interactionMode === "idle") {
+              if (cell.e > 0 && !cell.locked) {
+                commitSourceSelection(x, y);
               }
               return;
             }
 
-            if(cell.e===0 || cell.locked){
-              setSel(null);
+            // If already armed, same cell toggles off
+            if (sel.x === x && sel.y === y) {
+              cancelSelection();
               return;
             }
 
-            const src=grid[sel.y][sel.x];
-            const det=grid[y][x];
-            const r=Math.sqrt((x-sel.x)**2+(y-sel.y)**2);
+            // Armed mode: second click is target resolution only
+            if (interactionMode !== "armed") return;
 
-            if(det.e<=0||det.e<src.e){
-              SoundManager.play('decorrelate', 0.8);
-              const now=Date.now(),freshDecay=now+Math.max(DECAY_MIN,DECAY_BASE-level*500);
-              setGrid(prev=>{
-                const ng=prev.map(row=>row.map(c=>({...c})));
-                if(ng[sel.y][sel.x].e>0){
-                  ng[sel.y][sel.x].born=now;
-                  ng[sel.y][sel.x].decay=freshDecay;
-                  if(ng[sel.y][sel.x].e<MAX_E)ng[sel.y][sel.x].e+=1;
-                  if(ng[sel.y][sel.x].e===MAX_E)ng[sel.y][sel.x].locked=true;
+            if (cell.e === 0 || cell.locked) {
+              cancelSelection();
+              return;
+            }
+
+            const src = grid[sel.y][sel.x];
+            const det = grid[y][x];
+            const r = Math.sqrt((x - sel.x) ** 2 + (y - sel.y) ** 2);
+
+            if (det.e <= 0 || det.e < src.e) {
+              SoundManager.play("decorrelate", 0.8);
+              const now = Date.now();
+              const freshDecay = now + Math.max(DECAY_MIN, DECAY_BASE - level * 500);
+
+              setGrid(prev => {
+                const ng = prev.map(row => row.map(c => ({ ...c })));
+                if (ng[sel.y][sel.x].e > 0) {
+                  ng[sel.y][sel.x].born = now;
+                  ng[sel.y][sel.x].decay = freshDecay;
+                  if (ng[sel.y][sel.x].e < MAX_E) ng[sel.y][sel.x].e += 1;
+                  if (ng[sel.y][sel.x].e === MAX_E) ng[sel.y][sel.x].locked = true;
                 }
-                if(ng[y][x].e>0){
-                  ng[y][x].born=now;
-                  ng[y][x].decay=freshDecay;
-                  if(ng[y][x].e<MAX_E)ng[y][x].e+=1;
-                  if(ng[y][x].e===MAX_E)ng[y][x].locked=true;
+                if (ng[y][x].e > 0) {
+                  ng[y][x].born = now;
+                  ng[y][x].decay = freshDecay;
+                  if (ng[y][x].e < MAX_E) ng[y][x].e += 1;
+                  if (ng[y][x].e === MAX_E) ng[y][x].locked = true;
                 }
                 return ng;
               });
-              const sp2=cellPos(sel.x,sel.y),dp2=cellPos(x,y);
-              const mx=(sp2.px+dp2.px)/2+(Math.random()-0.5)*30,my=(sp2.py+dp2.py)/2+(Math.random()-0.5)*30;
-              fireBolt(sp2.px,sp2.py,mx,my,"#f87171",400,0.8);
-              firePart(mx,my,10,"rgb(248,113,113)");
+
+              const sp2 = cellPos(sel.x, sel.y), dp2 = cellPos(x, y);
+              const mx = (sp2.px + dp2.px) / 2 + (Math.random() - 0.5) * 30;
+              const my = (sp2.py + dp2.py) / 2 + (Math.random() - 0.5) * 30;
+              fireBolt(sp2.px, sp2.py, mx, my, "#f87171", 400, 0.8);
+              firePart(mx, my, 10, "rgb(248,113,113)");
               setScreenFlash("rgba(248,113,113,0.5)");
-              setTimeout(()=>setScreenFlash(null),80);
+              setTimeout(() => setScreenFlash(null), 80);
               setShake(true);
-              setTimeout(()=>setShake(false),150);
-              setOverlayMsg({text:"ENERGY MISMATCH",time:now});
-              setTimeout(()=>setOverlayMsg(null),1500);
-              setInfo({type:"mis",sE:src.e,dE:det.e,time:now});
-              setSel(null);
+              setTimeout(() => setShake(false), 150);
+              setOverlayMsg({ text: "ENERGY MISMATCH", time: now });
+              setTimeout(() => setOverlayMsg(null), 1500);
+              setInfo({ type: "mis", sE: src.e, dE: det.e, time: now });
+
+              cancelSelection();
               return;
             }
 
-            let prob=corrProb(r);
-            prob=Math.min(0.98,prob+getEcho(x,y));
+            let prob = corrProb(r);
+            prob = Math.min(0.98, prob + getEcho(x, y));
 
-            if(Math.random()<prob){
-              execTrans(sel.x,sel.y,x,y);
+            if (Math.random() < prob) {
+              execTrans(sel.x, sel.y, x, y);
+              setInteractionMode("idle");
+              clearDragState();
             } else {
-              SoundManager.play('decorrelate', 0.6);
-              const now=Date.now(),freshDecay=now+Math.max(DECAY_MIN,DECAY_BASE-level*500);
-              setGrid(prev=>{
-                const ng=prev.map(row=>row.map(c=>({...c})));
-                if(ng[sel.y][sel.x].e>0){
-                  ng[sel.y][sel.x].born=now;
-                  ng[sel.y][sel.x].decay=freshDecay;
-                  if(ng[sel.y][sel.x].e<MAX_E)ng[sel.y][sel.x].e+=1;
-                  if(ng[sel.y][sel.x].e===MAX_E)ng[sel.y][sel.x].locked=true;
+              SoundManager.play("decorrelate", 0.6);
+              const now = Date.now();
+              const freshDecay = now + Math.max(DECAY_MIN, DECAY_BASE - level * 500);
+
+              setGrid(prev => {
+                const ng = prev.map(row => row.map(c => ({ ...c })));
+                if (ng[sel.y][sel.x].e > 0) {
+                  ng[sel.y][sel.x].born = now;
+                  ng[sel.y][sel.x].decay = freshDecay;
+                  if (ng[sel.y][sel.x].e < MAX_E) ng[sel.y][sel.x].e += 1;
+                  if (ng[sel.y][sel.x].e === MAX_E) ng[sel.y][sel.x].locked = true;
                 }
-                if(ng[y][x].e>0){
-                  ng[y][x].born=now;
-                  ng[y][x].decay=freshDecay;
-                  if(ng[y][x].e<MAX_E)ng[y][x].e+=1;
-                  if(ng[y][x].e===MAX_E)ng[y][x].locked=true;
+                if (ng[y][x].e > 0) {
+                  ng[y][x].born = now;
+                  ng[y][x].decay = freshDecay;
+                  if (ng[y][x].e < MAX_E) ng[y][x].e += 1;
+                  if (ng[y][x].e === MAX_E) ng[y][x].locked = true;
                 }
-                const sc=1+Math.floor(Math.random()*2);
-                for(let i=0,a=0;i<sc&&a<20;a++){
-                  const sx2=Math.floor(Math.random()*COLS),sy2=Math.floor(Math.random()*ROWS);
-                  if(ng[sy2][sx2].e===0){
-                    ng[sy2][sx2]=mkCell(level,now);
+                const sc = 1 + Math.floor(Math.random() * 2);
+                for (let i = 0, a = 0; i < sc && a < 20; a++) {
+                  const sx2 = Math.floor(Math.random() * COLS), sy2 = Math.floor(Math.random() * ROWS);
+                  if (ng[sy2][sx2].e === 0) {
+                    ng[sy2][sx2] = mkCell(level, now);
                     i++;
                   }
                 }
                 return ng;
               });
-              const sp2=cellPos(sel.x,sel.y),dp2=cellPos(x,y);
-              const mx=(sp2.px+dp2.px)/2+(Math.random()-0.5)*30,my=(sp2.py+dp2.py)/2+(Math.random()-0.5)*30;
-              fireBolt(sp2.px,sp2.py,mx,my,"#f87171",400,0.8);
-              firePart(mx,my,10,"rgb(248,113,113)");
+
+              const sp2 = cellPos(sel.x, sel.y), dp2 = cellPos(x, y);
+              const mx = (sp2.px + dp2.px) / 2 + (Math.random() - 0.5) * 30;
+              const my = (sp2.py + dp2.py) / 2 + (Math.random() - 0.5) * 30;
+              fireBolt(sp2.px, sp2.py, mx, my, "#f87171", 400, 0.8);
+              firePart(mx, my, 10, "rgb(248,113,113)");
               setScreenFlash("rgba(248,113,113,0.5)");
-              setTimeout(()=>setScreenFlash(null),80);
+              setTimeout(() => setScreenFlash(null), 80);
               setShake(true);
-              setTimeout(()=>setShake(false),150);
-              setOverlayMsg({text:"DECORRELATED",time:now});
-              setTimeout(()=>setOverlayMsg(null),1500);
-              setInfo({type:"decorr",prob,r,time:now});
-              setSel(null);
+              setTimeout(() => setShake(false), 150);
+              setOverlayMsg({ text: "DECORRELATED", time: now });
+              setTimeout(() => setOverlayMsg(null), 1500);
+              setInfo({ type: "decorr", prob, r, time: now });
+
+              cancelSelection();
             }
-          },[phase,paused,grid,sel,getEcho,execTrans,cellPos,level,fireBolt,firePart]);
+          }, [
+            phase, paused, grid, sel, interactionMode, getEcho, execTrans,
+            cellPos, level, fireBolt, firePart, commitSourceSelection,
+            cancelSelection, clearDragState
+          ]);
 
-          const handleMouseDown=useCallback((x,y)=>{
-            if(phase!=="play"||paused)return;
-            const cell=grid[y][x];
-            if(cell.e<=0 || cell.locked) return;
+          const handleMouseDown = useCallback((x, y) => {
+            if (phase !== "play" || paused) return;
 
-            // If a source is already selected and this is a different cell,
-            // treat this as the target click, not a new drag source.
-            if(sel && (sel.x !== x || sel.y !== y)){
-              processCellSelection(x,y);
+            const cell = grid[y][x];
+            if (cell.e <= 0 || cell.locked) return;
+
+            // First click: commit source immediately
+            if (!sel || interactionMode === "idle") {
+              commitSourceSelection(x, y);
+              setPointerDown(true);
+              setDragStart({ x, y, startClientX: null, startClientY: null, role: "source" });
+              setDragEnd({ x, y });
               return;
             }
 
-            // Otherwise arm drag from this cell
-            setDragStart({x,y,initialX:x,initialY:y});
-            setDragEnd({x,y});
-
-            if(!hasTouchInteraction){
-              SoundManager.play('select');
+            // Clicking the already-selected source: allow drag from source
+            if (interactionMode === "armed" && sel.x === x && sel.y === y) {
+              setPointerDown(true);
+              setDragStart({ x, y, startClientX: null, startClientY: null, role: "source" });
+              setDragEnd({ x, y });
+              return;
             }
 
-            const now=Date.now();
-            setGrid(prev=>{
-              const ng=prev.map(row=>row.map(c=>({...c})));
-              if(ng[y][x].e>0){
-                ng[y][x].born=now;
-                ng[y][x].decay=now+Math.max(DECAY_MIN,DECAY_BASE-level*500);
-              }
-              return ng;
-            });
-          },[phase,paused,grid,level,hasTouchInteraction,sel,processCellSelection]);
+            // Clicking a different cell while armed: mark that a real click is happening
+            // so mouseup can resolve it as the second selection
+            if (interactionMode === "armed") {
+              setPointerDown(true);
+              setDragStart({ x, y, startClientX: null, startClientY: null, role: "target" });
+              setDragEnd({ x, y });
+              return;
+            }
+          }, [phase, paused, grid, sel, interactionMode, commitSourceSelection]);
         
-        const handleTouchStart=useCallback((event) => {
-            if(phase!=="play"||paused)return;
+        const handleTouchStart = useCallback((event) => {
+            if (phase !== "play" || paused) return;
 
             setHasTouchInteraction(true);
             setTimeout(() => setHasTouchInteraction(false), 100);
@@ -828,269 +885,345 @@
             if (x < 0 || x >= COLS || y < 0 || y >= ROWS) return;
 
             const cell = grid[y][x];
-            if(cell.e<=0 || cell.locked) return;
+            if (cell.e <= 0 || cell.locked) return;
 
-            // If a source is already selected and this is a different cell,
-            // treat this as the target tap, not a new drag source.
-            if(sel && (sel.x !== x || sel.y !== y)){
-                processCellSelection(x,y);
-                return;
+            // idle -> commit first source immediately
+            if (!sel || interactionMode === "idle") {
+              commitSourceSelection(x, y);
+              setPointerDown(true);
+              setDragStart({ x, y, startClientX: touch.clientX, startClientY: touch.clientY });
+              setDragEnd({ x, y });
+              return;
             }
 
-            setDragStart({x,y,initialX:x,initialY:y});
-            setDragEnd({x,y});
-            SoundManager.play('select');
-
-            const now=Date.now();
-            setGrid(prev=>{
-                const ng=prev.map(row=>row.map(c=>({...c})));
-                if(ng[y][x].e>0){
-                    ng[y][x].born=now;
-                    ng[y][x].decay=now+Math.max(DECAY_MIN,DECAY_BASE-level*500);
-                }
-                return ng;
-            });
-        },[phase,paused,grid,level,sel,processCellSelection]);
-        
-        const handleMouseEnter=useCallback((x,y)=>{
-            if(dragStart && !isDragging){
-                // Check if mouse actually moved from initial position
-                if(dragStart.initialX !== x || dragStart.initialY !== y){
-                    setIsDragging(true);
-                    setDragEnd({x,y});
-                    setDragHover({x,y});
-                }
-            } else if(isDragging && dragStart){
-                setDragEnd({x,y});
-                setDragHover({x,y});
-            } else if(sel && !isDragging && !dragStart){
-                // When a cell is selected, track hover for lightning
-                setDragHover({x,y});
+            // armed + same source -> allow drag from committed source
+            if (interactionMode === "armed" && sel.x === x && sel.y === y) {
+              setPointerDown(true);
+              setDragStart({ x, y, startClientX: touch.clientX, startClientY: touch.clientY });
+              setDragEnd({ x, y });
+              return;
             }
-        },[isDragging,dragStart,sel]);
+
+            // armed + different cell -> do nothing on touchstart.
+            // second tap resolves on touchend.
+          }, [phase, paused, grid, sel, interactionMode, commitSourceSelection]);
         
-        const handleTouchMove=useCallback((event) => {
-            if(!dragStart) return;
-            
-            // Get touch coordinates
+        const handleMouseEnter = useCallback((x, y) => {
+            // Always show hover when in armed mode with a selection
+            if (interactionMode === "armed" && sel) {
+              setDragHover({ x, y });
+              return;
+            }
+
+            // Only allow dragging from committed source
+            if (!pointerDown || !dragStart || !sel || dragStart.x !== sel.x || dragStart.y !== sel.y) {
+              return;
+            }
+
+            // Start dragging if we move from the source cell
+            if (!isDragging) {
+              if (x !== dragStart.x || y !== dragStart.y) {
+                setIsDragging(true);
+                setInteractionMode("dragging");
+                setDragEnd({ x, y });
+                setDragHover({ x, y });
+              }
+            } else {
+              // Already dragging - update hover position
+              setDragEnd({ x, y });
+              setDragHover({ x, y });
+            }
+          }, [pointerDown, dragStart, sel, isDragging, interactionMode]);
+        
+        const handleTouchMove = useCallback((event) => {
+            if (!pointerDown || !dragStart || !sel) return;
+
             const touch = event.touches[0];
             if (!touch) return;
-            
-            // Find which cell is being touched
+
             const gridElement = gridRef.current;
             if (!gridElement) return;
-            
+
             const rect = gridElement.getBoundingClientRect();
             const cellWidth = rect.width / COLS;
             const cellHeight = rect.height / ROWS;
-            
+
             const x = Math.floor((touch.clientX - rect.left) / cellWidth);
             const y = Math.floor((touch.clientY - rect.top) / cellHeight);
-            
-            if (x >= 0 && x < COLS && y >= 0 && y < ROWS) {
-                if(dragStart && !isDragging){
-                    // Check if touch actually moved from initial position
-                    if(dragStart.initialX !== x || dragStart.initialY !== y){
-                        setIsDragging(true);
-                        setDragEnd({x,y});
-                        setDragHover({x,y});
-                    }
-                } else if(isDragging && dragStart){
-                    setDragEnd({x,y});
-                    setDragHover({x,y});
-                } else if(sel && !isDragging && !dragStart){
-                    // When a cell is selected, track hover for lightning
-                    setDragHover({x,y});
-                }
-            }
-        },[isDragging,dragStart,sel]);
-        
-        const handleMouseLeave=useCallback(() => {
-            if(isDragging || (sel && !dragStart)){
-                setDragHover(null);
-            }
-        },[isDragging,sel,dragStart]);
-        
-        const handleTouchEnd=useCallback((event) => {
-            if(!dragStart) return;
-            
-            // Get touch coordinates
-            const touch = event.changedTouches[0];
-            if (!touch) {
-                // If no touch coordinates, just clear drag state
-                setIsDragging(false);
-                setDragStart(null);
-                setDragEnd(null);
-                setDragHover(null);
-                return;
-            }
-            
-            // Find which cell was touched
-            const gridElement = gridRef.current;
-            if (!gridElement) return;
-            
-            const rect = gridElement.getBoundingClientRect();
-            const cellWidth = rect.width / COLS;
-            const cellHeight = rect.height / ROWS;
-            
-            const x = Math.floor((touch.clientX - rect.left) / cellWidth);
-            const y = Math.floor((touch.clientY - rect.top) / cellHeight);
-            
-            if (x >= 0 && x < COLS && y >= 0 && y < ROWS) {
-                if(!isDragging){
-                    processCellSelection(x,y);
-                } else {
-                    // This was a drag - attempt correlation
-                    const src=grid[dragStart.y][dragStart.x],det=grid[y][x];
-                    if(dragStart.x===x && dragStart.y===y){
-                        // Same cell - just select
-                        setSel({x,y});
-                    } else if(det.e===0 || det.locked){
-                        // Empty cell or locked cell - deselect
-                        setSel(null);
-                    } else {
-                        // Attempt correlation
-                        const r=Math.sqrt((x-dragStart.x)**2+(y-dragStart.y)**2);
-                        if(det.e<=0||det.e<src.e){
-                            SoundManager.play('decorrelate', 0.8);
-                            const now=Date.now(),freshDecay=now+Math.max(DECAY_MIN,DECAY_BASE-level*500);
-                            setGrid(prev=>{const ng=prev.map(row=>row.map(c=>({...c})));
-                                if(ng[dragStart.y][dragStart.x].e>0){ng[dragStart.y][dragStart.x].born=now;ng[dragStart.y][dragStart.x].decay=freshDecay;if(ng[dragStart.y][dragStart.x].e<MAX_E)ng[dragStart.y][dragStart.x].e+=1; if(ng[dragStart.y][dragStart.x].e===MAX_E)ng[dragStart.y][dragStart.x].locked=true}
-                                if(ng[y][x].e>0){ng[y][x].born=now;ng[y][x].decay=freshDecay;if(ng[y][x].e<MAX_E)ng[y][x].e+=1; if(ng[y][x].e===MAX_E)ng[y][x].locked=true}
-                                return ng});
-                            const sp2=cellPos(dragStart.x,dragStart.y),dp2=cellPos(x,y);
-                            const mx=(sp2.px+dp2.px)/2+(Math.random()-0.5)*30,my=(sp2.py+dp2.py)/2+(Math.random()-0.5)*30;
-                            fireBolt(sp2.px,sp2.py,mx,my,"#f87171",400,0.8);firePart(mx,my,10,"rgb(248,113,113)");
-                            setScreenFlash("rgba(248,113,113,0.5)");setTimeout(()=>setScreenFlash(null),80);
-                            setShake(true);setTimeout(()=>setShake(false),150);
-                            setOverlayMsg({text:"ENERGY MISMATCH",time:now});setTimeout(()=>setOverlayMsg(null),1500);
-                            setInfo({type:"mis",sE:src.e,dE:det.e,time:now});
-                        } else {
-                            let prob=corrProb(r);prob=Math.min(0.98,prob+getEcho(x,y));
-                            if(Math.random()<prob){execTrans(dragStart.x,dragStart.y,x,y)}
-                            else{SoundManager.play('decorrelate', 0.6);
-                                const now=Date.now(),freshDecay=now+Math.max(DECAY_MIN,DECAY_BASE-level*500);
-                                setGrid(prev=>{const ng=prev.map(row=>row.map(c=>({...c})));
-                                    if(ng[dragStart.y][dragStart.x].e>0){ng[dragStart.y][dragStart.x].born=now;ng[dragStart.y][dragStart.x].decay=freshDecay;if(ng[dragStart.y][dragStart.x].e<MAX_E)ng[dragStart.y][dragStart.x].e+=1; if(ng[dragStart.y][dragStart.x].e===MAX_E)ng[dragStart.y][dragStart.x].locked=true}
-                                    if(ng[y][x].e>0){ng[y][x].born=now;ng[y][x].decay=freshDecay;if(ng[y][x].e<MAX_E)ng[y][x].e+=1; if(ng[y][x].e===MAX_E)ng[y][x].locked=true}
-                                    const sc=1+Math.floor(Math.random()*2);for(let i=0,a=0;i<sc&&a<20;a++){const sx2=Math.floor(Math.random()*COLS),sy2=Math.floor(Math.random()*ROWS);
-                                        if(ng[sy2][sx2].e===0){ng[sy2][sx2]=mkCell(level,now);i++}}
-                                    return ng});
-                                const sp2=cellPos(dragStart.x,dragStart.y),dp2=cellPos(x,y);
-                                const mx=(sp2.px+dp2.px)/2+(Math.random()-0.5)*30,my=(sp2.py+dp2.py)/2+(Math.random()-0.5)*30;
-                                fireBolt(sp2.px,sp2.py,mx,my,"#f87171",400,0.8);firePart(mx,my,10,"rgb(248,113,113)");
-                                setScreenFlash("rgba(248,113,113,0.5)");setTimeout(()=>setScreenFlash(null),80);
-                                setShake(true);setTimeout(()=>setShake(false),150);
-                                setOverlayMsg({text:"DECORRELATED",time:now});setTimeout(()=>setOverlayMsg(null),1500);
-                                setInfo({type:"decorr",prob,r,time:now});
-                            }
-                        }
-                    }
-                }
-            }
-            // Always clear drag state
-            setIsDragging(false);
-            setDragStart(null);
-            setDragEnd(null);
-            setDragHover(null);
-        },[isDragging,dragStart,grid,getEcho,execTrans,cellPos,level,fireBolt,firePart,processCellSelection]);
 
-        const handleMouseUp=useCallback((x,y)=>{
-            if(!dragStart) return;
+            if (x < 0 || x >= COLS || y < 0 || y >= ROWS) return;
 
-            if(isDragging){
-                const src=grid[dragStart.y][dragStart.x],det=grid[y][x];
-                if(dragStart.x===x && dragStart.y===y){
-                    setSel({x,y});
-                } else if(det.e===0 || det.locked){
-                    setSel(null);
-                } else {
-                    const r=Math.sqrt((x-dragStart.x)**2+(y-dragStart.y)**2);
-                    if(det.e<=0||det.e<src.e){
-                        SoundManager.play('decorrelate', 0.8);
-                        const now=Date.now(),freshDecay=now+Math.max(DECAY_MIN,DECAY_BASE-level*500);
-                        setGrid(prev=>{
-                            const ng=prev.map(row=>row.map(c=>({...c})));
-                            if(ng[dragStart.y][dragStart.x].e>0){
-                                ng[dragStart.y][dragStart.x].born=now;
-                                ng[dragStart.y][dragStart.x].decay=freshDecay;
-                                if(ng[dragStart.y][dragStart.x].e<MAX_E)ng[dragStart.y][dragStart.x].e+=1;
-                                if(ng[dragStart.y][dragStart.x].e===MAX_E)ng[dragStart.y][dragStart.x].locked=true;
-                            }
-                            if(ng[y][x].e>0){
-                                ng[y][x].born=now;
-                                ng[y][x].decay=freshDecay;
-                                if(ng[y][x].e<MAX_E)ng[y][x].e+=1;
-                                if(ng[y][x].e===MAX_E)ng[y][x].locked=true;
-                            }
-                            return ng;
-                        });
-                        const sp2=cellPos(dragStart.x,dragStart.y),dp2=cellPos(x,y);
-                        const mx=(sp2.px+dp2.px)/2+(Math.random()-0.5)*30,my=(sp2.py+dp2.py)/2+(Math.random()-0.5)*30;
-                        fireBolt(sp2.px,sp2.py,mx,my,"#f87171",400,0.8);
-                        firePart(mx,my,10,"rgb(248,113,113)");
-                        setScreenFlash("rgba(248,113,113,0.5)");
-                        setTimeout(()=>setScreenFlash(null),80);
-                        setShake(true);
-                        setTimeout(()=>setShake(false),150);
-                        setOverlayMsg({text:"ENERGY MISMATCH",time:now});
-                        setTimeout(()=>setOverlayMsg(null),1500);
-                        setInfo({type:"mis",sE:src.e,dE:det.e,time:now});
-                    } else {
-                        let prob=corrProb(r);
-                        prob=Math.min(0.98,prob+getEcho(x,y));
-                        if(Math.random()<prob){
-                            execTrans(dragStart.x,dragStart.y,x,y);
-                        } else {
-                            SoundManager.play('decorrelate', 0.6);
-                            const now=Date.now(),freshDecay=now+Math.max(DECAY_MIN,DECAY_BASE-level*500);
-                            setGrid(prev=>{
-                                const ng=prev.map(row=>row.map(c=>({...c})));
-                                if(ng[dragStart.y][dragStart.x].e>0){
-                                    ng[dragStart.y][dragStart.x].born=now;
-                                    ng[dragStart.y][dragStart.x].decay=freshDecay;
-                                    if(ng[dragStart.y][dragStart.x].e<MAX_E)ng[dragStart.y][dragStart.x].e+=1;
-                                    if(ng[dragStart.y][dragStart.x].e===MAX_E)ng[dragStart.y][dragStart.x].locked=true;
-                                }
-                                if(ng[y][x].e>0){
-                                    ng[y][x].born=now;
-                                    ng[y][x].decay=freshDecay;
-                                    if(ng[y][x].e<MAX_E)ng[y][x].e+=1;
-                                    if(ng[y][x].e===MAX_E)ng[y][x].locked=true;
-                                }
-                                const sc=1+Math.floor(Math.random()*2);
-                                for(let i=0,a=0;i<sc&&a<20;a++){
-                                    const sx2=Math.floor(Math.random()*COLS),sy2=Math.floor(Math.random()*ROWS);
-                                    if(ng[sy2][sx2].e===0){
-                                        ng[sy2][sx2]=mkCell(level,now);
-                                        i++;
-                                    }
-                                }
-                                return ng;
-                            });
-                            const sp2=cellPos(dragStart.x,dragStart.y),dp2=cellPos(x,y);
-                            const mx=(sp2.px+dp2.px)/2+(Math.random()-0.5)*30,my=(sp2.py+dp2.py)/2+(Math.random()-0.5)*30;
-                            fireBolt(sp2.px,sp2.py,mx,my,"#f87171",400,0.8);
-                            firePart(mx,my,10,"rgb(248,113,113)");
-                            setScreenFlash("rgba(248,113,113,0.5)");
-                            setTimeout(()=>setScreenFlash(null),80);
-                            setShake(true);
-                            setTimeout(()=>setShake(false),150);
-                            setOverlayMsg({text:"DECORRELATED",time:now});
-                            setTimeout(()=>setOverlayMsg(null),1500);
-                            setInfo({type:"decorr",prob,r,time:now});
-                        }
-                    }
-                }
+            // only drag from committed source
+            if (dragStart.x !== sel.x || dragStart.y !== sel.y) return;
+
+            const dx = touch.clientX - (dragStart.startClientX ?? touch.clientX);
+            const dy = touch.clientY - (dragStart.startClientY ?? touch.clientY);
+            const moved = Math.sqrt(dx * dx + dy * dy);
+
+            if (!isDragging) {
+              if (moved >= DRAG_THRESHOLD) {
+                setIsDragging(true);
+                setInteractionMode("dragging");
+                setDragEnd({ x, y });
+                setDragHover({ x, y });
+              }
             } else {
-                processCellSelection(x,y);
+              setDragEnd({ x, y });
+              setDragHover({ x, y });
+            }
+          }, [pointerDown, dragStart, sel, isDragging]);
+        
+        const resolveDragRelease = useCallback((targetX, targetY) => {
+            if (!sel || !dragStart) {
+              clearDragState();
+              return;
             }
 
-            setIsDragging(false);
-            setDragStart(null);
-            setDragEnd(null);
-            setDragHover(null);
-        },[dragStart,isDragging,grid,getEcho,execTrans,cellPos,level,fireBolt,firePart,processCellSelection]);
+            const sx = sel.x;
+            const sy = sel.y;
+
+            // release on nothing / outside grid -> cancel drag, keep selection armed
+            if (targetX == null || targetY == null) {
+              clearDragState();
+              setInteractionMode("armed");
+              return;
+            }
+
+            if (targetX === sx && targetY === sy) {
+              clearDragState();
+              setInteractionMode("armed");
+              return;
+            }
+
+            const det = grid[targetY][targetX];
+            const src = grid[sy][sx];
+
+            if (!det || det.e === 0 || det.locked) {
+              clearDragState();
+              setInteractionMode("armed");
+              return;
+            }
+
+            const r = Math.sqrt((targetX - sx) ** 2 + (targetY - sy) ** 2);
+
+            if (det.e <= 0 || det.e < src.e) {
+              SoundManager.play("decorrelate", 0.8);
+              const now = Date.now();
+              const freshDecay = now + Math.max(DECAY_MIN, DECAY_BASE - level * 500);
+
+              setGrid(prev => {
+                const ng = prev.map(row => row.map(c => ({ ...c })));
+                if (ng[sy][sx].e > 0) {
+                  ng[sy][sx].born = now;
+                  ng[sy][sx].decay = freshDecay;
+                  if (ng[sy][sx].e < MAX_E) ng[sy][sx].e += 1;
+                  if (ng[sy][sx].e === MAX_E) ng[sy][sx].locked = true;
+                }
+                if (ng[targetY][targetX].e > 0) {
+                  ng[targetY][targetX].born = now;
+                  ng[targetY][targetX].decay = freshDecay;
+                  if (ng[targetY][targetX].e < MAX_E) ng[targetY][targetX].e += 1;
+                  if (ng[targetY][targetX].e === MAX_E) ng[targetY][targetX].locked = true;
+                }
+                return ng;
+              });
+
+              const sp2 = cellPos(sx, sy), dp2 = cellPos(targetX, targetY);
+              const mx = (sp2.px + dp2.px) / 2 + (Math.random() - 0.5) * 30;
+              const my = (sp2.py + dp2.py) / 2 + (Math.random() - 0.5) * 30;
+              fireBolt(sp2.px, sp2.py, mx, my, "#f87171", 400, 0.8);
+              firePart(mx, my, 10, "rgb(248,113,113)");
+              setScreenFlash("rgba(248,113,113,0.5)");
+              setTimeout(() => setScreenFlash(null), 80);
+              setShake(true);
+              setTimeout(() => setShake(false), 150);
+              setOverlayMsg({ text: "ENERGY MISMATCH", time: now });
+              setTimeout(() => setOverlayMsg(null), 1500);
+              setInfo({ type: "mis", sE: src.e, dE: det.e, time: now });
+
+              cancelSelection();
+              return;
+            }
+
+            let prob = corrProb(r);
+            prob = Math.min(0.98, prob + getEcho(targetX, targetY));
+
+            if (Math.random() < prob) {
+              execTrans(sx, sy, targetX, targetY);
+              setInteractionMode("idle");
+              clearDragState();
+            } else {
+              SoundManager.play("decorrelate", 0.6);
+              const now = Date.now();
+              const freshDecay = now + Math.max(DECAY_MIN, DECAY_BASE - level * 500);
+
+              setGrid(prev => {
+                const ng = prev.map(row => row.map(c => ({ ...c })));
+                if (ng[sy][sx].e > 0) {
+                  ng[sy][sx].born = now;
+                  ng[sy][sx].decay = freshDecay;
+                  if (ng[sy][sx].e < MAX_E) ng[sy][sx].e += 1;
+                  if (ng[sy][sx].e === MAX_E) ng[sy][sx].locked = true;
+                }
+                if (ng[targetY][targetX].e > 0) {
+                  ng[targetY][targetX].born = now;
+                  ng[targetY][targetX].decay = freshDecay;
+                  if (ng[targetY][targetX].e < MAX_E) ng[targetY][targetX].e += 1;
+                  if (ng[targetY][targetX].e === MAX_E) ng[targetY][targetX].locked = true;
+                }
+                const sc = 1 + Math.floor(Math.random() * 2);
+                for (let i = 0, a = 0; i < sc && a < 20; a++) {
+                  const sx2 = Math.floor(Math.random() * COLS), sy2 = Math.floor(Math.random() * ROWS);
+                  if (ng[sy2][sx2].e === 0) {
+                    ng[sy2][sx2] = mkCell(level, now);
+                    i++;
+                  }
+                }
+                return ng;
+              });
+
+              const sp2 = cellPos(sx, sy), dp2 = cellPos(targetX, targetY);
+              const mx = (sp2.px + dp2.px) / 2 + (Math.random() - 0.5) * 30;
+              const my = (sp2.py + dp2.py) / 2 + (Math.random() - 0.5) * 30;
+              fireBolt(sp2.px, sp2.py, mx, my, "#f87171", 400, 0.8);
+              firePart(mx, my, 10, "rgb(248,113,113)");
+              setScreenFlash("rgba(248,113,113,0.5)");
+              setTimeout(() => setScreenFlash(null), 80);
+              setShake(true);
+              setTimeout(() => setShake(false), 150);
+              setOverlayMsg({ text: "DECORRELATED", time: now });
+              setTimeout(() => setOverlayMsg(null), 1500);
+              setInfo({ type: "decorr", prob, r, time: now });
+
+              cancelSelection();
+            }
+          }, [
+            sel, dragStart, grid, level, cellPos, fireBolt, firePart,
+            getEcho, execTrans, clearDragState, cancelSelection
+          ]);
+
+        const handleMouseLeave = useCallback(() => {
+            if (interactionMode === "dragging") {
+              setDragHover(null);
+              return;
+            }
+
+            if (interactionMode === "armed" && sel) {
+              setDragHover(null);
+            }
+          }, [interactionMode, sel]);
+        
+        const handleTouchEnd = useCallback((event) => {
+            if (!pointerDown) return;
+
+            const touch = event.changedTouches[0];
+
+            if (isDragging || interactionMode === "dragging") {
+              if (!touch) {
+                resolveDragRelease(null, null);
+                return;
+              }
+
+              const gridElement = gridRef.current;
+              if (!gridElement) {
+                resolveDragRelease(null, null);
+                return;
+              }
+
+              const rect = gridElement.getBoundingClientRect();
+              const cellWidth = rect.width / COLS;
+              const cellHeight = rect.height / ROWS;
+
+              const x = Math.floor((touch.clientX - rect.left) / cellWidth);
+              const y = Math.floor((touch.clientY - rect.top) / cellHeight);
+
+              if (x < 0 || x >= COLS || y < 0 || y >= ROWS) {
+                resolveDragRelease(null, null);
+                return;
+              }
+
+              resolveDragRelease(x, y);
+              return;
+            }
+
+            // non-drag touch release:
+            // if touch started on a different cell while armed, that is second-tap target selection
+            if (touch && sel && interactionMode === "armed" && dragStart) {
+              const gridElement = gridRef.current;
+              if (!gridElement) {
+                clearDragState();
+                processCellSelection(dragStart.x, dragStart.y); // Try to deselect same cell
+                return;
+              }
+
+              const rect = gridElement.getBoundingClientRect();
+              const cellWidth = rect.width / COLS;
+              const cellHeight = rect.height / ROWS;
+
+              const x = Math.floor((touch.clientX - rect.left) / cellWidth);
+              const y = Math.floor((touch.clientY - rect.top) / cellHeight);
+
+              if (x >= 0 && x < COLS && y >= 0 && y < ROWS) {
+                clearDragState();
+                processCellSelection(x, y);
+                return;
+              }
+            }
+
+            // Handle touch release on same cell or empty area
+            clearDragState();
+            if (touch && sel && dragStart) {
+              const gridElement = gridRef.current;
+              if (gridElement) {
+                const rect = gridElement.getBoundingClientRect();
+                const cellWidth = rect.width / COLS;
+                const cellHeight = rect.height / ROWS;
+
+                const x = Math.floor((touch.clientX - rect.left) / cellWidth);
+                const y = Math.floor((touch.clientY - rect.top) / cellHeight);
+
+                if (x >= 0 && x < COLS && y >= 0 && y < ROWS) {
+                  processCellSelection(x, y);
+                  return;
+                }
+              }
+            }
+
+            // Fallback: try to process the drag start cell for deselection
+            if (sel && dragStart) {
+              processCellSelection(dragStart.x, dragStart.y);
+            } else if (sel) {
+              setInteractionMode("armed");
+            } else {
+              setInteractionMode("idle");
+            }
+          }, [
+            pointerDown, isDragging, interactionMode, sel, dragStart,
+            resolveDragRelease, clearDragState, processCellSelection
+          ]);
+
+        const handleMouseUp = useCallback((x, y) => {
+            if (!pointerDown) return;
+
+            // Drag path resolves on release
+            if (isDragging || interactionMode === "dragging") {
+              resolveDragRelease(x, y);
+              return;
+            }
+
+            // Non-drag release: process as click selection
+            clearDragState();
+            
+            // Don't deselect if this is the immediate mouseup after selection
+            const now = Date.now();
+            if (dragStart && dragStart.x === x && dragStart.y === y && 
+                interactionMode === "armed" && (now - lastSelectionTime) < 200) {
+              // Just stay armed, don't process as a click
+              return;
+            }
+            
+            processCellSelection(x, y);
+          }, [pointerDown, isDragging, interactionMode, resolveDragRelease, clearDragState, processCellSelection, dragStart, lastSelectionTime]);
 
           useEffect(()=>{const h=e=>{if(e.key==="p"||e.key==="P")setPaused(p=>!p);if(e.key==="Escape")setSel(null)};
             window.addEventListener("keydown",h);return()=>window.removeEventListener("keydown",h)},[]);
