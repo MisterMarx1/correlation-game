@@ -105,25 +105,25 @@
                 this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
                 
                 // Initialize background music
-                this.backgroundMusic = new Audio('correlation/sfx/mixkit-pulsating-bass-transition-2295.wav');
+                this.backgroundMusic = new Audio('sfx/mixkit-pulsating-bass-transition-2295.wav');
                 this.backgroundMusic.loop = true;
                 this.backgroundMusic.volume = this.musicVolume;
                 this.backgroundMusic.preload = 'auto';
                 
                 // Predefined sound file paths
                 this.soundFiles = {
-                    select: 'correlation/sfx/select_click.mp3',
-                    correlate: 'correlation/sfx/correlation_success.mp3',
-                    decorrelate: 'correlation/sfx/decorrelation_fail.mp3',
-                    recoil: 'correlation/sfx/recoil_cascade.mp3',
-                    spawn: 'correlation/sfx/spawn_cell.mp3',
-                    gameOver: 'correlation/sfx/game_over.mp3',
-                    levelUp: 'correlation/sfx/level_up.mp3',
-                    combo: 'correlation/sfx/combo_multiplier.mp3',
-                    menu: 'correlation/sfx/menu_navigate.mp3',
-                    pause: 'correlation/sfx/pause_sound.mp3',
-                    countdown: 'correlation/sfx/mixkit-electronic-lock-success-beeps-2852.wav',
-                    startSound: 'correlation/sfx/mixkit-arcade-mechanical-bling-210.wav'
+                    select: 'sfx/select_click.mp3',
+                    correlate: 'sfx/correlation_success.mp3',
+                    decorrelate: 'sfx/decorrelation_fail.mp3',
+                    recoil: 'sfx/recoil_cascade.mp3',
+                    spawn: 'sfx/spawn_cell.mp3',
+                    gameOver: 'sfx/game_over.mp3',
+                    levelUp: 'sfx/level_up.mp3',
+                    combo: 'sfx/combo_multiplier.mp3',
+                    menu: 'sfx/menu_navigate.mp3',
+                    pause: 'sfx/pause_sound.mp3',
+                    countdown: 'sfx/mixkit-electronic-lock-success-beeps-2852.wav',
+                    startSound: 'sfx/mixkit-arcade-mechanical-bling-210.wav'
                 };
                 
                                 
@@ -195,7 +195,7 @@
                     // Try alternative approach for PC browsers
                     try {
                         // Create a new audio element with different format
-                        const fallbackMusic = new Audio('correlation/sfx/mixkit-pulsating-bass-transition-2295.wav');
+                        const fallbackMusic = new Audio('sfx/mixkit-pulsating-bass-transition-2295.wav');
                         fallbackMusic.loop = true;
                         fallbackMusic.volume = this.musicVolume;
                         await fallbackMusic.play();
