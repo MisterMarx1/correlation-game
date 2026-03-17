@@ -384,8 +384,9 @@
           const[pauseTime,setPauseTime]=useState(null);
 
           const gridRef=useRef(null);const canvasRef=useRef(null);
-          const particlesRef=useRef([]);const boltsRef=useRef([]);
-          const animRef=useRef(null);const dimsRef=useRef({cw:0,ch:0});
+const particlesRef=useRef([]);const boltsRef=useRef([]);
+const animRef=useRef(null);const dimsRef=useRef({cw:0,ch:0});
+const lastTouchTimeRef = useRef(0);
 
           const updateDims=useCallback(()=>{
             const g=gridRef.current;if(!g)return;
@@ -831,82 +832,84 @@
           ]);
 
           const handleMouseDown = useCallback((x, y) => {
-            if (phase !== "play" || paused) return;
+  if (Date.now() - lastTouchTimeRef.current < 700) return;
+  if (phase !== "play" || paused) return;
 
-            const cell = grid[y][x];
-            if (cell.e <= 0 || cell.locked) return;
+  const cell = grid[y][x];
 
-            // First click: commit source immediately
-            if (!sel || interactionMode === "idle") {
-              commitSourceSelection(x, y);
-              setPointerDown(true);
-              setDragStart({ x, y, startClientX: null, startClientY: null, role: "source" });
-              setDragEnd({ x, y });
-              return;
-            }
+  if (!sel || interactionMode === "idle") {
+    if (cell.e <= 0 || cell.locked) return;
+    commitSourceSelection(x, y);
+    setPointerDown(true);
+    setDragStart({ x, y, startClientX: null, startClientY: null, role: "source" });
+    setDragEnd({ x, y });
+    return;
+  }
 
-            // Clicking the already-selected source: allow drag from source
-            if (interactionMode === "armed" && sel.x === x && sel.y === y) {
-              setPointerDown(true);
-              setDragStart({ x, y, startClientX: null, startClientY: null, role: "source" });
-              setDragEnd({ x, y });
-              return;
-            }
+  if (interactionMode === "armed" && sel.x === x && sel.y === y) {
+    setPointerDown(true);
+    setDragStart({ x, y, startClientX: null, startClientY: null, role: "source" });
+    setDragEnd({ x, y });
+    return;
+  }
 
-            // Clicking a different cell while armed: mark that a real click is happening
-            // so mouseup can resolve it as the second selection
-            if (interactionMode === "armed") {
-              setPointerDown(true);
-              setDragStart({ x, y, startClientX: null, startClientY: null, role: "target" });
-              setDragEnd({ x, y });
-              return;
-            }
-          }, [phase, paused, grid, sel, interactionMode, commitSourceSelection]);
+  if (interactionMode === "armed") {
+    setPointerDown(true);
+    setDragStart({ x, y, startClientX: null, startClientY: null, role: "target" });
+    setDragEnd({ x, y });
+    return;
+  }
+}, [phase, paused, grid, sel, interactionMode, commitSourceSelection]);
         
         const handleTouchStart = useCallback((event) => {
-            if (phase !== "play" || paused) return;
+  event.preventDefault();
+  lastTouchTimeRef.current = Date.now();
 
-            setHasTouchInteraction(true);
-            setTimeout(() => setHasTouchInteraction(false), 100);
+  if (phase !== "play" || paused) return;
 
-            const touch = event.touches[0];
-            if (!touch) return;
+  setHasTouchInteraction(true);
+  setTimeout(() => setHasTouchInteraction(false), 100);
 
-            const gridElement = gridRef.current;
-            if (!gridElement) return;
+  const touch = event.touches[0];
+  if (!touch) return;
 
-            const rect = gridElement.getBoundingClientRect();
-            const cellWidth = rect.width / COLS;
-            const cellHeight = rect.height / ROWS;
+  const gridElement = gridRef.current;
+  if (!gridElement) return;
 
-            const x = Math.floor((touch.clientX - rect.left) / cellWidth);
-            const y = Math.floor((touch.clientY - rect.top) / cellHeight);
+  const rect = gridElement.getBoundingClientRect();
+  const cellWidth = rect.width / COLS;
+  const cellHeight = rect.height / ROWS;
 
-            if (x < 0 || x >= COLS || y < 0 || y >= ROWS) return;
+  const x = Math.floor((touch.clientX - rect.left) / cellWidth);
+  const y = Math.floor((touch.clientY - rect.top) / cellHeight);
 
-            const cell = grid[y][x];
-            if (cell.e <= 0 || cell.locked) return;
+  if (x < 0 || x >= COLS || y < 0 || y >= ROWS) return;
 
-            // idle -> commit first source immediately
-            if (!sel || interactionMode === "idle") {
-              commitSourceSelection(x, y);
-              setPointerDown(true);
-              setDragStart({ x, y, startClientX: touch.clientX, startClientY: touch.clientY });
-              setDragEnd({ x, y });
-              return;
-            }
+  const cell = grid[y][x];
 
-            // armed + same source -> allow drag from committed source
-            if (interactionMode === "armed" && sel.x === x && sel.y === y) {
-              setPointerDown(true);
-              setDragStart({ x, y, startClientX: touch.clientX, startClientY: touch.clientY });
-              setDragEnd({ x, y });
-              return;
-            }
+  if (!sel || interactionMode === "idle") {
+    if (cell.e <= 0 || cell.locked) return;
+    commitSourceSelection(x, y);
+    setPointerDown(true);
+    setDragStart({ x, y, startClientX: touch.clientX, startClientY: touch.clientY, role: "source" });
+    setDragEnd({ x, y });
+    return;
+  }
 
-            // armed + different cell -> do nothing on touchstart.
-            // second tap resolves on touchend.
-          }, [phase, paused, grid, sel, interactionMode, commitSourceSelection]);
+  if (interactionMode === "armed" && sel.x === x && sel.y === y) {
+    setPointerDown(true);
+    setDragStart({ x, y, startClientX: touch.clientX, startClientY: touch.clientY, role: "source" });
+    setDragEnd({ x, y });
+    return;
+  }
+
+  if (interactionMode === "armed") {
+    setPointerDown(true);
+    setDragStart({ x, y, startClientX: touch.clientX, startClientY: touch.clientY, role: "target" });
+    setDragEnd({ x, y });
+    return;
+  }
+}, [phase, paused, grid, sel, interactionMode, commitSourceSelection]);
         
         const handleMouseEnter = useCallback((x, y) => {
             // Always show hover when in armed mode with a selection
@@ -936,42 +939,45 @@
           }, [pointerDown, dragStart, sel, isDragging, interactionMode]);
         
         const handleTouchMove = useCallback((event) => {
-            if (!pointerDown || !dragStart || !sel) return;
+  event.preventDefault();
+  lastTouchTimeRef.current = Date.now();
 
-            const touch = event.touches[0];
-            if (!touch) return;
+  if (!pointerDown || !dragStart || !sel) return;
 
-            const gridElement = gridRef.current;
-            if (!gridElement) return;
+  const touch = event.touches[0];
+  if (!touch) return;
 
-            const rect = gridElement.getBoundingClientRect();
-            const cellWidth = rect.width / COLS;
-            const cellHeight = rect.height / ROWS;
+  const gridElement = gridRef.current;
+  if (!gridElement) return;
 
-            const x = Math.floor((touch.clientX - rect.left) / cellWidth);
-            const y = Math.floor((touch.clientY - rect.top) / cellHeight);
+  const rect = gridElement.getBoundingClientRect();
+  const cellWidth = rect.width / COLS;
+  const cellHeight = rect.height / ROWS;
 
-            if (x < 0 || x >= COLS || y < 0 || y >= ROWS) return;
+  const x = Math.floor((touch.clientX - rect.left) / cellWidth);
+  const y = Math.floor((touch.clientY - rect.top) / cellHeight);
 
-            // only drag from committed source
-            if (dragStart.x !== sel.x || dragStart.y !== sel.y) return;
+  if (x < 0 || x >= COLS || y < 0 || y >= ROWS) return;
 
-            const dx = touch.clientX - (dragStart.startClientX ?? touch.clientX);
-            const dy = touch.clientY - (dragStart.startClientY ?? touch.clientY);
-            const moved = Math.sqrt(dx * dx + dy * dy);
+  if (dragStart.x !== sel.x || dragStart.y !== sel.y) return;
+  if (dragStart.role !== "source") return;
 
-            if (!isDragging) {
-              if (moved >= DRAG_THRESHOLD) {
-                setIsDragging(true);
-                setInteractionMode("dragging");
-                setDragEnd({ x, y });
-                setDragHover({ x, y });
-              }
-            } else {
-              setDragEnd({ x, y });
-              setDragHover({ x, y });
-            }
-          }, [pointerDown, dragStart, sel, isDragging]);
+  const dx = touch.clientX - (dragStart.startClientX ?? touch.clientX);
+  const dy = touch.clientY - (dragStart.startClientY ?? touch.clientY);
+  const moved = Math.sqrt(dx * dx + dy * dy);
+
+  if (!isDragging) {
+    if (moved >= DRAG_THRESHOLD) {
+      setIsDragging(true);
+      setInteractionMode("dragging");
+      setDragEnd({ x, y });
+      setDragHover({ x, y });
+    }
+  } else {
+    setDragEnd({ x, y });
+    setDragHover({ x, y });
+  }
+}, [pointerDown, dragStart, sel, isDragging]);
         
         const resolveDragRelease = useCallback((targetX, targetY) => {
             if (!sel || !dragStart) {
@@ -1114,116 +1120,113 @@
           }, [interactionMode, sel]);
         
         const handleTouchEnd = useCallback((event) => {
-            if (!pointerDown) return;
+  event.preventDefault();
+  lastTouchTimeRef.current = Date.now();
 
-            const touch = event.changedTouches[0];
+  if (!pointerDown) return;
 
-            if (isDragging || interactionMode === "dragging") {
-              if (!touch) {
-                resolveDragRelease(null, null);
-                return;
-              }
+  const touch = event.changedTouches[0];
 
-              const gridElement = gridRef.current;
-              if (!gridElement) {
-                resolveDragRelease(null, null);
-                return;
-              }
+  if (isDragging || interactionMode === "dragging") {
+    if (!touch) {
+      resolveDragRelease(null, null);
+      return;
+    }
 
-              const rect = gridElement.getBoundingClientRect();
-              const cellWidth = rect.width / COLS;
-              const cellHeight = rect.height / ROWS;
+    const gridElement = gridRef.current;
+    if (!gridElement) {
+      resolveDragRelease(null, null);
+      return;
+    }
 
-              const x = Math.floor((touch.clientX - rect.left) / cellWidth);
-              const y = Math.floor((touch.clientY - rect.top) / cellHeight);
+    const rect = gridElement.getBoundingClientRect();
+    const cellWidth = rect.width / COLS;
+    const cellHeight = rect.height / ROWS;
 
-              if (x < 0 || x >= COLS || y < 0 || y >= ROWS) {
-                resolveDragRelease(null, null);
-                return;
-              }
+    const x = Math.floor((touch.clientX - rect.left) / cellWidth);
+    const y = Math.floor((touch.clientY - rect.top) / cellHeight);
 
-              resolveDragRelease(x, y);
-              return;
-            }
+    if (x < 0 || x >= COLS || y < 0 || y >= ROWS) {
+      resolveDragRelease(null, null);
+      return;
+    }
 
-            // non-drag touch release:
-            // if touch started on a different cell while armed, that is second-tap target selection
-            if (touch && sel && interactionMode === "armed" && dragStart) {
-              const gridElement = gridRef.current;
-              if (!gridElement) {
-                clearDragState();
-                processCellSelection(dragStart.x, dragStart.y); // Try to deselect same cell
-                return;
-              }
+    resolveDragRelease(x, y);
+    return;
+  }
 
-              const rect = gridElement.getBoundingClientRect();
-              const cellWidth = rect.width / COLS;
-              const cellHeight = rect.height / ROWS;
+  if (!touch || !dragStart) {
+    clearDragState();
+    return;
+  }
 
-              const x = Math.floor((touch.clientX - rect.left) / cellWidth);
-              const y = Math.floor((touch.clientY - rect.top) / cellHeight);
+  const gridElement = gridRef.current;
+  if (!gridElement) {
+    clearDragState();
+    return;
+  }
 
-              if (x >= 0 && x < COLS && y >= 0 && y < ROWS) {
-                clearDragState();
-                processCellSelection(x, y);
-                return;
-              }
-            }
+  const rect = gridElement.getBoundingClientRect();
+  const cellWidth = rect.width / COLS;
+  const cellHeight = rect.height / ROWS;
 
-            // Handle touch release on same cell or empty area
-            clearDragState();
-            if (touch && sel && dragStart) {
-              const gridElement = gridRef.current;
-              if (gridElement) {
-                const rect = gridElement.getBoundingClientRect();
-                const cellWidth = rect.width / COLS;
-                const cellHeight = rect.height / ROWS;
+  const x = Math.floor((touch.clientX - rect.left) / cellWidth);
+  const y = Math.floor((touch.clientY - rect.top) / cellHeight);
 
-                const x = Math.floor((touch.clientX - rect.left) / cellWidth);
-                const y = Math.floor((touch.clientY - rect.top) / cellHeight);
+  clearDragState();
 
-                if (x >= 0 && x < COLS && y >= 0 && y < ROWS) {
-                  processCellSelection(x, y);
-                  return;
-                }
-              }
-            }
+  if (x >= 0 && x < COLS && y >= 0 && y < ROWS) {
+    const now = Date.now();
 
-            // Fallback: try to process the drag start cell for deselection
-            if (sel && dragStart) {
-              processCellSelection(dragStart.x, dragStart.y);
-            } else if (sel) {
-              setInteractionMode("armed");
-            } else {
-              setInteractionMode("idle");
-            }
-          }, [
-            pointerDown, isDragging, interactionMode, sel, dragStart,
-            resolveDragRelease, clearDragState, processCellSelection
-          ]);
+    if (
+      dragStart.role === "source" &&
+      dragStart.x === x &&
+      dragStart.y === y &&
+      interactionMode === "armed" &&
+      (now - lastSelectionTime) < 200
+    ) {
+      return;
+    }
+
+    processCellSelection(x, y);
+    return;
+  }
+
+  if (sel) {
+    setInteractionMode("armed");
+  } else {
+    setInteractionMode("idle");
+  }
+}, [
+  pointerDown, isDragging, interactionMode, dragStart, sel,
+  resolveDragRelease, clearDragState, processCellSelection, lastSelectionTime
+]);
 
         const handleMouseUp = useCallback((x, y) => {
-            if (!pointerDown) return;
+  if (Date.now() - lastTouchTimeRef.current < 700) return;
+  if (!pointerDown) return;
 
-            // Drag path resolves on release
-            if (isDragging || interactionMode === "dragging") {
-              resolveDragRelease(x, y);
-              return;
-            }
+  if (isDragging || interactionMode === "dragging") {
+    resolveDragRelease(x, y);
+    return;
+  }
 
-            // Non-drag release: process as click selection
-            clearDragState();
-            
-            // Don't deselect if this is the immediate mouseup after selection
-            const now = Date.now();
-            if (dragStart && dragStart.x === x && dragStart.y === y && 
-                interactionMode === "armed" && (now - lastSelectionTime) < 200) {
-              // Just stay armed, don't process as a click
-              return;
-            }
-            
-            processCellSelection(x, y);
-          }, [pointerDown, isDragging, interactionMode, resolveDragRelease, clearDragState, processCellSelection, dragStart, lastSelectionTime]);
+  clearDragState();
+
+  const now = Date.now();
+  if (
+    dragStart &&
+    dragStart.x === x &&
+    dragStart.y === y &&
+    interactionMode === "armed" &&
+    dragStart.role === "source" &&
+    (now - lastSelectionTime) < 200
+  ) {
+    return;
+  }
+
+  processCellSelection(x, y);
+}, [pointerDown, isDragging, interactionMode, resolveDragRelease, clearDragState, processCellSelection, dragStart, lastSelectionTime]);
 
           useEffect(()=>{const h=e=>{if(e.key==="p"||e.key==="P")setPaused(p=>!p);if(e.key==="Escape")setSel(null)};
             window.addEventListener("keydown",h);return()=>window.removeEventListener("keydown",h)},[]);
