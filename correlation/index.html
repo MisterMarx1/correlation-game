@@ -275,7 +275,7 @@
           return out;
         }
 
-        const Cell=memo(function Cell({e,mass,isSel,isDet,detProb,echoB,dp,isNew,locked,onClick,onMouseDown,onMouseEnter,onMouseUp,onMouseLeave,onTouchStart,onTouchMove,onTouchEnd,x,y,dragStart,dragHover}) {
+        const Cell=memo(function Cell({e,mass,isSel,isDet,detProb,echoB,dp,isNew,locked,onMouseDown,onMouseEnter,onMouseUp,onMouseLeave,onTouchStart,onTouchMove,onTouchEnd,x,y,dragStart,dragHover}) {
           // Create conic gradient that sweeps clockwise
           const getGradient = (decayProgress, energy, isLocked) => {
             const baseColor = isLocked ? "rgba(128,128,128,0.6)" : (EC[energy] || "rgba(15,23,42,0.3)");
@@ -290,7 +290,7 @@
           const isDragHover = dragHover && dragHover.x === x && dragHover.y === y;
           
           return(
-            <div onClick={locked?null:onClick} 
+            <div 
                  onMouseDown={locked?null:onMouseDown}
                  onMouseEnter={locked?null:onMouseEnter}
                  onMouseUp={locked?null:onMouseUp}
@@ -659,57 +659,198 @@
             setInfo({type:"ok",dE,r,mom,prob:corrProb(r),combo:nc,time:now});setSel(null);
           },[grid,combo,cellPos,fireBolt,firePart,level]);
 
-          const handleMouseDown=useCallback((x,y)=>{
-            if(phase!=="play"||paused)return;const cell=grid[y][x];
-            if(cell.e>0){
-                // Store initial position for drag detection
-                setDragStart({x,y,initialX:x,initialY:y});
-                setDragEnd({x,y});
-                // Don't set isDragging yet - wait for actual movement
-                // Only play sound if this wasn't triggered by touch (prevents double sound on mobile)
-                if(!hasTouchInteraction){
-                    SoundManager.play('select');
-                }
-                const now=Date.now();setGrid(prev=>{const ng=prev.map(row=>row.map(c=>({...c})));
-                    if(ng[y][x].e>0){ng[y][x].born=now;ng[y][x].decay=now+Math.max(DECAY_MIN,DECAY_BASE-level*500)}return ng});
+          const processCellSelection=useCallback((x,y)=>{
+            if(phase!=="play"||paused)return;
+            const cell=grid[y][x];
+
+            if(sel&&sel.x===x&&sel.y===y){
+              setSel(null);
+              return;
             }
-        },[phase,paused,grid,level,hasTouchInteraction]);
+
+            if(!sel){
+              if(cell.e>0 && !cell.locked){
+                setSel({x,y});
+                SoundManager.play('select');
+                const now=Date.now();
+                setGrid(prev=>{
+                  const ng=prev.map(row=>row.map(c=>({...c})));
+                  if(ng[y][x].e>0){
+                    ng[y][x].born=now;
+                    ng[y][x].decay=now+Math.max(DECAY_MIN,DECAY_BASE-level*500);
+                  }
+                  return ng;
+                });
+              }
+              return;
+            }
+
+            if(cell.e===0 || cell.locked){
+              setSel(null);
+              return;
+            }
+
+            const src=grid[sel.y][sel.x];
+            const det=grid[y][x];
+            const r=Math.sqrt((x-sel.x)**2+(y-sel.y)**2);
+
+            if(det.e<=0||det.e<src.e){
+              SoundManager.play('decorrelate', 0.8);
+              const now=Date.now(),freshDecay=now+Math.max(DECAY_MIN,DECAY_BASE-level*500);
+              setGrid(prev=>{
+                const ng=prev.map(row=>row.map(c=>({...c})));
+                if(ng[sel.y][sel.x].e>0){
+                  ng[sel.y][sel.x].born=now;
+                  ng[sel.y][sel.x].decay=freshDecay;
+                  if(ng[sel.y][sel.x].e<MAX_E)ng[sel.y][sel.x].e+=1;
+                  if(ng[sel.y][sel.x].e===MAX_E)ng[sel.y][sel.x].locked=true;
+                }
+                if(ng[y][x].e>0){
+                  ng[y][x].born=now;
+                  ng[y][x].decay=freshDecay;
+                  if(ng[y][x].e<MAX_E)ng[y][x].e+=1;
+                  if(ng[y][x].e===MAX_E)ng[y][x].locked=true;
+                }
+                return ng;
+              });
+              const sp2=cellPos(sel.x,sel.y),dp2=cellPos(x,y);
+              const mx=(sp2.px+dp2.px)/2+(Math.random()-0.5)*30,my=(sp2.py+dp2.py)/2+(Math.random()-0.5)*30;
+              fireBolt(sp2.px,sp2.py,mx,my,"#f87171",400,0.8);
+              firePart(mx,my,10,"rgb(248,113,113)");
+              setScreenFlash("rgba(248,113,113,0.5)");
+              setTimeout(()=>setScreenFlash(null),80);
+              setShake(true);
+              setTimeout(()=>setShake(false),150);
+              setOverlayMsg({text:"ENERGY MISMATCH",time:now});
+              setTimeout(()=>setOverlayMsg(null),1500);
+              setInfo({type:"mis",sE:src.e,dE:det.e,time:now});
+              setSel(null);
+              return;
+            }
+
+            let prob=corrProb(r);
+            prob=Math.min(0.98,prob+getEcho(x,y));
+
+            if(Math.random()<prob){
+              execTrans(sel.x,sel.y,x,y);
+            } else {
+              SoundManager.play('decorrelate', 0.6);
+              const now=Date.now(),freshDecay=now+Math.max(DECAY_MIN,DECAY_BASE-level*500);
+              setGrid(prev=>{
+                const ng=prev.map(row=>row.map(c=>({...c})));
+                if(ng[sel.y][sel.x].e>0){
+                  ng[sel.y][sel.x].born=now;
+                  ng[sel.y][sel.x].decay=freshDecay;
+                  if(ng[sel.y][sel.x].e<MAX_E)ng[sel.y][sel.x].e+=1;
+                  if(ng[sel.y][sel.x].e===MAX_E)ng[sel.y][sel.x].locked=true;
+                }
+                if(ng[y][x].e>0){
+                  ng[y][x].born=now;
+                  ng[y][x].decay=freshDecay;
+                  if(ng[y][x].e<MAX_E)ng[y][x].e+=1;
+                  if(ng[y][x].e===MAX_E)ng[y][x].locked=true;
+                }
+                const sc=1+Math.floor(Math.random()*2);
+                for(let i=0,a=0;i<sc&&a<20;a++){
+                  const sx2=Math.floor(Math.random()*COLS),sy2=Math.floor(Math.random()*ROWS);
+                  if(ng[sy2][sx2].e===0){
+                    ng[sy2][sx2]=mkCell(level,now);
+                    i++;
+                  }
+                }
+                return ng;
+              });
+              const sp2=cellPos(sel.x,sel.y),dp2=cellPos(x,y);
+              const mx=(sp2.px+dp2.px)/2+(Math.random()-0.5)*30,my=(sp2.py+dp2.py)/2+(Math.random()-0.5)*30;
+              fireBolt(sp2.px,sp2.py,mx,my,"#f87171",400,0.8);
+              firePart(mx,my,10,"rgb(248,113,113)");
+              setScreenFlash("rgba(248,113,113,0.5)");
+              setTimeout(()=>setScreenFlash(null),80);
+              setShake(true);
+              setTimeout(()=>setShake(false),150);
+              setOverlayMsg({text:"DECORRELATED",time:now});
+              setTimeout(()=>setOverlayMsg(null),1500);
+              setInfo({type:"decorr",prob,r,time:now});
+              setSel(null);
+            }
+          },[phase,paused,grid,sel,getEcho,execTrans,cellPos,level,fireBolt,firePart]);
+
+          const handleMouseDown=useCallback((x,y)=>{
+            if(phase!=="play"||paused)return;
+            const cell=grid[y][x];
+            if(cell.e<=0 || cell.locked) return;
+
+            // If a source is already selected and this is a different cell,
+            // treat this as the target click, not a new drag source.
+            if(sel && (sel.x !== x || sel.y !== y)){
+              processCellSelection(x,y);
+              return;
+            }
+
+            // Otherwise arm drag from this cell
+            setDragStart({x,y,initialX:x,initialY:y});
+            setDragEnd({x,y});
+
+            if(!hasTouchInteraction){
+              SoundManager.play('select');
+            }
+
+            const now=Date.now();
+            setGrid(prev=>{
+              const ng=prev.map(row=>row.map(c=>({...c})));
+              if(ng[y][x].e>0){
+                ng[y][x].born=now;
+                ng[y][x].decay=now+Math.max(DECAY_MIN,DECAY_BASE-level*500);
+              }
+              return ng;
+            });
+          },[phase,paused,grid,level,hasTouchInteraction,sel,processCellSelection]);
         
         const handleTouchStart=useCallback((event) => {
             if(phase!=="play"||paused)return;
-            
-            // Set flag to prevent mouse events from firing
+
             setHasTouchInteraction(true);
             setTimeout(() => setHasTouchInteraction(false), 100);
-            
-            // Get touch coordinates
+
             const touch = event.touches[0];
             if (!touch) return;
-            
-            // Find which cell was touched
+
             const gridElement = gridRef.current;
             if (!gridElement) return;
-            
+
             const rect = gridElement.getBoundingClientRect();
             const cellWidth = rect.width / COLS;
             const cellHeight = rect.height / ROWS;
-            
+
             const x = Math.floor((touch.clientX - rect.left) / cellWidth);
             const y = Math.floor((touch.clientY - rect.top) / cellHeight);
-            
-            if (x >= 0 && x < COLS && y >= 0 && y < ROWS) {
-                const cell = grid[y][x];
-                if(cell.e>0){
-                    // Store initial position for drag detection
-                    setDragStart({x,y,initialX:x,initialY:y});
-                    setDragEnd({x,y});
-                    // Don't set isDragging yet - wait for actual movement
-                    SoundManager.play('select');
-                    const now=Date.now();setGrid(prev=>{const ng=prev.map(row=>row.map(c=>({...c})));
-                        if(ng[y][x].e>0){ng[y][x].born=now;ng[y][x].decay=now+Math.max(DECAY_MIN,DECAY_BASE-level*500)}return ng});
-                }
+
+            if (x < 0 || x >= COLS || y < 0 || y >= ROWS) return;
+
+            const cell = grid[y][x];
+            if(cell.e<=0 || cell.locked) return;
+
+            // If a source is already selected and this is a different cell,
+            // treat this as the target tap, not a new drag source.
+            if(sel && (sel.x !== x || sel.y !== y)){
+                processCellSelection(x,y);
+                return;
             }
-        },[phase,paused,grid,level]);
+
+            setDragStart({x,y,initialX:x,initialY:y});
+            setDragEnd({x,y});
+            SoundManager.play('select');
+
+            const now=Date.now();
+            setGrid(prev=>{
+                const ng=prev.map(row=>row.map(c=>({...c})));
+                if(ng[y][x].e>0){
+                    ng[y][x].born=now;
+                    ng[y][x].decay=now+Math.max(DECAY_MIN,DECAY_BASE-level*500);
+                }
+                return ng;
+            });
+        },[phase,paused,grid,level,sel,processCellSelection]);
         
         const handleMouseEnter=useCallback((x,y)=>{
             if(dragStart && !isDragging){
@@ -796,7 +937,9 @@
             const y = Math.floor((touch.clientY - rect.top) / cellHeight);
             
             if (x >= 0 && x < COLS && y >= 0 && y < ROWS) {
-                if(isDragging){
+                if(!isDragging){
+                    processCellSelection(x,y);
+                } else {
                     // This was a drag - attempt correlation
                     const src=grid[dragStart.y][dragStart.x],det=grid[y][x];
                     if(dragStart.x===x && dragStart.y===y){
@@ -850,107 +993,104 @@
             setDragStart(null);
             setDragEnd(null);
             setDragHover(null);
-        },[isDragging,dragStart,grid,getEcho,execTrans,cellPos,level,fireBolt,firePart]);
+        },[isDragging,dragStart,grid,getEcho,execTrans,cellPos,level,fireBolt,firePart,processCellSelection]);
 
         const handleMouseUp=useCallback((x,y)=>{
-            if(dragStart){
-                if(isDragging){
-                    // This was a drag - attempt correlation
-                    const src=grid[dragStart.y][dragStart.x],det=grid[y][x];
-                    if(dragStart.x===x && dragStart.y===y){
-                        // Same cell - just select
-                        setSel({x,y});
-                    } else if(det.e===0 || det.locked){
-                        // Empty cell or locked cell - deselect
-                        setSel(null);
+            if(!dragStart) return;
+
+            if(isDragging){
+                const src=grid[dragStart.y][dragStart.x],det=grid[y][x];
+                if(dragStart.x===x && dragStart.y===y){
+                    setSel({x,y});
+                } else if(det.e===0 || det.locked){
+                    setSel(null);
+                } else {
+                    const r=Math.sqrt((x-dragStart.x)**2+(y-dragStart.y)**2);
+                    if(det.e<=0||det.e<src.e){
+                        SoundManager.play('decorrelate', 0.8);
+                        const now=Date.now(),freshDecay=now+Math.max(DECAY_MIN,DECAY_BASE-level*500);
+                        setGrid(prev=>{
+                            const ng=prev.map(row=>row.map(c=>({...c})));
+                            if(ng[dragStart.y][dragStart.x].e>0){
+                                ng[dragStart.y][dragStart.x].born=now;
+                                ng[dragStart.y][dragStart.x].decay=freshDecay;
+                                if(ng[dragStart.y][dragStart.x].e<MAX_E)ng[dragStart.y][dragStart.x].e+=1;
+                                if(ng[dragStart.y][dragStart.x].e===MAX_E)ng[dragStart.y][dragStart.x].locked=true;
+                            }
+                            if(ng[y][x].e>0){
+                                ng[y][x].born=now;
+                                ng[y][x].decay=freshDecay;
+                                if(ng[y][x].e<MAX_E)ng[y][x].e+=1;
+                                if(ng[y][x].e===MAX_E)ng[y][x].locked=true;
+                            }
+                            return ng;
+                        });
+                        const sp2=cellPos(dragStart.x,dragStart.y),dp2=cellPos(x,y);
+                        const mx=(sp2.px+dp2.px)/2+(Math.random()-0.5)*30,my=(sp2.py+dp2.py)/2+(Math.random()-0.5)*30;
+                        fireBolt(sp2.px,sp2.py,mx,my,"#f87171",400,0.8);
+                        firePart(mx,my,10,"rgb(248,113,113)");
+                        setScreenFlash("rgba(248,113,113,0.5)");
+                        setTimeout(()=>setScreenFlash(null),80);
+                        setShake(true);
+                        setTimeout(()=>setShake(false),150);
+                        setOverlayMsg({text:"ENERGY MISMATCH",time:now});
+                        setTimeout(()=>setOverlayMsg(null),1500);
+                        setInfo({type:"mis",sE:src.e,dE:det.e,time:now});
                     } else {
-                        // Attempt correlation
-                        const r=Math.sqrt((x-dragStart.x)**2+(y-dragStart.y)**2);
-                        if(det.e<=0||det.e<src.e){
-                            SoundManager.play('decorrelate', 0.8);
+                        let prob=corrProb(r);
+                        prob=Math.min(0.98,prob+getEcho(x,y));
+                        if(Math.random()<prob){
+                            execTrans(dragStart.x,dragStart.y,x,y);
+                        } else {
+                            SoundManager.play('decorrelate', 0.6);
                             const now=Date.now(),freshDecay=now+Math.max(DECAY_MIN,DECAY_BASE-level*500);
-                            setGrid(prev=>{const ng=prev.map(row=>row.map(c=>({...c})));
-                                if(ng[dragStart.y][dragStart.x].e>0){ng[dragStart.y][dragStart.x].born=now;ng[dragStart.y][dragStart.x].decay=freshDecay;if(ng[dragStart.y][dragStart.x].e<MAX_E)ng[dragStart.y][dragStart.x].e+=1; if(ng[dragStart.y][dragStart.x].e===MAX_E)ng[dragStart.y][dragStart.x].locked=true}
-                                if(ng[y][x].e>0){ng[y][x].born=now;ng[y][x].decay=freshDecay;if(ng[y][x].e<MAX_E)ng[y][x].e+=1; if(ng[y][x].e===MAX_E)ng[y][x].locked=true}
-                                return ng});
+                            setGrid(prev=>{
+                                const ng=prev.map(row=>row.map(c=>({...c})));
+                                if(ng[dragStart.y][dragStart.x].e>0){
+                                    ng[dragStart.y][dragStart.x].born=now;
+                                    ng[dragStart.y][dragStart.x].decay=freshDecay;
+                                    if(ng[dragStart.y][dragStart.x].e<MAX_E)ng[dragStart.y][dragStart.x].e+=1;
+                                    if(ng[dragStart.y][dragStart.x].e===MAX_E)ng[dragStart.y][dragStart.x].locked=true;
+                                }
+                                if(ng[y][x].e>0){
+                                    ng[y][x].born=now;
+                                    ng[y][x].decay=freshDecay;
+                                    if(ng[y][x].e<MAX_E)ng[y][x].e+=1;
+                                    if(ng[y][x].e===MAX_E)ng[y][x].locked=true;
+                                }
+                                const sc=1+Math.floor(Math.random()*2);
+                                for(let i=0,a=0;i<sc&&a<20;a++){
+                                    const sx2=Math.floor(Math.random()*COLS),sy2=Math.floor(Math.random()*ROWS);
+                                    if(ng[sy2][sx2].e===0){
+                                        ng[sy2][sx2]=mkCell(level,now);
+                                        i++;
+                                    }
+                                }
+                                return ng;
+                            });
                             const sp2=cellPos(dragStart.x,dragStart.y),dp2=cellPos(x,y);
                             const mx=(sp2.px+dp2.px)/2+(Math.random()-0.5)*30,my=(sp2.py+dp2.py)/2+(Math.random()-0.5)*30;
-                            fireBolt(sp2.px,sp2.py,mx,my,"#f87171",400,0.8);firePart(mx,my,10,"rgb(248,113,113)");
-                            setScreenFlash("rgba(248,113,113,0.5)");setTimeout(()=>setScreenFlash(null),80);
-                            setShake(true);setTimeout(()=>setShake(false),150);
-                            setOverlayMsg({text:"ENERGY MISMATCH",time:now});setTimeout(()=>setOverlayMsg(null),1500);
-                            setInfo({type:"mis",sE:src.e,dE:det.e,time:now});
-                        } else {
-                            let prob=corrProb(r);prob=Math.min(0.98,prob+getEcho(x,y));
-                            if(Math.random()<prob){execTrans(dragStart.x,dragStart.y,x,y)}
-                            else{SoundManager.play('decorrelate', 0.6);
-                                const now=Date.now(),freshDecay=now+Math.max(DECAY_MIN,DECAY_BASE-level*500);
-                                setGrid(prev=>{const ng=prev.map(row=>row.map(c=>({...c})));
-                                    if(ng[dragStart.y][dragStart.x].e>0){ng[dragStart.y][dragStart.x].born=now;ng[dragStart.y][dragStart.x].decay=freshDecay;if(ng[dragStart.y][dragStart.x].e<MAX_E)ng[dragStart.y][dragStart.x].e+=1; if(ng[dragStart.y][dragStart.x].e===MAX_E)ng[dragStart.y][dragStart.x].locked=true}
-                                    if(ng[y][x].e>0){ng[y][x].born=now;ng[y][x].decay=freshDecay;if(ng[y][x].e<MAX_E)ng[y][x].e+=1; if(ng[y][x].e===MAX_E)ng[y][x].locked=true}
-                                    const sc=1+Math.floor(Math.random()*2);for(let i=0,a=0;i<sc&&a<20;a++){const sx2=Math.floor(Math.random()*COLS),sy2=Math.floor(Math.random()*ROWS);
-                                        if(ng[sy2][sx2].e===0){ng[sy2][sx2]=mkCell(level,now);i++}}
-                                    return ng});
-                                const sp2=cellPos(dragStart.x,dragStart.y),dp2=cellPos(x,y);
-                                const mx=(sp2.px+dp2.px)/2+(Math.random()-0.5)*30,my=(sp2.py+dp2.py)/2+(Math.random()-0.5)*30;
-                                fireBolt(sp2.px,sp2.py,mx,my,"#f87171",400,0.8);firePart(mx,my,10,"rgb(248,113,113)");
-                                setScreenFlash("rgba(248,113,113,0.5)");setTimeout(()=>setScreenFlash(null),80);
-                                setShake(true);setTimeout(()=>setShake(false),150);
-                                setOverlayMsg({text:"DECORRELATED",time:now});setTimeout(()=>setOverlayMsg(null),1500);
-                                setInfo({type:"decorr",prob,r,time:now});
-                            }
+                            fireBolt(sp2.px,sp2.py,mx,my,"#f87171",400,0.8);
+                            firePart(mx,my,10,"rgb(248,113,113)");
+                            setScreenFlash("rgba(248,113,113,0.5)");
+                            setTimeout(()=>setScreenFlash(null),80);
+                            setShake(true);
+                            setTimeout(()=>setShake(false),150);
+                            setOverlayMsg({text:"DECORRELATED",time:now});
+                            setTimeout(()=>setOverlayMsg(null),1500);
+                            setInfo({type:"decorr",prob,r,time:now});
                         }
                     }
                 }
-                // Always clear drag state
-                setIsDragging(false);
-                setDragStart(null);
-                setDragEnd(null);
-                setDragHover(null);
+            } else {
+                processCellSelection(x,y);
             }
-        },[isDragging,dragStart,grid,getEcho,execTrans,cellPos,level,fireBolt,firePart]);
 
-          const handleClick=useCallback((x,y)=>{
-            if(phase!=="play"||paused)return;const cell=grid[y][x];
-            if(sel&&sel.x===x&&sel.y===y){setSel(null);return}
-            if(!sel){if(cell.e>0){setSel({x,y});
-              const now=Date.now();setGrid(prev=>{const ng=prev.map(row=>row.map(c=>({...c})));
-                if(ng[y][x].e>0){ng[y][x].born=now;ng[y][x].decay=now+Math.max(DECAY_MIN,DECAY_BASE-level*500)}return ng})}return}
-            // If clicking empty cell, just deselect without penalty
-            if(cell.e===0){setSel(null);return}
-            const src=grid[sel.y][sel.x],det=grid[y][x],r=Math.sqrt((x-sel.x)**2+(y-sel.y)**2);
-            if(det.e<=0||det.e<src.e){
-              SoundManager.play('decorrelate', 0.8);
-              const now=Date.now(),freshDecay=now+Math.max(DECAY_MIN,DECAY_BASE-level*500);
-              setGrid(prev=>{const ng=prev.map(row=>row.map(c=>({...c})));
-                if(ng[sel.y][sel.x].e>0){ng[sel.y][sel.x].born=now;ng[sel.y][sel.x].decay=freshDecay;if(ng[sel.y][sel.x].e<MAX_E)ng[sel.y][sel.x].e+=1; if(ng[sel.y][sel.x].e===MAX_E)ng[sel.y][sel.x].locked=true}
-                if(ng[y][x].e>0){ng[y][x].born=now;ng[y][x].decay=freshDecay;if(ng[y][x].e<MAX_E)ng[y][x].e+=1; if(ng[y][x].e===MAX_E)ng[y][x].locked=true}
-                return ng});
-              const sp2=cellPos(sel.x,sel.y),dp2=cellPos(x,y);
-              const mx=(sp2.px+dp2.px)/2+(Math.random()-0.5)*30,my=(sp2.py+dp2.py)/2+(Math.random()-0.5)*30;
-              fireBolt(sp2.px,sp2.py,mx,my,"#f87171",400,0.8);firePart(mx,my,10,"rgb(248,113,113)");
-              setScreenFlash("rgba(248,113,113,0.5)");setTimeout(()=>setScreenFlash(null),80);
-              setShake(true);setTimeout(()=>setShake(false),150);
-              setOverlayMsg({text:"ENERGY MISMATCH",time:now});setTimeout(()=>setOverlayMsg(null),1500);
-              setInfo({type:"mis",sE:src.e,dE:det.e,time:now});setSel(null);return}
-            let prob=corrProb(r);prob=Math.min(0.98,prob+getEcho(x,y));
-            if(Math.random()<prob){execTrans(sel.x,sel.y,x,y)}
-            else{SoundManager.play('decorrelate', 0.6);
-              const now=Date.now(),freshDecay=now+Math.max(DECAY_MIN,DECAY_BASE-level*500);
-              setGrid(prev=>{const ng=prev.map(row=>row.map(c=>({...c})));
-                if(ng[sel.y][sel.x].e>0){ng[sel.y][sel.x].born=now;ng[sel.y][sel.x].decay=freshDecay;if(ng[sel.y][sel.x].e<MAX_E)ng[sel.y][sel.x].e+=1; if(ng[sel.y][sel.x].e===MAX_E)ng[sel.y][sel.x].locked=true}
-                if(ng[y][x].e>0){ng[y][x].born=now;ng[y][x].decay=freshDecay;if(ng[y][x].e<MAX_E)ng[y][x].e+=1; if(ng[y][x].e===MAX_E)ng[y][x].locked=true}
-                const sc=1+Math.floor(Math.random()*2);for(let i=0,a=0;i<sc&&a<20;a++){const sx2=Math.floor(Math.random()*COLS),sy2=Math.floor(Math.random()*ROWS);
-                  if(ng[sy2][sx2].e===0){ng[sy2][sx2]=mkCell(level,now);i++}}
-                return ng});
-              const sp2=cellPos(sel.x,sel.y),dp2=cellPos(x,y);
-              const mx=(sp2.px+dp2.px)/2+(Math.random()-0.5)*30,my=(sp2.py+dp2.py)/2+(Math.random()-0.5)*30;
-              fireBolt(sp2.px,sp2.py,mx,my,"#f87171",400,0.8);firePart(mx,my,10,"rgb(248,113,113)");
-              setScreenFlash("rgba(248,113,113,0.5)");setTimeout(()=>setScreenFlash(null),80);
-              setShake(true);setTimeout(()=>setShake(false),150);
-              setOverlayMsg({text:"DECORRELATED",time:now});setTimeout(()=>setOverlayMsg(null),1500);
-              setInfo({type:"decorr",prob,r,time:now});setSel(null)}
-          },[phase,paused,grid,sel,getEcho,execTrans,cellPos,level,fireBolt,firePart]);
+            setIsDragging(false);
+            setDragStart(null);
+            setDragEnd(null);
+            setDragHover(null);
+        },[dragStart,isDragging,grid,getEcho,execTrans,cellPos,level,fireBolt,firePart,processCellSelection]);
 
           useEffect(()=>{const h=e=>{if(e.key==="p"||e.key==="P")setPaused(p=>!p);if(e.key==="Escape")setSel(null)};
             window.addEventListener("keydown",h);return()=>window.removeEventListener("keydown",h)},[]);
@@ -1464,7 +1604,7 @@
                     const isNew=cell.e>0&&(nowMs-cell.born)<350;
                     return <Cell key={`${x}-${y}`} e={cell.e} mass={cell.mass} isSel={!!isSel}
                       isDet={!!det} detProb={det?det.prob:0} echoB={echoMap[y*COLS+x]} dp={dp} isNew={isNew}
-                      locked={cell.locked||false} onClick={()=>handleClick(x,y)} 
+                      locked={cell.locked||false}
                       onMouseDown={()=>handleMouseDown(x,y)} onMouseEnter={()=>handleMouseEnter(x,y)} onMouseUp={()=>handleMouseUp(x,y)} 
                       onMouseLeave={handleMouseLeave} onTouchStart={handleTouchStart} 
                       onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd} 
