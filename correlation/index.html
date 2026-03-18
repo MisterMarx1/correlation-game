@@ -1754,14 +1754,13 @@ const lastTouchTimeRef = useRef(0);
     return;
   }
 
+  // If releasing outside grid or invalid spot, and we have a selection, cancel it
   if (sel) {
-    setInteractionMode("armed");
-  } else {
-    setInteractionMode("idle");
+    cancelSelection();
   }
 }, [
   pointerDown, isDragging, interactionMode, dragStart, sel,
-  resolveDragRelease, clearDragState, processCellSelection, lastSelectionTime
+  resolveDragRelease, clearDragState, processCellSelection, cancelSelection, lastSelectionTime
 ]);
 
         const handleMouseUp = useCallback((x, y) => {
