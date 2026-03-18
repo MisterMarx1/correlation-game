@@ -142,6 +142,9 @@
             backgroundMusic: null,
             activeSounds: new Set(),
             weldingSound: null,
+            weldingPlayers: [],
+            weldingCrossfadeTimer: null,
+            weldingCrossfadeMs: 1000,
             
             async init() {
                 // Initialize Web Audio API
@@ -182,18 +185,25 @@
                 
                             },
             
-            play(soundName, volume = 1.0) {
+            play(soundName, volume = 1.0, options = {}) {
                 if (!this.enabled || !this.sounds[soundName]) return null;
+                
+                const { loop = false } = options;
                 
                 try {
                     const sound = this.sounds[soundName].cloneNode();
                     sound.volume = this.volume * volume;
+                    sound.loop = loop;
                     sound.currentTime = 0;
                     sound.play().catch(e => console.log('Sound play failed:', e));
                     
                     // Track the sound for stopping later
                     this.activeSounds.add(sound);
-                    sound.addEventListener('ended', () => this.activeSounds.delete(sound));
+                    sound.addEventListener('ended', () => {
+                        if (!sound.loop) {
+                            this.activeSounds.delete(sound);
+                        }
+                    });
                     
                     return sound;
                 } catch (error) {
@@ -216,6 +226,81 @@
                     sound.currentTime = 0;
                 });
                 this.activeSounds.clear();
+            },
+            
+            startWeldingLoop(volume = 0.25) {
+                if (!this.enabled || !this.sounds.welding) return;
+
+                this.stopWeldingLoop();
+
+                const a = this.sounds.welding.cloneNode();
+                const b = this.sounds.welding.cloneNode();
+
+                a.volume = this.volume * volume;
+                b.volume = this.volume * volume;
+
+                a.currentTime = 0;
+                b.currentTime = 0;
+
+                this.weldingPlayers = [a, b];
+
+                const startPlayer = (player) => {
+                    player.currentTime = 0;
+                    player.play().catch(e => console.log('Welding play failed:', e));
+                    this.activeSounds.add(player);
+                };
+
+                const scheduleNext = (currentIndex) => {
+                    const current = this.weldingPlayers[currentIndex];
+                    const nextIndex = currentIndex === 0 ? 1 : 0;
+                    const next = this.weldingPlayers[nextIndex];
+
+                    const loopOnceReady = () => {
+                        if (!current.duration || !isFinite(current.duration)) {
+                            this.weldingCrossfadeTimer = setTimeout(() => loopOnceReady(), 50);
+                            return;
+                        }
+
+                        const overlapSeconds = this.weldingCrossfadeMs / 1000;
+                        const delayMs = Math.max(0, (current.duration - overlapSeconds) * 1000);
+
+                        this.weldingCrossfadeTimer = setTimeout(() => {
+                            if (!this.weldingPlayers.length) return;
+
+                            next.volume = this.volume * volume;
+                            next.currentTime = 0;
+                            next.play().catch(e => console.log('Welding overlap play failed:', e));
+                            this.activeSounds.add(next);
+
+                            scheduleNext(nextIndex);
+                        }, delayMs);
+                    };
+
+                    loopOnceReady();
+                };
+
+                startPlayer(a);
+                scheduleNext(0);
+            },
+
+            stopWeldingLoop() {
+                if (this.weldingCrossfadeTimer) {
+                    clearTimeout(this.weldingCrossfadeTimer);
+                    this.weldingCrossfadeTimer = null;
+                }
+
+                this.weldingPlayers.forEach(player => {
+                    try {
+                        player.pause();
+                        player.currentTime = 0;
+                        this.activeSounds.delete(player);
+                    } catch (error) {
+                        console.log('Welding stop failed:', error);
+                    }
+                });
+
+                this.weldingPlayers = [];
+                this.weldingSound = null;
             },
             
             setVolume(vol) {
@@ -1250,7 +1335,7 @@ const lastTouchTimeRef = useRef(0);
             });
 
             SoundManager.play("select");
-            SoundManager.weldingSound = SoundManager.play("welding", 0.25);
+            SoundManager.startWeldingLoop(0.25);
           }, [grid, phase, paused, showQuitConfirmation, showCredits, level]);
 
           const clearDragState = useCallback(() => {
@@ -1262,8 +1347,7 @@ const lastTouchTimeRef = useRef(0);
           }, []);
 
           const cancelSelection = useCallback(() => {
-            SoundManager.stopSound(SoundManager.weldingSound);
-            SoundManager.weldingSound = null;
+            SoundManager.stopWeldingLoop();
             SoundManager.play('deselect', 0.3);
             setSel(null);
             setInteractionMode("idle");
@@ -1798,7 +1882,7 @@ const lastTouchTimeRef = useRef(0);
   processCellSelection(x, y);
 }, [pointerDown, isDragging, interactionMode, resolveDragRelease, clearDragState, processCellSelection, dragStart, lastSelectionTime]);
 
-          useEffect(()=>{const h=e=>{if(e.key==="p"||e.key==="P")setPaused(p=>!p);if(e.key==="Escape"){SoundManager.stopSound(SoundManager.weldingSound);SoundManager.weldingSound=null;SoundManager.play('deselect', 0.3);setSel(null);setInteractionMode("idle");clearDragState();}};
+          useEffect(()=>{const h=e=>{if(e.key==="p"||e.key==="P")setPaused(p=>!p);if(e.key==="Escape"){SoundManager.stopWeldingLoop();SoundManager.play('deselect', 0.3);setSel(null);setInteractionMode("idle");clearDragState();}};
             window.addEventListener("keydown",h);return()=>window.removeEventListener("keydown",h)},[clearDragState]);
 
           
