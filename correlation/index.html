@@ -331,7 +331,13 @@
             },
             
             async playBackgroundMusic() {
-                if (!this.enabled || !this.backgroundMusic) return;
+                if (!this.enabled || !this.backgroundMusic) {
+                    // Ensure background music is paused if sound is disabled
+                    if (this.backgroundMusic && !this.enabled) {
+                        this.backgroundMusic.pause();
+                    }
+                    return;
+                }
                 
                 try {
                     // Handle autoplay policies
@@ -1059,7 +1065,10 @@
           const handleToggleSound = useCallback(() => {
             const enabled = SoundManager.toggle();
             setSoundEnabled(enabled);
-            SoundManager.play("menu", 0.5);
+            // Only play menu sound if sound is enabled
+            if (enabled) {
+              SoundManager.play("menu", 0.5);
+            }
           }, []);
 
           const gridRef=useRef(null);const canvasRef=useRef(null);const bgCanvasRef=useRef(null);
