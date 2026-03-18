@@ -1450,7 +1450,11 @@ const lastTouchTimeRef = useRef(0);
   const x = Math.floor((touch.clientX - rect.left) / cellWidth);
   const y = Math.floor((touch.clientY - rect.top) / cellHeight);
 
-  if (x < 0 || x >= COLS || y < 0 || y >= ROWS) return;
+  if (x < 0 || x >= COLS || y < 0 || y >= ROWS) {
+    setDragHover(null);
+    setDragEnd(null);
+    return;
+  }
 
   const cell = grid[y][x];
 
@@ -1555,13 +1559,13 @@ const lastTouchTimeRef = useRef(0);
             const sx = sel.x;
             const sy = sel.y;
 
-            // release on nothing / outside grid -> cancel drag, keep selection armed
+            // release on nothing / outside grid -> fully cancel selection
             if (targetX == null || targetY == null) {
-              clearDragState();
-              setInteractionMode("armed");
+              cancelSelection();
               return;
             }
 
+            // release back onto the source cell -> keep it armed
             if (targetX === sx && targetY === sy) {
               clearDragState();
               setInteractionMode("armed");
@@ -1571,9 +1575,9 @@ const lastTouchTimeRef = useRef(0);
             const det = grid[targetY][targetX];
             const src = grid[sy][sx];
 
+            // release onto empty/locked cell -> fully cancel selection
             if (!det || det.e === 0 || det.locked) {
-              clearDragState();
-              setInteractionMode("armed");
+              cancelSelection();
               return;
             }
 
