@@ -405,6 +405,17 @@
           }
         ];
 
+        const CONTROL_ITEMS = [
+          {
+            title: "CLICK & DRAG",
+            body: "Click and hold on a node, then drag to a target node. Release to attempt correlation."
+          },
+          {
+            title: "CLICK ONLY", 
+            body: "Click and release a source node, then click and release a target node. The two clicked nodes attempt to correlate."
+          }
+        ];
+
         function RuleCard({ item, font }) {
           return (
             <div
@@ -992,6 +1003,7 @@
           const[isTransitioning,setIsTransitioning]=useState(false);
   const[showPauseRules,setShowPauseRules]=useState(false);
   const[showMenuRules,setShowMenuRules]=useState(false);
+  const[showMenuControls,setShowMenuControls]=useState(false);
   const[showQuitConfirmation,setShowQuitConfirmation]=useState(false);
           const[showCredits,setShowCredits]=useState(false);
           const[creditsPaused,setCreditsPaused]=useState(false);
@@ -2365,23 +2377,42 @@ const lastTouchTimeRef = useRef(0);
                       START
                     </PrimaryButton>
 
-                    <TextActionButton
-                      onClick={() => {
-                        window.dispatchEvent(new Event('showMenuRules'));
-                      }}
-                      fontFamily={font}
-                      padding="12px 40px"
-                      fontSize={12}
-                      borderRadius={8}
-                      width="100%"
-                      style={{
-                        textShadow: "0 0 6px rgba(255,255,255,0.7), 0 0 12px rgba(255,255,255,0.4)",
-                        color: "#94a3b8",
-                        animation: "glowPulse 2s ease-in-out infinite"
-                      }}
-                    >
-                      VIEW RULES
-                    </TextActionButton>
+                    <div style={{display: "flex", gap: 8, width: "100%"}}>
+                      <TextActionButton
+                        onClick={() => {
+                          window.dispatchEvent(new Event('showMenuRules'));
+                        }}
+                        fontFamily={font}
+                        padding="12px 20px"
+                        fontSize={12}
+                        borderRadius={8}
+                        width="50%"
+                        style={{
+                          textShadow: "0 0 6px rgba(255,255,255,0.7), 0 0 12px rgba(255,255,255,0.4)",
+                          color: "#94a3b8",
+                          animation: "glowPulse 2s ease-in-out infinite"
+                        }}
+                      >
+                        VIEW RULES
+                      </TextActionButton>
+                      <TextActionButton
+                        onClick={() => {
+                          window.dispatchEvent(new Event('showMenuControls'));
+                        }}
+                        fontFamily={font}
+                        padding="12px 20px"
+                        fontSize={12}
+                        borderRadius={8}
+                        width="50%"
+                        style={{
+                          textShadow: "0 0 6px rgba(255,255,255,0.7), 0 0 12px rgba(255,255,255,0.4)",
+                          color: "#94a3b8",
+                          animation: "glowPulse 2s ease-in-out infinite"
+                        }}
+                      >
+                        VIEW CONTROLS
+                      </TextActionButton>
+                    </div>
                   </div>
                 </div>
 
@@ -2757,27 +2788,27 @@ const lastTouchTimeRef = useRef(0);
                   >
                     QUIT TO MENU
                   </DangerButton>
-                  <TextActionButton
-                    onClick={() => setShowOverRules(p => !p)}
-                    fontFamily={font}
-                  >
-                    {showOverRules ? "HIDE RULES" : "VIEW RULES"}
-                  </TextActionButton>
+                  <div style={{display: "flex", gap: 8, width: "100%"}}>
+                    <TextActionButton
+                      onClick={() => setShowOverRules(p => !p)}
+                      fontFamily={font}
+                      width="50%"
+                    >
+                      {showOverRules ? "HIDE RULES" : "VIEW RULES"}
+                    </TextActionButton>
+                    <TextActionButton
+                      onClick={() => window.dispatchEvent(new Event('showMenuControls'))}
+                      fontFamily={font}
+                      width="50%"
+                    >
+                      VIEW CONTROLS
+                    </TextActionButton>
+                  </div>
                 </div></div>}
 
               {paused&&<div style={{position:"fixed",top:"var(--app-top, 0px)",left:0,right:0,height:"var(--app-height, 100dvh)",backgroundColor:"rgba(3,7,18,0.92)",
                 display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:20,zIndex:100}}>
                 <span style={{fontSize:32,fontWeight:900,letterSpacing:"0.3em",color:"#f8fafc",fontFamily:tFont}}>PAUSED</span>
-                
-                {showPauseRules && (
-                  <RulesPanel
-                    items={RULE_ITEMS}
-                    font={font}
-                    maxWidth={480}
-                    alignItems="center"
-                    width="100%"
-                  />
-                )}
                 
                 <PrimaryButton
                   onClick={() => setPaused(false)}
@@ -2786,12 +2817,24 @@ const lastTouchTimeRef = useRef(0);
                 >
                   RESUME
                 </PrimaryButton>
-                <TextActionButton
-                    onClick={() => setShowPauseRules(p => !p)}
-                    fontFamily={font}
-                  >
-                    {showPauseRules ? "HIDE RULES" : "VIEW RULES"}
-                  </TextActionButton></div>}
+                <div style={{display: "flex", gap: 4, width: "100%", justifyContent: "center"}}>
+                  <TextActionButton
+                      onClick={() => window.dispatchEvent(new Event('showMenuRules'))}
+                      fontFamily={font}
+                      width="auto"
+                      padding="12px 24px"
+                    >
+                      VIEW RULES
+                    </TextActionButton>
+                    <TextActionButton
+                      onClick={() => window.dispatchEvent(new Event('showMenuControls'))}
+                      fontFamily={font}
+                      width="auto"
+                      padding="12px 24px"
+                    >
+                      VIEW CONTROLS
+                    </TextActionButton>
+                </div></div>}
             </div>);
           }
 
@@ -2810,6 +2853,7 @@ const lastTouchTimeRef = useRef(0);
         function AppWrapper() {
           const [showCredits, setShowCredits] = React.useState(false);
           const [showMenuRules, setShowMenuRules] = React.useState(false);
+          const [showMenuControls, setShowMenuControls] = React.useState(false);
           const tFont = "'Orbitron',sans-serif";
           const font = "'IBM Plex Mono',monospace";
           
@@ -2825,17 +2869,23 @@ const lastTouchTimeRef = useRef(0);
             };
             const handleShowMenuRules = () => setShowMenuRules(true);
             const handleHideMenuRules = () => setShowMenuRules(false);
+            const handleShowMenuControls = () => setShowMenuControls(true);
+            const handleHideMenuControls = () => setShowMenuControls(false);
             
             window.addEventListener('showCredits', handleShowCredits);
             window.addEventListener('hideCredits', handleHideCredits);
             window.addEventListener('showMenuRules', handleShowMenuRules);
             window.addEventListener('hideMenuRules', handleHideMenuRules);
+            window.addEventListener('showMenuControls', handleShowMenuControls);
+            window.addEventListener('hideMenuControls', handleHideMenuControls);
             
             return () => {
               window.removeEventListener('showCredits', handleShowCredits);
               window.removeEventListener('hideCredits', handleHideCredits);
               window.removeEventListener('showMenuRules', handleShowMenuRules);
               window.removeEventListener('hideMenuRules', handleHideMenuRules);
+              window.removeEventListener('showMenuControls', handleShowMenuControls);
+              window.removeEventListener('hideMenuControls', handleHideMenuControls);
             };
           }, []);
           
@@ -2892,6 +2942,45 @@ const lastTouchTimeRef = useRef(0);
                       onClick={() => {
                         setShowMenuRules(false);
                         window.dispatchEvent(new Event('hideMenuRules'));
+                      }}
+                      style={{
+                        padding:"12px 32px",
+                        backgroundColor:"transparent",
+                        color:"#94a3b8",
+                        border:"1px solid rgba(148,163,184,0.2)",
+                        borderRadius:6,
+                        fontSize:13,
+                        fontWeight:700,
+                        letterSpacing:"0.12em",
+                        cursor:"pointer",
+                        fontFamily:"inherit",
+                        transition:"all 0.2s"
+                      }}
+                    >
+                      CLOSE
+                    </button>
+                </div>
+              </div>}
+
+              {/* Menu Controls popup at root level */}
+              {showMenuControls && <div style={{position:"fixed",top:"var(--app-top, 0px)",left:0,right:0,height:"var(--app-height, 100dvh)",backgroundColor:"rgba(3,7,18,0.98)",
+                display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:20,zIndex:1000}}>
+                <span style={{fontSize:32,fontWeight:900,letterSpacing:"0.3em",color:"#f8fafc",fontFamily:tFont}}>CONTROLS</span>
+                
+                <div style={{maxWidth:480,width:"100%",padding:"0 20px"}}>
+                  <RulesPanel
+                    items={CONTROL_ITEMS}
+                    font={font}
+                    maxWidth={480}
+                    alignItems="center"
+                  />
+                </div>
+                
+                <div style={{display:"flex",flexDirection:"column",gap:12,alignItems:"center"}}>
+                  <button
+                      onClick={() => {
+                        setShowMenuControls(false);
+                        window.dispatchEvent(new Event('hideMenuControls'));
                       }}
                       style={{
                         padding:"12px 32px",
