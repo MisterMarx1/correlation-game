@@ -99,6 +99,8 @@
             musicVolume: 0.3,
             enabled: true,
             backgroundMusic: null,
+            activeSounds: new Set(),
+            weldingSound: null,
             
             async init() {
                 // Initialize Web Audio API
@@ -123,7 +125,8 @@
                     menu: 'sfx/menu_navigate.mp3',
                     pause: 'sfx/pause_sound.mp3',
                     countdown: 'sfx/mixkit-electronic-lock-success-beeps-2852.wav',
-                    startSound: 'sfx/mixkit-arcade-mechanical-bling-210.wav'
+                    startSound: 'sfx/mixkit-arcade-mechanical-bling-210.wav',
+                    welding: 'sfx/mixkit-electric-welding-and-sparkles-2603.wav'
                 };
                 
                                 
@@ -138,16 +141,39 @@
                             },
             
             play(soundName, volume = 1.0) {
-                if (!this.enabled || !this.sounds[soundName]) return;
+                if (!this.enabled || !this.sounds[soundName]) return null;
                 
                 try {
                     const sound = this.sounds[soundName].cloneNode();
                     sound.volume = this.volume * volume;
                     sound.currentTime = 0;
                     sound.play().catch(e => console.log('Sound play failed:', e));
+                    
+                    // Track the sound for stopping later
+                    this.activeSounds.add(sound);
+                    sound.addEventListener('ended', () => this.activeSounds.delete(sound));
+                    
+                    return sound;
                 } catch (error) {
                     console.log('Sound system error:', error);
+                    return null;
                 }
+            },
+            
+            stopSound(sound) {
+                if (sound) {
+                    sound.pause();
+                    sound.currentTime = 0;
+                    this.activeSounds.delete(sound);
+                }
+            },
+            
+            stopAllSounds() {
+                this.activeSounds.forEach(sound => {
+                    sound.pause();
+                    sound.currentTime = 0;
+                });
+                this.activeSounds.clear();
             },
             
             setVolume(vol) {
@@ -365,8 +391,7 @@
           const[comboT,setComboT]=useState(0);
           const[info,setInfo]=useState(null);
   const[overlayMsg,setOverlayMsg]=useState(null);
-          const[overlayMsgColor,setOverlayMsgColor]=useState("#6ee7b7");
-  const[bgParticles,setBgParticles]=useState([]);
+  const[overlayMsgColor,setOverlayMsgColor]=useState("#6ee7b7");
   const[showTutorial,setShowTutorial]=useState(false);
   const[showMenu,setShowMenu]=useState(false);
           const[isLoading,setIsLoading]=useState(true);
@@ -385,8 +410,9 @@
           const[lastTickTime,setLastTickTime]=useState(Date.now());
           const[pauseTime,setPauseTime]=useState(null);
 
-          const gridRef=useRef(null);const canvasRef=useRef(null);
+          const gridRef=useRef(null);const canvasRef=useRef(null);const bgCanvasRef=useRef(null);
 const particlesRef=useRef([]);const boltsRef=useRef([]);
+const bgParticlesRef=useRef([]);
 const animRef=useRef(null);const dimsRef=useRef({cw:0,ch:0});
 const lastTouchTimeRef = useRef(0);
 
@@ -398,7 +424,32 @@ const lastTouchTimeRef = useRef(0);
 
           useEffect(()=>{
             const cv=canvasRef.current;if(!cv)return;const ctx=cv.getContext("2d");let on=true;
-            const draw=()=>{if(!on)return;const now=Date.now(),W=cv.width,H=cv.height;ctx.clearRect(0,0,W,H);
+            const bgcv=bgCanvasRef.current;if(!bgcv)return;const bgctx=bgcv.getContext("2d");
+            const draw=()=>{if(!on)return;const now=Date.now(),W=cv.width,H=cv.height,bgW=bgcv.width,bgH=bgcv.height;
+              
+              // Clear and draw background particles on full screen canvas
+              bgctx.clearRect(0,0,bgW,bgH);
+              const bgFiltered = [];
+              for(const p of bgParticlesRef.current){
+                const age = now - p.born;
+                if(age > p.life) continue;
+                bgFiltered.push(p);
+                
+                const t = age / p.life;
+                const px = p.x + p.vx * t;
+                const py = p.y + p.vy * t;
+                const al = (1 - t * t) * p.baseOpacity * (0.4 + 0.2 * Math.sin(now * p.flickerSpeed)); // Reduced max from 1.0 to 0.6
+                const sz = p.size;
+                
+                bgctx.beginPath();
+                bgctx.arc(px, py, sz, 0, 6.283);
+                bgctx.fillStyle = `rgba(255,255,255,${al})`;
+                bgctx.fill();
+              }
+              bgParticlesRef.current = bgFiltered;
+              
+              // Clear and draw game elements on game board canvas
+              ctx.clearRect(0,0,W,H);
               ctx.lineCap="round";
               
               // Draw animated white lightning if dragging or when selected and hovering
@@ -467,7 +518,9 @@ const lastTouchTimeRef = useRef(0);
 
           useEffect(()=>{
             let raf=null;
-            const resize=()=>{const c=canvasRef.current,g=gridRef.current;if(!c||!g)return;
+            const resize=()=>{
+              // Resize game board canvas
+              const c=canvasRef.current,g=gridRef.current;if(!c||!g)return;
               const r=g.getBoundingClientRect();
               if(r.width===0||r.height===0){
                 if(raf)cancelAnimationFrame(raf);
@@ -475,6 +528,11 @@ const lastTouchTimeRef = useRef(0);
                 return;
               }
               c.width=r.width;c.height=r.height;c.style.width=r.width+"px";c.style.height=r.height+"px";updateDims();
+              
+              // Resize background canvas to full screen
+              const bgc=bgCanvasRef.current;if(!bgc)return;
+              bgc.width=window.innerWidth;bgc.height=window.innerHeight;
+              bgc.style.width=window.innerWidth+"px";bgc.style.height=window.innerHeight+"px";
             };
             resize();
             raf=requestAnimationFrame(resize);
@@ -563,38 +621,40 @@ const lastTouchTimeRef = useRef(0);
             if(phase!=="play"||paused||showQuitConfirmation)return;
             const iv=setInterval(()=>{
               const now=Date.now();
-              setBgParticles(prev=>{
-                // Remove particles that are completely off screen
-                let filtered = prev.filter(p => 
-                  p.x > -50 && p.x < window.innerWidth + 50 && 
-                  p.y > -50 && p.y < window.innerHeight + 50
-                );
-                // Add new particles
-                if(filtered.length < 30 && Math.random() < 0.4){
-                  const side = Math.floor(Math.random() * 4);
-                  let x, y, vx, vy;
-                  switch(side){
-                    case 0: x = Math.random() * window.innerWidth; y = -20; vx = (Math.random() - 0.5) * 2; vy = 1 + Math.random() * 2; break;
-                    case 1: x = window.innerWidth + 20; y = Math.random() * window.innerHeight; vx = -(1 + Math.random() * 2); vy = (Math.random() - 0.5) * 2; break;
-                    case 2: x = Math.random() * window.innerWidth; y = window.innerHeight + 20; vx = (Math.random() - 0.5) * 2; vy = -(1 + Math.random() * 2); break;
-                    case 3: x = -20; y = Math.random() * window.innerHeight; vx = 1 + Math.random() * 2; vy = (Math.random() - 0.5) * 2; break;
-                  }
-                  filtered.push({
-                    x, y, vx, vy,
-                    size: 2 + Math.random() * 4,
-                    life: 15000 + Math.random() * 5000,
-                    born: now,
-                    baseOpacity: 0.15 + Math.random() * 0.25,
-                    flickerSpeed: 0.02 + Math.random() * 0.03
-                  });
+              
+              // Update background particles in ref (no React re-render)
+              const filtered = bgParticlesRef.current.filter(p => 
+                p.x > -50 && p.x < window.innerWidth + 50 && 
+                p.y > -50 && p.y < window.innerHeight + 50 &&
+                (now - p.born) < p.life
+              );
+              
+              // Add new particles
+              if(filtered.length < 30 && Math.random() < 0.4){
+                const side = Math.floor(Math.random() * 4);
+                let x, y, vx, vy;
+                switch(side){
+                  case 0: x = Math.random() * window.innerWidth; y = -20; vx = (Math.random() - 0.5) * 2; vy = 1 + Math.random() * 2; break;
+                  case 1: x = window.innerWidth + 20; y = Math.random() * window.innerHeight; vx = -(1 + Math.random() * 2); vy = (Math.random() - 0.5) * 2; break;
+                  case 2: x = Math.random() * window.innerWidth; y = window.innerHeight + 20; vx = (Math.random() - 0.5) * 2; vy = -(1 + Math.random() * 2); break;
+                  case 3: x = -20; y = Math.random() * window.innerHeight; vx = 1 + Math.random() * 2; vy = (Math.random() - 0.5) * 2; break;
                 }
-                // Update positions
-                return filtered.map(p => ({
-                  ...p,
-                  x: p.x + p.vx,
-                  y: p.y + p.vy
-                }));
-              });
+                filtered.push({
+                  x, y, vx, vy,
+                  size: 2 + Math.random() * 4,
+                  life: 15000 + Math.random() * 5000,
+                  born: now,
+                  baseOpacity: 0.05 + Math.random() * 0.1, // Reduced from 0.15-0.4 to 0.05-0.15
+                  flickerSpeed: 0.02 + Math.random() * 0.03
+                });
+              }
+              
+              // Update positions
+              bgParticlesRef.current = filtered.map(p => ({
+                ...p,
+                x: p.x + p.vx,
+                y: p.y + p.vy
+              }));
             }, 50);
             return()=>clearInterval(iv);
           },[phase,paused,showQuitConfirmation]);
@@ -665,7 +725,7 @@ const lastTouchTimeRef = useRef(0);
             else if(mom>3){setCascTxt({text:"MASSIVE RECOIL",time:now});setCascTxtColor(EB[dE]);setTimeout(()=>setCascTxt(null),1200);setTimeout(()=>setCascTxtColor("#10b981"),1200);SoundManager.play('recoil', 0.7)}
             else if(mom>1.5){setCascTxt({text:"RECOIL CASCADE",time:now});setCascTxtColor(EB[dE]);setTimeout(()=>setCascTxt(null),1000);setTimeout(()=>setCascTxtColor("#10b981"),1000);SoundManager.play('recoil', 0.5)}
             setOverlayMsg({text:"CORRELATED",time:now});setOverlayMsgColor(EB[dE]);setTimeout(()=>setOverlayMsg(null),1500);setTimeout(()=>setOverlayMsgColor("#6ee7b7"),1500);
-            setInfo({type:"ok",dE,r,mom,prob:corrProb(r),combo:nc,time:now});setSel(null);
+            setInfo({type:"ok",dE,r,mom,prob:corrProb(r),combo:nc,time:now});cancelSelection();
           },[grid,combo,cellPos,fireBolt,firePart,level]);
 
           const commitSourceSelection = useCallback((x, y) => {
@@ -689,6 +749,7 @@ const lastTouchTimeRef = useRef(0);
             });
 
             SoundManager.play("select");
+            SoundManager.weldingSound = SoundManager.play("welding", 0.25);
           }, [grid, phase, paused, level]);
 
           const clearDragState = useCallback(() => {
@@ -700,6 +761,8 @@ const lastTouchTimeRef = useRef(0);
           }, []);
 
           const cancelSelection = useCallback(() => {
+            SoundManager.stopSound(SoundManager.weldingSound);
+            SoundManager.weldingSound = null;
             setSel(null);
             setInteractionMode("idle");
             clearDragState();
@@ -1230,8 +1293,8 @@ const lastTouchTimeRef = useRef(0);
   processCellSelection(x, y);
 }, [pointerDown, isDragging, interactionMode, resolveDragRelease, clearDragState, processCellSelection, dragStart, lastSelectionTime]);
 
-          useEffect(()=>{const h=e=>{if(e.key==="p"||e.key==="P")setPaused(p=>!p);if(e.key==="Escape")setSel(null)};
-            window.addEventListener("keydown",h);return()=>window.removeEventListener("keydown",h)},[]);
+          useEffect(()=>{const h=e=>{if(e.key==="p"||e.key==="P")setPaused(p=>!p);if(e.key==="Escape"){SoundManager.stopSound(SoundManager.weldingSound);SoundManager.weldingSound=null;setSel(null);setInteractionMode("idle");clearDragState();}};
+            window.addEventListener("keydown",h);return()=>window.removeEventListener("keydown",h)},[clearDragState]);
 
           
           useEffect(()=>{
@@ -1333,32 +1396,39 @@ const lastTouchTimeRef = useRef(0);
                 setTimeout(() => {
                   setCountdown("START!");
                   SoundManager.play('startSound', 0.8); // Play START sound
-                  setTimeout(() => setCountdown(null), 250);
-                }, 300);
-              }, 300);
-            }, 300);
+                  setTimeout(() => setCountdown(null), 600);
+                }, 350);
+              }, 350);
+            }, 350);
           },[]);
 
           const restart=useCallback(()=>{setGrid(mkGrid());setScore(0);setLevel(1);setTotalT(0);setCombo(0);setComboT(0);setTransitionHistory([]);
             setSel(null);setEchoes([]);setPhase("menu");setInfo(null);setCascTxt(null);setPaused(false);setFillPct(0);setScreenFlash(null);setTick(0);setShowMenu(true);setShowTutorial(false);setShowQuitConfirmation(false);setShowPauseRules(false);setShowOverRules(false);
             particlesRef.current=[];boltsRef.current=[]},[]);
-          useEffect(()=>{
-            // Initialize sound system
+          useEffect(() => {
+            let transitionTimer;
+
             SoundManager.init();
-            SoundManager.setEnabled(soundEnabled);
-            
-            // Start transition after loading
-            setTimeout(() => {
+
+            const loadingTimer = setTimeout(() => {
               setIsLoading(false);
               setIsTransitioning(true);
-              
-              // Show menu after transition completes
-              setTimeout(() => {
+
+              transitionTimer = setTimeout(() => {
                 setShowMenu(true);
                 setIsTransitioning(false);
-              }, 600); // Transition duration
+              }, 600);
             }, 800);
-          },[soundEnabled]);
+
+            return () => {
+              clearTimeout(loadingTimer);
+              clearTimeout(transitionTimer);
+            };
+          }, []);
+
+          useEffect(() => {
+            SoundManager.setEnabled(soundEnabled);
+          }, [soundEnabled]);
 
           useEffect(()=>{const id="null-v3-css";if(document.getElementById(id))return;const s=document.createElement("style");s.id=id;
             s.textContent=`@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&family=Orbitron:wght@700;900&display=swap');
@@ -1793,22 +1863,11 @@ const lastTouchTimeRef = useRef(0);
 
           return(
             <div style={{...S.ctn,backgroundColor:dreadBg,fontFamily:font,transition:"background-color 1.5s",height:"var(--app-height, 100dvh)",display:"flex",flexDirection:"column",justifyContent:"space-between"}} className={(paused||showQuitConfirmation||phase==="over")?"paused-game":""}>
+              {/* Full screen background canvas for particles */}
+              <canvas ref={bgCanvasRef} style={{position:"fixed",top:0,left:0,width:"100vw",height:"100vh",pointerEvents:"none",zIndex:0}}/>
+              
               {fillPct>0.55&&<div style={{position:"fixed",top:"var(--app-top, 0px)",left:0,right:0,height:"var(--app-height, 100dvh)",pointerEvents:"none",zIndex:0,
                 background:`radial-gradient(ellipse at 50% 100%,rgba(185,28,28,${(fillPct-0.55)*0.4}) 0%,transparent 70%)`,transition:"all 1.5s"}}/>}
-              {bgParticles.map((p,i)=>(
-                <div key={i} style={{
-                  position:"fixed",
-                  left:p.x,
-                  top:p.y,
-                  width:p.size,
-                  height:p.size,
-                  borderRadius:"50%",
-                  background:`radial-gradient(circle, rgba(255,255,255,${p.baseOpacity * (0.7 + 0.3 * Math.sin(Date.now() * p.flickerSpeed))}) 0%, rgba(255,255,255,0) 70%)`,
-                  pointerEvents:"none",
-                  zIndex:1,
-                  transform:"translate(-50%, -50%)"
-                }}/>
-              ))}
               {screenFlash&&<div style={{position:"fixed",top:"var(--app-top, 0px)",left:0,right:0,height:"var(--app-height, 100dvh)",pointerEvents:"none",zIndex:50,backgroundColor:screenFlash,animation:"flash 0.12s ease-out forwards"}}/>}
 
               <div style={{width:"100%",maxWidth:480,marginBottom:8,zIndex:1,position:"relative"}}>
