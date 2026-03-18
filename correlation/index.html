@@ -1590,12 +1590,12 @@ const lastTouchTimeRef = useRef(0);
                   display:"flex",
                   flexDirection:"column",
                   alignItems:"center",
-                  gap:32,
                   margin:"0 auto",
                   flex:1,
-                  justifyContent:"center"
+                  justifyContent:"center",
+                  width:"100%"
                 }}>
-                  <div style={{textAlign:"center"}}>
+                  <div style={{textAlign:"center", marginBottom:32}}>
                     <h1 style={{
                       margin:0,
                        fontSize: "clamp(2rem, 8vw, 4rem)",
@@ -1614,7 +1614,21 @@ const lastTouchTimeRef = useRef(0);
                     }}>CORRELATION</h1>
                   </div>
 
-                  {showMenuRules&&<div style={{maxWidth:480,display:"flex",flexDirection:"column",alignItems:"center",gap:14,width:"100%"}}>
+                  <div style={{
+                    maxWidth:480,
+                    display:"flex",
+                    flexDirection:"column",
+                    alignItems:"center",
+                    gap:14,
+                    width:"100%",
+                    height: showMenuRules ? "auto" : "0px",
+                    opacity: showMenuRules ? 1 : 0,
+                    transform: showMenuRules ? "translateY(0)" : "translateY(-10px)",
+                    transition: "all 0.3s ease-in-out",
+                    overflow: "hidden",
+                    pointerEvents: showMenuRules ? "auto" : "none",
+                    flexShrink: 0
+                  }}>
                     <div style={{display:"flex",flexDirection:"column",gap:4,padding:"10px 14px",backgroundColor:"rgba(15,23,42,0.6)",borderRadius:6,borderLeft:"3px solid #0e7490"}}>
                       <span style={{fontSize:15,fontWeight:700,color:"#e2e8f0",fontFamily:font}}>QUANTUM LEAP</span>
                       <span style={{fontSize:12,color:"#94a3b8",lineHeight:1.5,fontFamily:font}}>Click a source node, then a detector node with matching or greater energy. The source transitions — its energy correlates with the detector.</span>
@@ -1634,13 +1648,15 @@ const lastTouchTimeRef = useRef(0);
                       <span style={{fontSize:15,fontWeight:700,color:"#e2e8f0",fontFamily:font}}>VOID EQUILIBRIUM</span>
                       <span style={{fontSize:12,color:"#94a3b8",lineHeight:1.5,fontFamily:font}}>The board fills with matter nodes. Clear them through correlated transitions before the grid saturates.</span>
                     </div>
-                  </div>}
+                  </div>
 
                   <div style={{
                     display:"flex",
                     flexDirection:"column",
                     gap:16,
-                    width:"100%"
+                    width:"100%",
+                    flexShrink: 0,
+                    marginTop: 32
                   }}>
                     <button style={{
                       padding:"16px 40px",
