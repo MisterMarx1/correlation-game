@@ -493,6 +493,79 @@
       font-size: 0.95rem;
     }
 
+    .ccss-score-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+      margin-top: 18px;
+    }
+
+    .ccss-score-item {
+      padding: 16px;
+      border-radius: 16px;
+      border: 1px solid rgba(251,191,36,0.18);
+      background: linear-gradient(135deg, rgba(251,191,36,0.08), rgba(96,165,250,0.08));
+    }
+
+    .ccss-score-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .ccss-score-name {
+      font-weight: 800;
+      color: var(--text);
+    }
+
+    .ccss-score-value {
+      color: var(--amber);
+      font-weight: 900;
+    }
+
+    .ccss-bar {
+      height: 8px;
+      border-radius: 999px;
+      background: rgba(148,163,184,0.12);
+      overflow: hidden;
+      margin-bottom: 10px;
+    }
+
+    .ccss-fill {
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--amber), var(--blue));
+    }
+
+    .ccss-score-desc {
+      margin: 0;
+      color: var(--soft);
+      font-size: 0.95rem;
+    }
+
+    .ccss-evidence {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid rgba(148,163,184,0.12);
+    }
+
+    .ccss-evidence p {
+      margin: 8px 0;
+      color: var(--soft);
+    }
+
+    .ccss-evidence ul {
+      margin: 8px 0;
+      padding-left: 18px;
+    }
+
+    .ccss-evidence li {
+      margin: 4px 0;
+      color: var(--soft);
+    }
+
     .reflection {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -522,7 +595,8 @@
       .habit-grid,
       .reflection,
       .score-grid,
-      .mhom-score-grid {
+      .mhom-score-grid,
+      .ccss-score-grid {
         grid-template-columns: 1fr;
       }
 
@@ -584,6 +658,16 @@
         </div>
       </div>
       <h1>CORRELATION <span style="font-size: 0.6em; font-weight: 400; letter-spacing: 0; text-transform: none;">v0.2</span></h1>
+      
+          <div style="text-align: left; margin-left: 20px;">
+            <a href="https://www.mistermarx.com/games/correlation" target="_blank" rel="noopener noreferrer" 
+               style="display: inline-block; background: linear-gradient(135deg, var(--teal), var(--cyan)); 
+                      color: white; padding: 6px 18px; border-radius: 12px; 
+                      font-weight: 700; font-size: 1.1rem; text-decoration: none;
+                      transition: all 0.2s; box-shadow: 0 4px 12px rgba(20,184,166,0.3);">
+              PLAY GAME
+            </a>
+          </div>
       <p class="hero-sub">
         This page is designed to help parents, teachers, and students understand
         what <strong>CORRELATION</strong> develops during play. The primary focus is
@@ -628,14 +712,15 @@
           <div class="kicker">Page Map</div>
           <a href="#overview">1. Overview</a>
           <a href="#math-habits">2. Mathematical Habits of Mind</a>
-          <a href="#teacher-guide">3. Teacher Guide</a>
-          <a href="#parent-guide">4. Parent Guide</a>
-          <a href="#student-guide">5. Student Guide</a>
-          <a href="#five-practices">6. 5 Practices for Orchestrating Productive Mathematical Discussions</a>
-          <a href="#additional-benefits">7. Additional Benefits</a>
-          <a href="#positives-negatives">8. Positives & Negatives</a>
-          <a href="#reflection">9. Reflection Questions</a>
-          <a href="#references">10. Research Sources</a>
+          <a href="#ccss-alignment">3. Common Core Alignment</a>
+          <a href="#teacher-guide">4. Teacher Guide</a>
+          <a href="#parent-guide">5. Parent Guide</a>
+          <a href="#student-guide">6. Student Guide</a>
+          <a href="#five-practices">7. 5 Practices for Orchestrating Productive Mathematical Discussions</a>
+          <a href="#additional-benefits">8. Additional Benefits</a>
+          <a href="#positives-negatives">9. Positives & Negatives</a>
+          <a href="#reflection">10. Reflection Questions</a>
+          <a href="#references">11. Research Sources</a>
         </aside>
       </div>
     </div>
@@ -1017,6 +1102,205 @@
         </p>
       </div>
 
+    </section>
+
+    <section id="ccss-alignment" class="panel section-card">
+      <div class="section-head">
+        <div>
+          <div class="kicker">Standards Alignment</div>
+          <h2 class="section-title">Common Core Mathematical Practice Alignment</h2>
+        </div>
+      </div>
+
+      <p class="lead">
+        The CORRELATION game emphasizes mathematical thinking behaviors rather than
+        specific grade-level content. Alignment is evaluated against the 
+        Common Core Standards for Mathematical Practice (CCSS-MP).
+      </p>
+
+      <div class="callout" style="margin-top: 18px;">
+        <h3>Scoring Scale</h3>
+        <ul>
+          <li>0–2 — Minimal presence</li>
+          <li>3–4 — Emerging alignment</li>
+          <li>5–6 — Moderate alignment</li>
+          <li>7–8 — Strong alignment</li>
+          <li>9–10 — Core mechanic of the experience</li>
+        </ul>
+      </div>
+
+      <div class="ccss-score-grid">
+        <div class="ccss-score-item">
+          <div class="ccss-score-top">
+            <span class="ccss-score-name">MP1 — Make sense of problems and persevere in solving them</span>
+            <span class="ccss-score-value">10/10</span>
+          </div>
+          <div class="ccss-bar"><div class="ccss-fill" style="width: 100%;"></div></div>
+          <p class="ccss-score-desc">
+            Players constantly interpret evolving board states and determine possible
+            node transitions. Failed correlations require re-evaluation and strategic
+            adjustment, reinforcing perseverance and problem solving.
+          </p>
+          <div class="ccss-evidence">
+            <p><strong>Gameplay Evidence:</strong></p>
+            <ul>
+              <li>Players analyze the grid to identify valid transitions.</li>
+              <li>Failed correlations require reassessment of strategy.</li>
+              <li>Increasing grid saturation creates sustained problem-solving pressure.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="ccss-score-item">
+          <div class="ccss-score-top">
+            <span class="ccss-score-name">MP2 — Reason abstractly and quantitatively</span>
+            <span class="ccss-score-value">8/10</span>
+          </div>
+          <div class="ccss-bar"><div class="ccss-fill" style="width: 80%;"></div></div>
+          <p class="ccss-score-desc">
+            Players reason about relationships between energy values, spatial distance,
+            and probabilistic outcomes. Quantitative relationships guide strategic
+            decisions.
+          </p>
+          <div class="ccss-evidence">
+            <p><strong>Gameplay Evidence:</strong></p>
+            <ul>
+              <li>Energy levels constrain possible correlations.</li>
+              <li>Distance affects probability of successful transition.</li>
+              <li>Players mentally estimate risk versus reward.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="ccss-score-item">
+          <div class="ccss-score-top">
+            <span class="ccss-score-name">MP3 — Construct viable arguments and critique reasoning</span>
+            <span class="ccss-score-value">6/10</span>
+          </div>
+          <div class="ccss-bar"><div class="ccss-fill" style="width: 60%;"></div></div>
+          <p class="ccss-score-desc">
+            While the game itself is single-player, discussion about strategy allows
+            players to justify choices and evaluate alternative reasoning.
+          </p>
+          <div class="ccss-evidence">
+            <p><strong>Gameplay Evidence:</strong></p>
+            <ul>
+              <li>Players can compare strategies and outcomes.</li>
+              <li>Different transitions can be debated in group play.</li>
+              <li>Players explain why a given move was optimal or risky.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="ccss-score-item">
+          <div class="ccss-score-top">
+            <span class="ccss-score-name">MP4 — Model with mathematics</span>
+            <span class="ccss-score-value">6/10</span>
+          </div>
+          <div class="ccss-bar"><div class="ccss-fill" style="width: 60%;"></div></div>
+          <p class="ccss-score-desc">
+            The game represents a simplified mathematical system involving quantities,
+            probability decay, and cascading system responses.
+          </p>
+          <div class="ccss-evidence">
+            <p><strong>Gameplay Evidence:</strong></p>
+            <ul>
+              <li>Energy transfer acts as a simplified quantitative model.</li>
+              <li>Distance decay reflects probabilistic modeling.</li>
+              <li>Recoil cascades demonstrate system interactions.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="ccss-score-item">
+          <div class="ccss-score-top">
+            <span class="ccss-score-name">MP5 — Use appropriate tools strategically</span>
+            <span class="ccss-score-value">4/10</span>
+          </div>
+          <div class="ccss-bar"><div class="ccss-fill" style="width: 40%;"></div></div>
+          <p class="ccss-score-desc">
+            The primary tools are visual cues within the interface rather than external
+            mathematical instruments.
+          </p>
+          <div class="ccss-evidence">
+            <p><strong>Gameplay Evidence:</strong></p>
+            <ul>
+              <li>Players rely on board structure and visual signals.</li>
+              <li>Players interpret probability indicators when selecting nodes.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="ccss-score-item">
+          <div class="ccss-score-top">
+            <span class="ccss-score-name">MP6 — Attend to precision</span>
+            <span class="ccss-score-value">8/10</span>
+          </div>
+          <div class="ccss-bar"><div class="ccss-fill" style="width: 80%;"></div></div>
+          <p class="ccss-score-desc">
+            Successful play requires careful comparison of energy levels and precise
+            selection of target nodes.
+          </p>
+          <div class="ccss-evidence">
+            <p><strong>Gameplay Evidence:</strong></p>
+            <ul>
+              <li>Players must accurately compare node values.</li>
+              <li>Incorrect choices result in decorrelation penalties.</li>
+              <li>Precise targeting improves probability of success.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="ccss-score-item">
+          <div class="ccss-score-top">
+            <span class="ccss-score-name">MP7 — Look for and make use of structure</span>
+            <span class="ccss-score-value">10/10</span>
+          </div>
+          <div class="ccss-bar"><div class="ccss-fill" style="width: 100%;"></div></div>
+          <p class="ccss-score-desc">
+            Strategic play depends on recognizing patterns within the grid and
+            understanding structural relationships between nodes.
+          </p>
+          <div class="ccss-evidence">
+            <p><strong>Gameplay Evidence:</strong></p>
+            <ul>
+              <li>Players identify clusters of compatible nodes.</li>
+              <li>Grid positioning influences correlation success.</li>
+              <li>Players exploit structure to produce cascades.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="ccss-score-item">
+          <div class="ccss-score-top">
+            <span class="ccss-score-name">MP8 — Look for and express regularity in repeated reasoning</span>
+            <span class="ccss-score-value">10/10</span>
+          </div>
+          <div class="ccss-bar"><div class="ccss-fill" style="width: 100%;"></div></div>
+          <p class="ccss-score-desc">
+            Repeated play reveals patterns in probability behavior and cascading effects,
+            allowing players to develop strategic heuristics.
+          </p>
+          <div class="ccss-evidence">
+            <p><strong>Gameplay Evidence:</strong></p>
+            <ul>
+              <li>Players learn correlation patterns over time.</li>
+              <li>Repeated gameplay refines strategic intuition.</li>
+              <li>Players develop heuristics for managing saturation.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout" style="margin-top: 18px;">
+        <h3>Summary</h3>
+        <ul>
+          <li><strong>Primary Alignment:</strong> MP1, MP7, MP8</li>
+          <li><strong>Strong Alignment:</strong> MP2, MP6</li>
+          <li><strong>Moderate Alignment:</strong> MP3, MP4</li>
+          <li><strong>Light Alignment:</strong> MP5</li>
+        </ul>
+      </div>
     </section>
 
     <section id="teacher-guide" class="panel section-card">
@@ -1549,6 +1833,28 @@
           target="_blank">
           Goldenberg, E. (1996).
           Organizing a Curriculum Around Mathematical Habits of Mind.
+          </a>
+        </li>
+
+      </ul>
+
+      <h3>Standards References</h3>
+      <ul>
+
+        <li>
+          <a href="https://www.corestandards.org/wp-content/uploads/Math_Standards.pdf" target="_blank">
+          National Governors Association Center for Best Practices & Council of
+          Chief State School Officers. (2010).
+          <strong>Common Core State Standards for Mathematics.</strong>
+          Washington, DC.
+          </a>
+        </li>
+
+        <li>
+          <a href="https://www.corestandards.org/Math/Practice/" target="_blank">
+          Common Core State Standards Initiative.
+          <strong>Standards for Mathematical Practice.</strong>
+          https://www.corestandards.org/Math/Practice/
           </a>
         </li>
 
