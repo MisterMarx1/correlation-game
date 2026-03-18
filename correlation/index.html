@@ -1,3 +1,36 @@
+<!--
+  CORRELATION - Node Transition Game
+  
+  Copyright © 2026 Mister Marx LLC. All rights reserved.
+  
+  Description:
+  A strategic puzzle game where players correlate nodes by matching
+  energy levels across distances, managing recoil cascades and grid saturation.
+  
+  Architecture:
+  - React 18 with functional components and hooks
+  - Web Audio API for dynamic sound management
+  - Canvas-based particle and bolt rendering
+  - Component-based UI with reusable elements
+  
+  Best Practices:
+  - Single source of truth for all repeated content
+  - Component unification for consistent styling
+  - Performance-optimized rendering with useCallback/useMemo
+  - Responsive design with viewport height synchronization
+  - Touch-friendly interaction patterns
+  - Accessibility considerations for keyboard navigation
+  
+  Dependencies:
+  - React 18 (CDN)
+  - Babel Standalone (JSX transformation)
+  - Web Audio API (native)
+  - Canvas API (native)
+  
+  Author: Mister Marx
+  Version: 0.1
+  Last Modified: 2026-03-18
+-->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -91,6 +124,14 @@
         const DECAY_BASE = 14000, DECAY_MIN = 4500, SPAWN_BASE = 2400, SPAWN_MIN = 800;
         const ECHO_DUR = 2500, ECHO_BOOST = 0.25, CIRC = 100.53;
 
+        const DIFFICULTY_OPTIONS = ["EASY", "MEDIUM", "HARD", "EXPERT"];
+        const DIFFICULTY_SPAWN_MULTIPLIER = {
+          EASY: 1.5,
+          MEDIUM: 1.25,
+          HARD: 1.00,
+          EXPERT: 0.5
+        };
+
         // Sound Management System
         const SoundManager = {
             sounds: {},
@@ -115,7 +156,7 @@
                 // Predefined sound file paths
                 this.soundFiles = {
                     select: 'sfx/select_click.mp3',
-                    correlate: 'sfx/correlation_success.mp3',
+                    correlate: 'sfx/mixkit-laser-weapon-shot-1681.wav',
                     decorrelate: 'sfx/decorrelation_fail.mp3',
                     recoil: 'sfx/recoil_cascade.mp3',
                     spawn: 'sfx/spawn_cell.mp3',
@@ -126,7 +167,8 @@
                     pause: 'sfx/pause_sound.mp3',
                     countdown: 'sfx/mixkit-electronic-lock-success-beeps-2852.wav',
                     startSound: 'sfx/mixkit-arcade-mechanical-bling-210.wav',
-                    welding: 'sfx/mixkit-electric-welding-and-sparkles-2603.wav'
+                    welding: 'sfx/mixkit-electric-welding-and-sparkles-2603.wav',
+                    deselect: 'sfx/mixkit-cybernetic-technology-affirmation-3116.wav'
                 };
                 
                                 
@@ -255,6 +297,52 @@
             }
         };
 
+        const GAME_VERSION = "CORRELATION v0.1";
+        const COPYRIGHT_TEXT = "© MisterMarx.com, 2026";
+        const GAME_TITLE = "CORRELATION";
+
+        const RULE_ITEMS = [
+          {
+            title: "QUANTUM LEAP",
+            body: "Click a node, then a second node with matching or greater energy. The first node transitions — its energy correlates with the second node's energy."
+          },
+          {
+            title: "DISTANCE DECAY",
+            body: "Closer nodes have higher correlation probability. Distant transitions may decorrelate."
+          },
+          {
+            title: "RECOIL CASCADE",
+            body: "High-energy transitions generate recoil momentum, clearing neighboring nodes. Chain transitions for combo multipliers."
+          },
+          {
+            title: "VOID EQUILIBRIUM",
+            body: "The board fills with nodes. Clear them through correlated transitions before the grid saturates."
+          }
+        ];
+
+        function RuleCard({ item, font }) {
+          return (
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 4,
+                padding: "10px 14px",
+                backgroundColor: "rgba(15,23,42,0.6)",
+                borderRadius: 6,
+                borderLeft: "3px solid #0e7490"
+              }}
+            >
+              <span style={{ fontSize: 15, fontWeight: 700, color: "#e2e8f0", fontFamily: font }}>
+                {item.title}
+              </span>
+              <span style={{ fontSize: 12, color: "#94a3b8", lineHeight: 1.5, fontFamily: font }}>
+                {item.body}
+              </span>
+            </div>
+          );
+        }
+
         const EC = ["transparent","#1e40af","#0e7490","#047857","#b45309","#b91c1c"];
         const EG = ["transparent","rgba(30,64,175,0.5)","rgba(14,116,144,0.5)","rgba(4,120,87,0.5)","rgba(180,83,9,0.6)","rgba(185,28,28,0.7)"];
         const EB = ["transparent","#93c5fd","#67e8f9","#6ee7b7","#fcd34d","#e879f9"];
@@ -363,10 +451,359 @@
             </div>);
         });
 
+        function FooterBar({
+          version,
+          copyright,
+          soundEnabled,
+          onToggleSound,
+          compact = false,
+          font
+        }) {
+          if (compact) {
+            return (
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  width: "100%",
+                  fontSize: 10,
+                  color: "#94a3b8",
+                  fontFamily: font,
+                  letterSpacing: "0.05em",
+                  marginTop: 0
+                }}
+              >
+                <span>{version}</span>
+
+                <div style={{ position: "absolute", left: "50%", transform: "translateX(-50%)" }}>
+                  <button
+                    onClick={onToggleSound}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      color: "#94a3b8",
+                      fontSize: 10,
+                      cursor: "pointer",
+                      padding: 0,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      width: "auto",
+                      height: "auto"
+                    }}
+                  >
+                    {soundEnabled ? "🔊" : "🔇"}
+                  </button>
+                </div>
+
+                <a
+                  href="https://www.mistermarx.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    color: "#94a3b8",
+                    textDecoration: "none",
+                    cursor: "pointer"
+                  }}
+                >
+                  {copyright}
+                </a>
+              </div>
+            );
+          }
+
+          return (
+            <div
+              style={{
+                textAlign: "center",
+                fontSize: 11,
+                color: "#94a3b8",
+                fontFamily: font,
+                paddingBottom: 20
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  gap: 20,
+                  fontSize: 10,
+                  letterSpacing: "0.05em"
+                }}
+              >
+                <span>{version}</span>
+
+                <button
+                  onClick={onToggleSound}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    color: "#94a3b8",
+                    fontSize: 10,
+                    cursor: "pointer",
+                    padding: 0,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    width: "auto",
+                    height: "auto"
+                  }}
+                >
+                  {soundEnabled ? "🔊" : "🔇"}
+                </button>
+
+                <a
+                  href="https://www.mistermarx.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    color: "#94a3b8",
+                    textDecoration: "none",
+                    cursor: "pointer"
+                  }}
+                >
+                  {copyright}
+                </a>
+              </div>
+            </div>
+          );
+        }
+
+        function RulesPanel({
+          items,
+          font,
+          maxWidth = 480,
+          alignItems = "center",
+          width = "100%"
+        }) {
+          return (
+            <div
+              style={{
+                maxWidth,
+                display: "flex",
+                flexDirection: "column",
+                alignItems,
+                gap: 14,
+                width
+              }}
+            >
+              {items.map((item) => (
+                <RuleCard key={item.title} item={item} font={font} />
+              ))}
+            </div>
+          );
+        }
+
+        function GameTitle({
+          title,
+          fontFamily,
+          size,
+          letterSpacing = "0.2em",
+          centered = true,
+          glow = false
+        }) {
+          return (
+            <h1
+              style={{
+                margin: 0,
+                fontSize: size,
+                fontWeight: 900,
+                letterSpacing,
+                fontFamily,
+                textAlign: centered ? "center" : "left",
+                width: centered ? "100%" : "auto",
+                background: "linear-gradient(90deg, #f8fafc 0%, #e0f2fe 25%, #bae6fd 50%, #7dd3fc 75%, #f8fafc 100%)",
+                backgroundSize: "200% 100%",
+                WebkitBackgroundClip: "text",
+                backgroundClip: "text",
+                color: "transparent",
+                textShadow: glow ? "0 0 50px rgba(14,116,144,0.5)" : "none",
+                animation: "textShimmer 3s ease-in-out infinite",
+                lineHeight: 1
+              }}
+            >
+              {title}
+            </h1>
+          );
+        }
+
+        function PrimaryButton({
+          children,
+          onClick,
+          fontFamily,
+          padding = "12px 32px",
+          fontSize = 13,
+          borderRadius = 6,
+          letterSpacing = "0.12em",
+          width = "auto",
+          boxShadow = "0 0 25px rgba(14,116,144,0.3)"
+        }) {
+          return (
+            <button
+              onClick={onClick}
+              style={{
+                padding,
+                backgroundColor: "#0e7490",
+                color: "#fff",
+                border: "none",
+                borderRadius,
+                fontSize,
+                fontWeight: 700,
+                letterSpacing,
+                cursor: "pointer",
+                fontFamily,
+                boxShadow,
+                transition: "all 0.2s",
+                width
+              }}
+            >
+              {children}
+            </button>
+          );
+        }
+
+        function TextActionButton({
+          children,
+          onClick,
+          fontFamily,
+          padding = "10px 24px",
+          fontSize = 11,
+          borderRadius = 6,
+          letterSpacing = "0.05em",
+          width = "auto",
+          color = "#94a3b8",
+          transition = "all 0.15s"
+        }) {
+          return (
+            <button
+              onClick={onClick}
+              style={{
+                padding,
+                backgroundColor: "transparent",
+                color,
+                border: "none",
+                borderRadius,
+                fontSize,
+                fontWeight: 500,
+                letterSpacing,
+                cursor: "pointer",
+                fontFamily,
+                transition,
+                width
+              }}
+            >
+              {children}
+            </button>
+          );
+        }
+
+        function DangerButton({
+          children,
+          onClick,
+          fontFamily = "inherit",
+          padding = "12px 32px",
+          fontSize = 13,
+          borderRadius = 6,
+          letterSpacing = "0.12em",
+          boxShadow = "0 0 25px rgba(185,28,28,0.25)",
+          width = "auto"
+        }) {
+          return (
+            <button
+              onClick={onClick}
+              style={{
+                padding,
+                backgroundColor: "#b91c1c",
+                color: "#fff",
+                border: "none",
+                borderRadius,
+                fontSize,
+                fontWeight: 700,
+                letterSpacing,
+                cursor: "pointer",
+                fontFamily,
+                boxShadow,
+                transition: "all 0.2s",
+                width
+              }}
+            >
+              {children}
+            </button>
+          );
+        }
+
+        function DifficultySelector({
+          value,
+          onChange,
+          fontFamily
+        }) {
+          return (
+            <div
+              style={{
+                width: "100%",
+                display: "flex",
+                flexDirection: "column",
+                gap: 10,
+                alignItems: "center"
+              }}
+            >
+              <span
+                style={{
+                  fontSize: 11,
+                  letterSpacing: "0.18em",
+                  color: "#94a3b8",
+                  fontFamily,
+                  fontWeight: 600
+                }}
+              >
+                SELECT DIFFICULTY
+              </span>
+
+              <div
+                style={{
+                  width: "100%",
+                  display: "grid",
+                  gridTemplateColumns: "repeat(4, 1fr)",
+                  gap: 8
+                }}
+              >
+                {DIFFICULTY_OPTIONS.map((option) => {
+                  const selected = value === option;
+                  return (
+                    <button
+                      key={option}
+                      onClick={() => onChange(option)}
+                      style={{
+                        padding: "12px 10px",
+                        borderRadius: 8,
+                        border: selected ? "1px solid rgba(103,232,249,0.9)" : "1px solid rgba(255,255,255,0.08)",
+                        background: selected ? "rgba(14,116,144,0.25)" : "rgba(15,23,42,0.55)",
+                        color: selected ? "#e0f2fe" : "#94a3b8",
+                        fontSize: 12,
+                        fontWeight: 700,
+                        letterSpacing: "0.10em",
+                        fontFamily,
+                        cursor: "pointer",
+                        boxShadow: selected ? "0 0 20px rgba(14,116,144,0.22), inset 0 0 12px rgba(255,255,255,0.06)" : "none",
+                        transition: "all 0.15s"
+                      }}
+                    >
+                      {option}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        }
+
         function NullV3(){
           const[grid,setGrid]=useState(mkGrid);
           const[score,setScore]=useState(0);
           const[level,setLevel]=useState(1);
+          const[difficulty,setDifficulty]=useState("EASY");
           const[sel,setSel]=useState(null);
           const[phase,setPhase]=useState("menu");
           const[echoes,setEchoes]=useState([]);
@@ -410,6 +847,12 @@
           const[lastTickTime,setLastTickTime]=useState(Date.now());
           const[pauseTime,setPauseTime]=useState(null);
 
+          const handleToggleSound = useCallback(() => {
+            const enabled = SoundManager.toggle();
+            setSoundEnabled(enabled);
+            SoundManager.play("menu", 0.5);
+          }, []);
+
           const gridRef=useRef(null);const canvasRef=useRef(null);const bgCanvasRef=useRef(null);
 const particlesRef=useRef([]);const boltsRef=useRef([]);
 const bgParticlesRef=useRef([]);
@@ -421,6 +864,9 @@ const lastTouchTimeRef = useRef(0);
             const r=g.getBoundingClientRect();dimsRef.current={cw:r.width/COLS,ch:r.height/ROWS};
           },[]);
           const cellPos=useCallback((x,y)=>{const{cw,ch}=dimsRef.current;return{px:x*cw+cw/2,py:y*ch+ch/2}},[]);
+
+          const spawnDifficultyMultiplier = DIFFICULTY_SPAWN_MULTIPLIER[difficulty] || 1;
+          const currentSpawnInterval = Math.max(SPAWN_MIN, SPAWN_BASE - level * 140) * spawnDifficultyMultiplier;
 
           useEffect(()=>{
             const cv=canvasRef.current;if(!cv)return;const ctx=cv.getContext("2d");let on=true;
@@ -608,9 +1054,9 @@ const lastTouchTimeRef = useRef(0);
 
           useEffect(()=>{
             if(phase!=="play"||paused||showQuitConfirmation)return;
-            const iv=setInterval(spawnTick,Math.max(SPAWN_MIN,SPAWN_BASE-level*140));
+            const iv=setInterval(spawnTick,currentSpawnInterval);
             return()=>clearInterval(iv);
-          },[spawnTick,phase,level,paused,showQuitConfirmation]);
+          },[spawnTick,phase,level,paused,showQuitConfirmation,currentSpawnInterval]);
 
           useEffect(()=>{
             if(phase!=="play"||paused||showQuitConfirmation)return;
@@ -763,6 +1209,7 @@ const lastTouchTimeRef = useRef(0);
           const cancelSelection = useCallback(() => {
             SoundManager.stopSound(SoundManager.weldingSound);
             SoundManager.weldingSound = null;
+            SoundManager.play('deselect', 0.3);
             setSel(null);
             setInteractionMode("idle");
             clearDragState();
@@ -1293,7 +1740,7 @@ const lastTouchTimeRef = useRef(0);
   processCellSelection(x, y);
 }, [pointerDown, isDragging, interactionMode, resolveDragRelease, clearDragState, processCellSelection, dragStart, lastSelectionTime]);
 
-          useEffect(()=>{const h=e=>{if(e.key==="p"||e.key==="P")setPaused(p=>!p);if(e.key==="Escape"){SoundManager.stopSound(SoundManager.weldingSound);SoundManager.weldingSound=null;setSel(null);setInteractionMode("idle");clearDragState();}};
+          useEffect(()=>{const h=e=>{if(e.key==="p"||e.key==="P")setPaused(p=>!p);if(e.key==="Escape"){SoundManager.stopSound(SoundManager.weldingSound);SoundManager.weldingSound=null;SoundManager.play('deselect', 0.3);setSel(null);setInteractionMode("idle");clearDragState();}};
             window.addEventListener("keydown",h);return()=>window.removeEventListener("keydown",h)},[clearDragState]);
 
           
@@ -1666,22 +2113,13 @@ const lastTouchTimeRef = useRef(0);
                   width:"100%"
                 }}>
                   <div style={{textAlign:"center", marginBottom:32}}>
-                    <h1 style={{
-                      margin:0,
-                       fontSize: "clamp(2rem, 8vw, 4rem)",
-                       fontWeight:900,
-                       letterSpacing:"0.2em",
-                      background:"linear-gradient(90deg, #f8fafc 0%, #e0f2fe 25%, #bae6fd 50%, #7dd3fc 75%, #f8fafc 100%)",
-                      backgroundSize:"200% 100%",
-                      WebkitBackgroundClip:"text",
-                      backgroundClip:"text",
-                      color:"transparent",
-                      textShadow:"none",
-                      fontFamily:tFont,
-                      textAlign:"center",
-                      width:"100%",
-                      animation:"textShimmer 3s ease-in-out infinite"
-                    }}>CORRELATION</h1>
+                    <GameTitle
+                      title={GAME_TITLE}
+                      fontFamily={tFont}
+                      size={"clamp(2rem, 8vw, 4rem)"}
+                      letterSpacing="0.2em"
+                      centered={true}
+                    />
                   </div>
 
                   <div style={{
@@ -1693,32 +2131,18 @@ const lastTouchTimeRef = useRef(0);
                     width:"100%",
                     height: showMenuRules ? "auto" : "0px",
                     opacity: showMenuRules ? 1 : 0,
-                    transform: showMenuRules ? "translateY(0)" : "translateY(-10px)",
-                    transition: "all 0.3s ease-in-out",
+                    transition: "none",
                     overflow: "hidden",
                     pointerEvents: showMenuRules ? "auto" : "none",
                     flexShrink: 0
                   }}>
-                    <div style={{display:"flex",flexDirection:"column",gap:4,padding:"10px 14px",backgroundColor:"rgba(15,23,42,0.6)",borderRadius:6,borderLeft:"3px solid #0e7490"}}>
-                    <span style={{fontSize:15,fontWeight:700,color:"#e2e8f0",fontFamily:font}}>QUANTUM LEAP</span>
-                    <span style={{fontSize:12,color:"#94a3b8",lineHeight:1.5,fontFamily:font}}>Click a node, then a second node with matching or greater energy. The first node transitions — its energy correlates with the second node's energy.</span>
-                  </div>
-                    
-                    <div style={{display:"flex",flexDirection:"column",gap:4,padding:"10px 14px",backgroundColor:"rgba(15,23,42,0.6)",borderRadius:6,borderLeft:"3px solid #0e7490"}}>
-                      <span style={{fontSize:15,fontWeight:700,color:"#e2e8f0",fontFamily:font}}>DISTANCE DECAY</span>
-                      <span style={{fontSize:12,color:"#94a3b8",lineHeight:1.5,fontFamily:font}}>Closer nodes have higher correlation probability. Distant transitions may decorrelate.</span>
-                    </div>
-                    
-                    <div style={{display:"flex",flexDirection:"column",gap:4,padding:"10px 14px",backgroundColor:"rgba(15,23,42,0.6)",borderRadius:6,borderLeft:"3px solid #0e7490"}}>
-                      <span style={{fontSize:15,fontWeight:700,color:"#e2e8f0",fontFamily:font}}>RECOIL CASCADE</span>
-                    <span style={{fontSize:12,color:"#94a3b8",lineHeight:1.5,fontFamily:font}}>High-energy transitions generate recoil momentum, clearing neighboring nodes. Chain transitions for combo multipliers.</span>
-                  </div>
-                    
-                    <div style={{display:"flex",flexDirection:"column",gap:4,padding:"10px 14px",backgroundColor:"rgba(15,23,42,0.6)",borderRadius:6,borderLeft:"3px solid #0e7490"}}>
-                     
-                    <span style={{fontSize:15,fontWeight:700,color:"#e2e8f0",fontFamily:font}}>VOID EQUILIBRIUM</span>
-                    <span style={{fontSize:12,color:"#94a3b8",lineHeight:1.5,fontFamily:font}}>The board fills with nodes. Clear them through correlated transitions before the grid saturates.</span>
-                  </div>
+                    <RulesPanel
+                      items={RULE_ITEMS}
+                      font={font}
+                      maxWidth={480}
+                      alignItems="center"
+                      width="100%"
+                    />
                   </div>
 
                   <div style={{
@@ -1729,134 +2153,98 @@ const lastTouchTimeRef = useRef(0);
                     flexShrink: 0,
                     marginTop: 32
                   }}>
-                    <button style={{
-                      padding:"16px 40px",
-                      backgroundColor:"#0e7490",
-                      color:"#fff",
-                      border:"none",
-                      borderRadius:8,
-                      fontSize:16,
-                      fontWeight:700,
-                      letterSpacing:"0.15em",
-                      cursor:"pointer",
-                      fontFamily:tFont,
-                      transition:"all 0.2s",
-                      boxShadow:"0 0 30px rgba(14,116,144,0.3)",
-                      width:"100%"
-                    }} onClick={()=>{
-                      setShowMenu(false);
-                      setShowTutorial(false);
-                      startGame();
-                    }}>
-                      START
-                    </button>
-
-                    <button style={{
-                      padding:"12px 40px",
-                      backgroundColor:"transparent",
-                      color:"#94a3b8",
-                      border:"none",
-                      borderRadius:8,
-                      fontSize:12,
-                      fontWeight:500,
-                      letterSpacing:"0.05em",
-                      cursor:"pointer",
-                      fontFamily:font,
-                      transition:"all 0.15s",
-                      width:"100%"
-                    }} onClick={()=>{
-                      setShowMenuRules(p=>!p);
-                    }}>
-                      {showMenuRules?"HIDE RULES":"VIEW RULES"}
-                    </button>
-                  </div>
-                </div>
-
-                <div style={{
-                  textAlign:"center",
-                  fontSize:11,
-                  color:"#94a3b8",
-                  fontFamily:font,
-                  paddingBottom:20
-                }}>
-                  <div style={{display:"flex",justifyContent:"center",alignItems:"center",gap:20,fontSize:10,letterSpacing:"0.05em"}}>
-                    <span>CORRELATION v0.1</span>
-                    <button 
-                      onClick={() => {const enabled = SoundManager.toggle(); setSoundEnabled(enabled); SoundManager.play('menu', 0.5)}}
-                      style={{
-                        background:"none",
-                        border:"none",
-                        color:"#94a3b8",
-                        fontSize:10,
-                        cursor:"pointer",
-                        padding:0,
-                        display:"flex",
-                        alignItems:"center",
-                        justifyContent:"center",
-                        width:"auto",
-                        height:"auto"
+                    <DifficultySelector
+                      value={difficulty}
+                      onChange={(nextDifficulty) => {
+                        setDifficulty(nextDifficulty);
+                        SoundManager.play("menu", 0.4);
                       }}
+                      fontFamily={font}
+                    />
+
+                    <PrimaryButton
+                      onClick={() => {
+                        setShowMenu(false);
+                        setShowTutorial(false);
+                        startGame();
+                      }}
+                      fontFamily={tFont}
+                      padding="16px 40px"
+                      fontSize={16}
+                      borderRadius={8}
+                      letterSpacing="0.15em"
+                      width="100%"
+                      boxShadow="0 0 30px rgba(14,116,144,0.3)"
                     >
-                      {soundEnabled ? "🔊" : "🔇"}
-                    </button>
-                    <span>© Mister Marx LLC, 2026</span>
+                      START
+                    </PrimaryButton>
+
+                    <TextActionButton
+                      onClick={() => {
+                        setShowMenuRules(p => !p);
+                      }}
+                      fontFamily={font}
+                      padding="12px 40px"
+                      fontSize={12}
+                      borderRadius={8}
+                      width="100%"
+                    >
+                      {showMenuRules ? "HIDE RULES" : "VIEW RULES"}
+                    </TextActionButton>
                   </div>
                 </div>
+
+                <FooterBar
+                  version={GAME_VERSION}
+                  copyright={COPYRIGHT_TEXT}
+                  soundEnabled={soundEnabled}
+                  onToggleSound={handleToggleSound}
+                  font={font}
+                />
               </div>
             </div>)}
 
           if(showTutorial){return(
             <div style={{...S.ctn,backgroundColor:"#030712",fontFamily:font,display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
               <div style={{maxWidth:480,display:"flex",flexDirection:"column",alignItems:"center",gap:20}}>
-                <h1 style={{margin:0,fontSize:48,fontWeight:900,letterSpacing:"0.4em",color:"#f8fafc",textShadow:"0 0 50px rgba(14,116,144,0.5)",fontFamily:tFont}}>CORRELATION</h1>
+                <GameTitle
+                  title={GAME_TITLE}
+                  fontFamily={tFont}
+                  size={48}
+                  letterSpacing="0.4em"
+                  centered={true}
+                  glow={true}
+                />
                 
-                <div style={{display:"flex",flexDirection:"column",gap:14,width:"100%"}}>
-                  <div style={{display:"flex",flexDirection:"column",gap:4,padding:"10px 14px",backgroundColor:"rgba(15,23,42,0.6)",borderRadius:6,borderLeft:"3px solid #0e7490"}}>
-                    <span style={{fontSize:15,fontWeight:700,color:"#e2e8f0",fontFamily:font}}>QUANTUM LEAP</span>
-                    <span style={{fontSize:12,color:"#94a3b8",lineHeight:1.5,fontFamily:font}}>Click a node, then a second node with matching or greater energy. The first node transitions — its energy correlates with the second node's energy.</span>
-                  </div>
-                  
-                  <div style={{display:"flex",flexDirection:"column",gap:4,padding:"10px 14px",backgroundColor:"rgba(15,23,42,0.6)",borderRadius:6,borderLeft:"3px solid #0e7490"}}>
-                    <span style={{fontSize:15,fontWeight:700,color:"#e2e8f0",fontFamily:font}}>DISTANCE DECAY</span>
-                    <span style={{fontSize:12,color:"#94a3b8",lineHeight:1.5,fontFamily:font}}>Closer nodes have higher correlation probability. Distant transitions may decorrelate.</span>
-                  </div>
-                  
-                  <div style={{display:"flex",flexDirection:"column",gap:4,padding:"10px 14px",backgroundColor:"rgba(15,23,42,0.6)",borderRadius:6,borderLeft:"3px solid #0e7490"}}>
-                    <span style={{fontSize:15,fontWeight:700,color:"#e2e8f0",fontFamily:font}}>RECOIL CASCADE</span>
-                    <span style={{fontSize:12,color:"#94a3b8",lineHeight:1.5,fontFamily:font}}>High-energy transitions generate recoil momentum, clearing neighboring nodes. Chain transitions for combo multipliers.</span>
-                  </div>
-                  
-                  <div style={{display:"flex",flexDirection:"column",gap:4,padding:"10px 14px",backgroundColor:"rgba(15,23,42,0.6)",borderRadius:6,borderLeft:"3px solid #0e7490"}}>
-                    <span style={{fontSize:15,fontWeight:700,color:"#e2e8f0",fontFamily:font}}>VOID EQUILIBRIUM</span>
-                    <span style={{fontSize:12,color:"#94a3b8",lineHeight:1.5,fontFamily:font}}>The board fills with nodes. Clear them through correlated transitions before the grid saturates.</span>
-                  </div>
-                </div>
+                <RulesPanel
+                  items={RULE_ITEMS}
+                  font={font}
+                  maxWidth={480}
+                  alignItems="stretch"
+                  width="100%"
+                />
 
-                <button style={{padding:"14px 40px",backgroundColor:"#0e7490",color:"#fff",border:"none",borderRadius:8,fontSize:14,fontWeight:700,letterSpacing:"0.15em",cursor:"pointer",fontFamily:tFont,transition:"all 0.2s",boxShadow:"0 0 30px rgba(14,116,144,0.3)"}} onClick={()=>{setShowTutorial(false)}}>
+                <PrimaryButton
+                  onClick={() => { setShowTutorial(false); }}
+                  fontFamily={tFont}
+                  padding="14px 40px"
+                  fontSize={14}
+                  borderRadius={8}
+                  letterSpacing="0.15em"
+                  boxShadow="0 0 30px rgba(14,116,144,0.3)"
+                >
                   START
-                </button>
+                </PrimaryButton>
 
-                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",width:"100%",fontSize:10,color:"#94a3b8",fontFamily:font,letterSpacing:"0.05em",marginTop:8}}>
-                  <span>CORRELATION v0.1</span>
-                  <div style={{display:"flex",alignItems:"center",gap:8}}>
-                    <button 
-                      onClick={() => {const enabled = SoundManager.toggle(); setSoundEnabled(enabled); SoundManager.play('menu', 0.5)}}
-                      style={{
-                        padding:"4px 8px",
-                        backgroundColor:soundEnabled?"#0e7490":"transparent",
-                        color:soundEnabled?"#fff":"#64748b",
-                        border:"1px solid #64748b",
-                        borderRadius:4,
-                        fontSize:9,
-                        fontWeight:500,
-                        cursor:"pointer",
-                        fontFamily:font,
-                        transition:"all 0.2s"
-                      }}>
-                      {soundEnabled?"🔊":"🔇"}
-                    </button>
-                    <span>© Mister Marx LLC, 2026</span>
-                  </div>
+                <div style={{ marginTop: 8, width: "100%" }}>
+                  <FooterBar
+                    version={GAME_VERSION}
+                    copyright={COPYRIGHT_TEXT}
+                    soundEnabled={soundEnabled}
+                    onToggleSound={handleToggleSound}
+                    compact={true}
+                    font={font}
+                  />
                 </div>
               </div>
             </div>)}
@@ -1872,8 +2260,24 @@ const lastTouchTimeRef = useRef(0);
 
               <div style={{width:"100%",maxWidth:480,marginBottom:8,zIndex:1,position:"relative"}}>
                 <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-                  <div style={{display:"flex",flexDirection:"column",alignItems:"flex-start",gap:2}}>
-                  <h1 style={{margin:0,fontSize:22,fontWeight:900,letterSpacing:"0.2em",color:"#f8fafc",textShadow:"0 0 20px rgba(14,116,144,0.3)",fontFamily:tFont,lineHeight:1,background:"linear-gradient(90deg, #f8fafc 0%, #e0f2fe 25%, #bae6fd 50%, #7dd3fc 75%, #f8fafc 100%)",backgroundSize:"200% 100%",WebkitBackgroundClip:"text",backgroundClip:"text",color:"transparent",textShadow:"none",animation:"textShimmer 3s ease-in-out infinite"}}>CORRELATION</h1>
+                  <div style={{display:"flex",flexDirection:"column",alignItems:"flex-start",gap:4}}>
+                  <GameTitle
+                    title={GAME_TITLE}
+                    fontFamily={tFont}
+                    size={22}
+                    letterSpacing="0.2em"
+                    centered={false}
+                  />
+                  <span
+                    style={{
+                      fontSize: 9,
+                      letterSpacing: "0.16em",
+                      color: "#94a3b8",
+                      fontWeight: 600
+                    }}
+                  >
+                    DIFFICULTY: {difficulty}
+                  </span>
                 </div>
                   <div style={{display:"flex",gap:14,flexWrap:"wrap"}}>
                     {[["SCORE",score.toLocaleString()],["LVL",level],["COMBO",combo>0?`×${combo}`:"—"],["LINKS",totalT]].map(([l,v])=>(
@@ -2018,27 +2422,15 @@ const lastTouchTimeRef = useRef(0);
                   <button style={S.ctrl} onClick={()=>setPaused(p=>!p)}>{paused?"▶ RESUME":"⏸ PAUSE"}</button>
                   <button style={S.ctrl} onClick={()=>setShowQuitConfirmation(true)}>↺ QUIT</button></div>
                 
-                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:12,fontSize:10,color:"#94a3b8",fontFamily:font,letterSpacing:"0.05em"}}>
-                  <span>CORRELATION v0.1</span>
-                  <button 
-                    onClick={() => {const enabled = SoundManager.toggle(); setSoundEnabled(enabled); SoundManager.play('menu', 0.5)}}
-                    style={{
-                      background:"none",
-                      border:"none",
-                      color:"#94a3b8",
-                      fontSize:10,
-                      cursor:"pointer",
-                      padding:0,
-                      display:"flex",
-                      alignItems:"center",
-                      justifyContent:"center",
-                      width:"auto",
-                      height:"auto"
-                    }}
-                  >
-                    {soundEnabled ? "🔊" : "🔇"}
-                  </button>
-                  <span>© Mister Marx LLC, 2026</span>
+                <div style={{ marginTop: 12 }}>
+                  <FooterBar
+                    version={GAME_VERSION}
+                    copyright={COPYRIGHT_TEXT}
+                    soundEnabled={soundEnabled}
+                    onToggleSound={handleToggleSound}
+                    compact={true}
+                    font={font}
+                  />
                 </div>
               </div>
 
@@ -2048,15 +2440,23 @@ const lastTouchTimeRef = useRef(0);
                 <span style={{fontSize:16,color:"#94a3b8",fontFamily:font,textAlign:"center",maxWidth:320,lineHeight:1.5}}>All progress will be lost</span>
                 
                 <div style={{display:"flex",flexDirection:"column",gap:12,alignItems:"center"}}>
-                  <button style={{padding:"12px 32px",backgroundColor:"#b91c1c",color:"#fff",border:"none",borderRadius:6,fontSize:14,fontWeight:700,letterSpacing:"0.12em",cursor:"pointer",fontFamily:"inherit",transition:"all 0.2s",boxShadow:"0 0 25px rgba(185,28,28,0.3)"}} onClick={()=>{
-                    restart();
-                    setShowQuitConfirmation(false);
-                  }}>
+                  <DangerButton
+                    onClick={() => {
+                      restart();
+                      setShowQuitConfirmation(false);
+                    }}
+                    fontFamily="inherit"
+                    fontSize={14}
+                    boxShadow="0 0 25px rgba(185,28,28,0.3)"
+                  >
                     QUIT TO MENU
-                  </button>
-                  <button style={{padding:"10px 24px",backgroundColor:"transparent",color:"#94a3b8",border:"none",borderRadius:6,fontSize:11,fontWeight:500,letterSpacing:"0.05em",cursor:"pointer",fontFamily:font,transition:"all 0.15s"}} onClick={()=>setShowQuitConfirmation(false)}>
-                    CANCEL
-                  </button>
+                  </DangerButton>
+                  <TextActionButton
+                      onClick={() => setShowQuitConfirmation(false)}
+                      fontFamily={font}
+                    >
+                      CANCEL
+                    </TextActionButton>
                 </div></div>}
 
               {phase==="over"&&<div style={{position:"fixed",top:"var(--app-top, 0px)",left:0,right:0,height:"var(--app-height, 100dvh)",backgroundColor:"rgba(3,7,18,0.92)",
@@ -2141,66 +2541,63 @@ const lastTouchTimeRef = useRef(0);
                     </div>))}
                 </div>
 
-                {showOverRules&&<div style={{maxWidth:480,display:"flex",flexDirection:"column",alignItems:"center",gap:14,width:"100%"}}>
-                  <div style={{display:"flex",flexDirection:"column",gap:4,padding:"10px 14px",backgroundColor:"rgba(15,23,42,0.6)",borderRadius:6,borderLeft:"3px solid #0e7490"}}>
-                    <span style={{fontSize:15,fontWeight:700,color:"#e2e8f0",fontFamily:font}}>QUANTUM LEAP</span>
-                    <span style={{fontSize:12,color:"#94a3b8",lineHeight:1.5,fontFamily:font}}>Click a node, then a second node with matching or greater energy. The first node transitions — its energy correlates with the second node's energy.</span>
-                  </div>
-                  
-                  <div style={{display:"flex",flexDirection:"column",gap:4,padding:"10px 14px",backgroundColor:"rgba(15,23,42,0.6)",borderRadius:6,borderLeft:"3px solid #0e7490"}}>
-                    <span style={{fontSize:15,fontWeight:700,color:"#e2e8f0",fontFamily:font}}>DISTANCE DECAY</span>
-                    <span style={{fontSize:12,color:"#94a3b8",lineHeight:1.5,fontFamily:font}}>Closer nodes have higher correlation probability. Distant transitions may decorrelate.</span>
-                  </div>
-                  
-                  <div style={{display:"flex",flexDirection:"column",gap:4,padding:"10px 14px",backgroundColor:"rgba(15,23,42,0.6)",borderRadius:6,borderLeft:"3px solid #0e7490"}}>
-                    <span style={{fontSize:15,fontWeight:700,color:"#e2e8f0",fontFamily:font}}>RECOIL CASCADE</span>
-                    <span style={{fontSize:12,color:"#94a3b8",lineHeight:1.5,fontFamily:font}}>High-energy transitions generate recoil momentum, clearing neighboring nodes. Chain transitions for combo multipliers.</span>
-                  </div>
-                  
-                  <div style={{display:"flex",flexDirection:"column",gap:4,padding:"10px 14px",backgroundColor:"rgba(15,23,42,0.6)",borderRadius:6,borderLeft:"3px solid #0e7490"}}>
-                    <span style={{fontSize:15,fontWeight:700,color:"#e2e8f0",fontFamily:font}}>VOID EQUILIBRIUM</span>
-                    <span style={{fontSize:12,color:"#94a3b8",lineHeight:1.5,fontFamily:font}}>The board fills with nodes. Clear them through correlated transitions before the grid saturates.</span>
-                  </div>
-                </div>}
+                {showOverRules && (
+                  <RulesPanel
+                    items={RULE_ITEMS}
+                    font={font}
+                    maxWidth={480}
+                    alignItems="center"
+                    width="100%"
+                  />
+                )}
 
                 <div style={{display:"flex",flexDirection:"column",gap:12,alignItems:"center"}}>
-                  <button style={S.btn} onClick={startGame}>PLAY AGAIN</button>
-                  <button style={{padding:"12px 32px",backgroundColor:"#b91c1c",color:"#fff",border:"none",borderRadius:6,fontSize:13,fontWeight:700,letterSpacing:"0.12em",cursor:"pointer",fontFamily:"inherit",boxShadow:"0 0 25px rgba(185,28,28,0.25)"}} onClick={restart}>QUIT TO MENU</button>
-                  <button style={{padding:"10px 24px",backgroundColor:"transparent",color:"#94a3b8",border:"none",borderRadius:6,fontSize:11,fontWeight:500,letterSpacing:"0.05em",cursor:"pointer",fontFamily:font,transition:"all 0.15s"}} onClick={()=>setShowOverRules(p=>!p)}>
-                    {showOverRules?"HIDE RULES":"VIEW RULES"}
-                  </button>
+                  <PrimaryButton
+                    onClick={startGame}
+                    fontFamily="inherit"
+                  >
+                    PLAY AGAIN
+                  </PrimaryButton>
+                  <DangerButton
+                    onClick={restart}
+                    fontFamily="inherit"
+                  >
+                    QUIT TO MENU
+                  </DangerButton>
+                  <TextActionButton
+                    onClick={() => setShowOverRules(p => !p)}
+                    fontFamily={font}
+                  >
+                    {showOverRules ? "HIDE RULES" : "VIEW RULES"}
+                  </TextActionButton>
                 </div></div>}
 
               {paused&&<div style={{position:"fixed",top:"var(--app-top, 0px)",left:0,right:0,height:"var(--app-height, 100dvh)",backgroundColor:"rgba(3,7,18,0.92)",
                 display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:20,zIndex:100}}>
                 <span style={{fontSize:32,fontWeight:900,letterSpacing:"0.3em",color:"#f8fafc",fontFamily:tFont}}>PAUSED</span>
                 
-                {showPauseRules&&<div style={{maxWidth:480,display:"flex",flexDirection:"column",alignItems:"center",gap:14,width:"100%"}}>
-                  <div style={{display:"flex",flexDirection:"column",gap:4,padding:"10px 14px",backgroundColor:"rgba(15,23,42,0.6)",borderRadius:6,borderLeft:"3px solid #0e7490"}}>
-                    <span style={{fontSize:15,fontWeight:700,color:"#e2e8f0",fontFamily:font}}>QUANTUM LEAP</span>
-                    <span style={{fontSize:12,color:"#94a3b8",lineHeight:1.5,fontFamily:font}}>Click a node, then a second node with matching or greater energy. The first node transitions — its energy correlates with the second node's energy.</span>
-                  </div>
-                  
-                  <div style={{display:"flex",flexDirection:"column",gap:4,padding:"10px 14px",backgroundColor:"rgba(15,23,42,0.6)",borderRadius:6,borderLeft:"3px solid #0e7490"}}>
-                    <span style={{fontSize:15,fontWeight:700,color:"#e2e8f0",fontFamily:font}}>DISTANCE DECAY</span>
-                    <span style={{fontSize:12,color:"#94a3b8",lineHeight:1.5,fontFamily:font}}>Closer nodes have higher correlation probability. Distant transitions may decorrelate.</span>
-                  </div>
-                  
-                  <div style={{display:"flex",flexDirection:"column",gap:4,padding:"10px 14px",backgroundColor:"rgba(15,23,42,0.6)",borderRadius:6,borderLeft:"3px solid #0e7490"}}>
-                    <span style={{fontSize:15,fontWeight:700,color:"#e2e8f0",fontFamily:font}}>RECOIL CASCADE</span>
-                    <span style={{fontSize:12,color:"#94a3b8",lineHeight:1.5,fontFamily:font}}>High-energy transitions generate recoil momentum, clearing neighboring nodes. Chain transitions for combo multipliers.</span>
-                  </div>
-                  
-                  <div style={{display:"flex",flexDirection:"column",gap:4,padding:"10px 14px",backgroundColor:"rgba(15,23,42,0.6)",borderRadius:6,borderLeft:"3px solid #0e7490"}}>
-                    <span style={{fontSize:15,fontWeight:700,color:"#e2e8f0",fontFamily:font}}>VOID EQUILIBRIUM</span>
-                    <span style={{fontSize:12,color:"#94a3b8",lineHeight:1.5,fontFamily:font}}>The board fills with nodes. Clear them through correlated transitions before the grid saturates.</span>
-                  </div>
-                </div>}
+                {showPauseRules && (
+                  <RulesPanel
+                    items={RULE_ITEMS}
+                    font={font}
+                    maxWidth={480}
+                    alignItems="center"
+                    width="100%"
+                  />
+                )}
                 
-                <button style={S.btn} onClick={()=>setPaused(false)}>RESUME</button>
-                <button style={{padding:"10px 24px",backgroundColor:"transparent",color:"#94a3b8",border:"none",borderRadius:6,fontSize:11,fontWeight:500,letterSpacing:"0.05em",cursor:"pointer",fontFamily:font,transition:"all 0.15s"}} onClick={()=>setShowPauseRules(p=>!p)}>
-                    {showPauseRules?"HIDE RULES":"VIEW RULES"}
-                  </button></div>}
+                <PrimaryButton
+                  onClick={() => setPaused(false)}
+                  fontFamily="inherit"
+                >
+                  RESUME
+                </PrimaryButton>
+                <TextActionButton
+                    onClick={() => setShowPauseRules(p => !p)}
+                    fontFamily={font}
+                  >
+                    {showPauseRules ? "HIDE RULES" : "VIEW RULES"}
+                  </TextActionButton></div>}
             </div>);
           }
 
