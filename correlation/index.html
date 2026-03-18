@@ -1022,7 +1022,8 @@
   const[showPauseRules,setShowPauseRules]=useState(false);
   const[showMenuRules,setShowMenuRules]=useState(false);
   const[showMenuControls,setShowMenuControls]=useState(false);
-  const[showQuitConfirmation,setShowQuitConfirmation]=useState(false);
+  const[showCompanionPage,setShowCompanionPage]=useState(false);
+          const[showQuitConfirmation,setShowQuitConfirmation]=useState(false);
           const[showCredits,setShowCredits]=useState(false);
           const[creditsPaused,setCreditsPaused]=useState(false);
 
@@ -2446,6 +2447,25 @@ const lastTouchTimeRef = useRef(0);
                         VIEW CONTROLS
                       </TextActionButton>
                     </div>
+                    <div style={{display: "flex", justifyContent: "center", width: "100%", marginTop: 8}}>
+                      <TextActionButton
+                        onClick={() => {
+                          window.dispatchEvent(new Event('showCompanionPage'));
+                        }}
+                        fontFamily={font}
+                        padding="12px 20px"
+                        fontSize={12}
+                        borderRadius={8}
+                        width="auto"
+                        style={{
+                          textShadow: "0 0 6px rgba(255,255,255,0.7), 0 0 12px rgba(255,255,255,0.4)",
+                          color: "#94a3b8",
+                          animation: "glowPulse 2s ease-in-out infinite"
+                        }}
+                      >
+                        VIEW COMPANION PAGE
+                      </TextActionButton>
+                    </div>
                   </div>
                 </div>
 
@@ -2851,23 +2871,50 @@ const lastTouchTimeRef = useRef(0);
                 >
                   RESUME
                 </PrimaryButton>
-                <div style={{display: "flex", gap: 4, width: "100%", justifyContent: "center"}}>
-                  <TextActionButton
-                      onClick={() => window.dispatchEvent(new Event('showMenuRules'))}
-                      fontFamily={font}
-                      width="auto"
-                      padding="12px 24px"
-                    >
-                      VIEW RULES
-                    </TextActionButton>
+                <div style={{display: "flex", gap: 4, width: "100%", justifyContent: "center", flexDirection: "column", alignItems: "center", marginTop: 8}}>
+                  <div style={{display: "flex", gap: 4, width: "100%", justifyContent: "center"}}>
                     <TextActionButton
-                      onClick={() => window.dispatchEvent(new Event('showMenuControls'))}
-                      fontFamily={font}
-                      width="auto"
-                      padding="12px 24px"
-                    >
-                      VIEW CONTROLS
+                        onClick={() => window.dispatchEvent(new Event('showMenuRules'))}
+                        fontFamily={font}
+                        width="auto"
+                        padding="12px 24px"
+                        style={{
+                          textShadow: "0 0 6px rgba(255,255,255,0.7), 0 0 12px rgba(255,255,255,0.4)",
+                          color: "#94a3b8",
+                          animation: "glowPulse 2s ease-in-out infinite"
+                        }}
+                      >
+                        VIEW RULES
+                      </TextActionButton>
+                    <TextActionButton
+                        onClick={() => window.dispatchEvent(new Event('showMenuControls'))}
+                        fontFamily={font}
+                        width="auto"
+                        padding="12px 24px"
+                        style={{
+                          textShadow: "0 0 6px rgba(255,255,255,0.7), 0 0 12px rgba(255,255,255,0.4)",
+                          color: "#94a3b8",
+                          animation: "glowPulse 2s ease-in-out infinite"
+                        }}
+                      >
+                        VIEW CONTROLS
                     </TextActionButton>
+                  </div>
+                  <TextActionButton
+                    onClick={() => {
+                      window.dispatchEvent(new Event('showCompanionPage'));
+                    }}
+                    fontFamily={font}
+                    width="auto"
+                    padding="12px 24px"
+                    style={{
+                      textShadow: "0 0 6px rgba(255,255,255,0.7), 0 0 12px rgba(255,255,255,0.4)",
+                      color: "#94a3b8",
+                      animation: "glowPulse 2s ease-in-out infinite"
+                    }}
+                  >
+                    VIEW COMPANION PAGE
+                  </TextActionButton>
                 </div></div>}
             </div>);
           }
@@ -2888,6 +2935,7 @@ const lastTouchTimeRef = useRef(0);
           const [showCredits, setShowCredits] = React.useState(false);
           const [showMenuRules, setShowMenuRules] = React.useState(false);
           const [showMenuControls, setShowMenuControls] = React.useState(false);
+          const [showCompanionPage, setShowCompanionPage] = React.useState(false);
           const tFont = "'Orbitron',sans-serif";
           const font = "'IBM Plex Mono',monospace";
           
@@ -2905,6 +2953,8 @@ const lastTouchTimeRef = useRef(0);
             const handleHideMenuRules = () => setShowMenuRules(false);
             const handleShowMenuControls = () => setShowMenuControls(true);
             const handleHideMenuControls = () => setShowMenuControls(false);
+            const handleShowCompanionPage = () => setShowCompanionPage(true);
+            const handleHideCompanionPage = () => setShowCompanionPage(false);
             
             window.addEventListener('showCredits', handleShowCredits);
             window.addEventListener('hideCredits', handleHideCredits);
@@ -2912,6 +2962,8 @@ const lastTouchTimeRef = useRef(0);
             window.addEventListener('hideMenuRules', handleHideMenuRules);
             window.addEventListener('showMenuControls', handleShowMenuControls);
             window.addEventListener('hideMenuControls', handleHideMenuControls);
+            window.addEventListener('showCompanionPage', handleShowCompanionPage);
+            window.addEventListener('hideCompanionPage', handleHideCompanionPage);
             
             return () => {
               window.removeEventListener('showCredits', handleShowCredits);
@@ -2920,6 +2972,8 @@ const lastTouchTimeRef = useRef(0);
               window.removeEventListener('hideMenuRules', handleHideMenuRules);
               window.removeEventListener('showMenuControls', handleShowMenuControls);
               window.removeEventListener('hideMenuControls', handleHideMenuControls);
+              window.removeEventListener('showCompanionPage', handleShowCompanionPage);
+              window.removeEventListener('hideCompanionPage', handleHideCompanionPage);
             };
           }, []);
           
@@ -3032,6 +3086,85 @@ const lastTouchTimeRef = useRef(0);
                     >
                       CLOSE
                     </button>
+                </div>
+              </div>}
+
+              {/* Companion Page popup at root level */}
+              {showCompanionPage && <div style={{position:"fixed",top:"var(--app-top, 0px)",left:0,right:0,height:"var(--app-height, 100dvh)",backgroundColor:"rgba(3,7,18,0.98)",
+                display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",zIndex:1000}}>
+                <div style={{
+                  width:"95%",
+                  maxWidth:480,
+                  height:"90vh",
+                  backgroundColor:"#030712",
+                  borderRadius:12,
+                  border:"1px solid rgba(148,163,184,0.18)",
+                  boxShadow:"0 20px 60px rgba(0,0,0,0.35)",
+                  overflow:"hidden",
+                  display:"flex",
+                  flexDirection:"column"
+                }}>
+                  <div style={{
+                    display:"flex",
+                    justifyContent:"space-between",
+                    alignItems:"center",
+                    padding:"16px 20px",
+                    borderBottom:"1px solid rgba(148,163,184,0.18)",
+                    backgroundColor:"rgba(15,23,42,0.82)"
+                  }}>
+                    <span style={{
+                      fontSize:16,
+                      fontWeight:800,
+                      letterSpacing:"0.1em",
+                      color:"#e2e8f0",
+                      fontFamily:tFont
+                    }}>
+                      COMPANION PAGE
+                    </span>
+                    <button
+                      onClick={() => {
+                        setShowCompanionPage(false);
+                        window.dispatchEvent(new Event('hideCompanionPage'));
+                      }}
+                      style={{
+                        background:"none",
+                        border:"none",
+                        color:"#94a3b8",
+                        fontSize:20,
+                        cursor:"pointer",
+                        padding:4,
+                        borderRadius:4,
+                        transition:"all 0.2s"
+                      }}
+                      onMouseOver={(e) => {
+                        e.target.style.backgroundColor = "rgba(148,163,184,0.1)";
+                        e.target.style.color = "#e2e8f0";
+                      }}
+                      onMouseOut={(e) => {
+                        e.target.style.backgroundColor = "transparent";
+                        e.target.style.color = "#94a3b8";
+                      }}
+                    >
+                      ×
+                    </button>
+                  </div>
+                  <div style={{
+                    flex:1,
+                    overflow:"hidden",
+                    padding:0
+                  }}>
+                    <iframe
+                      src="companion-page.html"
+                      style={{
+                        width:"100%",
+                        height:"100%",
+                        border:"none",
+                        backgroundColor:"#030712"
+                      }}
+                      title="Companion Page"
+                      scrolling="yes"
+                    />
+                  </div>
                 </div>
               </div>}
             </>
