@@ -1,41 +1,537 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Main Game Page</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-        }
-        .coming-soon {
-            text-align: center;
-            padding: 2rem;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 10px;
-            backdrop-filter: blur(10px);
-        }
-        h1 {
-            font-size: 3rem;
-            margin-bottom: 1rem;
-        }
-        p {
-            font-size: 1.2rem;
-            margin-bottom: 0.5rem;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MisterMarx.com Games Hub</title>
+  <meta
+    name="description"
+    content="Explore MisterMarx.com games and companion pages designed around Mathematical Habits of Mind, reasoning, reflection, and intentional play."
+  />
+  <style>
+    :root {
+      --bg: #020617;
+      --panel: rgba(15, 23, 42, 0.82);
+      --panel-2: rgba(30, 41, 59, 0.78);
+      --line: rgba(148, 163, 184, 0.18);
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+      --soft: #cbd5e1;
+      --cyan: #67e8f9;
+      --teal: #14b8a6;
+      --blue: #60a5fa;
+      --amber: #fbbf24;
+      --shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+      --radius: 18px;
+      --radius-sm: 12px;
+      --max: 1180px;
+    }
+
+    * { box-sizing: border-box; }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background:
+        radial-gradient(circle at top, rgba(20,184,166,0.10), transparent 30%),
+        radial-gradient(circle at 80% 20%, rgba(96,165,250,0.12), transparent 26%),
+        linear-gradient(180deg, #020617 0%, #06111f 100%);
+      color: var(--text);
+      line-height: 1.6;
+    }
+
+    a {
+      color: var(--cyan);
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    .wrap {
+      max-width: var(--max);
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    .hero {
+      position: relative;
+      overflow: hidden;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .hero::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(135deg, rgba(103,232,249,0.08), transparent 30%),
+        linear-gradient(315deg, rgba(96,165,250,0.10), transparent 34%);
+      pointer-events: none;
+    }
+
+    .hero-inner {
+      position: relative;
+      max-width: var(--max);
+      margin: 0 auto;
+      padding: 64px 24px 42px;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(15,23,42,0.65);
+      color: var(--soft);
+      font-size: 12px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      font-weight: 700;
+    }
+
+    h1, h2, h3 {
+      margin: 0 0 12px;
+      line-height: 1.15;
+    }
+
+    h1 {
+      margin-top: 18px;
+      font-size: clamp(2.2rem, 6vw, 4.8rem);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-weight: 900;
+      background: linear-gradient(90deg, #f8fafc 0%, #bae6fd 40%, #67e8f9 70%, #f8fafc 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .hero-sub {
+      max-width: 860px;
+      color: var(--soft);
+      font-size: clamp(1rem, 1.8vw, 1.18rem);
+      margin: 14px 0 0;
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 26px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 12px 18px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: rgba(15,23,42,0.84);
+      color: var(--text);
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      box-shadow: var(--shadow);
+    }
+
+    .btn.primary {
+      background: linear-gradient(135deg, rgba(20,184,166,0.24), rgba(14,116,144,0.34));
+      border-color: rgba(103,232,249,0.28);
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+    }
+
+    .section-card {
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+
+    .section-head {
+      margin-bottom: 18px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .kicker {
+      color: var(--cyan);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .section-title {
+      font-size: clamp(1.35rem, 2vw, 2rem);
+      font-weight: 900;
+      letter-spacing: 0.02em;
+    }
+
+    .lead {
+      color: var(--soft);
+      margin: 0;
+    }
+
+    .three-col {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 18px;
+    }
+
+    .audience-card {
+      padding: 18px;
+      border-radius: 16px;
+      border: 1px solid var(--line);
+      background: rgba(2,6,23,0.34);
+    }
+
+    .audience-card h3 {
+      margin-bottom: 10px;
+      font-size: 1.05rem;
+    }
+
+    .audience-card p {
+      margin: 0;
+      color: var(--soft);
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .chip {
+      padding: 9px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: rgba(2,6,23,0.36);
+      color: var(--text);
+      font-size: 0.95rem;
+      font-weight: 700;
+    }
+
+    .resource-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 18px;
+    }
+
+    .resource-card {
+      padding: 20px;
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      background: rgba(2,6,23,0.36);
+      box-shadow: var(--shadow);
+    }
+
+    .resource-type {
+      display: inline-block;
+      margin-bottom: 10px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: rgba(15,23,42,0.65);
+      color: var(--soft);
+      font-size: 0.8rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .resource-card h3 {
+      margin-bottom: 8px;
+      font-size: 1.2rem;
+    }
+
+    .resource-card p {
+      margin: 0 0 14px 0;
+      color: var(--soft);
+    }
+
+    .resource-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .footer {
+      border-top: 1px solid var(--line);
+      padding: 28px 0 42px;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    @media (max-width: 980px) {
+      .three-col,
+      .resource-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .wrap,
+      .hero-inner {
+        padding-left: 16px;
+        padding-right: 16px;
+      }
+
+      .section-card,
+      .resource-card {
+        padding: 18px;
+      }
+
+      h1 {
+        letter-spacing: 0.04em;
+      }
+    }
+  </style>
 </head>
 <body>
-    <div class="coming-soon">
-        <h1>Main Game Page</h1>
-        <p>Coming Soon!</p>
+  <header class="hero">
+    <div class="hero-inner">
+      <div class="eyebrow">
+        MisterMarx.com Games
+      </div>
+
+      <h1>Games Hub</h1>
+
+      <p class="lead">
+        MisterMarx.com games are designed around <strong>Mathematical Habits of Mind</strong> — 
+        ways of thinking that mathematics education research identifies as essential for reasoning, 
+        conjecture, and structural thinking
+        <a href="https://www.sciencedirect.com/science/article/pii/S0732312396900231" target="_blank">
+        (Cuoco, Goldenberg, & Mark, 1996)
+        </a>
+        and further developed in MisterMarx.com's educational approach
+        <a href="https://www.mistermarx.com/mathematicalhabitsofmind" target="_blank">
+        (MisterMarx.com, 2026)
+        </a>.
+      </p>
+
+      <div class="hero-actions">
+        <a class="btn primary" href="#games-library">Browse Games</a>
+        <a class="btn" href="https://www.mistermarx.com" target="_blank" rel="noopener noreferrer">Back to MisterMarx.com</a>
+      </div>
     </div>
+  </header>
+
+  <main class="wrap">
+    <section class="panel section-card">
+      <div class="section-head">
+        <div class="kicker">What to Expect</div>
+        <h2 class="section-title">From a Companion Page</h2>
+      </div>
+
+      <p class="lead">
+        Expect a clear explanation of what the game develops, what habits of mind it activates,
+        and how to think about the experience more intentionally. Research shows that 
+        pairing games with structured reflection enhances learning outcomes
+        <a href="https://www.researchgate.net/publication/220732085_What_video_games_have_to_teach_us_about_learning_and_literacy" target="_blank">
+        (Gee, 2003)
+        </a>.
+      </p>
+
+      <div class="chips">
+        <div class="chip">What the game develops</div>
+        <div class="chip">Habits of mind involved</div>
+        <div class="chip">How to think about play</div>
+        <div class="chip">How to discuss the experience</div>
+        <div class="chip">Guidance for intentional use</div>
+      </div>
+    </section>
+
+    <section class="panel section-card">
+      <div class="section-head">
+        <div class="kicker">What to Expect</div>
+        <h2 class="section-title">From the Full Package</h2>
+      </div>
+
+      <div class="three-col">
+        <div class="audience-card">
+          <h3>The game</h3>
+          <p>
+            The game gives the experience. It is where the player acts, notices, adjusts,
+            and learns through play. Games create situated problem-solving environments 
+            that support cognitive development
+            <a href="https://www.nature.com/articles/nature01069" target="_blank">
+            (Green & Bavelier, 2003)
+            </a>.
+          </p>
+        </div>
+
+        <div class="audience-card">
+          <h3>The companion page</h3>
+          <p>
+            The companion page explains the learning behind that experience and helps make the thinking visible.
+            This approach aligns with research on productive mathematical discussions
+            <a href="https://eric.ed.gov/?id=EJ815183" target="_blank">
+            (Stein, Engle, Smith, & Hughes, 2008)
+            </a>.
+          </p>
+        </div>
+
+        <div class="audience-card">
+          <h3>Together</h3>
+          <p>
+            Together they turn play into a more intentional learning experience without removing discovery.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section id="games-library" class="panel section-card">
+      <div class="section-head">
+        <div class="kicker">Game Library</div>
+        <h2 class="section-title">Choose a Game or Companion Page</h2>
+      </div>
+
+      <div class="resource-grid">
+        <article class="resource-card">
+          <div class="resource-type">Game</div>
+          <h3>CORRELATION</h3>
+          <p>
+            A fast-paced system management game built around active decisions,
+            timing, pattern recognition, and consequence. The game strongly activates 
+            key Mathematical Habits of Mind
+            <a href="https://www.mistermarx.com/mathematicalhabitsofmind" target="_blank">
+            (MisterMarx.com, 2026)
+            </a>.
+          </p>
+          <div class="resource-actions">
+            <a class="btn primary" href="https://www.mistermarx.com/games/correlation" target="_blank" rel="noopener noreferrer">Play Game</a>
+          </div>
+        </article>
+
+        <article class="resource-card">
+          <div class="resource-type">Companion Page</div>
+          <h3>CORRELATION Companion Page</h3>
+          <p>
+            A companion resource explaining the habits of mind, reflection,
+            and learning opportunities behind the game experience. Based on 
+            established mathematics education research
+            <a href="https://www.sciencedirect.com/science/article/pii/S0732312396900231" target="_blank">
+            (Cuoco, Goldenberg, & Mark, 1996)
+            </a>.
+          </p>
+          <div class="resource-actions">
+            <a class="btn primary" href="https://www.mistermarx.com/correlation-companion-page" target="_blank" rel="noopener noreferrer">Open Companion Page</a>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="panel section-card">
+      <div class="section-head">
+        <div class="kicker">References & Standards</div>
+        <h2 class="section-title">Resources, Research, and Standards</h2>
+      </div>
+
+      <p class="lead">
+        Companion pages may include MisterMarx.com resources, educational research, and standards references.
+        These help explain what a game develops, how the experience can be used intentionally,
+        and which mathematical practices or habits of mind are most strongly involved.
+      </p>
+
+      <div class="chips">
+        <div class="chip">MisterMarx.com Resources</div>
+        <div class="chip">Educational Research</div>
+        <div class="chip">Standards References</div>
+        <div class="chip">Mathematical Habits of Mind</div>
+        <div class="chip">Common Core Practices</div>
+      </div>
+    </section>
+
+    <section id="references" class="panel section-card">
+      <div class="section-head">
+        <div class="kicker">Research</div>
+        <h2 class="section-title">References & Further Reading</h2>
+      </div>
+
+      <h3>MisterMarx.com Educational Resources</h3>
+      <ul>
+        <li><a href="https://www.mistermarx.com/mathematicalhabitsofmind" target="_blank">
+        MisterMarx.com (2026). Mathematical Habits of Mind Framework.
+        </a></li>
+        <li><a href="https://www.mistermarx.com/games/correlation" target="_blank">
+        MisterMarx.com. (2026). CORRELATION Game.
+        </a></li>
+        <li><a href="https://www.mistermarx.com/games/correlation/companion-page.html" target="_blank">
+        MisterMarx.com. (2026). CORRELATION Game Companion Page.
+        </a></li>
+      </ul>
+
+      <h3>Academic Sources</h3>
+      <ul>
+        <li>
+          <a href="https://www.sciencedirect.com/science/article/pii/S0732312396900231" target="_blank">
+          Cuoco, A., Goldenberg, E. P., & Mark, J. (1996).
+          Habits of Mind: An Organizing Principle for Mathematics Curricula.
+          Journal of Mathematical Behavior.
+          </a>
+        </li>
+        <li>
+          <a href="https://eric.ed.gov/?id=EJ815183" target="_blank">
+          Stein, M. K., Engle, R. A., Smith, M. S., & Hughes, E. K. (2008).
+          Orchestrating Productive Mathematical Discussions:
+          Five Practices for Helping Teachers Move Beyond Show and Tell.
+          </a>
+        </li>
+        <li>
+          <a href="https://www.researchgate.net/publication/220732085_What_video_games_have_to_teach_us_about_learning_and_literacy" target="_blank">
+          Gee, J. P. (2003). What video games have to teach us about learning and literacy.
+          Computers in Entertainment.
+          </a>
+        </li>
+        <li>
+          <a href="https://www.nature.com/articles/nature01069" target="_blank">
+          Green, C. S., & Bavelier, D. (2003). Action video game modifies visual selective attention.
+          Nature, 423(6939), 534-537.
+          </a>
+        </li>
+      </ul>
+
+      <h3>Standards References</h3>
+      <ul>
+        <li>
+          <a href="https://www.corestandards.org/wp-content/uploads/Math_Standards.pdf" target="_blank">
+          National Governors Association Center for Best Practices & Council of
+          Chief State School Officers. (2010).
+          <strong>Common Core State Standards for Mathematics.</strong>
+          Washington, DC.
+          </a>
+        </li>
+        <li>
+          <a href="https://www.corestandards.org/Math/Practice/" target="_blank">
+          Common Core State Standards Initiative.
+          <strong>Standards for Mathematical Practice.</strong>
+          https://www.corestandards.org/Math/Practice/
+          </a>
+        </li>
+      </ul>
+    </section>
+
+    <footer class="footer">
+      <p style="margin: 0;">
+        Visit <a href="https://www.mistermarx.com" target="_blank" rel="noopener noreferrer">MisterMarx.com</a>
+        to explore more games, companion pages, and educational resources.
+      </p>
+    </footer>
+  </main>
 </body>
 </html>
