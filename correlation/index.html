@@ -382,7 +382,7 @@
             }
         };
 
-        const GAME_VERSION = "CORRELATION v0.2";
+        const GAME_VERSION = "v0.2";
         const COPYRIGHT_TEXT = "© MisterMarx.com, 2026";
         const GAME_TITLE = "CORRELATION";
 
@@ -556,6 +556,20 @@
           compact = false,
           font
         }) {
+          // Calculate responsive copyright font size
+          const [viewportWidth, setViewportWidth] = useState(480);
+          useEffect(() => {
+            const updateWidth = () => {
+              const width = Math.min(window.innerWidth, 480);
+              setViewportWidth(width);
+            };
+            updateWidth();
+            window.addEventListener('resize', updateWidth);
+            return () => window.removeEventListener('resize', updateWidth);
+          }, []);
+          
+          const copyrightFontSize = Math.max(7, Math.min(10, viewportWidth / 48));
+
           if (compact) {
             return (
               <div
@@ -622,7 +636,9 @@
                   style={{
                     color: "#94a3b8",
                     textDecoration: "none",
-                    cursor: "pointer"
+                    cursor: "pointer",
+                    fontSize: copyrightFontSize,
+                    whiteSpace: "nowrap"
                   }}
                 >
                   {copyright}
@@ -698,7 +714,9 @@
                   style={{
                     color: "#94a3b8",
                     textDecoration: "none",
-                    cursor: "pointer"
+                    cursor: "pointer",
+                    fontSize: copyrightFontSize,
+                    whiteSpace: "nowrap"
                   }}
                 >
                   {copyright}
@@ -2133,6 +2151,21 @@ const lastTouchTimeRef = useRef(0);
           const font="'IBM Plex Mono',monospace",tFont="'Orbitron',sans-serif";
           const nowMs=Date.now();
 
+          // Calculate responsive font sizes based on viewport width
+          const [viewportWidth, setViewportWidth] = useState(480);
+          useEffect(() => {
+            const updateWidth = () => {
+              const width = Math.min(window.innerWidth, 480);
+              setViewportWidth(width);
+            };
+            updateWidth();
+            window.addEventListener('resize', updateWidth);
+            return () => window.removeEventListener('resize', updateWidth);
+          }, []);
+          
+          const titleFontSize = Math.max(12, Math.min(22, viewportWidth / 34));
+          const diffFontSize = 8;
+
           // Loading Screen
           if(isLoading){return(
             <div style={{
@@ -2337,7 +2370,7 @@ const lastTouchTimeRef = useRef(0);
                     <GameTitle
                       title={GAME_TITLE}
                       fontFamily={tFont}
-                      size={"clamp(2rem, 8vw, 4rem)"}
+                      size={"clamp(1.8rem, 8vw, 4rem)"}
                       letterSpacing="0.2em"
                       centered={true}
                     />
@@ -2483,29 +2516,30 @@ const lastTouchTimeRef = useRef(0);
 
               <div style={{width:"100%",maxWidth:480,marginBottom:8,zIndex:1,position:"relative"}}>
                 <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-                  <div style={{display:"flex",flexDirection:"column",alignItems:"flex-start",gap:4}}>
+                  <div style={{display:"flex",flexDirection:"column",alignItems:"flex-start",gap:4,flex:1,minWidth:0,marginRight:12}}>
                   <GameTitle
                     title={GAME_TITLE}
                     fontFamily={tFont}
-                    size={22}
+                    size={titleFontSize}
                     letterSpacing="0.2em"
                     centered={false}
                   />
                   <span
                     style={{
-                      fontSize: 9,
+                      fontSize: diffFontSize,
                       letterSpacing: "0.16em",
                       color: "#94a3b8",
-                      fontWeight: 600
+                      fontWeight: 600,
+                      lineHeight: 1
                     }}
                   >
                     DIFFICULTY: {difficulty}
                   </span>
                 </div>
-                  <div style={{display:"flex",gap:14,flexWrap:"wrap"}}>
+                  <div style={{display:"flex",gap:14,flexWrap:"nowrap",flexShrink:0}}>
                     {[["SCORE",score.toLocaleString()],["LVL",level],["COMBO",combo>0?`×${combo}`:"—"],["LINKS",totalT]].map(([l,v])=>(
-                      <div key={l} style={{display:"flex",flexDirection:"column",gap:8}}>
-                        <span style={{fontSize:8,letterSpacing:"0.15em",color:"#94a3b8",fontWeight:600}}>{l}</span>
+                      <div key={l} style={{display:"flex",flexDirection:"column",gap:8,flexShrink:0}}>
+                        <span style={{fontSize:8,letterSpacing:"0.15em",color:"#94a3b8",fontWeight:600,whiteSpace:"nowrap"}}>{l}</span>
                         <div style={{position:"relative",display:"flex",alignItems:"center",justifyContent:"center"}}>
                           {l==="COMBO"&&combo>0&&(() => {
                             const colors = ["#e879f9", "#fcd34d", "#6ee7b7", "#67e8f9", "#93c5fd", "#b91c1c", "transparent"];
@@ -2575,7 +2609,7 @@ const lastTouchTimeRef = useRef(0);
               zIndex:1
             }}/>
           )}
-                          <span style={{fontSize:15,fontWeight:700,color:l==="COMBO"&&combo>0?"#fbbf24":"#f1f5f9",position:"relative",zIndex:2}}>{v}</span>
+                          <span style={{fontSize:15,fontWeight:700,color:l==="COMBO"&&combo>0?"#fbbf24":"#f1f5f9",position:"relative",zIndex:2,whiteSpace:"nowrap"}}>{v}</span>
                           {l==="LVL"&&transitionHistory.map((lvl, i) => (
                             <div key={i} style={{
                               position:"absolute",
