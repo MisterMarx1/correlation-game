@@ -764,7 +764,8 @@
           borderRadius = 6,
           letterSpacing = "0.12em",
           width = "auto",
-          boxShadow = "0 0 25px rgba(14,116,144,0.3)"
+          boxShadow = "0 0 25px rgba(14,116,144,0.3)",
+          disableBorderAnimation = false
         }) {
           return (
             <button
@@ -787,18 +788,20 @@
                 overflow: "hidden"
               }}
             >
-              <div style={{
-                position: "absolute",
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                borderRadius: "inherit",
-                padding: "2px",
-                background: "conic-gradient(from 0deg at 50% 50%, transparent 0deg, rgba(255,255,255,0.8) 45deg, transparent 90deg, transparent 360deg)",
-                animation: "rotateBorder 2s linear infinite",
-                zIndex: 1
-              }} />
+              {!disableBorderAnimation && (
+                <div style={{
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  borderRadius: "inherit",
+                  padding: "2px",
+                  background: "conic-gradient(from 0deg at 50% 50%, transparent 0deg, rgba(255,255,255,0.8) 45deg, transparent 90deg, transparent 360deg)",
+                  animation: "rotateBorder 2s linear infinite",
+                  zIndex: 1
+                }} />
+              )}
               <div style={{
                 position: "absolute",
                 top: "2px",
@@ -2779,6 +2782,7 @@ const lastTouchTimeRef = useRef(0);
                 <PrimaryButton
                   onClick={() => setPaused(false)}
                   fontFamily="inherit"
+                  disableBorderAnimation={true}
                 >
                   RESUME
                 </PrimaryButton>
