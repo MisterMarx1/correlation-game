@@ -963,16 +963,23 @@
   const[showMenuRules,setShowMenuRules]=useState(false);
   const[showQuitConfirmation,setShowQuitConfirmation]=useState(false);
           const[showCredits,setShowCredits]=useState(false);
+          const[creditsPaused,setCreditsPaused]=useState(false);
 
           // Listen for credits events from AppWrapper
           useEffect(() => {
             const handleHideCredits = () => setShowCredits(false);
             const handleHideMenuRules = () => setShowMenuRules(false);
+            const handlePauseForCredits = () => setCreditsPaused(true);
+            const handleResumeFromCredits = () => setCreditsPaused(false);
             window.addEventListener('hideCredits', handleHideCredits);
             window.addEventListener('hideMenuRules', handleHideMenuRules);
+            window.addEventListener('pauseForCredits', handlePauseForCredits);
+            window.addEventListener('resumeFromCredits', handleResumeFromCredits);
             return () => {
               window.removeEventListener('hideCredits', handleHideCredits);
               window.removeEventListener('hideMenuRules', handleHideMenuRules);
+              window.removeEventListener('pauseForCredits', handlePauseForCredits);
+              window.removeEventListener('resumeFromCredits', handleResumeFromCredits);
             };
           }, []);
           const[showOverRules,setShowOverRules]=useState(false);
@@ -1135,7 +1142,7 @@ const lastTouchTimeRef = useRef(0);
           const firePart=useCallback((x,y,n,col)=>{particlesRef.current.push(...mkParticles(x,y,n,col))},[]);
 
           const spawnTick=useCallback(()=>{
-            if(phase!=="play"||paused||showQuitConfirmation||showCredits)return;const now=Date.now();
+            if(phase!=="play"||paused||showQuitConfirmation||showCredits||creditsPaused)return;const now=Date.now();
             setGrid(prev=>{const ng=prev.map(r=>r.map(c=>({...c})));
               let f=0;let allFives=true;
               for(let y=0;y<ROWS;y++)for(let x=0;x<COLS;x++){
@@ -1152,10 +1159,10 @@ const lastTouchTimeRef = useRef(0);
               for(let a=0;a<40&&s<cnt;a++){const x=Math.floor(Math.random()*COLS),y=Math.floor(Math.random()*ROWS);
                 if(ng[y][x].e===0){ng[y][x]=mkCell(level,now);s++;SoundManager.play('spawn', 0.3)}}
               return ng});
-          },[phase,paused,level,showQuitConfirmation,showCredits]);
+          },[phase,paused,level,showQuitConfirmation,showCredits,creditsPaused]);
 
           const decayTick=useCallback(()=>{
-            if(phase!=="play"||paused||showQuitConfirmation||showCredits)return;const now=Date.now();const ols=[];
+            if(phase!=="play"||paused||showQuitConfirmation||showCredits||creditsPaused)return;const now=Date.now();const ols=[];
             setGrid(prev=>{const ng=prev.map(r=>r.map(c=>({...c})));let over=false;
               for(let y=0;y<ROWS;y++)for(let x=0;x<COLS;x++){const c=ng[y][x];
                 if(c.e>0&&c.decay>0&&now>c.decay){
@@ -1190,21 +1197,21 @@ const lastTouchTimeRef = useRef(0);
                 if(nx>=0&&nx<COLS&&ny>=0&&ny<ROWS){const np=cellPos(nx,ny);fireBolt(cp.px,cp.py,np.px,np.py,"#fca5a5",500,0.7)}}
               firePart(cp.px,cp.py,12,"rgb(252,165,165)")}
               setScreenFlash("rgba(220,38,38,0.3)");setTimeout(()=>setScreenFlash(null),100)}
-          },[phase,paused,level,cellPos,fireBolt,firePart,showQuitConfirmation,showCredits]);
+          },[phase,paused,level,cellPos,fireBolt,firePart,showQuitConfirmation,showCredits,creditsPaused]);
 
           useEffect(()=>{
-            if(phase!=="play"||paused||showQuitConfirmation||showCredits)return;
+            if(phase!=="play"||paused||showQuitConfirmation||showCredits||creditsPaused)return;
             const iv=setInterval(spawnTick,currentSpawnInterval);
             return()=>clearInterval(iv);
-          },[spawnTick,phase,level,paused,showQuitConfirmation,showCredits,currentSpawnInterval]);
+          },[spawnTick,phase,level,paused,showQuitConfirmation,showCredits,creditsPaused,currentSpawnInterval]);
 
           useEffect(()=>{
-            if(phase!=="play"||paused||showQuitConfirmation||showCredits)return;
+            if(phase!=="play"||paused||showQuitConfirmation||showCredits||creditsPaused)return;
             const iv=setInterval(decayTick,500);
             return()=>clearInterval(iv);
-          },[decayTick,phase,level,paused,showQuitConfirmation,showCredits]);
+          },[decayTick,phase,level,paused,showQuitConfirmation,showCredits,creditsPaused]);
           useEffect(()=>{
-            if(phase!=="play"||paused||showQuitConfirmation||showCredits)return;
+            if(phase!=="play"||paused||showQuitConfirmation||showCredits||creditsPaused)return;
             const iv=setInterval(()=>{
               const now=Date.now();
               
@@ -1316,7 +1323,7 @@ const lastTouchTimeRef = useRef(0);
 
           const commitSourceSelection = useCallback((x, y) => {
             const cell = grid[y][x];
-            if (phase !== "play" || paused || showQuitConfirmation || showCredits) return;
+            if (phase !== "play" || paused || showQuitConfirmation || showCredits || creditsPaused) return;
             if (cell.e <= 0 || cell.locked) return;
 
             const now = Date.now();
@@ -1336,7 +1343,7 @@ const lastTouchTimeRef = useRef(0);
 
             SoundManager.play("select");
             SoundManager.startWeldingLoop(0.25);
-          }, [grid, phase, paused, showQuitConfirmation, showCredits, level]);
+          }, [grid, phase, paused, showQuitConfirmation, showCredits, creditsPaused, level]);
 
           const clearDragState = useCallback(() => {
             setPointerDown(false);
@@ -1355,7 +1362,7 @@ const lastTouchTimeRef = useRef(0);
           }, [clearDragState]);
 
           const processCellSelection = useCallback((x, y) => {
-            if (phase !== "play" || paused || showQuitConfirmation || showCredits) return;
+            if (phase !== "play" || paused || showQuitConfirmation || showCredits || creditsPaused) return;
 
             const cell = grid[y][x];
 
@@ -1477,14 +1484,14 @@ const lastTouchTimeRef = useRef(0);
               cancelSelection();
             }
           }, [
-            phase, paused, showQuitConfirmation, showCredits, grid, sel, interactionMode, getEcho, execTrans,
+            phase, paused, showQuitConfirmation, showCredits, creditsPaused, grid, sel, interactionMode, getEcho, execTrans,
             cellPos, level, fireBolt, firePart, commitSourceSelection,
             cancelSelection, clearDragState
           ]);
 
           const handleMouseDown = useCallback((x, y) => {
   if (Date.now() - lastTouchTimeRef.current < 700) return;
-  if (phase !== "play" || paused || showQuitConfirmation || showCredits) return;
+  if (phase !== "play" || paused || showQuitConfirmation || showCredits || creditsPaused) return;
 
   const cell = grid[y][x];
 
@@ -1510,13 +1517,13 @@ const lastTouchTimeRef = useRef(0);
     setDragEnd({ x, y });
     return;
   }
-}, [phase, paused, showQuitConfirmation, showCredits, grid, sel, interactionMode, commitSourceSelection]);
+}, [phase, paused, showQuitConfirmation, showCredits, creditsPaused, grid, sel, interactionMode, commitSourceSelection]);
         
         const handleTouchStart = useCallback((event) => {
   event.preventDefault();
   lastTouchTimeRef.current = Date.now();
 
-  if (phase !== "play" || paused || showQuitConfirmation || showCredits) return;
+  if (phase !== "play" || paused || showQuitConfirmation || showCredits || creditsPaused) return;
 
   setHasTouchInteraction(true);
   setTimeout(() => setHasTouchInteraction(false), 100);
@@ -1966,7 +1973,7 @@ const lastTouchTimeRef = useRef(0);
           }, [paused, pauseTime]);
 
           useEffect(()=>{
-            const isPopupOpen = showQuitConfirmation || showCredits;
+            const isPopupOpen = showQuitConfirmation || showCredits || creditsPaused;
             if (!isPopupOpen && popupTime) {
               // Just closed popup - adjust all decay times
               const popupDuration = Date.now() - popupTime;
@@ -1990,7 +1997,7 @@ const lastTouchTimeRef = useRef(0);
               // Just opened popup
               setPopupTime(Date.now());
             }
-          }, [showQuitConfirmation, showCredits, popupTime]);
+          }, [showQuitConfirmation, showCredits, creditsPaused, popupTime]);
 
           const startGame=useCallback(()=>{
             setGrid(mkGrid());setScore(0);setLevel(1);setTotalT(0);setCombo(0);setComboT(0);setTransitionHistory([]);
@@ -2769,8 +2776,14 @@ const lastTouchTimeRef = useRef(0);
           
           // Listen for credits events from NullV3
           React.useEffect(() => {
-            const handleShowCredits = () => setShowCredits(true);
-            const handleHideCredits = () => setShowCredits(false);
+            const handleShowCredits = () => {
+              setShowCredits(true);
+              window.dispatchEvent(new Event('pauseForCredits'));
+            };
+            const handleHideCredits = () => {
+              setShowCredits(false);
+              window.dispatchEvent(new Event('resumeFromCredits'));
+            };
             const handleShowMenuRules = () => setShowMenuRules(true);
             const handleHideMenuRules = () => setShowMenuRules(false);
             
