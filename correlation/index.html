@@ -456,6 +456,7 @@
           copyright,
           soundEnabled,
           onToggleSound,
+          onShowCredits,
           compact = false,
           font
         }) {
@@ -477,24 +478,45 @@
                 <span>{version}</span>
 
                 <div style={{ position: "absolute", left: "50%", transform: "translateX(-50%)" }}>
-                  <button
-                    onClick={onToggleSound}
-                    style={{
-                      background: "none",
-                      border: "none",
-                      color: "#94a3b8",
-                      fontSize: 10,
-                      cursor: "pointer",
-                      padding: 0,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      width: "auto",
-                      height: "auto"
-                    }}
-                  >
-                    {soundEnabled ? "🔊" : "🔇"}
-                  </button>
+                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                    <button
+                      onClick={onToggleSound}
+                      style={{
+                        background: "none",
+                        border: "none",
+                        color: "#94a3b8",
+                        fontSize: 10,
+                        cursor: "pointer",
+                        padding: 0,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        width: "auto",
+                        height: "auto"
+                      }}
+                    >
+                      {soundEnabled ? "🔊" : "🔇"}
+                    </button>
+                    
+                    <button
+                      onClick={onShowCredits}
+                      style={{
+                        background: "none",
+                        border: "none",
+                        color: "#94a3b8",
+                        fontSize: 10,
+                        cursor: "pointer",
+                        padding: 0,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        width: "auto",
+                        height: "auto"
+                      }}
+                    >
+                      📋
+                    </button>
+                  </div>
                 </div>
 
                 <a
@@ -552,6 +574,25 @@
                   }}
                 >
                   {soundEnabled ? "🔊" : "🔇"}
+                </button>
+
+                <button
+                  onClick={onShowCredits}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    color: "#94a3b8",
+                    fontSize: 10,
+                    cursor: "pointer",
+                    padding: 0,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    width: "auto",
+                    height: "auto"
+                  }}
+                >
+                  📋
                 </button>
 
                 <a
@@ -836,6 +877,14 @@
   const[showPauseRules,setShowPauseRules]=useState(false);
   const[showMenuRules,setShowMenuRules]=useState(false);
   const[showQuitConfirmation,setShowQuitConfirmation]=useState(false);
+          const[showCredits,setShowCredits]=useState(false);
+
+          // Listen for credits events from AppWrapper
+          useEffect(() => {
+            const handleHideCredits = () => setShowCredits(false);
+            window.addEventListener('hideCredits', handleHideCredits);
+            return () => window.removeEventListener('hideCredits', handleHideCredits);
+          }, []);
           const[showOverRules,setShowOverRules]=useState(false);
           const[shake,setShake]=useState(false);
           const[screenFlash,setScreenFlash]=useState(null);
@@ -846,6 +895,7 @@
           const[lastComboExpire,setLastComboExpire]=useState(0);
           const[lastTickTime,setLastTickTime]=useState(Date.now());
           const[pauseTime,setPauseTime]=useState(null);
+          const[popupTime,setPopupTime]=useState(null);
 
           const handleToggleSound = useCallback(() => {
             const enabled = SoundManager.toggle();
@@ -995,7 +1045,7 @@ const lastTouchTimeRef = useRef(0);
           const firePart=useCallback((x,y,n,col)=>{particlesRef.current.push(...mkParticles(x,y,n,col))},[]);
 
           const spawnTick=useCallback(()=>{
-            if(phase!=="play"||paused||showQuitConfirmation)return;const now=Date.now();
+            if(phase!=="play"||paused||showQuitConfirmation||showCredits)return;const now=Date.now();
             setGrid(prev=>{const ng=prev.map(r=>r.map(c=>({...c})));
               let f=0;let allFives=true;
               for(let y=0;y<ROWS;y++)for(let x=0;x<COLS;x++){
@@ -1012,10 +1062,10 @@ const lastTouchTimeRef = useRef(0);
               for(let a=0;a<40&&s<cnt;a++){const x=Math.floor(Math.random()*COLS),y=Math.floor(Math.random()*ROWS);
                 if(ng[y][x].e===0){ng[y][x]=mkCell(level,now);s++;SoundManager.play('spawn', 0.3)}}
               return ng});
-          },[phase,paused,level,showQuitConfirmation]);
+          },[phase,paused,level,showQuitConfirmation,showCredits]);
 
           const decayTick=useCallback(()=>{
-            if(phase!=="play"||paused||showQuitConfirmation)return;const now=Date.now();const ols=[];
+            if(phase!=="play"||paused||showQuitConfirmation||showCredits)return;const now=Date.now();const ols=[];
             setGrid(prev=>{const ng=prev.map(r=>r.map(c=>({...c})));let over=false;
               for(let y=0;y<ROWS;y++)for(let x=0;x<COLS;x++){const c=ng[y][x];
                 if(c.e>0&&c.decay>0&&now>c.decay){
@@ -1050,21 +1100,21 @@ const lastTouchTimeRef = useRef(0);
                 if(nx>=0&&nx<COLS&&ny>=0&&ny<ROWS){const np=cellPos(nx,ny);fireBolt(cp.px,cp.py,np.px,np.py,"#fca5a5",500,0.7)}}
               firePart(cp.px,cp.py,12,"rgb(252,165,165)")}
               setScreenFlash("rgba(220,38,38,0.3)");setTimeout(()=>setScreenFlash(null),100)}
-          },[phase,paused,level,cellPos,fireBolt,firePart,showQuitConfirmation]);
+          },[phase,paused,level,cellPos,fireBolt,firePart,showQuitConfirmation,showCredits]);
 
           useEffect(()=>{
-            if(phase!=="play"||paused||showQuitConfirmation)return;
+            if(phase!=="play"||paused||showQuitConfirmation||showCredits)return;
             const iv=setInterval(spawnTick,currentSpawnInterval);
             return()=>clearInterval(iv);
-          },[spawnTick,phase,level,paused,showQuitConfirmation,currentSpawnInterval]);
+          },[spawnTick,phase,level,paused,showQuitConfirmation,showCredits,currentSpawnInterval]);
 
           useEffect(()=>{
-            if(phase!=="play"||paused||showQuitConfirmation)return;
+            if(phase!=="play"||paused||showQuitConfirmation||showCredits)return;
             const iv=setInterval(decayTick,500);
             return()=>clearInterval(iv);
-          },[decayTick,phase,level,paused,showQuitConfirmation]);
+          },[decayTick,phase,level,paused,showQuitConfirmation,showCredits]);
           useEffect(()=>{
-            if(phase!=="play"||paused||showQuitConfirmation)return;
+            if(phase!=="play"||paused||showQuitConfirmation||showCredits)return;
             const iv=setInterval(()=>{
               const now=Date.now();
               
@@ -1176,7 +1226,7 @@ const lastTouchTimeRef = useRef(0);
 
           const commitSourceSelection = useCallback((x, y) => {
             const cell = grid[y][x];
-            if (phase !== "play" || paused) return;
+            if (phase !== "play" || paused || showQuitConfirmation || showCredits) return;
             if (cell.e <= 0 || cell.locked) return;
 
             const now = Date.now();
@@ -1196,7 +1246,7 @@ const lastTouchTimeRef = useRef(0);
 
             SoundManager.play("select");
             SoundManager.weldingSound = SoundManager.play("welding", 0.25);
-          }, [grid, phase, paused, level]);
+          }, [grid, phase, paused, showQuitConfirmation, showCredits, level]);
 
           const clearDragState = useCallback(() => {
             setPointerDown(false);
@@ -1216,7 +1266,7 @@ const lastTouchTimeRef = useRef(0);
           }, [clearDragState]);
 
           const processCellSelection = useCallback((x, y) => {
-            if (phase !== "play" || paused) return;
+            if (phase !== "play" || paused || showQuitConfirmation || showCredits) return;
 
             const cell = grid[y][x];
 
@@ -1338,14 +1388,14 @@ const lastTouchTimeRef = useRef(0);
               cancelSelection();
             }
           }, [
-            phase, paused, grid, sel, interactionMode, getEcho, execTrans,
+            phase, paused, showQuitConfirmation, showCredits, grid, sel, interactionMode, getEcho, execTrans,
             cellPos, level, fireBolt, firePart, commitSourceSelection,
             cancelSelection, clearDragState
           ]);
 
           const handleMouseDown = useCallback((x, y) => {
   if (Date.now() - lastTouchTimeRef.current < 700) return;
-  if (phase !== "play" || paused) return;
+  if (phase !== "play" || paused || showQuitConfirmation || showCredits) return;
 
   const cell = grid[y][x];
 
@@ -1371,13 +1421,13 @@ const lastTouchTimeRef = useRef(0);
     setDragEnd({ x, y });
     return;
   }
-}, [phase, paused, grid, sel, interactionMode, commitSourceSelection]);
+}, [phase, paused, showQuitConfirmation, showCredits, grid, sel, interactionMode, commitSourceSelection]);
         
         const handleTouchStart = useCallback((event) => {
   event.preventDefault();
   lastTouchTimeRef.current = Date.now();
 
-  if (phase !== "play" || paused) return;
+  if (phase !== "play" || paused || showQuitConfirmation || showCredits) return;
 
   setHasTouchInteraction(true);
   setTimeout(() => setHasTouchInteraction(false), 100);
@@ -1823,6 +1873,33 @@ const lastTouchTimeRef = useRef(0);
             }
           }, [paused, pauseTime]);
 
+          useEffect(()=>{
+            const isPopupOpen = showQuitConfirmation || showCredits;
+            if (!isPopupOpen && popupTime) {
+              // Just closed popup - adjust all decay times
+              const popupDuration = Date.now() - popupTime;
+              setGrid(prev => {
+                const ng = prev.map(row => row.map(c => ({...c})));
+                for (let y = 0; y < ROWS; y++) {
+                  for (let x = 0; x < COLS; x++) {
+                    if (ng[y][x].decay > 0) {
+                      ng[y][x].decay += popupDuration;
+                    }
+                    if (ng[y][x].born > 0) {
+                      ng[y][x].born += popupDuration;
+                    }
+                  }
+                }
+                return ng;
+              });
+              setPopupTime(null);
+              setLastTickTime(Date.now());
+            } else if (isPopupOpen && !popupTime) {
+              // Just opened popup
+              setPopupTime(Date.now());
+            }
+          }, [showQuitConfirmation, showCredits, popupTime]);
+
           const startGame=useCallback(()=>{
             setGrid(mkGrid());setScore(0);setLevel(1);setTotalT(0);setCombo(0);setComboT(0);setTransitionHistory([]);
             setSel(null);setEchoes([]);setPhase("play");setInfo(null);setCascTxt(null);setPaused(false);setFillPct(0);setScreenFlash(null);setTick(0);setShowMenu(false);setShowTutorial(false);setShowQuitConfirmation(false);setShowPauseRules(false);setShowOverRules(false);
@@ -2199,6 +2276,7 @@ const lastTouchTimeRef = useRef(0);
                   copyright={COPYRIGHT_TEXT}
                   soundEnabled={soundEnabled}
                   onToggleSound={handleToggleSound}
+                  onShowCredits={() => window.dispatchEvent(new Event('showCredits'))}
                   font={font}
                 />
               </div>
@@ -2417,7 +2495,7 @@ const lastTouchTimeRef = useRef(0);
                       x={x} y={y} dragStart={dragStart} dragHover={dragHover}/>;
                   }))}</div></div>
 
-              <div style={{width:"100%",maxWidth:480,marginTop:8,zIndex:1,position:"relative"}}>
+              <div style={{width:"100%",maxWidth:480,marginTop:8,zIndex:10,position:"relative"}}>
                 <div style={{display:"flex",gap:6,marginTop:6}}>
                   <button style={S.ctrl} onClick={()=>setPaused(p=>!p)}>{paused?"▶ RESUME":"⏸ PAUSE"}</button>
                   <button style={S.ctrl} onClick={()=>setShowQuitConfirmation(true)}>↺ QUIT</button></div>
@@ -2428,6 +2506,7 @@ const lastTouchTimeRef = useRef(0);
                     copyright={COPYRIGHT_TEXT}
                     soundEnabled={soundEnabled}
                     onToggleSound={handleToggleSound}
+                    onShowCredits={() => window.dispatchEvent(new Event('showCredits'))}
                     compact={true}
                     font={font}
                   />
@@ -2613,7 +2692,63 @@ const lastTouchTimeRef = useRef(0);
             letterSpacing:"0.08em",cursor:"pointer",fontFamily:"inherit"},
         };
 
-        ReactDOM.render(<NullV3 />, document.getElementById('root'));
+        function AppWrapper() {
+          const [showCredits, setShowCredits] = React.useState(false);
+          const tFont = "'Orbitron',sans-serif";
+          const font = "'IBM Plex Mono',monospace";
+          
+          // Listen for credits events from NullV3
+          React.useEffect(() => {
+            const handleShowCredits = () => setShowCredits(true);
+            const handleHideCredits = () => setShowCredits(false);
+            
+            window.addEventListener('showCredits', handleShowCredits);
+            window.addEventListener('hideCredits', handleHideCredits);
+            
+            return () => {
+              window.removeEventListener('showCredits', handleShowCredits);
+              window.removeEventListener('hideCredits', handleHideCredits);
+            };
+          }, []);
+          
+          return (
+            <>
+              <NullV3 />
+              {/* Credits popup at root level */}
+              {showCredits && <div style={{position:"fixed",top:"var(--app-top, 0px)",left:0,right:0,height:"var(--app-height, 100dvh)",backgroundColor:"rgba(3,7,18,0.98)",
+                display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:20,zIndex:1000}}>
+                <span style={{fontSize:32,fontWeight:900,letterSpacing:"0.3em",color:"#f8fafc",fontFamily:tFont}}>CREDITS</span>
+                <span style={{fontSize:16,color:"#94a3b8",fontFamily:font,textAlign:"center",maxWidth:320,lineHeight:1.5}}>Sound Effects by Mixkit<br/>https://mixkit.co</span>
+                
+                <div style={{display:"flex",flexDirection:"column",gap:12,alignItems:"center"}}>
+                  <button
+                      onClick={() => {
+                        setShowCredits(false);
+                        window.dispatchEvent(new Event('hideCredits'));
+                      }}
+                      style={{
+                        padding:"12px 32px",
+                        backgroundColor:"transparent",
+                        color:"#94a3b8",
+                        border:"1px solid rgba(148,163,184,0.2)",
+                        borderRadius:6,
+                        fontSize:13,
+                        fontWeight:700,
+                        letterSpacing:"0.12em",
+                        cursor:"pointer",
+                        fontFamily:"inherit",
+                        transition:"all 0.2s"
+                      }}
+                    >
+                      CLOSE
+                    </button>
+                </div>
+              </div>}
+            </>
+          );
+        }
+
+        ReactDOM.render(<AppWrapper />, document.getElementById('root'));
     </script>
 </body>
 </html>
