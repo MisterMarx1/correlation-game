@@ -521,7 +521,8 @@
       .three-col,
       .habit-grid,
       .reflection,
-      .score-grid {
+      .score-grid,
+      .mhom-score-grid {
         grid-template-columns: 1fr;
       }
 
@@ -554,14 +555,35 @@
       h1 {
         letter-spacing: 0.04em;
       }
+
+      .hero-inner > div:first-child {
+        flex-wrap: nowrap;
+        gap: 10px;
+      }
+
+      .hero-inner > div:first-child .eyebrow {
+        white-space: nowrap;
+        font-size: 0.75em;
+      }
     }
   </style>
 </head>
 <body>
   <header class="hero">
     <div class="hero-inner">
-      <div class="eyebrow">Mister Marx • Educational Companion Page • CORRELATION v0.2</div>
-      <h1>CORRELATION</h1>
+      <div style="display: flex; justify-content: center; align-items: center; gap: 10px;">
+        <div class="eyebrow" style="background: rgba(251,191,36,0.12); color: var(--amber); padding: 4px 12px; border-radius: 12px; cursor: pointer; transition: all 0.2s;">
+          <a href="https://www.mistermarx.com/games" target="_blank" rel="noopener noreferrer" style="color: inherit; text-decoration: none;">
+            Back to Games
+          </a>
+        </div>
+        <div class="eyebrow" style="background: rgba(96,165,250,0.12); color: var(--cyan); padding: 4px 12px; border-radius: 12px; cursor: pointer; transition: all 0.2s;">
+          <a href="https://www.mistermarx.com" target="_blank" rel="noopener noreferrer" style="color: inherit; text-decoration: none;">
+            Back to MisterMarx.com
+          </a>
+        </div>
+      </div>
+      <h1>CORRELATION <span style="font-size: 0.6em; font-weight: 400; letter-spacing: 0; text-transform: none;">v0.2</span></h1>
       <p class="hero-sub">
         This page is designed to help parents, teachers, and students understand
         what <strong>CORRELATION</strong> develops during play. The primary focus is
