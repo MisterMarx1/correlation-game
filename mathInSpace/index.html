@@ -721,6 +721,18 @@
                 }
                 this.musicStarted = false;
             }
+
+            pause() {
+                if (this.backgroundMusicTrack && !this.backgroundMusicTrack.paused) {
+                    this.backgroundMusicTrack.pause();
+                }
+            }
+
+            resume() {
+                if (this.backgroundMusicTrack && this.musicStarted && this.backgroundMusicTrack.paused) {
+                    this.backgroundMusicTrack.play().catch(e => console.log('Background music resume failed:', e));
+                }
+            }
         }
 
         // Initialize sound manager
@@ -1341,6 +1353,8 @@
 
             // --- Game State ---
             const [gameState, setGameState] = useState('setup');
+            const [isPaused, setIsPaused] = useState(false);
+            const [pauseTime, setPauseTime] = useState(null);
             const [isWaitingForNextProblem, setIsWaitingForNextProblem] = useState(false);
             const [score, setScore] = useState(0);
             const [timeLeft, setTimeLeft] = useState(DEFAULT_DURATION);
@@ -1685,6 +1699,63 @@
                 selectedMaxDigits,
                 selectedNumOptions,
             ]);
+
+            // --- Tab Visibility Detection ---
+            useEffect(() => {
+                const handleVisibilityChange = () => {
+                    if (document.hidden) {
+                        // Page is hidden - pause background music
+                        if (!isPaused) setPauseTime(Date.now());
+                        setIsPaused(true);
+                        soundManager.pause();
+                    } else {
+                        // Page is visible again - resume background music
+                        setIsPaused(false);
+                        soundManager.resume();
+                    }
+                };
+
+                const handleBlur = () => {
+                    if (!isPaused) setPauseTime(Date.now());
+                    setIsPaused(true);
+                    soundManager.pause();
+                };
+
+                const handleFocus = () => {
+                    setIsPaused(false);
+                    soundManager.resume();
+                };
+
+                const handlePageHide = () => {
+                    if (!isPaused) setPauseTime(Date.now());
+                    setIsPaused(true);
+                    soundManager.pause();
+                };
+
+                const handlePageShow = () => {
+                    setIsPaused(false);
+                    soundManager.resume();
+                };
+
+                // Page Visibility API
+                document.addEventListener('visibilitychange', handleVisibilityChange);
+                
+                // Page lifecycle events
+                window.addEventListener('pagehide', handlePageHide);
+                window.addEventListener('pageshow', handlePageShow);
+                
+                // Window focus/blur events
+                window.addEventListener('blur', handleBlur);
+                window.addEventListener('focus', handleFocus);
+
+                return () => {
+                    document.removeEventListener('visibilitychange', handleVisibilityChange);
+                    window.removeEventListener('pagehide', handlePageHide);
+                    window.removeEventListener('pageshow', handlePageShow);
+                    window.removeEventListener('blur', handleBlur);
+                    window.removeEventListener('focus', handleFocus);
+                };
+            }, [isPaused]);
 
             // --- Calculate Progress Bar Widths ---
             const totalAttempts = correctCount + incorrectCount + timeoutCount;
