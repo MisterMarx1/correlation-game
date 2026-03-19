@@ -1350,7 +1350,7 @@ const lastTouchTimeRef = useRef(0);
             for(let y=0;y<ROWS;y++)for(let x=0;x<COLS;x++){if(x===sx&&y===sy)continue;const d=grid[y][x];if(d.e<=0||d.e<dE)continue;
               const r=Math.sqrt((x-sx)**2+(y-sy)**2);let p=corrProb(r);p=Math.min(0.98,p+echoMap[y*COLS+x]);ds.push({x,y,prob:p,r,dE})}
             return ds.sort((a,b)=>b.prob-a.prob)},[grid,echoMap]);
-          const detMap=useMemo(()=>{if(!sel)return{};const ds=getDets(sel.x,sel.y);const m={};for(const d of ds)m[`${d.x},${d.y}`]=d;return m},[sel,getDets]);
+          const detMap=useCallback(()=>{if(!sel)return{};const ds=getDets(sel.x,sel.y);const m={};for(const d of ds)m[`${d.x},${d.y}`]=d;return m},[sel,getDets]);
 
           const execTrans=useCallback((sx,sy,dx,dy)=>{
             const now=Date.now(),src=grid[sy][sx],det=grid[dy][dx],dE=src.e,r=Math.sqrt((dx-sx)**2+(dy-sy)**2),mom=recoilP(det.mass,dE);
