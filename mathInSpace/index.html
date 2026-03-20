@@ -25,6 +25,25 @@
             overflow: hidden;
             width: 100%;
             height: 100%;
+            -webkit-text-size-adjust: 100%;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+
+        /* Allow text selection for inputs and buttons */
+        input, textarea, button, select {
+            -webkit-user-select: auto;
+            -moz-user-select: auto;
+            -ms-user-select: auto;
+            user-select: auto;
+        }
+
+        /* Keep pointer cursor for interactive elements */
+        button, [role="button"], a {
+            cursor: pointer;
         }
 
         /* --- Base Container --- */
@@ -578,6 +597,7 @@
             width: 40px;
             height: 40px;
             z-index: 1000;
+            opacity: 0.8;
         }
 
         .sound-toggle:hover {
@@ -591,6 +611,117 @@
 
         .sound-toggle.muted:hover {
             color: rgba(150, 150, 150, 0.8);
+        }
+
+        /* --- Credits Toggle --- */
+        .credits-toggle {
+            position: fixed;
+            bottom: 24px;
+            left: -4px;
+            background: transparent;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            font-size: 18px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            color: #00ccff;
+            opacity: 0.8;
+            z-index: 1000;
+        }
+
+        .credits-toggle:hover {
+            color: #fff;
+            transform: scale(1.1);
+        }
+
+        .version-text {
+            position: fixed;
+            bottom: 2px;
+            left: 34px;
+            font-size: 7px;
+            font-family: 'IBM Plex Mono', monospace;
+            color: #ffffff;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            opacity: 0.4;
+            z-index: 1000;
+        }
+
+        .copyright-text {
+            position: fixed;
+            bottom: 2px;
+            right: 6px;
+            font-size: 7px;
+            font-family: 'IBM Plex Mono', monospace;
+            color: #ffffff;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            opacity: 0.4;
+            z-index: 1000;
+        }
+
+        /* --- Credits Popup --- */
+        .credits-popup {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 100vh;
+            background-color: rgba(0, 31, 63, 0.98);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            z-index: 2000;
+        }
+
+        .credits-title {
+            font-size: 32px;
+            font-weight: 900;
+            letter-spacing: 0.3em;
+            color: #f8fafc;
+            font-family: 'Orbitron', sans-serif;
+            text-transform: uppercase;
+        }
+
+        .credits-content {
+            font-size: 16px;
+            color: #94a3b8;
+            font-family: 'IBM Plex Mono', monospace;
+            text-align: center;
+            max-width: 320px;
+            line-height: 1.5;
+        }
+
+        .credits-close-button {
+            padding: 12px 32px;
+            background: transparent;
+            color: #94a3b8;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            cursor: pointer;
+            font-family: 'IBM Plex Mono', monospace;
+            transition: all 0.2s;
+            text-transform: uppercase;
+        }
+
+        .credits-close-button:hover {
+            background-color: rgba(0, 204, 255, 0.1);
+            color: #fff;
+            border-color: rgba(0, 204, 255, 0.3);
+        }
+
+        .paused-game * {
+            animation-play-state: paused !important;
         }
     </style>
 </head>
@@ -1041,6 +1172,69 @@
             );
         };
 
+        // --- Credits Toggle Component ---
+        const CreditsToggle = () => {
+            const [showCredits, setShowCredits] = useState(false);
+
+            const showCreditsPopup = () => {
+                setShowCredits(true);
+                soundManager.play('BUTTON_CLICK');
+                // Pause the game
+                document.body.classList.add('paused-game');
+                soundManager.pause();
+            };
+
+            const hideCreditsPopup = () => {
+                setShowCredits(false);
+                soundManager.play('BUTTON_CLICK');
+                // Resume the game
+                document.body.classList.remove('paused-game');
+                soundManager.resume();
+            };
+
+            return (
+                <>
+                    <button 
+                        className="credits-toggle"
+                        onClick={showCreditsPopup}
+                        title="View credits"
+                    >
+                        ℹ️
+                    </button>
+                    
+                    <div className="version-text">v0.1</div>
+                    <a 
+                        href="https://www.mistermarx.com"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="copyright-text"
+                        style={{
+                            textDecoration: 'none',
+                            cursor: 'pointer'
+                        }}
+                    >
+                        © MisterMarx.com, 2026
+                    </a>
+                    
+                    {showCredits && (
+                        <div className="credits-popup">
+                            <div className="credits-title">Credits</div>
+                            <div className="credits-content">
+                                Sound Effects by Mixkit<br/>
+                                https://mixkit.co
+                            </div>
+                            <button 
+                                className="credits-close-button"
+                                onClick={hideCreditsPopup}
+                            >
+                                Close
+                            </button>
+                        </div>
+                    )}
+                </>
+            );
+        };
+
         // --- View Components ---
         const SetupScreen = ({
             username,
@@ -1055,112 +1249,187 @@
             difficultyMultiplier,
             setDifficultyMultiplier,
             onStart,
-        }) => (
-            <div className="setup-content">
-                <h1>Math In Space!</h1>
-                <h2>Welcome, {username}! Prepare for your math mission.</h2>
-                <div className="settings-grid">
-                    <div className="setting-group">
-                        <label htmlFor="duration">Mission Duration:</label>
-                        <select
-                            id="duration"
-                            value={selectedDuration}
-                            onChange={(e) => {
-                                soundManager.play('DROPDOWN_SELECT');
-                                const value = Number(e.target.value);
-                                setSelectedDuration(value);
-                                setDifficultyMultiplier((prev) => ({
-                                    ...prev,
-                                    oldDifficulty: prev.newDifficulty,
-                                    selectedDuration: 0.985 + value / 2000,
-                                    newDifficulty:
-                                        prev.initial * (0.985 + value / 2000) * prev.selectedMaxDigits * prev.selectedNumOptions * prev.selectedOperations,
-                                }));
-                            }}
-                        >
-                            <option value={30}>30 Seconds</option>
-                            <option value={60}>60 Seconds</option>
-                            <option value={90}>90 Seconds</option>
-                        </select>
-                    </div>
-                    <div className="setting-group">
-                        <label htmlFor="maxDigits">Max Digits:</label>
-                        <select
-                            id="maxDigits"
-                            value={selectedMaxDigits}
-                            onChange={(e) => {
-                                soundManager.play('DROPDOWN_SELECT');
-                                const value = Number(e.target.value);
-                                setSelectedMaxDigits(value);
-                                setDifficultyMultiplier((prev) => ({
-                                    ...prev,
-                                    oldDifficulty: prev.newDifficulty,
-                                    selectedMaxDigits: Number(0.98 + value / 50),
-                                    newDifficulty:
-                                        prev.initial * (0.98 + value / 50) * prev.selectedDuration * prev.selectedNumOptions * prev.selectedOperations,
-                                }));
-                            }}
-                        >
-                            <option value={1}>1 digit (0-9)</option>
-                            <option value={2}>2 digits (10-99)</option>
-                        </select>
-                    </div>
-                    <div className="setting-group">
-                        <label className="operations-label">Operations: {selectedOperations.length} Selected</label>
-                        <div className="operation-toggles">
-                            {[
-                                { sym: '+', label: '+' },
-                                { sym: '-', label: '-' },
-                                { sym: '*', label: '×' },
-                                { sym: '/', label: '÷' },
-                            ].map(({ sym, label }) => (
-                                <button
-                                    key={sym}
-                                    type="button"
-                                    className={`op-button ${selectedOperations.includes(sym) ? 'active' : ''}`}
-                                    onClick={() => { soundManager.play('OPERATION_TOGGLE'); toggleOperation(sym); }}
-                                >
-                                    {label}
-                                </button>
-                            ))}
+        }) => {
+            // Initialize wave field effect
+            useEffect(() => {
+                const canvas = document.createElement('canvas');
+                canvas.id = 'waveFieldCanvas';
+                canvas.style.position = 'fixed';
+                canvas.style.top = '0';
+                canvas.style.left = '0';
+                canvas.style.width = '100%';
+                canvas.style.height = '100%';
+                canvas.style.zIndex = '1';
+                canvas.style.pointerEvents = 'none';
+                document.body.appendChild(canvas);
+
+                const ctx = canvas.getContext('2d');
+                let width, height;
+                let time = 0;
+                let animationId;
+                
+                // SPEED MULTIPLIER - Adjust this to control animation speed:
+                // > 1.0 = faster (1.1, 1.2, 1.5, etc.)
+                // < 1.0 = slower (0.8, 0.6, 0.4, etc.)
+                // 1.0 = normal speed
+                const SPEED_MULTIPLIER = 0.3;
+
+                function resizeCanvas() {
+                    width = canvas.width = window.innerWidth;
+                    height = canvas.height = window.innerHeight;
+                }
+
+                function drawWaveField() {
+                    const gridSize = 50;
+                    const waveAmplitude = 20;
+                    const waveFrequency = 0.01;
+                    
+ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
+                    ctx.lineWidth = 12;
+                    
+                    for (let x = 0; x < width; x += gridSize) {
+                        ctx.beginPath();
+                        for (let y = 0; y < height; y += 10) {
+                            const waveOffset = Math.sin(y * waveFrequency + time * 0.02 * SPEED_MULTIPLIER) * waveAmplitude;
+                            const xPos = x + waveOffset;
+                            
+                            if (y === 0) {
+                                ctx.moveTo(xPos, y);
+                            } else {
+                                ctx.lineTo(xPos, y);
+                            }
+                        }
+                        ctx.stroke();
+                    }
+                }
+
+                function animate() {
+                    ctx.clearRect(0, 0, width, height);
+                    drawWaveField();
+                    time += 1 * SPEED_MULTIPLIER;
+                    animationId = requestAnimationFrame(animate);
+                }
+
+                window.addEventListener('resize', resizeCanvas);
+                resizeCanvas();
+                animate();
+
+                return () => {
+                    window.removeEventListener('resize', resizeCanvas);
+                    cancelAnimationFrame(animationId);
+                    if (canvas.parentNode) {
+                        canvas.parentNode.removeChild(canvas);
+                    }
+                };
+            }, []);
+
+            return (
+                <div className="setup-content">
+                    <h1>Math In Space!</h1>
+                    <h2>Welcome, {username}! Prepare for your math mission.</h2>
+                    <div className="settings-grid">
+                        <div className="setting-group">
+                            <label htmlFor="duration">Mission Duration:</label>
+                            <select
+                                id="duration"
+                                value={selectedDuration}
+                                onChange={(e) => {
+                                    soundManager.play('DROPDOWN_SELECT');
+                                    const value = Number(e.target.value);
+                                    setSelectedDuration(value);
+                                    setDifficultyMultiplier((prev) => ({
+                                        ...prev,
+                                        oldDifficulty: prev.newDifficulty,
+                                        selectedDuration: 0.985 + value / 2000,
+                                        newDifficulty:
+                                            prev.initial * (0.985 + value / 2000) * prev.selectedMaxDigits * prev.selectedNumOptions * prev.selectedOperations,
+                                    }));
+                                }}
+                            >
+                                <option value={30}>30 Seconds</option>
+                                <option value={60}>60 Seconds</option>
+                                <option value={90}>90 Seconds</option>
+                            </select>
+                        </div>
+                        <div className="setting-group">
+                            <label htmlFor="maxDigits">Max Digits:</label>
+                            <select
+                                id="maxDigits"
+                                value={selectedMaxDigits}
+                                onChange={(e) => {
+                                    soundManager.play('DROPDOWN_SELECT');
+                                    const value = Number(e.target.value);
+                                    setSelectedMaxDigits(value);
+                                    setDifficultyMultiplier((prev) => ({
+                                        ...prev,
+                                        oldDifficulty: prev.newDifficulty,
+                                        selectedMaxDigits: Number(0.98 + value / 50),
+                                        newDifficulty:
+                                            prev.initial * (0.98 + value / 50) * prev.selectedDuration * prev.selectedNumOptions * prev.selectedOperations,
+                                    }));
+                                }}
+                            >
+                                <option value={1}>1 digit (0-9)</option>
+                                <option value={2}>2 digits (10-99)</option>
+                            </select>
+                        </div>
+                        <div className="setting-group">
+                            <label className="operations-label">Operations: {selectedOperations.length} Selected</label>
+                            <div className="operation-toggles">
+                                {[
+                                    { sym: '+', label: '+' },
+                                    { sym: '-', label: '-' },
+                                    { sym: '*', label: '×' },
+                                    { sym: '/', label: '÷' },
+                                ].map(({ sym, label }) => (
+                                    <button
+                                        key={sym}
+                                        type="button"
+                                        className={`op-button ${selectedOperations.includes(sym) ? 'active' : ''}`}
+                                        onClick={() => { soundManager.play('OPERATION_TOGGLE'); toggleOperation(sym); }}
+                                    >
+                                        {label}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                        <div className="setting-group">
+                            <label htmlFor="numOptions">Answer Choices:</label>
+                            <select
+                                id="numOptions"
+                                value={selectedNumOptions}
+                                onChange={(e) => {
+                                    soundManager.play('DROPDOWN_SELECT');
+                                    const value = Number(e.target.value);
+                                    setSelectedNumOptions(value);
+                                    setDifficultyMultiplier((prev) => ({
+                                        ...prev,
+                                        oldDifficulty: prev.newDifficulty,
+                                        selectedNumOptions: 0.97 + value / 100,
+                                        newDifficulty:
+                                            prev.initial * (0.97 + value / 100) * prev.selectedDuration * prev.selectedMaxDigits * prev.selectedOperations,
+                                    }));
+                                }}
+                            >
+                                <option value={3}>3</option>
+                                <option value={4}>4</option>
+                                <option value={5}>5</option>
+                                <option value={6}>6</option>
+                            </select>
                         </div>
                     </div>
-                    <div className="setting-group">
-                        <label htmlFor="numOptions">Answer Choices:</label>
-                        <select
-                            id="numOptions"
-                            value={selectedNumOptions}
-                            onChange={(e) => {
-                                soundManager.play('DROPDOWN_SELECT');
-                                const value = Number(e.target.value);
-                                setSelectedNumOptions(value);
-                                setDifficultyMultiplier((prev) => ({
-                                    ...prev,
-                                    oldDifficulty: prev.newDifficulty,
-                                    selectedNumOptions: 0.97 + value / 100,
-                                    newDifficulty:
-                                        prev.initial * (0.97 + value / 100) * prev.selectedDuration * prev.selectedMaxDigits * prev.selectedOperations,
-                                }));
-                            }}
-                        >
-                            <option value={3}>3</option>
-                            <option value={4}>4</option>
-                            <option value={5}>5</option>
-                            <option value={6}>6</option>
-                        </select>
+                    <div className="start-controls">
+                        <div className="multiplier-container">
+                            <div className="multiplier-label">Score Multiplier:</div>
+                            <span className="difficulty-multiplier-display">~{difficultyMultiplier.newDifficulty.toFixed(3)}x</span>
+                        </div>
+                        <button onClick={() => { soundManager.play('BUTTON_CLICK'); onStart(); }} className="start-button" disabled={selectedOperations.length === 0}>
+                                Engage!
+                            </button>
                     </div>
                 </div>
-                <div className="start-controls">
-                    <div className="multiplier-container">
-                        <div className="multiplier-label">Score Multiplier:</div>
-                        <span className="difficulty-multiplier-display">~{difficultyMultiplier.newDifficulty.toFixed(3)}x</span>
-                    </div>
-                    <button onClick={() => { soundManager.play('BUTTON_CLICK'); onStart(); }} className="start-button" disabled={selectedOperations.length === 0}>
-                            Engage!
-                        </button>
-                </div>
-            </div>
-        );
+            );
+        };
 
         const PlayingScreen = ({
             score,
@@ -1836,6 +2105,9 @@
                         />
                     )}
 
+                    {/* Floating credits toggle */}
+                    <CreditsToggle />
+                    
                     {/* Floating sound toggle */}
                     <SoundToggle />
                 </div>
