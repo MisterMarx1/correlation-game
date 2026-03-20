@@ -2666,7 +2666,7 @@ const lastTouchTimeRef = useRef(0);
                 </div>
               </div>
 
-              <div className={shake?"n3-shake":""} style={{width:"100%",maxWidth:480,aspectRatio:`${COLS}/${ROWS}`,position:"relative",zIndex:1}} ref={gridRef}>
+              <div className={shake?"n3-shake":""} style={{width:"100%",maxWidth:480,height:"auto",aspectRatio:`${COLS}/${ROWS}`,position:"relative",zIndex:1,overflow:"hidden"}} ref={gridRef}>
                 <canvas ref={canvasRef} style={{position:"absolute",inset:0,pointerEvents:"none",zIndex:15}}/>
                 {countdown && <div className={`n3-countdown ${countdown === "START!" ? "start" : ""}`}>{countdown}</div>}
                 {cascTxt&&<div style={{position:"absolute",top:"45%",left:"50%",transform:"translateX(-50%)",zIndex:20,pointerEvents:"none",
