@@ -228,7 +228,7 @@
 
     .resource-grid {
       display: grid;
-      grid-template-columns: repeat(2, 1fr);
+      grid-template-columns: repeat(3, 1fr);
       gap: 18px;
     }
 
@@ -284,9 +284,9 @@
       }
     }
 
-    @media (max-width: 640px) {
-      .wrap,
-      .hero-inner {
+    @media (max-width: 1200px) {
+      .resource-grid {
+        grid-template-columns: 1fr;
         padding-left: 16px;
         padding-right: 16px;
       }
@@ -299,6 +299,108 @@
       h1 {
         letter-spacing: 0.04em;
       }
+    }
+
+    .slideshow-container {
+      position: relative;
+      width: 100%;
+      min-height: 240px;
+      border-radius: 12px;
+      overflow: hidden;
+      background: rgba(2,6,23,0.36);
+      border: 1px solid var(--line);
+    }
+
+    .slide {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      transition: opacity 0.8s ease-in-out;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .slide.active {
+      opacity: 1;
+    }
+
+    .slide img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 12px;
+    }
+
+    .slideshow-controls {
+      position: absolute;
+      bottom: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      background: rgba(2,6,23,0.4);
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      backdrop-filter: blur(10px);
+      opacity: 0.6;
+    }
+
+    .slideshow-btn {
+      background: none;
+      border: none;
+      color: var(--text);
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 14px;
+      transition: all 0.2s;
+      opacity: 0.8;
+    }
+
+    .slideshow-btn:hover {
+      background: rgba(103,232,249,0.2);
+      opacity: 1;
+    }
+
+    .slideshow-counter {
+      color: var(--soft);
+      font-size: 12px;
+      font-weight: 600;
+      min-width: 32px;
+      text-align: center;
+    }
+
+    .slideshow-nav {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(2,6,23,0.6);
+      border: 1px solid var(--line);
+      color: var(--text);
+      cursor: pointer;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 16px;
+      transition: all 0.2s;
+      backdrop-filter: blur(10px);
+      opacity: 0.7;
+    }
+
+    .slideshow-nav:hover {
+      background: rgba(103,232,249,0.2);
+      opacity: 1;
+    }
+
+    .slideshow-nav.prev {
+      left: 12px;
+    }
+
+    .slideshow-nav.next {
+      right: 12px;
     }
   </style>
 </head>
@@ -413,7 +515,7 @@
         <h2 class="section-title">Choose a Game or Companion Page</h2>
       </div>
 
-      <div class="resource-grid">
+      <div class="resource-grid three-col">
         <article class="resource-card">
           <div class="resource-type">Game</div>
           <h3>CORRELATION</h3>
@@ -427,6 +529,33 @@
           </p>
           <div class="resource-actions">
             <a class="btn primary" href="https://www.mistermarx.com/games/correlation" target="_blank" rel="noopener noreferrer">Play Game</a>
+          </div>
+        </article>
+
+        <article class="resource-card">
+          <div class="resource-type">Game Preview</div>
+          <div class="slideshow-container" id="gameSlideshow">
+            <div class="slide active">
+              <img src="correlation/images/Screenshot_20260317-213643.png" alt="CORRELATION Game Screenshot 1">
+            </div>
+            <div class="slide">
+              <img src="correlation/images/Screenshot_20260317-214702.png" alt="CORRELATION Game Screenshot 2">
+            </div>
+            <div class="slide">
+              <img src="correlation/images/Screenshot_20260317-214717.png" alt="CORRELATION Game Screenshot 3">
+            </div>
+            <div class="slide">
+              <img src="correlation/images/Screenshot_20260317-214727.png" alt="CORRELATION Game Screenshot 4">
+            </div>
+            
+            <button class="slideshow-nav prev" onclick="changeSlide(-1)">‹</button>
+            <button class="slideshow-nav next" onclick="changeSlide(1)">›</button>
+            
+            <div class="slideshow-controls">
+              <button class="slideshow-btn" onclick="toggleAutoPlay()" id="autoPlayBtn">⏸</button>
+              <span class="slideshow-counter" id="slideCounter">1/4</span>
+              <button class="slideshow-btn" onclick="resetSlideshow()">⟲</button>
+            </div>
           </div>
         </article>
 
@@ -546,10 +675,130 @@ to explore more games, companion pages, and educational resources.
 </p>
 </footer>
 </main>
-        Visit <a href="https://www.mistermarx.com" target="_blank" rel="noopener noreferrer">MisterMarx.com</a>
-        to explore more games, companion pages, and educational resources.
-      </p>
-    </footer>
-  </main>
+
+<script>
+  let currentSlide = 0;
+  const slides = document.querySelectorAll('.slide');
+  const totalSlides = slides.length;
+  let autoPlayInterval;
+  let isAutoPlaying = true;
+  
+  function calculateSlideshowHeight() {
+    const container = document.getElementById('gameSlideshow');
+    const images = container.querySelectorAll('img');
+    let maxHeight = 240; // minimum height
+    
+    images.forEach(img => {
+      if (img.naturalHeight > 0) {
+        const aspectRatio = img.naturalHeight / img.naturalWidth;
+        const containerWidth = container.offsetWidth;
+        const calculatedHeight = containerWidth * aspectRatio;
+        maxHeight = Math.max(maxHeight, calculatedHeight);
+      }
+    });
+    
+    container.style.height = maxHeight + 'px';
+    return maxHeight;
+  }
+  
+  function showSlide(index) {
+    slides.forEach(slide => slide.classList.remove('active'));
+    currentSlide = (index + totalSlides) % totalSlides;
+    slides[currentSlide].classList.add('active');
+    document.getElementById('slideCounter').textContent = `${currentSlide + 1}/${totalSlides}`;
+  }
+  
+  function changeSlide(direction) {
+    showSlide(currentSlide + direction);
+    if (isAutoPlaying) {
+      resetAutoPlay();
+    }
+  }
+  
+  function nextSlide() {
+    showSlide(currentSlide + 1);
+  }
+  
+  function toggleAutoPlay() {
+    const btn = document.getElementById('autoPlayBtn');
+    if (isAutoPlaying) {
+      clearInterval(autoPlayInterval);
+      btn.textContent = '▶';
+      isAutoPlaying = false;
+    } else {
+      startAutoPlay();
+      btn.textContent = '⏸';
+      isAutoPlaying = true;
+    }
+  }
+  
+  function startAutoPlay() {
+    autoPlayInterval = setInterval(nextSlide, 3000);
+  }
+  
+  function resetAutoPlay() {
+    if (isAutoPlaying) {
+      clearInterval(autoPlayInterval);
+      startAutoPlay();
+    }
+  }
+  
+  function resetSlideshow() {
+    showSlide(0);
+    resetAutoPlay();
+  }
+  
+  function initializeSlideshow() {
+    // Load all images and calculate height
+    const container = document.getElementById('gameSlideshow');
+    const images = container.querySelectorAll('img');
+    let loadedImages = 0;
+    
+    images.forEach(img => {
+      if (img.complete) {
+        loadedImages++;
+        if (loadedImages === images.length) {
+          calculateSlideshowHeight();
+          showSlide(0);
+          startAutoPlay();
+        }
+      } else {
+        img.onload = () => {
+          loadedImages++;
+          if (loadedImages === images.length) {
+            calculateSlideshowHeight();
+            showSlide(0);
+            startAutoPlay();
+          }
+        };
+      }
+    });
+    
+    // Handle window resize
+    window.addEventListener('resize', () => {
+      calculateSlideshowHeight();
+    });
+  }
+  
+  // Initialize slideshow when DOM is loaded
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeSlideshow);
+  } else {
+    initializeSlideshow();
+  }
+  
+  // Pause slideshow when user interacts with controls
+  document.getElementById('gameSlideshow').addEventListener('mouseenter', () => {
+    if (isAutoPlaying) {
+      clearInterval(autoPlayInterval);
+    }
+  });
+  
+  document.getElementById('gameSlideshow').addEventListener('mouseleave', () => {
+    if (isAutoPlaying) {
+      startAutoPlay();
+    }
+  });
+</script>
 </body>
 </html>
