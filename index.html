@@ -922,15 +922,20 @@ to explore more games, companion pages, and educational resources.
 </script>
   
   // Pause slideshow when user interacts with controls
-  document.getElementById('gameSlideshow').addEventListener('mouseenter', () => {
-    if (isAutoPlaying) {
-      clearInterval(autoPlayInterval);
-    }
-  });
-  
-  document.getElementById('gameSlideshow').addEventListener('mouseleave', () => {
-    if (isAutoPlaying) {
-      startAutoPlay();
+  document.addEventListener('DOMContentLoaded', () => {
+    const gameSlideshow = document.getElementById('gameSlideshow');
+    if (gameSlideshow) {
+      gameSlideshow.addEventListener('mouseenter', () => {
+        if (isAutoPlaying) {
+          clearInterval(autoPlayInterval);
+        }
+      });
+      
+      gameSlideshow.addEventListener('mouseleave', () => {
+        if (isAutoPlaying) {
+          startAutoPlay();
+        }
+      });
     }
   });
 </script>
