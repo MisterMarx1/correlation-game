@@ -361,6 +361,12 @@
                     return;
                 }
                 
+                // Check if music is already playing to prevent double playback on mobile
+                if (this.backgroundMusic.currentTime > 0 && !this.backgroundMusic.paused) {
+                    console.log('Background music already playing, skipping...');
+                    return;
+                }
+                
                 try {
                     // Handle autoplay policies
                     if (this.audioContext && this.audioContext.state === 'suspended') {
