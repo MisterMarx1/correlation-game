@@ -1178,18 +1178,16 @@
 
             const showCreditsPopup = () => {
                 setShowCredits(true);
-                soundManager.play('BUTTON_CLICK');
+                soundManager.play('OPERATION_TOGGLE');
                 // Pause the game
                 document.body.classList.add('paused-game');
-                soundManager.pause();
             };
 
             const hideCreditsPopup = () => {
                 setShowCredits(false);
-                soundManager.play('BUTTON_CLICK');
+                soundManager.play('OPERATION_TOGGLE');
                 // Resume the game
                 document.body.classList.remove('paused-game');
-                soundManager.resume();
             };
 
             return (
