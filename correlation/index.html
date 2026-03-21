@@ -2470,6 +2470,7 @@ const lightningRef=useRef({active:false,start:null,end:null,frame:0});
                     <div style={{display: "flex", gap: 8, width: "100%"}}>
                       <TextActionButton
                         onClick={() => {
+                          SoundManager.play("menu", 0.4);
                           window.dispatchEvent(new Event('showMenuRules'));
                         }}
                         fontFamily={font}
@@ -2487,6 +2488,7 @@ const lightningRef=useRef({active:false,start:null,end:null,frame:0});
                       </TextActionButton>
                       <TextActionButton
                         onClick={() => {
+                          SoundManager.play("menu", 0.4);
                           window.dispatchEvent(new Event('showMenuControls'));
                         }}
                         fontFamily={font}
@@ -2506,6 +2508,7 @@ const lightningRef=useRef({active:false,start:null,end:null,frame:0});
                     <div style={{display: "flex", justifyContent: "center", width: "100%", marginTop: 8}}>
                       <TextActionButton
                         onClick={() => {
+                          SoundManager.play("menu", 0.4);
                           window.dispatchEvent(new Event('showCompanionPage'));
                         }}
                         fontFamily={font}
@@ -2907,7 +2910,10 @@ const lightningRef=useRef({active:false,start:null,end:null,frame:0});
                       {showOverRules ? "HIDE RULES" : "VIEW RULES"}
                     </TextActionButton>
                     <TextActionButton
-                      onClick={() => window.dispatchEvent(new Event('showMenuControls'))}
+                      onClick={() => {
+                        SoundManager.play("menu", 0.4);
+                        window.dispatchEvent(new Event('showMenuControls'));
+                      }}
                       fontFamily={font}
                       width="50%"
                     >
@@ -2930,34 +2936,41 @@ const lightningRef=useRef({active:false,start:null,end:null,frame:0});
                 <div style={{display: "flex", gap: 4, width: "100%", justifyContent: "center", flexDirection: "column", alignItems: "center", marginTop: 8}}>
                   <div style={{display: "flex", gap: 4, width: "100%", justifyContent: "center"}}>
                     <TextActionButton
-                        onClick={() => window.dispatchEvent(new Event('showMenuRules'))}
-                        fontFamily={font}
-                        width="auto"
-                        padding="12px 24px"
-                        style={{
-                          textShadow: "0 0 6px rgba(255,255,255,0.7), 0 0 12px rgba(255,255,255,0.4)",
-                          color: "#94a3b8",
-                          animation: "glowPulse 2s ease-in-out infinite"
-                        }}
-                      >
-                        VIEW RULES
-                      </TextActionButton>
+                      onClick={() => {
+                        SoundManager.play("menu", 0.4);
+                        window.dispatchEvent(new Event('showMenuRules'));
+                      }}
+                      fontFamily={font}
+                      width="auto"
+                      padding="12px 24px"
+                      style={{
+                        textShadow: "0 0 6px rgba(255,255,255,0.7), 0 0 12px rgba(255,255,255,0.4)",
+                        color: "#94a3b8",
+                        animation: "glowPulse 2s ease-in-out infinite"
+                      }}
+                    >
+                      VIEW RULES
+                    </TextActionButton>
                     <TextActionButton
-                        onClick={() => window.dispatchEvent(new Event('showMenuControls'))}
-                        fontFamily={font}
-                        width="auto"
-                        padding="12px 24px"
-                        style={{
-                          textShadow: "0 0 6px rgba(255,255,255,0.7), 0 0 12px rgba(255,255,255,0.4)",
-                          color: "#94a3b8",
-                          animation: "glowPulse 2s ease-in-out infinite"
-                        }}
-                      >
-                        VIEW CONTROLS
+                      onClick={() => {
+                        SoundManager.play("menu", 0.4);
+                        window.dispatchEvent(new Event('showMenuControls'));
+                      }}
+                      fontFamily={font}
+                      width="auto"
+                      padding="12px 24px"
+                      style={{
+                        textShadow: "0 0 6px rgba(255,255,255,0.7), 0 0 12px rgba(255,255,255,0.4)",
+                        color: "#94a3b8",
+                        animation: "glowPulse 2s ease-in-out infinite"
+                      }}
+                    >
+                      VIEW CONTROLS
                     </TextActionButton>
                   </div>
                   <TextActionButton
                     onClick={() => {
+                      SoundManager.play("menu", 0.4);
                       window.dispatchEvent(new Event('showCompanionPage'));
                     }}
                     fontFamily={font}
@@ -3045,6 +3058,7 @@ const lightningRef=useRef({active:false,start:null,end:null,frame:0});
                 <div style={{display:"flex",flexDirection:"column",gap:12,alignItems:"center"}}>
                   <button
                       onClick={() => {
+                        SoundManager.play("menu", 0.4);
                         setShowCredits(false);
                         window.dispatchEvent(new Event('hideCredits'));
                       }}
@@ -3084,6 +3098,7 @@ const lightningRef=useRef({active:false,start:null,end:null,frame:0});
                 <div style={{display:"flex",flexDirection:"column",gap:12,alignItems:"center"}}>
                   <button
                       onClick={() => {
+                        SoundManager.play("menu", 0.4);
                         setShowMenuRules(false);
                         window.dispatchEvent(new Event('hideMenuRules'));
                       }}
@@ -3123,6 +3138,7 @@ const lightningRef=useRef({active:false,start:null,end:null,frame:0});
                 <div style={{display:"flex",flexDirection:"column",gap:12,alignItems:"center"}}>
                   <button
                       onClick={() => {
+                        SoundManager.play("menu", 0.4);
                         setShowMenuControls(false);
                         window.dispatchEvent(new Event('hideMenuControls'));
                       }}
@@ -3179,6 +3195,7 @@ const lightningRef=useRef({active:false,start:null,end:null,frame:0});
                     </span>
                     <button
                       onClick={() => {
+                        SoundManager.play("menu", 0.4);
                         setShowCompanionPage(false);
                         window.dispatchEvent(new Event('hideCompanionPage'));
                       }}
