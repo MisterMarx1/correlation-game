@@ -402,6 +402,19 @@
     .slideshow-nav.next {
       right: 12px;
     }
+
+    /* Fix long URL overflow */
+    li {
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+      word-break: break-word;
+    }
+    
+    a {
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+      word-break: break-word;
+    }
   </style>
 </head>
 <body>
@@ -519,21 +532,14 @@
         <article class="resource-card">
           <div class="resource-type">Game</div>
           <h3>CORRELATION</h3>
+          <div class="resource-actions">
+            <a class="btn primary" href="https://www.mistermarx.com/games/correlation" target="_blank" rel="noopener noreferrer" style="font-size: 0.85em;">Play Game</a>
+            <a class="btn" href="https://www.mistermarx.com/correlation-companion-page" target="_blank" rel="noopener noreferrer" style="font-size: 0.85em; background: linear-gradient(135deg, rgba(96,165,250,0.24), rgba(103,232,249,0.34)); border-color: rgba(103,232,249,0.28);">Open Companion Page</a>
+          </div>
           <p>
             A fast-paced system management game built around active decisions,
-            timing, pattern recognition, and consequence. The game strongly activates 
-            key Mathematical Habits of Mind
-            <a href="https://www.mistermarx.com/mathematicalhabitsofmind" target="_blank">
-            (MisterMarx.com, 2026)
-            </a>.
+            timing, pattern recognition, and consequence.
           </p>
-          <div class="resource-actions">
-            <a class="btn primary" href="https://www.mistermarx.com/games/correlation" target="_blank" rel="noopener noreferrer">Play Game</a>
-          </div>
-        </article>
-
-        <article class="resource-card">
-          <div class="resource-type">Game Preview</div>
           <div class="slideshow-container" id="gameSlideshow">
             <div class="slide active">
               <img src="correlation/images/Screenshot_20260317-213643.png" alt="CORRELATION Game Screenshot 1">
@@ -560,18 +566,37 @@
         </article>
 
         <article class="resource-card">
-          <div class="resource-type">Companion Page</div>
-          <h3>CORRELATION Companion Page</h3>
-          <p>
-            A companion resource explaining the habits of mind, reflection,
-            and learning opportunities behind the game experience. Based on 
-            established mathematics education research
-            <a href="https://www.sciencedirect.com/science/article/pii/S0732312396900231" target="_blank">
-            (Cuoco, Goldenberg, & Mark, 1996)
-            </a>.
-          </p>
+          <div class="resource-type">Game</div>
+          <h3>MATH IN SPACE</h3>
           <div class="resource-actions">
-            <a class="btn primary" href="https://www.mistermarx.com/correlation-companion-page" target="_blank" rel="noopener noreferrer">Open Companion Page</a>
+            <a class="btn primary" href="https://www.mistermarx.com/math-in-space" target="_blank" rel="noopener noreferrer" style="font-size: 0.85em;">Play Game</a>
+            <a class="btn" href="https://www.mistermarx.com/mathinspace-companion-page" target="_blank" rel="noopener noreferrer" style="font-size: 0.85em; background: linear-gradient(135deg, rgba(96,165,250,0.24), rgba(103,232,249,0.34)); border-color: rgba(103,232,249,0.28);">Open Companion Page</a>
+          </div>
+          <p>
+            A mathematical journey where players solve equations in space to practice basic arithmetic operations.
+          </p>
+          <div class="slideshow-container" id="mathInSpaceSlideshow">
+            <div class="slide active">
+              <img src="correlation/images/Screenshot_20260321-160806.png" alt="MATH IN SPACE Screenshot 1">
+            </div>
+            <div class="slide">
+              <img src="correlation/images/Screenshot_20260321-160835.png" alt="MATH IN SPACE Screenshot 2">
+            </div>
+            <div class="slide">
+              <img src="correlation/images/Screenshot_20260321-160841.png" alt="MATH IN SPACE Screenshot 3">
+            </div>
+            <div class="slide">
+              <img src="correlation/images/Screenshot_20260321-160948.png" alt="MATH IN SPACE Screenshot 4">
+            </div>
+            
+            <button class="slideshow-nav prev" onclick="changeMathInSpaceSlide(-1)">‹</button>
+            <button class="slideshow-nav next" onclick="changeMathInSpaceSlide(1)">›</button>
+            
+            <div class="slideshow-controls">
+              <button class="slideshow-btn" onclick="toggleMathInSpaceAutoPlay()" id="mathInSpaceAutoPlayBtn">⏸</button>
+              <span class="slideshow-counter" id="mathInSpaceSlideCounter">1/4</span>
+              <button class="slideshow-btn" onclick="resetMathInSpaceSlideshow()">⟲</button>
+            </div>
           </div>
         </article>
       </div>
@@ -678,13 +703,38 @@ to explore more games, companion pages, and educational resources.
 
 <script>
   let currentSlide = 0;
-  const slides = document.querySelectorAll('.slide');
+  const slides = document.querySelectorAll('#gameSlideshow .slide');
   const totalSlides = slides.length;
   let autoPlayInterval;
   let isAutoPlaying = true;
   
+  // MATH IN SPACE slideshow variables
+  let mathInSpaceCurrentSlide = 0;
+  const mathInSpaceSlides = document.querySelectorAll('#mathInSpaceSlideshow .slide');
+  const mathInSpaceTotalSlides = mathInSpaceSlides.length;
+  let mathInSpaceAutoPlayInterval;
+  let mathInSpaceIsAutoPlaying = true;
+  
   function calculateSlideshowHeight() {
     const container = document.getElementById('gameSlideshow');
+    const images = container.querySelectorAll('img');
+    let maxHeight = 240; // minimum height
+    
+    images.forEach(img => {
+      if (img.naturalHeight > 0) {
+        const aspectRatio = img.naturalHeight / img.naturalWidth;
+        const containerWidth = container.offsetWidth;
+        const calculatedHeight = containerWidth * aspectRatio;
+        maxHeight = Math.max(maxHeight, calculatedHeight);
+      }
+    });
+    
+    container.style.height = maxHeight + 'px';
+    return maxHeight;
+  }
+  
+  function calculateMathInSpaceSlideshowHeight() {
+    const container = document.getElementById('mathInSpaceSlideshow');
     const images = container.querySelectorAll('img');
     let maxHeight = 240; // minimum height
     
@@ -708,6 +758,13 @@ to explore more games, companion pages, and educational resources.
     document.getElementById('slideCounter').textContent = `${currentSlide + 1}/${totalSlides}`;
   }
   
+  function showMathInSpaceSlide(index) {
+    mathInSpaceSlides.forEach(slide => slide.classList.remove('active'));
+    mathInSpaceCurrentSlide = (index + mathInSpaceTotalSlides) % mathInSpaceTotalSlides;
+    mathInSpaceSlides[mathInSpaceCurrentSlide].classList.add('active');
+    document.getElementById('mathInSpaceSlideCounter').textContent = `${mathInSpaceCurrentSlide + 1}/${mathInSpaceTotalSlides}`;
+  }
+  
   function changeSlide(direction) {
     showSlide(currentSlide + direction);
     if (isAutoPlaying) {
@@ -715,8 +772,19 @@ to explore more games, companion pages, and educational resources.
     }
   }
   
+  function changeMathInSpaceSlide(direction) {
+    showMathInSpaceSlide(mathInSpaceCurrentSlide + direction);
+    if (mathInSpaceIsAutoPlaying) {
+      resetMathInSpaceAutoPlay();
+    }
+  }
+  
   function nextSlide() {
     showSlide(currentSlide + 1);
+  }
+  
+  function nextMathInSpaceSlide() {
+    showMathInSpaceSlide(mathInSpaceCurrentSlide + 1);
   }
   
   function toggleAutoPlay() {
@@ -732,8 +800,25 @@ to explore more games, companion pages, and educational resources.
     }
   }
   
+  function toggleMathInSpaceAutoPlay() {
+    const btn = document.getElementById('mathInSpaceAutoPlayBtn');
+    if (mathInSpaceIsAutoPlaying) {
+      clearInterval(mathInSpaceAutoPlayInterval);
+      btn.textContent = '▶';
+      mathInSpaceIsAutoPlaying = false;
+    } else {
+      startMathInSpaceAutoPlay();
+      btn.textContent = '⏸';
+      mathInSpaceIsAutoPlaying = true;
+    }
+  }
+  
   function startAutoPlay() {
     autoPlayInterval = setInterval(nextSlide, 3000);
+  }
+  
+  function startMathInSpaceAutoPlay() {
+    mathInSpaceAutoPlayInterval = setInterval(nextMathInSpaceSlide, 3000);
   }
   
   function resetAutoPlay() {
@@ -743,13 +828,25 @@ to explore more games, companion pages, and educational resources.
     }
   }
   
+  function resetMathInSpaceAutoPlay() {
+    if (mathInSpaceIsAutoPlaying) {
+      clearInterval(mathInSpaceAutoPlayInterval);
+      startMathInSpaceAutoPlay();
+    }
+  }
+  
   function resetSlideshow() {
     showSlide(0);
     resetAutoPlay();
   }
   
+  function resetMathInSpaceSlideshow() {
+    showMathInSpaceSlide(0);
+    resetMathInSpaceAutoPlay();
+  }
+  
   function initializeSlideshow() {
-    // Load all images and calculate height
+    // Load all images and calculate height for CORRELATION slideshow
     const container = document.getElementById('gameSlideshow');
     const images = container.querySelectorAll('img');
     let loadedImages = 0;
@@ -774,18 +871,55 @@ to explore more games, companion pages, and educational resources.
       }
     });
     
-    // Handle window resize
+    // Handle window resize for CORRELATION slideshow
     window.addEventListener('resize', () => {
       calculateSlideshowHeight();
     });
   }
   
-  // Initialize slideshow when DOM is loaded
+  function initializeMathInSpaceSlideshow() {
+    // Load all images and calculate height for MATH IN SPACE slideshow
+    const container = document.getElementById('mathInSpaceSlideshow');
+    const images = container.querySelectorAll('img');
+    let loadedImages = 0;
+    
+    images.forEach(img => {
+      if (img.complete) {
+        loadedImages++;
+        if (loadedImages === images.length) {
+          calculateMathInSpaceSlideshowHeight();
+          showMathInSpaceSlide(0);
+          startMathInSpaceAutoPlay();
+        }
+      } else {
+        img.onload = () => {
+          loadedImages++;
+          if (loadedImages === images.length) {
+            calculateMathInSpaceSlideshowHeight();
+            showMathInSpaceSlide(0);
+            startMathInSpaceAutoPlay();
+          }
+        };
+      }
+    });
+    
+    // Handle window resize for MATH IN SPACE slideshow
+    window.addEventListener('resize', () => {
+      calculateMathInSpaceSlideshowHeight();
+    });
+  }
+  
+  // Initialize slideshows when DOM is loaded
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initializeSlideshow);
+    document.addEventListener('DOMContentLoaded', () => {
+      initializeSlideshow();
+      initializeMathInSpaceSlideshow();
+    });
   } else {
     initializeSlideshow();
+    initializeMathInSpaceSlideshow();
   }
+</script>
   
   // Pause slideshow when user interacts with controls
   document.getElementById('gameSlideshow').addEventListener('mouseenter', () => {
