@@ -1,0 +1,626 @@
+/* client/src/games/mathInSpace/MathInSpace.css */
+
+/* --- Base Container --- */
+.math-in-space-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    text-align: center;
+    width: 100%;
+    height: 100%;
+    /* Respect LayoutManager-provided main height; do not force viewport height */
+    min-height: 0;
+    color: #e0e0e0;
+    box-sizing: border-box;
+    overflow: hidden;
+    position: relative;
+    font-family: 'Orbitron', sans-serif;
+}
+
+/* Default background for setup/results */
+.math-in-space-container:not(.playing-screen) {
+    background: linear-gradient(to bottom, #000428, #004e92);
+}
+
+/* Remove background for playing state since canvas handles it */
+.math-in-space-container.playing-screen {
+    background: none;
+    padding: 10px;
+}
+
+/* Add Orbitron font */
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
+
+/* --- Setup Screen --- */
+.setup-content {
+    height: 100%;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+.setup-content h1 {
+    color: #00ccff;
+    /* margin-bottom: 10px; */
+    font-weight: 700;
+    letter-spacing: 1px;
+    margin: 0 0 0em;   /* remove the default top margin, keep a little space below */
+    padding: 0em 0;    /* your custom padding */
+}
+.setup-content h2 {
+    color: #ff9900;
+    /* margin-bottom: 25px; */
+    font-size: 1.1em;
+}
+.settings-grid {
+    display: grid;
+    gap: 10px;
+    margin-bottom: 10px;
+    width: 70%;
+    max-width: 600px;
+    grid-template-columns: 1fr; /* Default 1 column */
+}
+
+@media (min-width: 400px) {
+    .settings-grid {
+        grid-template-columns: repeat(2, 1fr); /* 2 columns */
+    }
+}
+
+@media (min-width: 825px) {
+    .settings-grid {
+        grid-template-columns: repeat(4, 1fr); /* 4 columns */
+    }
+}
+.setting-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 0.9em;
+    color: #ccc;
+}
+.setting-group select {
+    width: 100%;
+    padding: 8px 10px;
+    background-color: rgba(255, 255, 255, 0.1);
+    color: #e0e0e0;
+    border: 1px solid #00ccff;
+    border-radius: 5px;
+    font-family: 'Orbitron', sans-serif;
+    cursor: pointer;
+}
+.setting-group select option {
+    background-color: #001f3f; /* Dark blue for dropdown */
+    color: #e0e0e0;
+}
+.start-button {
+    font-size: 1.2em;
+    padding: 8px 20px;
+    cursor: pointer;
+    background: linear-gradient(145deg, #ff9900, #cc7a00);
+    color: #fff;
+    border: none;
+    border-radius: 50px;
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 700;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    box-shadow: 0 0 15px rgba(255, 153, 0, 0.4);
+}
+.start-button:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 25px rgba(255, 153, 0, 0.6);
+}
+
+/* --- Playing Screen --- */
+.game-hud {
+    display: flex;
+    justify-content: space-between;
+    width: 95%;
+    max-width: 500px;
+    font-size: clamp(1.1em, 1.5vw, 1.3em);
+
+    padding: 5px 10px;
+    margin-bottom: 10px;
+    color: #00ccff;
+    font-weight: 700;
+    background-color: rgba(0, 0, 0, 0.3);
+    border-radius: 5px;
+    z-index: 10; /* Above answers */
+    position: relative; /* Needed for z-index */
+}
+.question-area {
+    width: 100%;
+    text-align: center;
+    margin-bottom: -10px; /* Space between question and answers */
+    z-index: 10;
+    position: relative;
+}
+.question {
+    font-size: clamp(2.2em, 2.5vw, 2.5em);
+    font-weight: 700;
+    color: #fff;
+    text-shadow: 0 0 8px #00ccff;
+}
+
+.answer-options-container {
+    position: absolute;
+    top: 15%; /* Start below HUD/Question */
+    left: 0;
+    width: 100%;
+    height: 65%; /* Occupy top ~2/3rds area, leaving space for player ship */
+    overflow: visible; /* Allow ships to go outside */
+    padding: 10px; /* Add internal buffer */
+    box-sizing: border-box;
+}
+
+.answer-ship-wrapper {
+    position: absolute;
+    width: 120px;
+    height: 120px;
+    padding: 8px 4px;
+    transform: translate(-50%, -50%);
+    border-radius: 50px;
+    z-index: 5;
+    user-select: none;     /* optional: so it doesn’t highlight */
+    animation:
+      shipAnimation 5s infinite ease-in-out,
+      shipPopIn 0.3s ease-out;
+}
+
+.answer-ship-inner {
+    background-color: rgba(0, 204, 255, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 70px;
+    min-height: 44px;
+    color: #001f3f;
+    border: 2px solid #00ccff;
+    border-radius: 9999px;
+    cursor: pointer;
+    font-size: 1.2em;
+    font-weight: 700;
+    text-align: center;
+    transition:
+        background-color 0.3s ease,
+        border-color 0.3s ease,
+        box-shadow 0.3s ease;
+    box-shadow: 0 0 10px rgba(0, 204, 255, 0.5);
+    padding: 8px 16px;
+    user-select: none;     /* optional: so it doesn’t highlight */
+
+
+
+    &:hover {
+        outline: 3px solid #ff9900;
+        outline-offset: 2px;
+    }
+
+    &.correct {
+        outline: 4px solid #00ff00 !important;
+        outline-offset: 2px;
+    }
+
+    &.incorrect {
+        outline: 4px solid #ff0000 !important;
+        outline-offset: 2px;
+    }
+}
+
+.answer-ship.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+
+.answer-ship-inner.disabled {
+    pointer-events: none; /* Also disable inner element */
+    opacity: 0.8;
+}
+
+.player-ship-area {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 20%; /* Bottom part */
+    /* background-color: rgba(255, 255, 255, 0.05); */ /* Subtle area indicator */
+    /* border-top: 2px solid rgba(0, 204, 255, 0.3); */
+    display: flex;
+    justify-content: center;
+    align-items: flex-end; /* Position elements at the bottom */
+    overflow: hidden;
+    z-index: 1; /* Behind answers if they overlap */
+    /* background-image: url('/path/to/cockpit-view.png'); */ /* Optional cockpit bg */
+    /* background-size: cover; */
+    /* background-position: center bottom; */
+}
+
+
+
+/* --- Ship Animation --- */
+
+@keyframes shipAnimation {
+    0% {
+        transform: translate(-50%, -50%) rotate(0deg) scale(1);
+    }
+    25% {
+        transform: translate(-50%, -50%) translateY(-5px) rotate(5deg) scale(1);
+    }
+    50% {
+        transform: translate(-50%, -50%) rotate(0deg) scale(1);
+    }
+    75% {
+        transform: translate(-50%, -50%) translateY(5px) rotate(-5deg) scale(1);
+    }
+    100% {
+        transform: translate(-50%, -50%) rotate(0deg) scale(1);
+    }
+}
+
+  @keyframes shipPopIn {
+    0% {
+      transform: translate(-50%, -50%) scale(0.6);
+      opacity: 0;
+    }
+    100% {
+      transform: translate(-50%, -50%) scale(1);
+      opacity: 1;
+    }
+  }
+  
+  
+
+/* --- Feedback Flash --- */
+@keyframes flash-effect {
+    0% { opacity: 0.4; }
+    50% { opacity: 0; }
+    100% { opacity: 0.4; }
+}
+.flash-correct::before, .flash-incorrect::before, .flash-timeout::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 50; /* On top */
+    pointer-events: none;
+    animation: flash-effect 0.4s linear;
+}
+.flash-correct::before { background-color: rgba(40, 167, 69, 0.4); } /* Green */
+.flash-incorrect::before { background-color: rgba(255, 69, 69, 0.4); } /* More vibrant red */
+.flash-timeout::before { background-color: rgba(255, 193, 7, 0.4); } /* Yellow */
+
+/* --- Progress Bars --- */
+.progress-bar-container {
+    position: absolute;
+    bottom: 5px; /* Positioned at the very bottom */
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80%;
+    max-width: 400px;
+    height: 10px;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 5px;
+    display: flex;
+    overflow: hidden;
+    z-index: 15; /* Above player ship area, below laser */
+    margin-bottom: 10px;
+}
+.progress-bar {
+    height: 100%;
+    transition: width 0.3s ease-in-out;
+}
+.progress-bar.correct { background-color: #28a745; } /* Green */
+.progress-bar.incorrect { background-color: #dc3545; } /* Red */
+.progress-bar.timeout { background-color: #ffc107; } /* Yellow */
+
+/* --- Results Screen --- */
+.math-in-space-container.results-screen {
+    justify-content: center;
+    gap: 20px;
+}
+
+.results-content {
+    background-color: rgba(0, 0, 0, 0.5);
+    padding: 25px;
+    /* border-radius: 15px; */
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    max-width: 600px;
+    width: 90%;
+    flex-direction: column;
+    height: 100%;
+    max-height: 100%;
+}
+.results-ops {
+    font-size: 1.2em;
+    margin: 0px 0 10px 0;
+}
+.results-content h1 {
+    color: #00ccff;
+    margin: -0.5em 0em 0em;   /* remove the default top margin, keep a little space below */
+    padding: 0em 0;    /* your custom padding */
+    font-size: clamp(1.4em, 7vw, 2em);
+}
+
+.results-content h2 {
+    color: #ff9900;
+    font-size: 1.5em;
+    margin: 10px 0 10px 0;
+}
+.results-bars {
+    position: relative; /* Override absolute positioning from playing state */
+    bottom: auto;
+    left: auto;
+    transform: none;
+    margin: 15px auto; /* Center the bars */
+    height: 15px; /* Make bars taller on results */
+}
+.results-summary {
+    font-size: 1em;
+    color: #ccc;
+    margin-bottom: 25px;
+}
+.play-again-button {
+    font-size: 1.2em;
+    padding: 10px 25px;
+    cursor: pointer;
+    background: linear-gradient(145deg, #00ccff, #007bff);
+    color: #fff;
+    border: none;
+    border-radius: 50px;
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 700;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    box-shadow: 0 0 15px rgba(0, 204, 255, 0.4);
+    /* margin-bottom: 20px; */
+}
+.play-again-button:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 25px rgba(0, 204, 255, 0.6);
+}
+.log-output {
+    margin-top: 10px;
+}
+.log-output h3 {
+    color: #ccc;
+    margin-top: -5px;
+
+    margin-bottom: 10px;
+}
+.log-output textarea {
+    width: 100%;
+    box-sizing: border-box;
+    border: 1px solid rgba(0, 204, 255, 0.3);
+    background-color: rgba(0, 0, 0, 0.3);
+    color: #0f0; /* Green console text */
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 0.8em;
+    padding: 10px;
+    border-radius: 4px;
+    height: 100px;
+    min-height: 100px;
+    
+    /* allow dragging to resize only up/down */
+    resize: vertical;
+    overflow: auto;
+}
+
+/* --- Ship Feedback Colors --- */
+.answer-ship-inner.clicked-correct {
+    background-color: rgba(40, 167, 69, 0.8); /* Green */
+    border-color: #28a745;
+    box-shadow: 0 0 15px rgba(40, 167, 69, 0.7);
+    z-index: 6;
+}
+
+.answer-ship-inner.clicked-incorrect {
+    background-color: rgba(220, 53, 69, 0.8); /* Red */
+    border-color: #dc3545;
+    box-shadow: 0 0 15px rgba(220, 53, 69, 0.7);
+    z-index: 6;
+}
+
+.answer-ship-inner.show-correct {
+    background-color: rgba(40, 167, 69, 0.8); /* Green */
+    border-color: #28a745;
+    box-shadow: 0 0 15px rgba(40, 167, 69, 0.7);
+    z-index: 6;
+}
+
+/* Add these to existing animations */
+@keyframes shipAnimationHover {
+    0% {
+        background-color: rgba(255, 153, 0, 0.8);
+        border-color: #ff9900;
+        box-shadow: 0 0 15px rgba(255, 153, 0, 0.7);
+    }
+    25% {
+        transform: translate(-50%, -50%) scale(1.1);
+        box-shadow: 0 0 20px rgba(255, 153, 0, 0.8);
+    }
+    50% {
+        transform: translate(-50%, -50%) scale(1.2);
+        box-shadow: 0 0 25px rgba(255, 153, 0, 0.9);
+    }
+    75% {
+        transform: translate(-50%, -50%) scale(1.1);
+        box-shadow: 0 0 20px rgba(255, 153, 0, 0.8);
+    }
+    100% {
+        transform: translate(-50%, -50%) scale(1);
+        box-shadow: 0 0 15px rgba(255, 153, 0, 0.7);
+    }
+}
+
+@keyframes correctAnimation {
+    0% {
+        transform: translate(-50%, -50%) scale(1.1);
+        background-color: rgba(40, 167, 69, 0.8);
+        border-color: #28a745;
+        box-shadow: 0 0 15px rgba(40, 167, 69, 0.7);
+    }
+    50% {
+        transform: translate(-50%, -50%) scale(1.2);
+        box-shadow: 0 0 20px rgba(40, 167, 69, 0.8);
+    }
+    100% {
+        transform: translate(-50%, -50%) scale(1.1);
+        box-shadow: 0 0 15px rgba(40, 167, 69, 0.7);
+    }
+}
+
+@keyframes incorrectAnimation {
+    0% {
+        transform: translate(-50%, -50%) scale(1.1);
+        background-color: rgba(220, 53, 69, 0.8);
+        border-color: #dc3545;
+        box-shadow: 0 0 15px rgba(220, 53, 69, 0.7);
+    }
+    50% {
+        transform: translate(-50%, -50%) scale(1.2);
+        box-shadow: 0 0 20px rgba(220, 53, 69, 0.8);
+    }
+    100% {
+        transform: translate(-50%, -50%) scale(1.1);
+        box-shadow: 0 0 15px rgba(220, 53, 69, 0.7);
+    }
+}
+
+.quit-button {
+    background: linear-gradient(145deg, #ff4444, #cc0000);
+    color: #fff;
+    padding: 4px 4px;
+    border: none;
+    border-radius: 50px;
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    box-shadow: 0 0 15px rgba(255, 68, 68, 0.4);
+}
+.quit-button:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 25px rgba(255, 68, 68, 0.6);
+}
+
+/* Operation toggles to match dropdown styling in setup screen */
+.setting-group .operation-toggles {
+    display: flex;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.setting-group .op-button {
+    flex: 1;
+    padding: 8px 10px;
+    background-color: rgba(255, 255, 255, 0.1);
+    color: #e0e0e0;
+    border: 1px solid #00ccff;
+    border-radius: 5px;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.setting-group .op-button:hover {
+    background-color: rgba(0, 204, 255, 0.1);
+}
+
+.setting-group .op-button.active {
+    background-color: #00ccff;
+    color: #001f3f;
+    box-shadow: 0 0 8px rgba(0, 204, 255, 0.5);
+}
+
+.start-button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
+}
+
+/* bottom-left shrinking bar for per-question timer */
+.question-timer-container {
+    position: absolute;
+    bottom: 5px;
+    width: 100px;
+    height: 6px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 3px;
+    overflow: hidden;
+    z-index: 20;
+  }
+  .question-timer-bar {
+    height: 100%;
+    background: #ff9900;       /* match your orange accent */
+    transition: width 0.1s linear;
+  }
+  
+
+  @keyframes floatUpFade {
+    0% {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
+    }
+    50% {
+      transform: translate(-50%, -80%) scale(1.2);
+    }
+    100% {
+      opacity: 0;
+      transform: translate(-50%, -120%) scale(0.9);
+    }
+  }
+  
+/* make the multiplier + button sit side by side */
+.start-controls {
+    display: flex;
+    align-items: center;   /* align items at the top */
+    gap: 1rem;             /* 1rem of space between */
+    margin-top: .5rem;     /* give a bit of breathing room above if needed */
+  }
+  
+  
+.multiplier-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;    /* Centers items horizontally */
+    justify-content: center; /* Centers items vertically within container */
+}
+
+  /* style the multiplier to look like an emoji “100!” badge */
+  .difficulty-multiplier-display {
+    background: none;      /* remove any box/background */
+    border: none;          /* kill any border if present */
+    display: flex;
+    align-items: center;   /* vertically center them */
+
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.5rem;     /* bump up the size to emoji scale */
+    color: #ff0000;        /* optional: pick a bold color */
+    user-select: none;     /* optional: so it doesn’t highlight */
+  }
+
+  .multiplier-label {
+    font-size: 0.5rem;
+    color: #ffffff;
+    margin-bottom: 0.25rem;
+  }
+
+  .results-divider {
+    border: none;
+    height: 3px;
+    background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.2), transparent);
+    margin: 20px;
+  }

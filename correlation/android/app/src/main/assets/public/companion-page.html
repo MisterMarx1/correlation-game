@@ -1,0 +1,2185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Correlation | Educational Companion | MisterMarx.com</title>
+  <meta
+    name="description"
+    content="Educational companion page for CORRELATION by MisterMarx.com. Mathematical Habits of Mind first, with guidance for parents, teachers, and students."
+  />
+  <style>
+    :root {
+      --bg: #020617;
+      --panel: rgba(15, 23, 42, 0.82);
+      --panel-2: rgba(30, 41, 59, 0.78);
+      --line: rgba(148, 163, 184, 0.18);
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+      --soft: #cbd5e1;
+      --cyan: #67e8f9;
+      --teal: #14b8a6;
+      --blue: #60a5fa;
+      --green: #34d399;
+      --amber: #fbbf24;
+      --red: #f87171;
+      --purple: #c084fc;
+      --shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+      --radius: 18px;
+      --radius-sm: 12px;
+      --max: 1180px;
+    }
+
+    * { box-sizing: border-box; }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background:
+        radial-gradient(circle at top, rgba(20,184,166,0.10), transparent 30%),
+        radial-gradient(circle at 80% 20%, rgba(96,165,250,0.12), transparent 26%),
+        linear-gradient(180deg, #020617 0%, #06111f 100%);
+      color: var(--text);
+      line-height: 1.6;
+    }
+
+    a {
+      color: var(--cyan);
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    .wrap {
+      max-width: var(--max);
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    .hero {
+      position: relative;
+      overflow: hidden;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .hero::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(135deg, rgba(103,232,249,0.08), transparent 30%),
+        linear-gradient(315deg, rgba(96,165,250,0.10), transparent 34%);
+      pointer-events: none;
+    }
+
+    .hero-inner {
+      position: relative;
+      max-width: var(--max);
+      margin: 0 auto;
+      padding: 64px 24px 42px;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(15,23,42,0.65);
+      color: var(--soft);
+      font-size: 12px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      font-weight: 700;
+    }
+
+    h1, h2, h3, h4 {
+      margin: 0 0 12px;
+      line-height: 1.15;
+    }
+
+    h1 {
+      margin-top: 18px;
+      font-size: clamp(2.2rem, 6vw, 4.8rem);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-weight: 900;
+      background: linear-gradient(90deg, #f8fafc 0%, #bae6fd 40%, #67e8f9 70%, #f8fafc 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .hero-sub {
+      max-width: 860px;
+      color: var(--soft);
+      font-size: clamp(1rem, 1.8vw, 1.18rem);
+      margin: 14px 0 0;
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 26px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 12px 18px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: rgba(15,23,42,0.84);
+      color: var(--text);
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      box-shadow: var(--shadow);
+    }
+
+    .btn.primary {
+      background: linear-gradient(135deg, rgba(20,184,166,0.24), rgba(14,116,144,0.34));
+      border-color: rgba(103,232,249,0.28);
+    }
+
+    .grid {
+      display: grid;
+      gap: 20px;
+    }
+
+    .overview-grid {
+      grid-template-columns: 1fr 1fr 1fr;
+      align-items: start;
+      margin-top: 28px;
+    }
+
+    .slideshow-container {
+      position: relative;
+      width: 100%;
+      min-height: 240px;
+      border-radius: 12px;
+      overflow: hidden;
+      background: rgba(2,6,23,0.36);
+      border: 1px solid var(--line);
+    }
+
+    .slide {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      transition: opacity 0.8s ease-in-out;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .slide.active {
+      opacity: 1;
+    }
+
+    .slide img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 12px;
+    }
+
+    .slideshow-controls {
+      position: absolute;
+      bottom: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      background: rgba(2,6,23,0.4);
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      backdrop-filter: blur(10px);
+      opacity: 0.6;
+    }
+
+    .slideshow-btn {
+      background: none;
+      border: none;
+      color: var(--text);
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 14px;
+      transition: all 0.2s;
+      opacity: 0.8;
+    }
+
+    .slideshow-btn:hover {
+      background: rgba(103,232,249,0.2);
+      opacity: 1;
+    }
+
+    .slideshow-counter {
+      color: var(--soft);
+      font-size: 12px;
+      font-weight: 600;
+      min-width: 32px;
+      text-align: center;
+    }
+
+    .slideshow-nav {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(2,6,23,0.6);
+      border: 1px solid var(--line);
+      color: var(--text);
+      cursor: pointer;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 16px;
+      transition: all 0.2s;
+      backdrop-filter: blur(10px);
+      opacity: 0.7;
+    }
+
+    .slideshow-nav:hover {
+      background: rgba(103,232,249,0.2);
+      opacity: 1;
+    }
+
+    .slideshow-nav.prev {
+      left: 12px;
+    }
+
+    .slideshow-nav.next {
+      right: 12px;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+    }
+
+    .panel.pad {
+      padding: 22px;
+    }
+
+    .kicker {
+      color: var(--cyan);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .lead {
+      color: var(--soft);
+      margin: 0;
+    }
+
+    .quickfacts {
+      display: grid;
+      gap: 14px;
+    }
+
+    .fact {
+      padding: 14px 16px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--line);
+      background: rgba(2,6,23,0.34);
+    }
+
+    .fact .label {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .toc {
+      position: sticky;
+      top: 18px;
+    }
+
+    .toc a {
+      display: block;
+      padding: 10px 12px;
+      border-radius: 10px;
+      color: var(--soft);
+    }
+
+    .toc a:hover {
+      background: rgba(148,163,184,0.08);
+      text-decoration: none;
+    }
+
+    main {
+      padding: 28px 0 56px;
+    }
+
+    section {
+      margin-bottom: 26px;
+    }
+
+    .section-card {
+      padding: 24px;
+    }
+
+    .section-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: end;
+      gap: 16px;
+      margin-bottom: 18px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .section-title {
+      font-size: clamp(1.35rem, 2vw, 2rem);
+      font-weight: 900;
+      letter-spacing: 0.02em;
+    }
+
+    .section-note {
+      color: var(--muted);
+      font-size: 0.95rem;
+      max-width: 520px;
+      text-align: right;
+    }
+
+    .priority-banner {
+      margin: 18px 0 0;
+      padding: 14px 16px;
+      border-radius: 14px;
+      border: 1px solid rgba(103,232,249,0.24);
+      background: linear-gradient(135deg, rgba(20,184,166,0.12), rgba(96,165,250,0.10));
+      color: var(--soft);
+      font-weight: 600;
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .chip {
+      padding: 9px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: rgba(2,6,23,0.36);
+      color: var(--text);
+      font-size: 0.95rem;
+      font-weight: 700;
+    }
+
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+    }
+
+    .three-col {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 18px;
+    }
+
+    .callout {
+      padding: 18px;
+      border-radius: 16px;
+      border: 1px solid var(--line);
+      background: var(--panel-2);
+    }
+
+    .callout h3 {
+      font-size: 1.04rem;
+      margin-bottom: 10px;
+    }
+
+    .habit-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+      margin-top: 12px;
+    }
+
+    .habit {
+      padding: 16px;
+      border-radius: 16px;
+      border: 1px solid var(--line);
+      background: rgba(2,6,23,0.30);
+    }
+
+    .habit h4 {
+      font-size: 1rem;
+      margin-bottom: 6px;
+      color: #f8fafc;
+    }
+
+    .habit p {
+      margin: 0;
+      color: var(--soft);
+      font-size: 0.96rem;
+    }
+
+    .separate-band {
+      border: 1px solid rgba(251,191,36,0.24);
+      background: linear-gradient(135deg, rgba(251,191,36,0.10), rgba(192,132,252,0.08));
+      color: #f8fafc;
+      padding: 16px 18px;
+      border-radius: 16px;
+      margin-bottom: 16px;
+      font-weight: 700;
+    }
+
+    .audience-card {
+      padding: 18px;
+      border-radius: 16px;
+      border: 1px solid var(--line);
+      background: rgba(2,6,23,0.34);
+    }
+
+    .audience-card h3 {
+      margin-bottom: 10px;
+      font-size: 1.05rem;
+    }
+
+    .audience-card ul,
+    .callout ul,
+    .pro-con ul,
+    .question-list,
+    .practice-list,
+    .score-list {
+      margin: 0;
+      padding-left: 18px;
+    }
+
+    .audience-card li,
+    .callout li,
+    .pro-con li,
+    .question-list li,
+    .practice-list li,
+    .score-list li {
+      margin: 8px 0;
+      color: var(--soft);
+    }
+
+    .pro-con {
+      padding: 18px;
+      border-radius: 16px;
+      border: 1px solid var(--line);
+      min-height: 100%;
+    }
+
+    .pro {
+      background: rgba(52,211,153,0.08);
+      border-color: rgba(52,211,153,0.24);
+    }
+
+    .con {
+      background: rgba(248,113,113,0.08);
+      border-color: rgba(248,113,113,0.24);
+    }
+
+    .score-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+    }
+
+    .score-item {
+      padding: 14px 16px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: rgba(2,6,23,0.34);
+    }
+
+    .score-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .score-name {
+      font-weight: 800;
+      color: var(--text);
+    }
+
+    .score-value {
+      color: var(--cyan);
+      font-weight: 900;
+    }
+
+    .bar {
+      height: 8px;
+      border-radius: 999px;
+      background: rgba(148,163,184,0.12);
+      overflow: hidden;
+    }
+
+    .fill {
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--blue), var(--cyan));
+    }
+
+    .mhom-score-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+      margin-top: 18px;
+    }
+
+    .mhom-score-item {
+      padding: 16px;
+      border-radius: 16px;
+      border: 1px solid rgba(103,232,249,0.18);
+      background: linear-gradient(135deg, rgba(20,184,166,0.08), rgba(96,165,250,0.08));
+    }
+
+    .mhom-score-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .mhom-score-name {
+      font-weight: 800;
+      color: var(--text);
+    }
+
+    .mhom-score-value {
+      color: var(--cyan);
+      font-weight: 900;
+    }
+
+    .mhom-bar {
+      height: 8px;
+      border-radius: 999px;
+      background: rgba(148,163,184,0.12);
+      overflow: hidden;
+      margin-bottom: 10px;
+    }
+
+    .mhom-fill {
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--teal), var(--cyan));
+    }
+
+    .mhom-score-desc {
+      margin: 0;
+      color: var(--soft);
+      font-size: 0.95rem;
+    }
+
+    .ccss-score-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+      margin-top: 18px;
+    }
+
+    .ccss-score-item {
+      padding: 16px;
+      border-radius: 16px;
+      border: 1px solid rgba(251,191,36,0.18);
+      background: linear-gradient(135deg, rgba(251,191,36,0.08), rgba(96,165,250,0.08));
+    }
+
+    .ccss-score-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .ccss-score-name {
+      font-weight: 800;
+      color: var(--text);
+    }
+
+    .ccss-score-value {
+      color: var(--amber);
+      font-weight: 900;
+    }
+
+    .ccss-bar {
+      height: 8px;
+      border-radius: 999px;
+      background: rgba(148,163,184,0.12);
+      overflow: hidden;
+      margin-bottom: 10px;
+    }
+
+    .ccss-fill {
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--amber), var(--blue));
+    }
+
+    .ccss-score-desc {
+      margin: 0;
+      color: var(--soft);
+      font-size: 0.95rem;
+    }
+
+    .ccss-evidence {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid rgba(148,163,184,0.12);
+    }
+
+    .ccss-evidence p {
+      margin: 8px 0;
+      color: var(--soft);
+    }
+
+    .ccss-evidence ul {
+      margin: 8px 0;
+      padding-left: 18px;
+    }
+
+    .ccss-evidence li {
+      margin: 4px 0;
+      color: var(--soft);
+    }
+
+    .reflection {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+    }
+
+    .footer {
+      border-top: 1px solid var(--line);
+      padding: 28px 0 42px;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .small {
+      font-size: 0.92rem;
+      color: var(--muted);
+    }
+
+    .mono {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+
+    @media (max-width: 980px) {
+      .overview-grid,
+      .two-col,
+      .three-col,
+      .habit-grid,
+      .reflection,
+      .score-grid,
+      .mhom-score-grid,
+      .ccss-score-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .toc {
+        position: static;
+      }
+
+      .section-head {
+        align-items: start;
+        flex-direction: column;
+      }
+
+      .section-note {
+        text-align: left;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .wrap,
+      .hero-inner {
+        padding-left: 16px;
+        padding-right: 16px;
+      }
+
+      .panel.pad,
+      .section-card {
+        padding: 18px;
+      }
+
+      h1 {
+        letter-spacing: 0.04em;
+      }
+
+      .hero-inner > div:first-child {
+        flex-wrap: nowrap;
+        gap: 10px;
+      }
+
+      .hero-inner > div:first-child .eyebrow {
+        white-space: nowrap;
+        font-size: 0.75em;
+      }
+
+      /* Stack navigation buttons when screen is too small */
+      .hero-inner > div:first-child {
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+      }
+    }
+
+    @media (max-width: 400px) {
+      /* Additional stacking for very small screens */
+      .hero-inner > div:first-child .eyebrow {
+        text-align: center;
+        font-size: 0.7em;
+      }
+    }
+
+    /* Fix long URL overflow in references */
+    #references li {
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+      word-break: break-word;
+    }
+    
+    #references a {
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+      word-break: break-word;
+    }
+  </style>
+</head>
+<body>
+  <header class="hero">
+    <div class="hero-inner">
+      <div style="display: flex; justify-content: center; align-items: center; gap: 10px;">
+        <div class="eyebrow" style="background: rgba(251,191,36,0.12); color: var(--amber); padding: 4px 12px; border-radius: 12px; cursor: pointer; transition: all 0.2s;">
+          <a href="https://www.mistermarx.com/games" style="color: inherit; text-decoration: none;">
+            Back to Games
+          </a>
+        </div>
+        <div class="eyebrow" style="background: rgba(96,165,250,0.12); color: var(--cyan); padding: 4px 12px; border-radius: 12px; cursor: pointer; transition: all 0.2s;">
+          <a href="https://www.mistermarx.com" target="_blank" rel="noopener noreferrer" style="color: inherit; text-decoration: none;">
+            Back to MisterMarx.com
+          </a>
+        </div>
+      </div>
+      <h1>CORRELATION <span style="font-size: 0.6em; font-weight: 400; letter-spacing: 0; text-transform: none;">v0.2</span></h1>
+      
+          <div style="text-align: left; margin-left: 20px;">
+            <a href="https://www.mistermarx.com/games/correlation" target="_blank" rel="noopener noreferrer" 
+               style="display: inline-block; background: linear-gradient(135deg, var(--teal), var(--cyan)); 
+                      color: white; padding: 6px 18px; border-radius: 12px; 
+                      font-weight: 700; font-size: 1.1rem; text-decoration: none;
+                      transition: all 0.2s; box-shadow: 0 4px 12px rgba(20,184,166,0.3);">
+              PLAY GAME
+            </a>
+          </div>
+      <p class="hero-sub">
+        This page is designed to help parents, teachers, and students understand
+        what <strong>CORRELATION</strong> develops during play. The primary focus is
+        <strong>Mathematical Habits of Mind</strong>. Additional cognitive and personal
+        benefits are included secondarily.
+      </p>
+
+      <p></p>
+      <p class="lead" style="margin: 0 0 18px 0;">
+        CORRELATION is a fast-paced system management game where players connect nodes across a dynamic board while managing risk, instability, and timing.
+      </p>
+
+      <div class="callout" style="margin: 18px 0;">
+        <p class="lead" style="margin: 0;">
+          <strong>Important:</strong> CORRELATION does not teach mathematical content 
+          (formulas, procedures, or curriculum). Instead, it develops the underlying 
+          cognitive skills that mathematics education research identifies as essential: Reasoning, Decision-making, Pattern recognition, and Reflection.
+          <br><br>
+          These are exactly what Mathematical Habits of Mind literature argues 
+          mathematics education should cultivate.
+        </p>
+      </div>
+
+      <div class="grid overview-grid">
+        <div class="panel pad">
+          <div class="kicker">Game Experience</div>
+          <h2 style="font-size: 1.5rem;">What playing this game actually feels like</h2>
+          <p class="lead">
+            CORRELATION feels like managing an unstable system under pressure. The player scans
+            a changing board, commits to an energy source, judges risk, aims a connection,
+            and then lives with the consequence. Success feels corrective and explosive.
+            Failure makes the board harder. The player is not just making moves. The player is
+            learning to read a system, prioritize under pressure, and act with intention.
+          </p>
+          <div class="priority-banner">
+            Instructional priority: this companion page treats the play experience itself as the
+            source of learning.
+          </div>
+        </div>
+
+        <div class="panel pad">
+          <div class="kicker">Game Preview</div>
+          <div class="slideshow-container" id="gameSlideshow">
+            <div class="slide active">
+              <img src="images/Screenshot_20260317-213643.png" alt="CORRELATION Game Screenshot 1">
+            </div>
+            <div class="slide">
+              <img src="images/Screenshot_20260317-214702.png" alt="CORRELATION Game Screenshot 2">
+            </div>
+            <div class="slide">
+              <img src="images/Screenshot_20260317-214717.png" alt="CORRELATION Game Screenshot 3">
+            </div>
+            <div class="slide">
+              <img src="images/Screenshot_20260317-214727.png" alt="CORRELATION Game Screenshot 4">
+            </div>
+            
+            <button class="slideshow-nav prev" onclick="changeSlide(-1)">‹</button>
+            <button class="slideshow-nav next" onclick="changeSlide(1)">›</button>
+            
+            <div class="slideshow-controls">
+              <button class="slideshow-btn" onclick="toggleAutoPlay()" id="autoPlayBtn">⏸</button>
+              <span class="slideshow-counter" id="slideCounter">1/4</span>
+              <button class="slideshow-btn" onclick="resetSlideshow()">⟲</button>
+            </div>
+          </div>
+        </div>
+
+        <aside class="panel pad toc">
+          <div class="kicker">Page Map</div>
+          <a href="#overview">1. Overview</a>
+          <a href="#math-habits">2. Mathematical Habits of Mind</a>
+          <a href="#ccss-alignment">3. Common Core Alignment</a>
+          <a href="#teacher-guide">4. Teacher Guide</a>
+          <a href="#parent-guide">5. Parent Guide</a>
+          <a href="#student-guide">6. Student Guide</a>
+          <a href="#five-practices">7. 5 Practices for Orchestrating Productive Mathematical Discussions</a>
+          <a href="#additional-benefits">8. Additional Benefits</a>
+          <a href="#positives-negatives">9. Positives & Negatives</a>
+          <a href="#reflection">10. Reflection Questions</a>
+          <a href="#references">11. Research Sources</a>
+        </aside>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section id="overview" class="panel section-card">
+      <div class="section-head">
+        <div>
+          <div class="kicker">Overview</div>
+          <h2 class="section-title">What players are doing during play</h2>
+        </div>
+      </div>
+
+      <div class="two-col">
+        <div class="callout">
+          <h3>Core play loop</h3>
+          <p class="lead mono">scan → select → aim → risk → release → consequence</p>
+          <p class="small" style="margin-top: 10px;">
+            The board is active, time-sensitive, and unstable. The player reads the current state,
+            chooses a source, evaluates remaining nodes, decides whether the move is worth the risk,
+            and responds to the outcome.
+          </p>
+        </div>
+        <div class="callout">
+          <h3>Dominant experience</h3>
+          <p class="lead">
+            This is not a calm static puzzle. It is a pressure-based decision game where the player
+            must balance urgency, precision, and restraint.
+          </p>
+        </div>
+      </div>
+<p></p>
+      <p class="lead">
+        This companion page explains the play experience, the habits of mind the game can develop,
+        and the kinds of decisions players are asked to make. It does not reveal every hidden or
+        underlying system of the game. Some details are intentionally left for player discovery.
+      </p>
+<p></p>
+      <div class="callout">
+        <h3>Some game details are intentionally omitted and left to be discovered</h3>
+        <p class="lead">
+          Not every underlying mechanic is explained on this page or in the game's instructions. Some systems are left partly hidden
+          so that players can notice patterns, test ideas, form conjectures, and learn through discovery
+          <a href="https://www.sciencedirect.com/science/article/pii/S0732312396900231" target="_blank">
+          (Cuoco, Goldenberg, & Mark, 1996)
+          </a>.
+          The goal is not to remove depth by over-explaining every variable. The goal is to preserve
+          meaningful exploration while still giving players, parents, and teachers enough structure to
+          use the game intentionally.
+        </p>
+<p></p>
+      <div class="audience-card">
+        <h3>What this serves</h3>
+        <ul>
+          <li>Preserves curiosity and discovery during play.</li>
+          <li>Encourages players to look for patterns rather than wait for every rule to be told to them.</li>
+          <li>Supports conjecture, revision, and discussion.</li>
+          <li>Keeps the companion page focused on reasoning and learning rather than system spoilage.</li>
+          <li>Allows players to experience growth from uncertainty toward insight.</li>
+        </ul>
+      </div>
+      </div>
+<p></p>
+
+      <div class="callout">
+        <h3>What still requires explanation</h3>
+        <p class="lead">
+          The essential rules of play should still be made clear: how to start a move, how to select a second node,
+          that risk changes across situations, that failure has consequences, and that the board becomes
+          harder if left unmanaged. Discovery should deepen play, not make the game unreadable.
+        </p>
+      </div>
+
+<p></p>
+      <!-- Key skills -->
+        <h3>Key Skills</h3>
+
+      <div class="chips">
+        <div class="chip">Board scanning</div>
+        <div class="chip">Risk judgment</div>
+        <div class="chip">Intentional choice</div>
+        <div class="chip">Consequence awareness</div>
+        <div class="chip">Pattern noticing</div>
+        <div class="chip">Recovery after error</div>
+        <div class="chip">System-level thinking</div>
+      </div>
+
+      <!-- Player experience -->
+       <p></p>
+       <h3>Player Experience</h3>
+      <div class="three-col" style="margin-top: 18px;">
+        <div class="fact">
+          <span class="label">Player task</span>
+          Determine what is urgent, what is safe, and what has the best payoff.
+        </div>
+        <div class="fact">
+          <span class="label">Emotional rhythm</span>
+          Tension while aiming, relief or celebration on success, pressure after mistakes.
+        </div>
+        <div class="fact">
+          <span class="label">Growth arc</span>
+          Beginners often react impulsively. Stronger players become more deliberate and predictive.
+        </div>
+      </div>
+    </section>
+
+    <section id="math-habits" class="panel section-card">
+      <div class="section-head">
+        <div>
+          <div class="kicker">Primary Focus</div>
+          <h2 class="section-title">Mathematical Habits of Mind</h2>
+        </div>
+      </div>
+
+
+      <p class="lead" style="margin-bottom: 14px;">
+        The Mathematical Habits of Mind framework originates from
+        research on mathematics curriculum design emphasizing
+        reasoning, conjecture, and structural thinking
+        <a href="https://www.sciencedirect.com/science/article/pii/S0732312396900231" target="_blank">
+        (Cuoco, Goldenberg, & Mark, 1996)
+        </a>
+        and is further developed in MisterMarx.com's educational approach
+        <a href="https://www.mistermarx.com/mathematicalhabitsofmind" target="_blank">
+        (MisterMarx.com, 2026)
+        </a>.
+        This approach builds on research showing that games create effective learning environments
+        <a href="https://www.researchgate.net/publication/220686314_What_Video_Games_Have_to_Teach_Us_About_Learning_and_Literacy" target="_blank">
+        (Gee, 2003)
+        </a>,
+        support cognitive development
+        <a href="https://www.nature.com/articles/nature01647" target="_blank">
+        (Green & Bavelier, 2003)
+        </a>,
+        and benefit from structured mathematical discussions
+        <a href="https://eric.ed.gov/?id=EJ815183" target="_blank">
+        (Stein, Engle, Smith, & Hughes, 2008)
+        </a>.
+      </p>
+
+      <div class="callout" style="margin-top: 18px;">
+        <h3>Research Foundation</h3>
+        <p class="lead">
+          This companion page builds on established research in mathematics education, 
+          cognitive development, and game-based learning.
+        </p>
+        
+        <p class="small" style="margin-top: 12px;">
+          <strong>Mathematical Habits of Mind:</strong> Mathematics education should cultivate 
+          ways of thinking, not just procedures
+          <a href="https://www.sciencedirect.com/science/article/pii/S0732312396900231" target="_blank">
+          (Cuoco, Goldenberg, & Mark, 1996)
+          </a>.
+        </p>
+        
+        <p class="small">
+          <strong>Mathematical Discussion Theory:</strong> The 5 Practices framework for turning 
+          activity into reasoning
+          <a href="https://eric.ed.gov/?id=EJ815183" target="_blank">
+          (Stein, Engle, Smith, & Hughes, 2008)
+          </a>.
+        </p>
+        
+        <p class="small">
+          <strong>Inquiry Learning:</strong> Discovery learning improves conceptual retention
+          <a href="https://www.sciencedirect.com/science/article/abs/pii/00220731619090031" target="_blank">
+          (Bruner, 1961)
+          </a>.
+        </p>
+        
+        <p class="small">
+          <strong>Game-Based Learning:</strong> Games create situated problem-solving environments
+          <a href="https://www.researchgate.net/publication/220686314_What_Video_Games_Have_to_Teach_Us_About_Learning_and_Literacy" target="_blank">
+          (Gee, 2003)
+          </a>.
+        </p>
+        
+        <p class="small">
+          <strong>Cognitive Skill Development:</strong> Action games improve attention and decision making
+          <a href="https://www.nature.com/articles/nature01647" target="_blank">
+          (Green & Bavelier, 2003)
+          </a>.
+        </p>
+      </div>
+
+      <p class="lead" style="margin-bottom: 14px;">
+        Because some mechanics are left for discovery, players are pushed to make sense of the system,
+        notice regularity, test ideas, explain outcomes, and revise their thinking from experience.
+        That design choice directly supports Mathematical Habits of Mind
+        <a href="https://nrich.maths.org/content/id/9971/HabitsOfMind.pdf" target="_blank">
+        (Cuoco, Goldenberg, & Mark, 1996)
+        </a>
+        as applied in MisterMarx.com's educational approach
+        <a href="https://www.mistermarx.com/mathematicalhabitsofmind" target="_blank">
+        (MisterMarx.com, 2026)
+        </a>.
+      </p>
+
+      <p class="lead" style="margin-bottom: 18px;">
+        The ratings below show which Mathematical Habits of Mind are most strongly activated by the actual play experience of CORRELATION.
+      </p>
+
+      <div class="callout" style="margin-top: 18px;">
+        <h3>How to read these ratings</h3>
+        <p class="lead">
+          These scores are not claims about all games in general. They describe how strongly CORRELATION appears to activate each Mathematical Habit of Mind through its actual play experience.
+        </p>
+      </div>
+
+      <div class="mhom-score-grid">
+        <div class="mhom-score-item">
+          <div class="mhom-score-top">
+            <span class="mhom-score-name">MAKE SENSE</span>
+            <span class="mhom-score-value">10/10</span>
+          </div>
+          <div class="mhom-bar"><div class="mhom-fill" style="width: 100%;"></div></div>
+          <p class="mhom-score-desc">The player must constantly interpret a changing board before acting
+          <a href="https://www.mistermarx.com/mathematicalhabitsofmind/make-sense" target="_blank">
+          (MisterMarx.com, 2026)
+          </a>.</p>
+        </div>
+
+        <div class="mhom-score-item">
+          <div class="mhom-score-top">
+            <span class="mhom-score-name">JUSTIFY WHY</span>
+            <span class="mhom-score-value">9/10</span>
+          </div>
+          <div class="mhom-bar"><div class="mhom-fill" style="width: 90%;"></div></div>
+          <p class="mhom-score-desc">Strong play depends on being able to explain why one move is safer, stronger, or more urgent than another
+          <a href="https://www.mistermarx.com/mathematicalhabitsofmind/justify-why" target="_blank">
+          (MisterMarx.com, 2026)
+          </a>.</p>
+        </div>
+
+        <div class="mhom-score-item">
+          <div class="mhom-score-top">
+            <span class="mhom-score-name">REGULARITY / PATTERNS / STRUCTURE</span>
+            <span class="mhom-score-value">9/10</span>
+          </div>
+          <div class="mhom-bar"><div class="mhom-fill" style="width: 90%;"></div></div>
+          <p class="mhom-score-desc">Players improve by noticing recurring board states, danger patterns, and reliable move structures
+          <a href="https://www.mistermarx.com/mathematicalhabitsofmind/regularity-patterns" target="_blank">
+          (MisterMarx.com, 2026)
+          </a>.</p>
+        </div>
+
+        <div class="mhom-score-item">
+          <div class="mhom-score-top">
+            <span class="mhom-score-name">PERSEVERE & SEEK MORE</span>
+            <span class="mhom-score-value">9/10</span>
+          </div>
+          <div class="mhom-bar"><div class="mhom-fill" style="width: 90%;"></div></div>
+          <p class="mhom-score-desc">The game repeatedly asks the player to recover, rethink, and continue after pressure or failure
+          <a href="https://www.mistermarx.com/mathematicalhabitsofmind/persevere-and-seek-more" target="_blank">
+          (MisterMarx.com, 2026)
+          </a>.</p>
+        </div>
+
+        <div class="mhom-score-item">
+          <div class="mhom-score-top">
+            <span class="mhom-score-name">MISTAKES & STUCK POINTS</span>
+            <span class="mhom-score-value">9/10</span>
+          </div>
+          <div class="mhom-bar"><div class="mhom-fill" style="width: 90%;"></div></div>
+          <p class="mhom-score-desc">Errors are visible, consequential, and highly informative for future decision-making
+          <a href="https://www.mistermarx.com/mathematicalhabitsofmind/mistakes-stuck-points" target="_blank">
+          (MisterMarx.com, 2026)
+          </a>.</p>
+        </div>
+
+        <div class="mhom-score-item">
+          <div class="mhom-score-top">
+            <span class="mhom-score-name">EXPLORE MULTIPLE PATHWAYS</span>
+            <span class="mhom-score-value">8/10</span>
+          </div>
+          <div class="mhom-bar"><div class="mhom-fill" style="width: 80%;"></div></div>
+          <p class="mhom-score-desc">The board often offers several playable options, and stronger players compare them rather than acting immediately
+          <a href="https://www.mistermarx.com/mathematicalhabitsofmind/explore-multiple-pathways" target="_blank">
+          (MisterMarx.com, 2026)
+          </a>.</p>
+        </div>
+
+        <div class="mhom-score-item">
+          <div class="mhom-score-top">
+            <span class="mhom-score-name">EXPLAIN</span>
+            <span class="mhom-score-value">8/10</span>
+          </div>
+          <div class="mhom-bar"><div class="mhom-fill" style="width: 80%;"></div></div>
+          <p class="mhom-score-desc">Players can clearly describe what they saw, what they intended, and what result they expected
+          <a href="https://www.mistermarx.com/mathematicalhabitsofmind/explain" target="_blank">
+          (MisterMarx.com, 2026)
+          </a>.</p>
+        </div>
+
+        <div class="mhom-score-item">
+          <div class="mhom-score-top">
+            <span class="mhom-score-name">METACOGNITION & REFLECTION</span>
+            <span class="mhom-score-value">8/10</span>
+          </div>
+          <div class="mhom-bar"><div class="mhom-fill" style="width: 80%;"></div></div>
+          <p class="mhom-score-desc">The game supports strong reflection on how choices changed the board and what better reasoning would look like next time
+          <a href="https://www.mistermarx.com/mathematicalhabitsofmind/metacognition-reflection" target="_blank">
+          (MisterMarx.com, 2026)
+          </a>.</p>
+        </div>
+
+        <div class="mhom-score-item">
+          <div class="mhom-score-top">
+            <span class="mhom-score-name">GENERALIZE</span>
+            <span class="mhom-score-value">8/10</span>
+          </div>
+          <div class="mhom-bar"><div class="mhom-fill" style="width: 80%;"></div></div>
+          <p class="mhom-score-desc">Players begin forming broad rules from repeated play about urgency, safety, and payoff
+          <a href="https://www.mistermarx.com/mathematicalhabitsofmind/generalize" target="_blank">
+          (MisterMarx.com, 2026)
+          </a>.</p>
+        </div>
+
+        <div class="mhom-score-item">
+          <div class="mhom-score-top">
+            <span class="mhom-score-name">CONNECTIONS</span>
+            <span class="mhom-score-value">8/10</span>
+          </div>
+          <div class="mhom-bar"><div class="mhom-fill" style="width: 80%;"></div></div>
+          <p class="mhom-score-desc">Good play depends on seeing how one local decision affects the wider board
+          <a href="https://www.mistermarx.com/mathematicalhabitsofmind/connections" target="_blank">
+          (MisterMarx.com, 2026)
+          </a>.</p>
+        </div>
+
+        <div class="mhom-score-item">
+          <div class="mhom-score-top">
+            <span class="mhom-score-name">GENUINE QUESTIONS</span>
+            <span class="mhom-score-value">8/10</span>
+          </div>
+          <div class="mhom-bar"><div class="mhom-fill" style="width: 80%;"></div></div>
+          <p class="mhom-score-desc">The game naturally produces real questions about risk, priority, and consequence
+          <a href="https://www.mistermarx.com/mathematicalhabitsofmind/genuine-questions" target="_blank">
+          (MisterMarx.com, 2026)
+          </a>.</p>
+        </div>
+
+        <div class="mhom-score-item">
+          <div class="mhom-score-top">
+            <span class="mhom-score-name">MATHEMATICAL REPRESENTATIONS</span>
+            <span class="mhom-score-value">7/10</span>
+          </div>
+          <div class="mhom-bar"><div class="mhom-fill" style="width: 70%;"></div></div>
+          <p class="mhom-score-desc">The board acts as a visual representation of a dynamic system that players must interpret
+          <a href="https://www.mistermarx.com/mathematicalhabitsofmind/mathematical-representations" target="_blank">
+          (MisterMarx.com, 2026)
+          </a>.</p>
+        </div>
+      </div>
+
+      <div class="callout" style="margin-top:18px;">
+        <h3>Discussion-based Mathematical Habits</h3>
+
+        <p class="lead">
+          Some Mathematical Habits of Mind appear most strongly during
+          discussion rather than during solo gameplay.
+        </p>
+
+        <ul>
+          <li>Listen to Understand
+          <a href="https://www.mistermarx.com/mathematicalhabitsofmind/listen-to-understand" target="_blank">
+          (MisterMarx.com, 2026)
+          </a></li>
+          <li>Private Reasoning Time
+          <a href="https://www.mistermarx.com/mathematicalhabitsofmind/private-reasoning-time" target="_blank">
+          (MisterMarx.com, 2026)
+          </a></li>
+          <li>Compare Our Logic & Ideas
+          <a href="https://www.mistermarx.com/mathematicalhabitsofmind/compare-our-logic" target="_blank">
+          (MisterMarx.com, 2026)
+          </a></li>
+          <li>Critique & Debate
+          <a href="https://www.mistermarx.com/mathematicalhabitsofmind/critique-and-debate" target="_blank">
+          (MisterMarx.com, 2026)
+          </a></li>
+          <li>Math Reasoning is the Authority
+          <a href="https://www.mistermarx.com/mathematicalhabitsofmind/math-reasoning-authority" target="_blank">
+          (MisterMarx.com, 2026)
+          </a></li>
+        </ul>
+
+        <p class="small">
+          These habits emerge most clearly when gameplay is paired with
+          conversation, reflection, and comparison of strategies.
+        </p>
+      </div>
+
+    </section>
+
+    <section id="ccss-alignment" class="panel section-card">
+      <div class="section-head">
+        <div>
+          <div class="kicker">Standards Alignment</div>
+          <h2 class="section-title">Common Core Mathematical Practice Alignment</h2>
+        </div>
+      </div>
+
+      <p class="lead">
+        The CORRELATION game emphasizes mathematical thinking behaviors rather than
+        specific grade-level content. Alignment is evaluated against the 
+        Common Core Standards for Mathematical Practice (CCSS-MP).
+      </p>
+
+      <div class="callout" style="margin-top: 18px;">
+        <h3>Scoring Scale</h3>
+        <ul>
+          <li>0–2 — Minimal presence</li>
+          <li>3–4 — Emerging alignment</li>
+          <li>5–6 — Moderate alignment</li>
+          <li>7–8 — Strong alignment</li>
+          <li>9–10 — Core mechanic of the experience</li>
+        </ul>
+      </div>
+
+      <div class="ccss-score-grid">
+        <div class="ccss-score-item">
+          <div class="ccss-score-top">
+            <span class="ccss-score-name">MP1 — Make sense of problems and persevere in solving them</span>
+            <span class="ccss-score-value">10/10</span>
+          </div>
+          <div class="ccss-bar"><div class="ccss-fill" style="width: 100%;"></div></div>
+          <p class="ccss-score-desc">
+            Players constantly interpret evolving board states and determine possible
+            node transitions. Failed correlations require re-evaluation and strategic
+            adjustment, reinforcing perseverance and problem solving.
+          </p>
+          <div class="ccss-evidence">
+            <p><strong>Gameplay Evidence:</strong></p>
+            <ul>
+              <li>Players analyze the grid to identify valid transitions.</li>
+              <li>Failed correlations require reassessment of strategy.</li>
+              <li>Increasing grid saturation creates sustained problem-solving pressure.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="ccss-score-item">
+          <div class="ccss-score-top">
+            <span class="ccss-score-name">MP2 — Reason abstractly and quantitatively</span>
+            <span class="ccss-score-value">8/10</span>
+          </div>
+          <div class="ccss-bar"><div class="ccss-fill" style="width: 80%;"></div></div>
+          <p class="ccss-score-desc">
+            Players reason about relationships between energy values, spatial distance,
+            and probabilistic outcomes. Quantitative relationships guide strategic
+            decisions.
+          </p>
+          <div class="ccss-evidence">
+            <p><strong>Gameplay Evidence:</strong></p>
+            <ul>
+              <li>Energy levels constrain possible correlations.</li>
+              <li>Distance affects probability of successful transition.</li>
+              <li>Players mentally estimate risk versus reward.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="ccss-score-item">
+          <div class="ccss-score-top">
+            <span class="ccss-score-name">MP3 — Construct viable arguments and critique reasoning</span>
+            <span class="ccss-score-value">6/10</span>
+          </div>
+          <div class="ccss-bar"><div class="ccss-fill" style="width: 60%;"></div></div>
+          <p class="ccss-score-desc">
+            While the game itself is single-player, discussion about strategy allows
+            players to justify choices and evaluate alternative reasoning.
+          </p>
+          <div class="ccss-evidence">
+            <p><strong>Gameplay Evidence:</strong></p>
+            <ul>
+              <li>Players can compare strategies and outcomes.</li>
+              <li>Different transitions can be debated in group play.</li>
+              <li>Players explain why a given move was optimal or risky.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="ccss-score-item">
+          <div class="ccss-score-top">
+            <span class="ccss-score-name">MP4 — Model with mathematics</span>
+            <span class="ccss-score-value">6/10</span>
+          </div>
+          <div class="ccss-bar"><div class="ccss-fill" style="width: 60%;"></div></div>
+          <p class="ccss-score-desc">
+            The game represents a simplified mathematical system involving quantities,
+            probability decay, and cascading system responses.
+          </p>
+          <div class="ccss-evidence">
+            <p><strong>Gameplay Evidence:</strong></p>
+            <ul>
+              <li>Energy transfer acts as a simplified quantitative model.</li>
+              <li>Distance decay reflects probabilistic modeling.</li>
+              <li>Recoil cascades demonstrate system interactions.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="ccss-score-item">
+          <div class="ccss-score-top">
+            <span class="ccss-score-name">MP5 — Use appropriate tools strategically</span>
+            <span class="ccss-score-value">4/10</span>
+          </div>
+          <div class="ccss-bar"><div class="ccss-fill" style="width: 40%;"></div></div>
+          <p class="ccss-score-desc">
+            The primary tools are visual cues within the interface rather than external
+            mathematical instruments.
+          </p>
+          <div class="ccss-evidence">
+            <p><strong>Gameplay Evidence:</strong></p>
+            <ul>
+              <li>Players rely on board structure and visual signals.</li>
+              <li>Players interpret probability indicators when selecting nodes.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="ccss-score-item">
+          <div class="ccss-score-top">
+            <span class="ccss-score-name">MP6 — Attend to precision</span>
+            <span class="ccss-score-value">8/10</span>
+          </div>
+          <div class="ccss-bar"><div class="ccss-fill" style="width: 80%;"></div></div>
+          <p class="ccss-score-desc">
+            Successful play requires careful comparison of energy levels and precise
+            selection of target nodes.
+          </p>
+          <div class="ccss-evidence">
+            <p><strong>Gameplay Evidence:</strong></p>
+            <ul>
+              <li>Players must accurately compare node values.</li>
+              <li>Incorrect choices result in decorrelation penalties.</li>
+              <li>Precise targeting improves probability of success.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="ccss-score-item">
+          <div class="ccss-score-top">
+            <span class="ccss-score-name">MP7 — Look for and make use of structure</span>
+            <span class="ccss-score-value">10/10</span>
+          </div>
+          <div class="ccss-bar"><div class="ccss-fill" style="width: 100%;"></div></div>
+          <p class="ccss-score-desc">
+            Strategic play depends on recognizing patterns within the grid and
+            understanding structural relationships between nodes.
+          </p>
+          <div class="ccss-evidence">
+            <p><strong>Gameplay Evidence:</strong></p>
+            <ul>
+              <li>Players identify clusters of compatible nodes.</li>
+              <li>Grid positioning influences correlation success.</li>
+              <li>Players exploit structure to produce cascades.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="ccss-score-item">
+          <div class="ccss-score-top">
+            <span class="ccss-score-name">MP8 — Look for and express regularity in repeated reasoning</span>
+            <span class="ccss-score-value">10/10</span>
+          </div>
+          <div class="ccss-bar"><div class="ccss-fill" style="width: 100%;"></div></div>
+          <p class="ccss-score-desc">
+            Repeated play reveals patterns in probability behavior and cascading effects,
+            allowing players to develop strategic heuristics.
+          </p>
+          <div class="ccss-evidence">
+            <p><strong>Gameplay Evidence:</strong></p>
+            <ul>
+              <li>Players learn correlation patterns over time.</li>
+              <li>Repeated gameplay refines strategic intuition.</li>
+              <li>Players develop heuristics for managing saturation.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout" style="margin-top: 18px;">
+        <h3>Summary</h3>
+        <ul>
+          <li><strong>Primary Alignment:</strong> MP1, MP7, MP8</li>
+          <li><strong>Strong Alignment:</strong> MP2, MP6</li>
+          <li><strong>Moderate Alignment:</strong> MP3, MP4</li>
+          <li><strong>Light Alignment:</strong> MP5</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="teacher-guide" class="panel section-card">
+      <div class="section-head">
+        <div>
+          <div class="kicker">For Teachers</div>
+          <h2 class="section-title">How to use this game instructionally</h2>
+        </div>
+        <div class="section-note">
+          Keep classroom discussion centered on player reasoning, not just scores.
+        </div>
+      </div>
+
+      <div class="three-col">
+        <div class="audience-card">
+          <h3>Before play</h3>
+          <ul>
+            <li>Tell students the goal is to study decision-making, not just to win.</li>
+            <li>Ask students what makes a move “strong” in a changing system.</li>
+            <li>Set a focus habit of mind for the round, such as explain, justify why, or persevere.</li>
+          </ul>
+        </div>
+
+        <div class="audience-card">
+          <h3>During play</h3>
+          <ul>
+            <li>Pause and ask students to name the most urgent area of the board.</li>
+            <li>Have students predict which move is safest and which move is boldest.</li>
+            <li>Ask what evidence on the board supports the choice.</li>
+          </ul>
+        </div>
+
+        <div class="audience-card">
+          <h3>After play</h3>
+          <ul>
+            <li>Compare two different approaches to the same kind of board state.</li>
+            <li>Discuss what mistakes taught the most.</li>
+            <li>Have students write or say what changed in their thinking from round one to round two.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="callout" style="margin-top: 18px;">
+        <h3>Good teacher questions</h3>
+        <ul class="question-list">
+          <li>What did you notice before you committed to that move?</li>
+          <li>What other move did you consider, and why did you reject it?</li>
+          <li>Was your move solving a local problem or a larger board problem?</li>
+          <li>What signs told you the board was becoming unstable?</li>
+          <li>How did a failed attempt change the next decision you made?</li>
+        </ul>
+      </div>
+
+      <div class="callout" style="margin-top: 18px;">
+        <h3>Teacher note on withheld details</h3>
+        <p class="lead">
+          There is benefit to not explaining every hidden mechanic immediately. Leaving some structure
+          undisclosed creates opportunities for students to hypothesize, compare observations, justify
+          claims, and debate what they think is happening in the system. This exposes the learning via inquiry and reasoning that is naturally occuring during gameplay.
+        </p>
+      </div>
+    </section>
+
+    <section id="parent-guide" class="panel section-card">
+      <div class="section-head">
+        <div>
+          <div class="kicker">For Parents</div>
+          <h2 class="section-title">How to guide play at home</h2>
+        </div>
+        <div class="section-note">
+          The best parent role here is not to direct every move, but to help the child talk through choices.
+        </div>
+      </div>
+
+      <div class="two-col">
+        <div class="audience-card">
+          <h3>What to look for</h3>
+          <ul>
+            <li>Does your child pause to read the board before choosing?</li>
+            <li>Can your child explain why one option looked better than another?</li>
+            <li>Does your child recover thoughtfully after mistakes, or simply rush?</li>
+            <li>Does your child notice patterns in what tends to work?</li>
+          </ul>
+        </div>
+
+        <div class="audience-card">
+          <h3>What to say</h3>
+          <ul>
+            <li>“Tell me what you noticed before you picked that move.”</li>
+            <li>“What was the risk in that choice?”</li>
+            <li>“What do you think the board needs right now?”</li>
+            <li>“What did that mistake teach you for the next turn?”</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="callout" style="margin-top: 18px;">
+        <h3>Home use recommendation</h3>
+        <p class="lead">
+          Keep sessions short and reflective. A strong routine is
+          <strong>play → pause → explain → play again</strong>.
+          That turns the game into a thinking tool instead of passive screen time.
+        </p>
+      </div>
+
+      <div class="callout" style="margin-top: 18px;">
+        <h3>Parent note on discovery</h3>
+        <p class="lead">
+          Your child does not need every rule explained in advance. In many cases, it is better to ask
+          what they notice, what they predict, and what they think caused a success or failure. That helps
+          the game become a thinking experience rather than just an instruction-following experience.
+        </p>
+      </div>
+    </section>
+
+    <section id="student-guide" class="panel section-card">
+      <div class="section-head">
+        <div>
+          <div class="kicker">For Students</div>
+          <h2 class="section-title">How to play with intention</h2>
+        </div>
+        <div class="section-note">
+          The goal is not just speed. The goal is better judgment.
+        </div>
+      </div>
+
+      <div class="two-col">
+        <div class="callout">
+          <h3>When you are about to move</h3>
+          <ul class="practice-list">
+            <li>Look at the whole board first.</li>
+            <li>Ask what is most urgent, not just what is easiest.</li>
+            <li>Think about what your move might change nearby.</li>
+            <li>Do not confuse “possible” with “wise.”</li>
+          </ul>
+        </div>
+
+        <div class="callout">
+          <h3>After a move</h3>
+          <ul class="practice-list">
+            <li>Say whether the move did what you wanted.</li>
+            <li>Name one reason it worked or failed.</li>
+            <li>Notice whether you solved one problem or several.</li>
+            <li>Use mistakes to improve the next decision immediately.</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Key Practices -->
+       <p></p>
+       <h3>Key Practices</h3>
+      
+      <div class="chips" style="margin-top: 18px;">
+        <div class="chip">Pause before acting</div>
+        <div class="chip">Explain your choice</div>
+        <div class="chip">Study mistakes</div>
+        <div class="chip">Look for patterns</div>
+        <div class="chip">Try another pathway</div>
+      </div>
+
+      <!-- Student Guidance -->
+       <p></p>
+       <h3>Student Guidance</h3>
+      <div class="callout" style="margin-top: 18px;">
+        <h3>For student players</h3>
+        <p class="lead">
+          Part of the game is discovery. You are not supposed to be told every hidden detail right away.
+          Pay attention to what seems to make a move safer, riskier, stronger, or more dangerous. Your task
+          is not just to play. Your task is to notice and wonder.
+        </p>
+      </div>
+    </section>
+
+    <section id="five-practices" class="panel section-card">
+      <div class="section-head">
+        <div>
+          <div class="kicker">Teacher Discussion Framework</div>
+          <h2 class="section-title">The 5 Practices for Orchestrating Productive Discussion</h2>
+        </div>
+        <div class="section-note">
+          This is where teachers can turn gameplay into strong mathematical conversation.
+        </div>
+      </div>
+
+      <p class="lead" style="margin-bottom: 18px;">
+        Research on productive mathematics discussions identifies five
+        instructional practices: anticipating, monitoring, selecting,
+        sequencing, and connecting student thinking
+        <a href="https://eric.ed.gov/?id=EJ815183" target="_blank">
+        (Stein, Engle, Smith, & Hughes, 2008)
+        </a>.
+      </p>
+
+      <div class="habit-grid">
+        <article class="habit">
+          <h4>ANTICIPATING</h4>
+          <p>
+            Predict the kinds of choices students will make: rushing, playing too locally,
+            overvaluing risky long-range moves, or missing larger board threats.
+          </p>
+        </article>
+
+        <article class="habit">
+          <h4>MONITORING</h4>
+          <p>
+            Watch and listen for how students justify moves, how they react to failure,
+            and whether they are reading the board globally or only one piece at a time.
+          </p>
+        </article>
+
+        <article class="habit">
+          <h4>SELECTING</h4>
+          <p>
+            Choose students whose moves show contrasting reasoning: careful stabilization,
+            impulsive overreach, strong recovery, or powerful pattern recognition.
+          </p>
+        </article>
+
+        <article class="habit">
+          <h4>SEQUENCING</h4>
+          <p>
+            Share examples in an order that helps the class move from surface-level description
+            toward stronger system-based explanation.
+          </p>
+        </article>
+
+        <article class="habit">
+          <h4>CONNECTING</h4>
+          <p>
+            Connect one player’s reasoning to another’s so students can see how different
+            decisions reveal larger mathematical habits of mind.
+          </p>
+        </article>
+      </div>
+    </section>
+
+    <section id="additional-benefits" class="panel section-card">
+      <div class="section-head">
+        <div>
+          <div class="kicker">Secondary Section</div>
+          <h2 class="section-title">Additional Benefits</h2>
+        </div>
+      </div>
+
+      <div class="separate-band">
+        The following ratings describe additional gains that may arise through intentional play.
+      </div>
+
+      <div class="score-grid">
+        <div class="score-item">
+          <div class="score-top">
+            <span class="score-name">Attention Control</span>
+            <span class="score-value">8/10</span>
+          </div>
+          <div class="bar"><div class="fill" style="width: 80%;"></div></div>
+          <p class="small">The player must stay aware of an evolving board and shifting urgency.</p>
+        </div>
+
+        <div class="score-item">
+          <div class="score-top">
+            <span class="score-name">Working Memory</span>
+            <span class="score-value">7/10</span>
+          </div>
+          <div class="bar"><div class="fill" style="width: 70%;"></div></div>
+          <p class="small">Players keep multiple threats, options, and consequences in mind at once.</p>
+        </div>
+
+        <div class="score-item">
+          <div class="score-top">
+            <span class="score-name">Planning & Prioritization</span>
+            <span class="score-value">9/10</span>
+          </div>
+          <div class="bar"><div class="fill" style="width: 90%;"></div></div>
+          <p class="small">The game constantly asks what deserves attention now versus later.</p>
+        </div>
+
+        <div class="score-item">
+          <div class="score-top">
+            <span class="score-name">Emotional Regulation</span>
+            <span class="score-value">7/10</span>
+          </div>
+          <div class="bar"><div class="fill" style="width: 70%;"></div></div>
+          <p class="small">Players must recover from pressure and mistakes without unraveling.</p>
+        </div>
+
+        <div class="score-item">
+          <div class="score-top">
+            <span class="score-name">Pattern Detection</span>
+            <span class="score-value">8/10</span>
+          </div>
+          <div class="bar"><div class="fill" style="width: 80%;"></div></div>
+          <p class="small">Repeated board situations train noticing and using recurring structures.</p>
+        </div>
+
+        <div class="score-item">
+          <div class="score-top">
+            <span class="score-name">Decision Under Pressure</span>
+            <span class="score-value">9/10</span>
+          </div>
+          <div class="bar"><div class="fill" style="width: 90%;"></div></div>
+          <p class="small">The game constantly asks players to make quick, thoughtful decisions under time pressure.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="positives-negatives" class="panel section-card">
+      <div class="section-head">
+        <div>
+          <div class="kicker">Balanced View</div>
+          <h2 class="section-title">Positives and negatives of the play experience</h2>
+        </div>
+        <div class="section-note">
+          Educational use is strongest when both gains and risks are named clearly.
+        </div>
+      </div>
+
+      <div class="two-col">
+        <div class="pro-con pro">
+          <h3>Positives</h3>
+          <ul>
+            <li>Builds disciplined board reading before action.</li>
+            <li>Rewards reasoning over random tapping.</li>
+            <li>Creates strong opportunities for explanation and justification.</li>
+            <li>Makes mistakes visible and usable for reflection.</li>
+            <li>Encourages persistence when the board becomes difficult.</li>
+            <li>Supports discussion about strategy, evidence, and consequence.</li>
+            <li>Helps students feel the difference between impulsive and intentional thinking.</li>
+          </ul>
+        </div>
+
+        <div class="pro-con con">
+          <h3>Negatives / cautions</h3>
+          <ul>
+            <li>Pressure can push some players into rushing instead of thinking.</li>
+            <li>Repeated failure may trigger frustration if reflection is absent.</li>
+            <li>Players may become score-focused and ignore the reasoning process.</li>
+            <li>The fast feedback can encourage overplay if time limits are not set.</li>
+            <li>Without discussion, players may experience the game as stress instead of insight.</li>
+            <li>Some learners may need structured pauses to slow the pace of decision-making.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="callout" style="margin-top: 18px;">
+        <h3>Best use condition</h3>
+        <p class="lead">
+          CORRELATION is strongest educationally when gameplay is paired with brief reflection,
+          comparison of strategies, and explicit attention to Mathematical Habits of Mind.
+        </p>
+      </div>
+    </section>
+
+    <section id="reflection" class="panel section-card">
+      <div class="section-head">
+        <div>
+          <div class="kicker">Reflection</div>
+          <h2 class="section-title">Questions for discussion or writing</h2>
+        </div>
+        <div class="section-note">
+          Use these to reveal and harness the learning behind play.
+        </div>
+      </div>
+
+      <div class="reflection">
+        <div class="callout">
+          <h3>Math habits reflection</h3>
+          <ul class="question-list">
+            <li>What did you notice before making your strongest move?</li>
+            <li>What pattern did you begin to recognize across the game?</li>
+            <li>What mistake taught you the most, and why?</li>
+            <li>What made one pathway stronger than another?</li>
+            <li>How did your reasoning improve from the start of play to the end?</li>
+          </ul>
+        </div>
+
+        <div class="callout">
+          <h3>Parent / teacher discussion prompts</h3>
+          <ul class="question-list">
+            <li>Did the player act intentionally or react impulsively?</li>
+            <li>Was the player solving urgent problems first?</li>
+            <li>Could the player justify choices with evidence from the gameboard?</li>
+            <li>How did the player recover after difficulty?</li>
+            <li>What would more reflective play look like next time?</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel section-card">
+      <div class="section-head">
+        <div>
+          <div class="kicker">Summary</div>
+        </div>
+      </div>
+
+      <p class="lead">
+        The game <strong>CORRELATION</strong> is best understood as a game of intentional decision-making
+        inside a changing system. Its strongest educational value lies in how strongly it activates
+        key <strong>Mathematical Habits of Mind</strong>, especially making sense, justifying why,
+        recognizing regularity and structure, persevering, learning from mistakes, and refining judgment through reflection
+        <a href="https://www.sciencedirect.com/science/article/pii/S0732312396900231" target="_blank">
+        (Cuoco, Goldenberg, & Mark, 1996)
+        </a>
+        and implemented through MisterMarx.com's educational approach
+        <a href="https://www.mistermarx.com/mathematicalhabitsofmind" target="_blank">
+        (MisterMarx.com, 2026)
+        </a>.
+      </p>
+
+      <p class="lead">
+        The game and this companion page intentionally leave some internal systems for players to discover
+        through observation, experimentation, and reflection. That balance helps preserve both accessibility and depth.
+      </p>
+
+      <p class="lead">
+        Like many strong strategy games, CORRELATION teaches through experience rather than instruction. Play
+      </p>
+
+      <p class="lead">
+        The game CORRELATION makes thinking visible. The board gradually becomes a record of how the player is reading situations, weighing risk, recognizing patterns, and revising decisions. The board reflects the
+        quality of the player's judgment over time.
+      </p>
+    </section>
+
+    <section class="panel section-card">
+      <div class="section-head">
+        <div class="kicker">References & Standards</div>
+        <h2 class="section-title">Resources, Research, and Standards</h2>
+      </div>
+
+      <p class="lead">
+        Companion pages may include MisterMarx.com resources, educational research, and standards references.
+        These help explain what a game develops, how the experience can be used intentionally,
+        and which mathematical practices or habits of mind are most strongly involved.
+      </p>
+
+      <div class="chips">
+        <div class="chip">MisterMarx.com Resources</div>
+        <div class="chip">Educational Research</div>
+        <div class="chip">Standards References</div>
+        <div class="chip">Mathematical Habits of Mind</div>
+        <div class="chip">Common Core Practices</div>
+      </div>
+    </section>
+
+    <section id="references" class="panel section-card">
+      <div class="section-head">
+        <div>
+          <div class="kicker">Research</div>
+          <h2 class="section-title">References & Further Reading</h2>
+        </div>
+      </div>
+
+      <h3>MisterMarx.com Educational Resources</h3>
+      <ul>
+
+        <li><a href="https://www.mistermarx.com/mathematicalhabitsofmind" target="_blank">
+        MisterMarx.com (2026). Mathematical Habits of Mind Framework.
+        </a></li>
+
+        <li><a href="https://www.mistermarx.com/mathematicalhabitsofmind/private-reasoning-time" target="_blank">
+        MisterMarx.com (2026). Private Reasoning Time.
+        </a></li>
+
+        <li><a href="https://www.mistermarx.com/mathematicalhabitsofmind/explain" target="_blank">
+        MisterMarx.com (2026). Explain: A Mathematical Habit of Mind.
+        </a></li>
+
+        <li><a href="https://www.mistermarx.com/mathematicalhabitsofmind/generalize" target="_blank">
+        MisterMarx.com (2026). Generalize: A Mathematical Habit of Mind.
+        </a></li>
+
+        <li><a href="https://www.mistermarx.com/mathematicalhabitsofmind/justify-why" target="_blank">
+        MisterMarx.com (2026). Justify Why.
+        </a></li>
+
+        <li><a href="https://www.mistermarx.com/mathematicalhabitsofmind/persevere-and-seek-more" target="_blank">
+        MisterMarx.com (2026). Persevere & Seek More.
+        </a></li>
+
+        <li><a href="https://www.mistermarx.com/mathematicalhabitsofmind/metacognition-reflection" target="_blank">
+        MisterMarx.com (2026). Metacognition Reflection.
+        </a></li>
+
+        <li><a href="https://www.mistermarx.com/mathematicalhabitsofmind/regularity-patterns" target="_blank">
+        MisterMarx.com (2026). Regularity, Patterns & Structure.
+        </a></li>
+
+        <li><a href="https://www.mistermarx.com/mathematicalhabitsofmind/genuine-questions" target="_blank">
+        MisterMarx.com (2026). Genuine Questions.
+        </a></li>
+
+        <li><a href="https://www.mistermarx.com/mathematicalhabitsofmind/critique-and-debate" target="_blank">
+        MisterMarx.com (2026). Critique & Debate.
+        </a></li>
+
+        <li>
+          <a href="https://www.mistermarx.com/correlation-companion-page" target="_blank">
+          MisterMarx.com. (2026).
+          CORRELATION Game Companion Page.
+          </a>
+        </li>
+        <li>
+          <a href="https://www.mistermarx.com/games/correlation" target="_blank">
+          MisterMarx.com. (2026).
+          CORRELATION Game.
+          </a>
+        </li>
+
+      </ul>
+
+      <h3>Academic Sources</h3>
+      <ul>
+
+        <li>
+          <a href="https://www.sciencedirect.com/science/article/pii/S0732312396900231" target="_blank">
+          Cuoco, A., Goldenberg, E. P., & Mark, J. (1996).
+          Habits of Mind: An Organizing Principle for Mathematics Curricula.
+          Journal of Mathematical Behavior.
+          </a>
+        </li>
+
+        <li>
+          <a href="https://eric.ed.gov/?id=EJ815183" target="_blank">
+          Stein, M. K., Engle, R. A., Smith, M. S., & Hughes, E. K. (2008).
+          Orchestrating Productive Mathematical Discussions:
+          Five Practices for Helping Teachers Move Beyond Show and Tell.
+          </a>
+        </li>
+
+        <li>
+          <a href="https://www.nctm.org/Store/Products/5-Practices-for-Orchestrating-Productive-Mathematics-Discussions%2C-2nd-edition-%28Download%29/"
+          target="_blank">
+          Smith, M. S., & Stein, M. K. (2011).
+          5 Practices for Orchestrating Productive Mathematics Discussions.
+          National Council of Teachers of Mathematics.
+          </a>
+        </li>
+
+        <li>
+          <a href="https://www.sciencedirect.com/science/article/pii/S0732312396900231" target="_blank">
+          Cuoco, A., Goldenberg, E. P., & Mark, J. (1996).
+          Habits of Mind: An Organizing Principle for Mathematics Curricula.
+          Journal of Mathematical Behavior.
+          </a>
+        </li>
+
+        <li>
+          <a href="https://www.sciencedirect.com/science/article/pii/S0732312396900231" target="_blank">
+          Goldenberg, E. (1996).
+          Organizing a Curriculum Around Mathematical Habits of Mind.
+          </a>
+        </li>
+
+      </ul>
+
+      <h3>Standards References</h3>
+      <ul>
+
+        <li>
+          <a href="https://corestandards.org/" target="_blank">
+          Common Core State Standards Initiative. (2010).
+          <strong>Common Core State Standards for Mathematics.</strong>
+          https://corestandards.org/
+          </a>
+        </li>
+
+        <li>
+          <a href="https://www.thecorestandards.org/read-the-standards/" target="_blank">
+          Common Core State Standards Initiative.
+          <strong>Standards for Mathematical Practice.</strong>
+          https://www.thecorestandards.org/read-the-standards/
+          </a>
+        </li>
+
+      </ul>
+    </section>
+
+    <footer class="footer wrap" style="padding-left:0; padding-right:0;">
+      <div class="panel pad">
+        <p style="margin: 0 0 0px;">
+          Head to <a href="https://www.mistermarx.com" target="_blank" rel="noopener noreferrer">MisterMarx.com</a> to play CORRELATION and other games in order to learn how your brain learns via Mathematical Habits of Mind.
+        </p>
+      </div>
+    </footer>
+  </main>
+  
+  <script>
+    let currentSlide = 0;
+    const slides = document.querySelectorAll('.slide');
+    const totalSlides = slides.length;
+    let autoPlayInterval;
+    let isAutoPlaying = true;
+    
+    function calculateSlideshowHeight() {
+      const container = document.getElementById('gameSlideshow');
+      const images = container.querySelectorAll('img');
+      let maxHeight = 240; // minimum height
+      
+      images.forEach(img => {
+        if (img.naturalHeight > 0) {
+          const aspectRatio = img.naturalHeight / img.naturalWidth;
+          const containerWidth = container.offsetWidth;
+          const calculatedHeight = containerWidth * aspectRatio;
+          maxHeight = Math.max(maxHeight, calculatedHeight);
+        }
+      });
+      
+      container.style.height = maxHeight + 'px';
+      return maxHeight;
+    }
+    
+    function showSlide(index) {
+      slides.forEach(slide => slide.classList.remove('active'));
+      currentSlide = (index + totalSlides) % totalSlides;
+      slides[currentSlide].classList.add('active');
+      document.getElementById('slideCounter').textContent = `${currentSlide + 1}/${totalSlides}`;
+    }
+    
+    function changeSlide(direction) {
+      showSlide(currentSlide + direction);
+      if (isAutoPlaying) {
+        resetAutoPlay();
+      }
+    }
+    
+    function nextSlide() {
+      showSlide(currentSlide + 1);
+    }
+    
+    function toggleAutoPlay() {
+      const btn = document.getElementById('autoPlayBtn');
+      if (isAutoPlaying) {
+        clearInterval(autoPlayInterval);
+        btn.textContent = '▶';
+        isAutoPlaying = false;
+      } else {
+        startAutoPlay();
+        btn.textContent = '⏸';
+        isAutoPlaying = true;
+      }
+    }
+    
+    function startAutoPlay() {
+      autoPlayInterval = setInterval(nextSlide, 3000);
+    }
+    
+    function resetAutoPlay() {
+      if (isAutoPlaying) {
+        clearInterval(autoPlayInterval);
+        startAutoPlay();
+      }
+    }
+    
+    function resetSlideshow() {
+      showSlide(0);
+      resetAutoPlay();
+    }
+    
+    function initializeSlideshow() {
+      // Load all images and calculate height
+      const container = document.getElementById('gameSlideshow');
+      const images = container.querySelectorAll('img');
+      let loadedImages = 0;
+      
+      images.forEach(img => {
+        if (img.complete) {
+          loadedImages++;
+          if (loadedImages === images.length) {
+            calculateSlideshowHeight();
+            showSlide(0);
+            startAutoPlay();
+          }
+        } else {
+          img.onload = () => {
+            loadedImages++;
+            if (loadedImages === images.length) {
+              calculateSlideshowHeight();
+              showSlide(0);
+              startAutoPlay();
+            }
+          };
+        }
+      });
+      
+      // Handle window resize
+      window.addEventListener('resize', () => {
+        calculateSlideshowHeight();
+      });
+    }
+    
+    // Initialize slideshow when DOM is loaded
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initializeSlideshow);
+    } else {
+      initializeSlideshow();
+    }
+    
+    // Pause slideshow when user interacts with controls
+    document.getElementById('gameSlideshow').addEventListener('mouseenter', () => {
+      if (isAutoPlaying) {
+        clearInterval(autoPlayInterval);
+      }
+    });
+    
+    document.getElementById('gameSlideshow').addEventListener('mouseleave', () => {
+      if (isAutoPlaying) {
+        startAutoPlay();
+      }
+    });
+  </script>
+</body>
+</html>

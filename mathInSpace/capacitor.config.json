@@ -1,0 +1,8 @@
+{
+  "appId": "com.mistermarx.mathinspace",
+  "appName": "Math In Space",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https"
+  }
+}
