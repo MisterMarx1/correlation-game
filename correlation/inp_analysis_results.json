@@ -1,0 +1,2943 @@
+{
+  "file_path": "correlation/index.html",
+  "performance_score": 0,
+  "total_issues": 209,
+  "issues_by_severity": {
+    "high": 26,
+    "medium": 183
+  },
+  "issues_by_category": {
+    "dom_manipulation": 1,
+    "animation": 39,
+    "memory": 37,
+    "rendering": 132
+  },
+  "issues": [
+    {
+      "severity": "high",
+      "category": "dom_manipulation",
+      "title": "Heavy DOM Manipulation Detected",
+      "description": "Potential blocking DOM operation: \\.appendChild\\(",
+      "line_number": 2411,
+      "code_snippet": "document.head.appendChild(s);return()=>{const el=document.getElementById(id);if(el)el.remove()}},[]);",
+      "impact_score": 70,
+      "recommendations": [
+        "Use document fragments for batch operations",
+        "Consider virtual scrolling for large lists",
+        "Use CSS transforms instead of direct manipulation"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "animation",
+      "title": "Non-optimized CSS Animation",
+      "description": "Animation not using transform/opacity for better performance",
+      "line_number": 628,
+      "code_snippet": "animation:\"orbit1 2s linear infinite\",",
+      "impact_score": 40,
+      "recommendations": [
+        "Use transform and opacity for smooth animations",
+        "Add will-change property for animated elements",
+        "Consider using CSS animations instead of JavaScript"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "animation",
+      "title": "Non-optimized CSS Animation",
+      "description": "Animation not using transform/opacity for better performance",
+      "line_number": 633,
+      "code_snippet": "animation:\"orbit2 2s linear infinite\",",
+      "impact_score": 40,
+      "recommendations": [
+        "Use transform and opacity for smooth animations",
+        "Add will-change property for animated elements",
+        "Consider using CSS animations instead of JavaScript"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "animation",
+      "title": "Non-optimized CSS Animation",
+      "description": "Animation not using transform/opacity for better performance",
+      "line_number": 639,
+      "code_snippet": "animation:\"orbit3 2s linear infinite\",",
+      "impact_score": 40,
+      "recommendations": [
+        "Use transform and opacity for smooth animations",
+        "Add will-change property for animated elements",
+        "Consider using CSS animations instead of JavaScript"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "animation",
+      "title": "Non-optimized CSS Animation",
+      "description": "Animation not using transform/opacity for better performance",
+      "line_number": 879,
+      "code_snippet": "animation: \"textShimmer 3s ease-in-out infinite\",",
+      "impact_score": 40,
+      "recommendations": [
+        "Use transform and opacity for smooth animations",
+        "Add will-change property for animated elements",
+        "Consider using CSS animations instead of JavaScript"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "animation",
+      "title": "Non-optimized CSS Animation",
+      "description": "Animation not using transform/opacity for better performance",
+      "line_number": 915,
+      "code_snippet": "transition: \"all 0.2s\",",
+      "impact_score": 40,
+      "recommendations": [
+        "Use transform and opacity for smooth animations",
+        "Add will-change property for animated elements",
+        "Consider using CSS animations instead of JavaScript"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "animation",
+      "title": "Non-optimized CSS Animation",
+      "description": "Animation not using transform/opacity for better performance",
+      "line_number": 931,
+      "code_snippet": "animation: \"rotateBorder 2s linear infinite\",",
+      "impact_score": 40,
+      "recommendations": [
+        "Use transform and opacity for smooth animations",
+        "Add will-change property for animated elements",
+        "Consider using CSS animations instead of JavaScript"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "animation",
+      "title": "Non-optimized CSS Animation",
+      "description": "Animation not using transform/opacity for better performance",
+      "line_number": 1027,
+      "code_snippet": "transition: \"all 0.2s\",",
+      "impact_score": 40,
+      "recommendations": [
+        "Use transform and opacity for smooth animations",
+        "Add will-change property for animated elements",
+        "Consider using CSS animations instead of JavaScript"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "animation",
+      "title": "Non-optimized CSS Animation",
+      "description": "Animation not using transform/opacity for better performance",
+      "line_number": 1089,
+      "code_snippet": "transition: \"all 0.15s\"",
+      "impact_score": 40,
+      "recommendations": [
+        "Use transform and opacity for smooth animations",
+        "Add will-change property for animated elements",
+        "Consider using CSS animations instead of JavaScript"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "animation",
+      "title": "Non-optimized CSS Animation",
+      "description": "Animation not using transform/opacity for better performance",
+      "line_number": 2407,
+      "code_snippet": ".n3-countdown.start{font-size:60px;color:#047857;text-shadow:0 0 50px rgba(4,120,87,0.8),0 0 100px rgba(4,120,87,0.4),inset 0 0 20px rgba(255,255,255,0.3);animation:startShake 0.25s ease-in-out}",
+      "impact_score": 40,
+      "recommendations": [
+        "Use transform and opacity for smooth animations",
+        "Add will-change property for animated elements",
+        "Consider using CSS animations instead of JavaScript"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "animation",
+      "title": "Non-optimized CSS Animation",
+      "description": "Animation not using transform/opacity for better performance",
+      "line_number": 2408,
+      "code_snippet": ".n3-spawn{animation:spawn 0.35s cubic-bezier(0.34,1.56,0.64,1) forwards}",
+      "impact_score": 40,
+      "recommendations": [
+        "Use transform and opacity for smooth animations",
+        "Add will-change property for animated elements",
+        "Consider using CSS animations instead of JavaScript"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "animation",
+      "title": "Non-optimized CSS Animation",
+      "description": "Animation not using transform/opacity for better performance",
+      "line_number": 2409,
+      "code_snippet": ".n3-shake{animation:shake 0.25s ease-in-out}.n3-echo{animation:echo 0.9s ease-out}",
+      "impact_score": 40,
+      "recommendations": [
+        "Use transform and opacity for smooth animations",
+        "Add will-change property for animated elements",
+        "Consider using CSS animations instead of JavaScript"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "animation",
+      "title": "Non-optimized CSS Animation",
+      "description": "Animation not using transform/opacity for better performance",
+      "line_number": 2469,
+      "code_snippet": "animation:`float ${3 + Math.random() * 2}s ease-in-out infinite`,",
+      "impact_score": 40,
+      "recommendations": [
+        "Use transform and opacity for smooth animations",
+        "Add will-change property for animated elements",
+        "Consider using CSS animations instead of JavaScript"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "animation",
+      "title": "Non-optimized CSS Animation",
+      "description": "Animation not using transform/opacity for better performance",
+      "line_number": 2491,
+      "code_snippet": "animation:\"pulse 2s ease-in-out infinite, rotate 4s linear infinite\",",
+      "impact_score": 40,
+      "recommendations": [
+        "Use transform and opacity for smooth animations",
+        "Add will-change property for animated elements",
+        "Consider using CSS animations instead of JavaScript"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "animation",
+      "title": "Non-optimized CSS Animation",
+      "description": "Animation not using transform/opacity for better performance",
+      "line_number": 2504,
+      "code_snippet": "animation:\"innerPulse 1.5s ease-in-out infinite\"",
+      "impact_score": 40,
+      "recommendations": [
+        "Use transform and opacity for smooth animations",
+        "Add will-change property for animated elements",
+        "Consider using CSS animations instead of JavaScript"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "animation",
+      "title": "Non-optimized CSS Animation",
+      "description": "Animation not using transform/opacity for better performance",
+      "line_number": 2515,
+      "code_snippet": "animation:\"fadeInOut 2s ease-in-out infinite\"",
+      "impact_score": 40,
+      "recommendations": [
+        "Use transform and opacity for smooth animations",
+        "Add will-change property for animated elements",
+        "Consider using CSS animations instead of JavaScript"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "animation",
+      "title": "Non-optimized CSS Animation",
+      "description": "Animation not using transform/opacity for better performance",
+      "line_number": 2571,
+      "code_snippet": "animation:\"diagonalWipe 0.6s ease-out forwards\",",
+      "impact_score": 40,
+      "recommendations": [
+        "Use transform and opacity for smooth animations",
+        "Add will-change property for animated elements",
+        "Consider using CSS animations instead of JavaScript"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "animation",
+      "title": "Non-optimized CSS Animation",
+      "description": "Animation not using transform/opacity for better performance",
+      "line_number": 2585,
+      "code_snippet": "animation:`transitionParticle ${0.6 + Math.random() * 0.4}s ease-out forwards`,",
+      "impact_score": 40,
+      "recommendations": [
+        "Use transform and opacity for smooth animations",
+        "Add will-change property for animated elements",
+        "Consider using CSS animations instead of JavaScript"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "animation",
+      "title": "Non-optimized CSS Animation",
+      "description": "Animation not using transform/opacity for better performance",
+      "line_number": 2703,
+      "code_snippet": "animation: \"glowPulse 2s ease-in-out infinite\"",
+      "impact_score": 40,
+      "recommendations": [
+        "Use transform and opacity for smooth animations",
+        "Add will-change property for animated elements",
+        "Consider using CSS animations instead of JavaScript"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "animation",
+      "title": "Non-optimized CSS Animation",
+      "description": "Animation not using transform/opacity for better performance",
+      "line_number": 2721,
+      "code_snippet": "animation: \"glowPulse 2s ease-in-out infinite\"",
+      "impact_score": 40,
+      "recommendations": [
+        "Use transform and opacity for smooth animations",
+        "Add will-change property for animated elements",
+        "Consider using CSS animations instead of JavaScript"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "animation",
+      "title": "Non-optimized CSS Animation",
+      "description": "Animation not using transform/opacity for better performance",
+      "line_number": 2741,
+      "code_snippet": "animation: \"glowPulse 2s ease-in-out infinite\"",
+      "impact_score": 40,
+      "recommendations": [
+        "Use transform and opacity for smooth animations",
+        "Add will-change property for animated elements",
+        "Consider using CSS animations instead of JavaScript"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "animation",
+      "title": "Non-optimized CSS Animation",
+      "description": "Animation not using transform/opacity for better performance",
+      "line_number": 2807,
+      "code_snippet": "<div style={{...S.ctn,backgroundColor:dreadBg,fontFamily:font,transition:\"background-color 1.5s\",height:\"var(--app-height, 100dvh)\",display:\"flex\",flexDirection:\"column\",justifyContent:\"space-between\"}} className={(paused||showQuitConfirmation||phase===\"over\")?\"paused-game\":\"\"}>",
+      "impact_score": 40,
+      "recommendations": [
+        "Use transform and opacity for smooth animations",
+        "Add will-change property for animated elements",
+        "Consider using CSS animations instead of JavaScript"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "animation",
+      "title": "Non-optimized CSS Animation",
+      "description": "Animation not using transform/opacity for better performance",
+      "line_number": 2812,
+      "code_snippet": "background:`radial-gradient(ellipse at 50% 100%,rgba(185,28,28,${(fillPct-0.55)*0.4}) 0%,transparent 70%)`,transition:\"all 1.5s\"}}/>}",
+      "impact_score": 40,
+      "recommendations": [
+        "Use transform and opacity for smooth animations",
+        "Add will-change property for animated elements",
+        "Consider using CSS animations instead of JavaScript"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "animation",
+      "title": "Non-optimized CSS Animation",
+      "description": "Animation not using transform/opacity for better performance",
+      "line_number": 2813,
+      "code_snippet": "{screenFlash&&<div style={{position:\"fixed\",top:\"var(--app-top, 0px)\",left:0,right:0,height:\"var(--app-height, 100dvh)\",pointerEvents:\"none\",zIndex:50,backgroundColor:screenFlash,animation:\"flash 0.12s ease-out forwards\"}}/>}",
+      "impact_score": 40,
+      "recommendations": [
+        "Use transform and opacity for smooth animations",
+        "Add will-change property for animated elements",
+        "Consider using CSS animations instead of JavaScript"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "animation",
+      "title": "Non-optimized CSS Animation",
+      "description": "Animation not using transform/opacity for better performance",
+      "line_number": 2887,
+      "code_snippet": "transition: \"stroke-dashoffset 0.6s linear, stroke 0.3s ease-out\",",
+      "impact_score": 40,
+      "recommendations": [
+        "Use transform and opacity for smooth animations",
+        "Add will-change property for animated elements",
+        "Consider using CSS animations instead of JavaScript"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "animation",
+      "title": "Non-optimized CSS Animation",
+      "description": "Animation not using transform/opacity for better performance",
+      "line_number": 2905,
+      "code_snippet": "animation:\"smokePuff 1s ease-out forwards\",",
+      "impact_score": 40,
+      "recommendations": [
+        "Use transform and opacity for smooth animations",
+        "Add will-change property for animated elements",
+        "Consider using CSS animations instead of JavaScript"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "animation",
+      "title": "Non-optimized CSS Animation",
+      "description": "Animation not using transform/opacity for better performance",
+      "line_number": 2918,
+      "code_snippet": "animation:isLevelingUp ? `lvlSmashIn 0.8s ease-in forwards` : `lvlOrbit${i+1} 3s linear infinite`,",
+      "impact_score": 40,
+      "recommendations": [
+        "Use transform and opacity for smooth animations",
+        "Add will-change property for animated elements",
+        "Consider using CSS animations instead of JavaScript"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "animation",
+      "title": "Non-optimized CSS Animation",
+      "description": "Animation not using transform/opacity for better performance",
+      "line_number": 2929,
+      "code_snippet": "animation:\"lvlExplode 0.8s ease-out forwards\",",
+      "impact_score": 40,
+      "recommendations": [
+        "Use transform and opacity for smooth animations",
+        "Add will-change property for animated elements",
+        "Consider using CSS animations instead of JavaScript"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "animation",
+      "title": "Non-optimized CSS Animation",
+      "description": "Animation not using transform/opacity for better performance",
+      "line_number": 2946,
+      "code_snippet": "fontFamily:tFont,animation:cascTxt.text.includes(\"RECOIL\")||cascTxt.text.includes(\"MASSIVE\")?\"recoilText 1.5s ease-out forwards\":\"cascTxt 1.5s ease-out forwards\"}}>{cascTxt.text}</div>}",
+      "impact_score": 40,
+      "recommendations": [
+        "Use transform and opacity for smooth animations",
+        "Add will-change property for animated elements",
+        "Consider using CSS animations instead of JavaScript"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "animation",
+      "title": "Non-optimized CSS Animation",
+      "description": "Animation not using transform/opacity for better performance",
+      "line_number": 2948,
+      "code_snippet": "textAlign:\"center\",fontFamily:tFont,animation:\"overlayMsg 1.5s ease-out forwards\",whiteSpace:\"nowrap\",width:\"100%\",padding:\"0 20px\"}}>",
+      "impact_score": 40,
+      "recommendations": [
+        "Use transform and opacity for smooth animations",
+        "Add will-change property for animated elements",
+        "Consider using CSS animations instead of JavaScript"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "animation",
+      "title": "Non-optimized CSS Animation",
+      "description": "Animation not using transform/opacity for better performance",
+      "line_number": 2961,
+      "code_snippet": "border:fillPct>0.7?`1px solid rgba(185,28,28,${(fillPct-0.7)*2.5})`:\"1px solid rgba(255,255,255,0.04)\",transition:\"border-color 1s\"}}>",
+      "impact_score": 40,
+      "recommendations": [
+        "Use transform and opacity for smooth animations",
+        "Add will-change property for animated elements",
+        "Consider using CSS animations instead of JavaScript"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "animation",
+      "title": "Non-optimized CSS Animation",
+      "description": "Animation not using transform/opacity for better performance",
+      "line_number": 3072,
+      "code_snippet": "transition: \"stroke-dashoffset 0.6s linear, stroke 0.3s ease-out\",",
+      "impact_score": 40,
+      "recommendations": [
+        "Use transform and opacity for smooth animations",
+        "Add will-change property for animated elements",
+        "Consider using CSS animations instead of JavaScript"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "animation",
+      "title": "Non-optimized CSS Animation",
+      "description": "Animation not using transform/opacity for better performance",
+      "line_number": 3090,
+      "code_snippet": "animation:\"smokePuff 1s ease-out forwards\",",
+      "impact_score": 40,
+      "recommendations": [
+        "Use transform and opacity for smooth animations",
+        "Add will-change property for animated elements",
+        "Consider using CSS animations instead of JavaScript"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "animation",
+      "title": "Non-optimized CSS Animation",
+      "description": "Animation not using transform/opacity for better performance",
+      "line_number": 3168,
+      "code_snippet": "animation: \"glowPulse 2s ease-in-out infinite\"",
+      "impact_score": 40,
+      "recommendations": [
+        "Use transform and opacity for smooth animations",
+        "Add will-change property for animated elements",
+        "Consider using CSS animations instead of JavaScript"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "animation",
+      "title": "Non-optimized CSS Animation",
+      "description": "Animation not using transform/opacity for better performance",
+      "line_number": 3184,
+      "code_snippet": "animation: \"glowPulse 2s ease-in-out infinite\"",
+      "impact_score": 40,
+      "recommendations": [
+        "Use transform and opacity for smooth animations",
+        "Add will-change property for animated elements",
+        "Consider using CSS animations instead of JavaScript"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "animation",
+      "title": "Non-optimized CSS Animation",
+      "description": "Animation not using transform/opacity for better performance",
+      "line_number": 3201,
+      "code_snippet": "animation: \"glowPulse 2s ease-in-out infinite\"",
+      "impact_score": 40,
+      "recommendations": [
+        "Use transform and opacity for smooth animations",
+        "Add will-change property for animated elements",
+        "Consider using CSS animations instead of JavaScript"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "animation",
+      "title": "Non-optimized CSS Animation",
+      "description": "Animation not using transform/opacity for better performance",
+      "line_number": 3295,
+      "code_snippet": "transition:\"all 0.2s\"",
+      "impact_score": 40,
+      "recommendations": [
+        "Use transform and opacity for smooth animations",
+        "Add will-change property for animated elements",
+        "Consider using CSS animations instead of JavaScript"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "animation",
+      "title": "Non-optimized CSS Animation",
+      "description": "Animation not using transform/opacity for better performance",
+      "line_number": 3335,
+      "code_snippet": "transition:\"all 0.2s\"",
+      "impact_score": 40,
+      "recommendations": [
+        "Use transform and opacity for smooth animations",
+        "Add will-change property for animated elements",
+        "Consider using CSS animations instead of JavaScript"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "animation",
+      "title": "Non-optimized CSS Animation",
+      "description": "Animation not using transform/opacity for better performance",
+      "line_number": 3375,
+      "code_snippet": "transition:\"all 0.2s\"",
+      "impact_score": 40,
+      "recommendations": [
+        "Use transform and opacity for smooth animations",
+        "Add will-change property for animated elements",
+        "Consider using CSS animations instead of JavaScript"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "animation",
+      "title": "Non-optimized CSS Animation",
+      "description": "Animation not using transform/opacity for better performance",
+      "line_number": 3429,
+      "code_snippet": "transition:\"all 0.2s\"",
+      "impact_score": 40,
+      "recommendations": [
+        "Use transform and opacity for smooth animations",
+        "Add will-change property for animated elements",
+        "Consider using CSS animations instead of JavaScript"
+      ]
+    },
+    {
+      "severity": "high",
+      "category": "memory",
+      "title": "Potential Memory Leak",
+      "description": "addEventListener without corresponding removeEventListener",
+      "line_number": 174,
+      "code_snippet": "window.addEventListener('resize', syncAppHeight);",
+      "impact_score": 65,
+      "recommendations": [
+        "Always remove event listeners in cleanup functions",
+        "Use useEffect cleanup in React",
+        "Consider using weak references for large objects"
+      ]
+    },
+    {
+      "severity": "high",
+      "category": "memory",
+      "title": "Potential Memory Leak",
+      "description": "addEventListener without corresponding removeEventListener",
+      "line_number": 175,
+      "code_snippet": "window.addEventListener('orientationchange', syncAppHeight);",
+      "impact_score": 65,
+      "recommendations": [
+        "Always remove event listeners in cleanup functions",
+        "Use useEffect cleanup in React",
+        "Consider using weak references for large objects"
+      ]
+    },
+    {
+      "severity": "high",
+      "category": "memory",
+      "title": "Potential Memory Leak",
+      "description": "addEventListener without corresponding removeEventListener",
+      "line_number": 178,
+      "code_snippet": "window.visualViewport.addEventListener('resize', syncAppHeight);",
+      "impact_score": 65,
+      "recommendations": [
+        "Always remove event listeners in cleanup functions",
+        "Use useEffect cleanup in React",
+        "Consider using weak references for large objects"
+      ]
+    },
+    {
+      "severity": "high",
+      "category": "memory",
+      "title": "Potential Memory Leak",
+      "description": "addEventListener without corresponding removeEventListener",
+      "line_number": 179,
+      "code_snippet": "window.visualViewport.addEventListener('scroll', syncAppHeight);",
+      "impact_score": 65,
+      "recommendations": [
+        "Always remove event listeners in cleanup functions",
+        "Use useEffect cleanup in React",
+        "Consider using weak references for large objects"
+      ]
+    },
+    {
+      "severity": "high",
+      "category": "memory",
+      "title": "Potential Memory Leak",
+      "description": "addEventListener without corresponding removeEventListener",
+      "line_number": 668,
+      "code_snippet": "window.addEventListener('resize', updateWidth);",
+      "impact_score": 65,
+      "recommendations": [
+        "Always remove event listeners in cleanup functions",
+        "Use useEffect cleanup in React",
+        "Consider using weak references for large objects"
+      ]
+    },
+    {
+      "severity": "high",
+      "category": "memory",
+      "title": "Potential Memory Leak",
+      "description": "addEventListener without corresponding removeEventListener",
+      "line_number": 1150,
+      "code_snippet": "window.addEventListener('hideCredits', handleHideCredits);",
+      "impact_score": 65,
+      "recommendations": [
+        "Always remove event listeners in cleanup functions",
+        "Use useEffect cleanup in React",
+        "Consider using weak references for large objects"
+      ]
+    },
+    {
+      "severity": "high",
+      "category": "memory",
+      "title": "Potential Memory Leak",
+      "description": "addEventListener without corresponding removeEventListener",
+      "line_number": 1151,
+      "code_snippet": "window.addEventListener('hideMenuRules', handleHideMenuRules);",
+      "impact_score": 65,
+      "recommendations": [
+        "Always remove event listeners in cleanup functions",
+        "Use useEffect cleanup in React",
+        "Consider using weak references for large objects"
+      ]
+    },
+    {
+      "severity": "high",
+      "category": "memory",
+      "title": "Potential Memory Leak",
+      "description": "addEventListener without corresponding removeEventListener",
+      "line_number": 1152,
+      "code_snippet": "window.addEventListener('pauseForCredits', handlePauseForCredits);",
+      "impact_score": 65,
+      "recommendations": [
+        "Always remove event listeners in cleanup functions",
+        "Use useEffect cleanup in React",
+        "Consider using weak references for large objects"
+      ]
+    },
+    {
+      "severity": "high",
+      "category": "memory",
+      "title": "Potential Memory Leak",
+      "description": "addEventListener without corresponding removeEventListener",
+      "line_number": 1153,
+      "code_snippet": "window.addEventListener('resumeFromCredits', handleResumeFromCredits);",
+      "impact_score": 65,
+      "recommendations": [
+        "Always remove event listeners in cleanup functions",
+        "Use useEffect cleanup in React",
+        "Consider using weak references for large objects"
+      ]
+    },
+    {
+      "severity": "high",
+      "category": "memory",
+      "title": "Potential Memory Leak",
+      "description": "addEventListener without corresponding removeEventListener",
+      "line_number": 1305,
+      "code_snippet": "window.addEventListener(\"resize\",resize);",
+      "impact_score": 65,
+      "recommendations": [
+        "Always remove event listeners in cleanup functions",
+        "Use useEffect cleanup in React",
+        "Consider using weak references for large objects"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "memory",
+      "title": "Large Array Creation",
+      "description": "Creating large arrays can cause memory pressure",
+      "line_number": 1351,
+      "code_snippet": "const ng=prev.map((row,y)=>changedRows.has(y)?[...row]:row);",
+      "impact_score": 40,
+      "recommendations": [
+        "Use typed arrays for better performance",
+        "Implement object pooling for frequently created objects",
+        "Consider lazy loading for large datasets"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "memory",
+      "title": "Large Array Creation",
+      "description": "Creating large arrays can cause memory pressure",
+      "line_number": 1396,
+      "code_snippet": "const ng=prev.map((row,y)=>changedRows.has(y)?[...row]:row);",
+      "impact_score": 40,
+      "recommendations": [
+        "Use typed arrays for better performance",
+        "Implement object pooling for frequently created objects",
+        "Consider lazy loading for large datasets"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "memory",
+      "title": "Large Array Creation",
+      "description": "Creating large arrays can cause memory pressure",
+      "line_number": 1522,
+      "code_snippet": "setGrid(prev=>{const ng=prev.map((row,y)=>[...row]);ng[sy][sx]=empty();",
+      "impact_score": 40,
+      "recommendations": [
+        "Use typed arrays for better performance",
+        "Implement object pooling for frequently created objects",
+        "Consider lazy loading for large datasets"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "memory",
+      "title": "Large Array Creation",
+      "description": "Creating large arrays can cause memory pressure",
+      "line_number": 1541,
+      "code_snippet": "const newHistory = [...prev, transitionInLevel];",
+      "impact_score": 40,
+      "recommendations": [
+        "Use typed arrays for better performance",
+        "Implement object pooling for frequently created objects",
+        "Consider lazy loading for large datasets"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "memory",
+      "title": "Large Array Creation",
+      "description": "Creating large arrays can cause memory pressure",
+      "line_number": 1544,
+      "code_snippet": "setEchoes(p=>[...p,{x:dx,y:dy,time:now},{x:sx,y:sy,time:now}]);",
+      "impact_score": 40,
+      "recommendations": [
+        "Use typed arrays for better performance",
+        "Implement object pooling for frequently created objects",
+        "Consider lazy loading for large datasets"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "memory",
+      "title": "Large Array Creation",
+      "description": "Creating large arrays can cause memory pressure",
+      "line_number": 1565,
+      "code_snippet": "const ng = prev.map((row, rowIndex) => rowIndex === y ? [...row] : row);",
+      "impact_score": 40,
+      "recommendations": [
+        "Use typed arrays for better performance",
+        "Implement object pooling for frequently created objects",
+        "Consider lazy loading for large datasets"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "memory",
+      "title": "Large Array Creation",
+      "description": "Creating large arrays can cause memory pressure",
+      "line_number": 1633,
+      "code_snippet": "rowIndex === sel.y || rowIndex === y ? [...row] : row",
+      "impact_score": 40,
+      "recommendations": [
+        "Use typed arrays for better performance",
+        "Implement object pooling for frequently created objects",
+        "Consider lazy loading for large datasets"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "memory",
+      "title": "Large Array Creation",
+      "description": "Creating large arrays can cause memory pressure",
+      "line_number": 1692,
+      "code_snippet": "const ng = prev.map((row, rowIndex) => changedRows.has(rowIndex) ? [...row] : row);",
+      "impact_score": 40,
+      "recommendations": [
+        "Use typed arrays for better performance",
+        "Implement object pooling for frequently created objects",
+        "Consider lazy loading for large datasets"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "memory",
+      "title": "Large Array Creation",
+      "description": "Creating large arrays can cause memory pressure",
+      "line_number": 1972,
+      "code_snippet": "rowIndex === sy || rowIndex === targetY ? [...row] : row",
+      "impact_score": 40,
+      "recommendations": [
+        "Use typed arrays for better performance",
+        "Implement object pooling for frequently created objects",
+        "Consider lazy loading for large datasets"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "memory",
+      "title": "Large Array Creation",
+      "description": "Creating large arrays can cause memory pressure",
+      "line_number": 2031,
+      "code_snippet": "const ng = prev.map((row, rowIndex) => changedRows.has(rowIndex) ? [...row] : row);",
+      "impact_score": 40,
+      "recommendations": [
+        "Use typed arrays for better performance",
+        "Implement object pooling for frequently created objects",
+        "Consider lazy loading for large datasets"
+      ]
+    },
+    {
+      "severity": "high",
+      "category": "memory",
+      "title": "Potential Memory Leak",
+      "description": "addEventListener without corresponding removeEventListener",
+      "line_number": 2251,
+      "code_snippet": "document.addEventListener('visibilitychange', handleVisibilityChange);",
+      "impact_score": 65,
+      "recommendations": [
+        "Always remove event listeners in cleanup functions",
+        "Use useEffect cleanup in React",
+        "Consider using weak references for large objects"
+      ]
+    },
+    {
+      "severity": "high",
+      "category": "memory",
+      "title": "Potential Memory Leak",
+      "description": "addEventListener without corresponding removeEventListener",
+      "line_number": 2254,
+      "code_snippet": "window.addEventListener('pagehide', handlePageHide);",
+      "impact_score": 65,
+      "recommendations": [
+        "Always remove event listeners in cleanup functions",
+        "Use useEffect cleanup in React",
+        "Consider using weak references for large objects"
+      ]
+    },
+    {
+      "severity": "high",
+      "category": "memory",
+      "title": "Potential Memory Leak",
+      "description": "addEventListener without corresponding removeEventListener",
+      "line_number": 2255,
+      "code_snippet": "window.addEventListener('pageshow', handlePageShow);",
+      "impact_score": 65,
+      "recommendations": [
+        "Always remove event listeners in cleanup functions",
+        "Use useEffect cleanup in React",
+        "Consider using weak references for large objects"
+      ]
+    },
+    {
+      "severity": "high",
+      "category": "memory",
+      "title": "Potential Memory Leak",
+      "description": "addEventListener without corresponding removeEventListener",
+      "line_number": 2258,
+      "code_snippet": "window.addEventListener('blur', handleBlur);",
+      "impact_score": 65,
+      "recommendations": [
+        "Always remove event listeners in cleanup functions",
+        "Use useEffect cleanup in React",
+        "Consider using weak references for large objects"
+      ]
+    },
+    {
+      "severity": "high",
+      "category": "memory",
+      "title": "Potential Memory Leak",
+      "description": "addEventListener without corresponding removeEventListener",
+      "line_number": 2259,
+      "code_snippet": "window.addEventListener('focus', handleFocus);",
+      "impact_score": 65,
+      "recommendations": [
+        "Always remove event listeners in cleanup functions",
+        "Use useEffect cleanup in React",
+        "Consider using weak references for large objects"
+      ]
+    },
+    {
+      "severity": "high",
+      "category": "memory",
+      "title": "Potential Memory Leak",
+      "description": "addEventListener without corresponding removeEventListener",
+      "line_number": 2262,
+      "code_snippet": "window.addEventListener('mouseup', handleGlobalMouseUp);",
+      "impact_score": 65,
+      "recommendations": [
+        "Always remove event listeners in cleanup functions",
+        "Use useEffect cleanup in React",
+        "Consider using weak references for large objects"
+      ]
+    },
+    {
+      "severity": "high",
+      "category": "memory",
+      "title": "Potential Memory Leak",
+      "description": "addEventListener without corresponding removeEventListener",
+      "line_number": 2438,
+      "code_snippet": "window.addEventListener('resize', updateWidth);",
+      "impact_score": 65,
+      "recommendations": [
+        "Always remove event listeners in cleanup functions",
+        "Use useEffect cleanup in React",
+        "Consider using weak references for large objects"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "memory",
+      "title": "Large Array Creation",
+      "description": "Creating large arrays can cause memory pressure",
+      "line_number": 2460,
+      "code_snippet": "{[...Array(8)].map((_, i) => (",
+      "impact_score": 40,
+      "recommendations": [
+        "Use typed arrays for better performance",
+        "Implement object pooling for frequently created objects",
+        "Consider lazy loading for large datasets"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "memory",
+      "title": "Large Array Creation",
+      "description": "Creating large arrays can cause memory pressure",
+      "line_number": 2576,
+      "code_snippet": "{[...Array(20)].map((_, i) => (",
+      "impact_score": 40,
+      "recommendations": [
+        "Use typed arrays for better performance",
+        "Implement object pooling for frequently created objects",
+        "Consider lazy loading for large datasets"
+      ]
+    },
+    {
+      "severity": "high",
+      "category": "memory",
+      "title": "Potential Memory Leak",
+      "description": "addEventListener without corresponding removeEventListener",
+      "line_number": 3247,
+      "code_snippet": "window.addEventListener('showCredits', handleShowCredits);",
+      "impact_score": 65,
+      "recommendations": [
+        "Always remove event listeners in cleanup functions",
+        "Use useEffect cleanup in React",
+        "Consider using weak references for large objects"
+      ]
+    },
+    {
+      "severity": "high",
+      "category": "memory",
+      "title": "Potential Memory Leak",
+      "description": "addEventListener without corresponding removeEventListener",
+      "line_number": 3248,
+      "code_snippet": "window.addEventListener('hideCredits', handleHideCredits);",
+      "impact_score": 65,
+      "recommendations": [
+        "Always remove event listeners in cleanup functions",
+        "Use useEffect cleanup in React",
+        "Consider using weak references for large objects"
+      ]
+    },
+    {
+      "severity": "high",
+      "category": "memory",
+      "title": "Potential Memory Leak",
+      "description": "addEventListener without corresponding removeEventListener",
+      "line_number": 3249,
+      "code_snippet": "window.addEventListener('showMenuRules', handleShowMenuRules);",
+      "impact_score": 65,
+      "recommendations": [
+        "Always remove event listeners in cleanup functions",
+        "Use useEffect cleanup in React",
+        "Consider using weak references for large objects"
+      ]
+    },
+    {
+      "severity": "high",
+      "category": "memory",
+      "title": "Potential Memory Leak",
+      "description": "addEventListener without corresponding removeEventListener",
+      "line_number": 3250,
+      "code_snippet": "window.addEventListener('hideMenuRules', handleHideMenuRules);",
+      "impact_score": 65,
+      "recommendations": [
+        "Always remove event listeners in cleanup functions",
+        "Use useEffect cleanup in React",
+        "Consider using weak references for large objects"
+      ]
+    },
+    {
+      "severity": "high",
+      "category": "memory",
+      "title": "Potential Memory Leak",
+      "description": "addEventListener without corresponding removeEventListener",
+      "line_number": 3251,
+      "code_snippet": "window.addEventListener('showMenuControls', handleShowMenuControls);",
+      "impact_score": 65,
+      "recommendations": [
+        "Always remove event listeners in cleanup functions",
+        "Use useEffect cleanup in React",
+        "Consider using weak references for large objects"
+      ]
+    },
+    {
+      "severity": "high",
+      "category": "memory",
+      "title": "Potential Memory Leak",
+      "description": "addEventListener without corresponding removeEventListener",
+      "line_number": 3252,
+      "code_snippet": "window.addEventListener('hideMenuControls', handleHideMenuControls);",
+      "impact_score": 65,
+      "recommendations": [
+        "Always remove event listeners in cleanup functions",
+        "Use useEffect cleanup in React",
+        "Consider using weak references for large objects"
+      ]
+    },
+    {
+      "severity": "high",
+      "category": "memory",
+      "title": "Potential Memory Leak",
+      "description": "addEventListener without corresponding removeEventListener",
+      "line_number": 3253,
+      "code_snippet": "window.addEventListener('showCompanionPage', handleShowCompanionPage);",
+      "impact_score": 65,
+      "recommendations": [
+        "Always remove event listeners in cleanup functions",
+        "Use useEffect cleanup in React",
+        "Consider using weak references for large objects"
+      ]
+    },
+    {
+      "severity": "high",
+      "category": "memory",
+      "title": "Potential Memory Leak",
+      "description": "addEventListener without corresponding removeEventListener",
+      "line_number": 3254,
+      "code_snippet": "window.addEventListener('hideCompanionPage', handleHideCompanionPage);",
+      "impact_score": 65,
+      "recommendations": [
+        "Always remove event listeners in cleanup functions",
+        "Use useEffect cleanup in React",
+        "Consider using weak references for large objects"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 521,
+      "code_snippet": "style={{",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 531,
+      "code_snippet": "<span style={{ fontSize: 15, fontWeight: 700, color: \"#e2e8f0\", fontFamily: font }}>",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 534,
+      "code_snippet": "<span style={{ fontSize: 12, color: \"#94a3b8\", lineHeight: 1.5, fontFamily: font }}>",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 613,
+      "code_snippet": "style={{borderRadius:4,display:\"flex\",alignItems:\"center\",justifyContent:\"center\",",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 623,
+      "code_snippet": "{e>0&&<div style={{display:\"flex\",flexDirection:\"column\",alignItems:\"center\",zIndex:2,position:\"relative\"}}>",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 624,
+      "code_snippet": "<div style={{position:\"relative\",width:40,height:40}}>",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 625,
+      "code_snippet": "<span style={{position:\"absolute\",top:\"50%\",left:\"50%\",transform:\"translate(-50%,-50%)\",fontSize:13,fontWeight:800,color:\"#fff\",textShadow:\"0 1px 3px rgba(0,0,0,0.5)\",zIndex:2}}>{e}</span>",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 626,
+      "code_snippet": "{mass>=1&&<div style={{",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 631,
+      "code_snippet": "{mass>=2&&<div style={{",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 637,
+      "code_snippet": "{mass>=3&&<div style={{",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 645,
+      "code_snippet": "{isDet&&<div style={{position:\"absolute\",top:-3,right:-3,fontSize:7,fontWeight:700,color:\"#fff\",",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 677,
+      "code_snippet": "style={{",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 691,
+      "code_snippet": "<div style={{ position: \"absolute\", left: \"50%\", transform: \"translateX(-50%)\" }}>",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 692,
+      "code_snippet": "<div style={{ display: \"flex\", alignItems: \"center\", gap: 12 }}>",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 695,
+      "code_snippet": "style={{",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 714,
+      "code_snippet": "style={{",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 737,
+      "code_snippet": "style={{",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 753,
+      "code_snippet": "style={{",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 762,
+      "code_snippet": "style={{",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 775,
+      "code_snippet": "style={{",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 794,
+      "code_snippet": "style={{",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 815,
+      "code_snippet": "style={{",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 839,
+      "code_snippet": "style={{",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 865,
+      "code_snippet": "style={{",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 903,
+      "code_snippet": "style={{",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 922,
+      "code_snippet": "<div style={{",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 935,
+      "code_snippet": "<div style={{",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 945,
+      "code_snippet": "<span style={{ position: \"relative\", zIndex: 3 }}>",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 963,
+      "code_snippet": "style = {}",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 968,
+      "code_snippet": "style={{",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 988,
+      "code_snippet": "<span style={{",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 1015,
+      "code_snippet": "style={{",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 1043,
+      "code_snippet": "style={{",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 1052,
+      "code_snippet": "style={{",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 1064,
+      "code_snippet": "style={{",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 1077,
+      "code_snippet": "style={{",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 2447,
+      "code_snippet": "<div style={{",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 2461,
+      "code_snippet": "<div key={i} style={{",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 2476,
+      "code_snippet": "<div style={{",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 2485,
+      "code_snippet": "<div style={{",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 2495,
+      "code_snippet": "<div style={{",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 2509,
+      "code_snippet": "<div style={{",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 2554,
+      "code_snippet": "<div style={{",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 2562,
+      "code_snippet": "<div style={{",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 2577,
+      "code_snippet": "<div key={i} style={{",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 2623,
+      "code_snippet": "<div style={{...S.ctn, height:\"var(--app-height, 100dvh)\"}}>",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 2624,
+      "code_snippet": "<div style={{",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 2635,
+      "code_snippet": "<div style={{",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 2645,
+      "code_snippet": "<div style={{textAlign:\"center\", marginBottom:32}}>",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 2655,
+      "code_snippet": "<div style={{",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 2689,
+      "code_snippet": "<div style={{display: \"flex\", gap: 8, width: \"100%\"}}>",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 2700,
+      "code_snippet": "style={{",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 2718,
+      "code_snippet": "style={{",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 2727,
+      "code_snippet": "<div style={{display: \"flex\", justifyContent: \"center\", width: \"100%\", marginTop: 8}}>",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 2738,
+      "code_snippet": "style={{",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 2762,
+      "code_snippet": "<div style={{...S.ctn,backgroundColor:\"#030712\",fontFamily:font,display:\"flex\",alignItems:\"center\",justifyContent:\"center\",padding:20}}>",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 2763,
+      "code_snippet": "<div style={{maxWidth:480,display:\"flex\",flexDirection:\"column\",alignItems:\"center\",gap:20}}>",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 2793,
+      "code_snippet": "<div style={{ marginTop: 8, width: \"100%\" }}>",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 2807,
+      "code_snippet": "<div style={{...S.ctn,backgroundColor:dreadBg,fontFamily:font,transition:\"background-color 1.5s\",height:\"var(--app-height, 100dvh)\",display:\"flex\",flexDirection:\"column\",justifyContent:\"space-between\"}} className={(paused||showQuitConfirmation||phase===\"over\")?\"paused-game\":\"\"}>",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 2809,
+      "code_snippet": "<canvas ref={bgCanvasRef} style={{position:\"fixed\",top:0,left:0,width:\"100vw\",height:\"100vh\",pointerEvents:\"none\",zIndex:0}}/>",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 2811,
+      "code_snippet": "{fillPct>0.55&&<div style={{position:\"fixed\",top:\"var(--app-top, 0px)\",left:0,right:0,height:\"var(--app-height, 100dvh)\",pointerEvents:\"none\",zIndex:0,",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 2813,
+      "code_snippet": "{screenFlash&&<div style={{position:\"fixed\",top:\"var(--app-top, 0px)\",left:0,right:0,height:\"var(--app-height, 100dvh)\",pointerEvents:\"none\",zIndex:50,backgroundColor:screenFlash,animation:\"flash 0.12s ease-out forwards\"}}/>}",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 2815,
+      "code_snippet": "<div style={{width:\"100%\",maxWidth:480,marginBottom:8,zIndex:1,position:\"relative\"}}>",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 2816,
+      "code_snippet": "<div style={{display:\"flex\",alignItems:\"center\",justifyContent:\"space-between\"}}>",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 2817,
+      "code_snippet": "<div style={{display:\"flex\",flexDirection:\"column\",alignItems:\"flex-start\",gap:4,flex:1,minWidth:0,marginRight:12}}>",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 2826,
+      "code_snippet": "style={{",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 2837,
+      "code_snippet": "<div style={{display:\"flex\",gap:14,flexWrap:\"nowrap\",flexShrink:0}}>",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 2839,
+      "code_snippet": "<div key={l} style={{display:\"flex\",flexDirection:\"column\",gap:8,flexShrink:0}}>",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 2840,
+      "code_snippet": "<span style={{fontSize:8,letterSpacing:\"0.15em\",color:\"#94a3b8\",fontWeight:600,whiteSpace:\"nowrap\"}}>{l}</span>",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 2841,
+      "code_snippet": "<div style={{position:\"relative\",display:\"flex\",alignItems:\"center\",justifyContent:\"center\"}}>",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 2868,
+      "code_snippet": "<svg style={{position:\"absolute\",width:35,height:35,transform:\"rotate(-90deg)\",zIndex:1}}>",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 2886,
+      "code_snippet": "style={{",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 2896,
+      "code_snippet": "<div style={{",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 2910,
+      "code_snippet": "<span style={{fontSize:15,fontWeight:700,color:l===\"COMBO\"&&combo>0?\"#fbbf24\":\"#f1f5f9\",position:\"relative\",zIndex:2,whiteSpace:\"nowrap\"}}>{v}</span>",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 2912,
+      "code_snippet": "<div key={i} style={{",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 2923,
+      "code_snippet": "<div style={{",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 2938,
+      "code_snippet": "<div className={shake?\"n3-shake\":\"\"} style={{width:\"100%\",maxWidth:480,height:\"auto\",aspectRatio:`${COLS}/${ROWS}`,position:\"relative\",zIndex:1,overflow:\"hidden\"}} ref={gridRef}>",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 2939,
+      "code_snippet": "<canvas ref={canvasRef} style={{position:\"absolute\",inset:0,pointerEvents:\"none\",zIndex:15}}/>",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 2941,
+      "code_snippet": "{cascTxt&&<div style={{position:\"absolute\",top:\"45%\",left:\"50%\",transform:\"translateX(-50%)\",zIndex:20,pointerEvents:\"none\",",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 2947,
+      "code_snippet": "{overlayMsg&&<div style={{position:\"fixed\",top:\"15%\",left:\"50%\",transform:\"translateX(-50%)\",zIndex:200,pointerEvents:\"none\",",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 2949,
+      "code_snippet": "<div style={{fontSize:24,fontWeight:900,letterSpacing:\"0.3em\",",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 2958,
+      "code_snippet": "<div style={{width:\"100%\",height:\"100%\",display:\"grid\",gap:2,padding:2,",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 2975,
+      "code_snippet": "<div style={{width:\"100%\",maxWidth:480,marginTop:8,zIndex:10,position:\"relative\"}}>",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 2976,
+      "code_snippet": "<div style={{display:\"flex\",gap:6,marginTop:6}}>",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 2977,
+      "code_snippet": "<button style={S.ctrl} onClick={()=>setPaused(p=>!p)}>{paused?\"\u25b6 RESUME\":\"\u23f8 PAUSE\"}</button>",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 2978,
+      "code_snippet": "<button style={S.ctrl} onClick={()=>setShowQuitConfirmation(true)}>\u21ba QUIT</button></div>",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 2980,
+      "code_snippet": "<div style={{ marginTop: 12 }}>",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 2993,
+      "code_snippet": "{showQuitConfirmation&&<div style={{position:\"fixed\",top:\"var(--app-top, 0px)\",left:0,right:0,height:\"var(--app-height, 100dvh)\",backgroundColor:\"rgba(3,7,18,0.92)\",",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 2995,
+      "code_snippet": "<span style={{fontSize:32,fontWeight:900,letterSpacing:\"0.3em\",color:\"#f8fafc\",fontFamily:tFont}}>ARE YOU SURE?</span>",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 2996,
+      "code_snippet": "<span style={{fontSize:16,color:\"#94a3b8\",fontFamily:font,textAlign:\"center\",maxWidth:320,lineHeight:1.5}}>All progress will be lost</span>",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 2998,
+      "code_snippet": "<div style={{display:\"flex\",flexDirection:\"column\",gap:12,alignItems:\"center\"}}>",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 3018,
+      "code_snippet": "{phase===\"over\"&&<div style={{position:\"fixed\",top:\"var(--app-top, 0px)\",left:0,right:0,height:\"var(--app-height, 100dvh)\",backgroundColor:\"rgba(3,7,18,0.92)\",",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 3020,
+      "code_snippet": "<span style={{fontSize:32,fontWeight:900,letterSpacing:\"0.3em\",color:\"#f8fafc\",fontFamily:tFont,textShadow:\"0 0 40px rgba(185,28,28,0.5)\",textAlign:\"center\",width:\"100%\",display:\"block\"}}>GRID SATURATED</span>",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 3022,
+      "code_snippet": "<div style={{display:\"flex\",gap:24,flexWrap:\"wrap\",justifyContent:\"center\"}}>",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 3024,
+      "code_snippet": "<div key={l} style={{display:\"flex\",flexDirection:\"column\",alignItems:\"center\",gap:2}}>",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 3025,
+      "code_snippet": "<span style={{fontSize:9,letterSpacing:\"0.15em\",color:\"#94a3b8\",fontWeight:600}}>{l}</span>",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 3026,
+      "code_snippet": "<div style={{position:\"relative\",display:\"flex\",alignItems:\"center\",justifyContent:\"center\"}}>",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 3053,
+      "code_snippet": "<svg style={{position:\"absolute\",width:50,height:50,transform:\"rotate(-90deg)\",zIndex:1}}>",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 3071,
+      "code_snippet": "style={{",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 3081,
+      "code_snippet": "<div style={{",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 3095,
+      "code_snippet": "<span style={{fontSize:22,fontWeight:700,color:l===\"COMBO\"&&combo>0?\"#fbbf24\":\"#f1f5f9\",position:\"relative\",zIndex:2}}>{v}</span>",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 3110,
+      "code_snippet": "<div style={{display:\"flex\",flexDirection:\"column\",gap:12,alignItems:\"center\"}}>",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 3123,
+      "code_snippet": "<div style={{display: \"flex\", gap: 8, width: \"100%\"}}>",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 3144,
+      "code_snippet": "{paused&&<div style={{position:\"fixed\",top:\"var(--app-top, 0px)\",left:0,right:0,height:\"var(--app-height, 100dvh)\",backgroundColor:\"rgba(3,7,18,0.92)\",",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 3146,
+      "code_snippet": "<span style={{fontSize:32,fontWeight:900,letterSpacing:\"0.3em\",color:\"#f8fafc\",fontFamily:tFont}}>PAUSED</span>",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 3155,
+      "code_snippet": "<div style={{display: \"flex\", gap: 4, width: \"100%\", justifyContent: \"center\", flexDirection: \"column\", alignItems: \"center\", marginTop: 8}}>",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 3156,
+      "code_snippet": "<div style={{display: \"flex\", gap: 4, width: \"100%\", justifyContent: \"center\"}}>",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 3165,
+      "code_snippet": "style={{",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 3181,
+      "code_snippet": "style={{",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 3198,
+      "code_snippet": "style={{",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 3272,
+      "code_snippet": "{showCredits && <div style={{position:\"fixed\",top:\"var(--app-top, 0px)\",left:0,right:0,height:\"var(--app-height, 100dvh)\",backgroundColor:\"rgba(3,7,18,0.98)\",",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 3274,
+      "code_snippet": "<span style={{fontSize:32,fontWeight:900,letterSpacing:\"0.3em\",color:\"#f8fafc\",fontFamily:tFont}}>CREDITS</span>",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 3275,
+      "code_snippet": "<span style={{fontSize:16,color:\"#94a3b8\",fontFamily:font,textAlign:\"center\",maxWidth:320,lineHeight:1.5}}>Sound Effects by Mixkit<br/>https://mixkit.co</span>",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 3277,
+      "code_snippet": "<div style={{display:\"flex\",flexDirection:\"column\",gap:12,alignItems:\"center\"}}>",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 3284,
+      "code_snippet": "style={{",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 3304,
+      "code_snippet": "{showMenuRules && <div style={{position:\"fixed\",top:\"var(--app-top, 0px)\",left:0,right:0,height:\"var(--app-height, 100dvh)\",backgroundColor:\"rgba(3,7,18,0.98)\",",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 3306,
+      "code_snippet": "<span style={{fontSize:32,fontWeight:900,letterSpacing:\"0.3em\",color:\"#f8fafc\",fontFamily:tFont}}>RULES</span>",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 3308,
+      "code_snippet": "<div style={{maxWidth:480,width:\"100%\",padding:\"0 20px\"}}>",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 3317,
+      "code_snippet": "<div style={{display:\"flex\",flexDirection:\"column\",gap:12,alignItems:\"center\"}}>",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 3324,
+      "code_snippet": "style={{",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 3344,
+      "code_snippet": "{showMenuControls && <div style={{position:\"fixed\",top:\"var(--app-top, 0px)\",left:0,right:0,height:\"var(--app-height, 100dvh)\",backgroundColor:\"rgba(3,7,18,0.98)\",",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 3346,
+      "code_snippet": "<span style={{fontSize:32,fontWeight:900,letterSpacing:\"0.3em\",color:\"#f8fafc\",fontFamily:tFont}}>CONTROLS</span>",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 3348,
+      "code_snippet": "<div style={{maxWidth:480,width:\"100%\",padding:\"0 20px\"}}>",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 3357,
+      "code_snippet": "<div style={{display:\"flex\",flexDirection:\"column\",gap:12,alignItems:\"center\"}}>",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 3364,
+      "code_snippet": "style={{",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 3384,
+      "code_snippet": "{showCompanionPage && <div style={{position:\"fixed\",top:\"var(--app-top, 0px)\",left:0,right:0,height:\"var(--app-height, 100dvh)\",backgroundColor:\"rgba(3,7,18,0.98)\",",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 3386,
+      "code_snippet": "<div style={{",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 3398,
+      "code_snippet": "<div style={{",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 3406,
+      "code_snippet": "<span style={{",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 3421,
+      "code_snippet": "style={{",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 3443,
+      "code_snippet": "<div style={{",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    },
+    {
+      "severity": "medium",
+      "category": "rendering",
+      "title": "Inline Style Object Creation",
+      "description": "Creating style objects in render causes re-renders",
+      "line_number": 3450,
+      "code_snippet": "style={{",
+      "impact_score": 30,
+      "recommendations": [
+        "Use useMemo for style objects",
+        "Define styles outside component",
+        "Consider CSS classes instead of inline styles"
+      ]
+    }
+  ]
+}

@@ -210,6 +210,10 @@
             weldingCrossfadeTimer: null,
             weldingCrossfadeMs: 1000,
             
+            // Audio object pooling for performance
+            audioPool: {},
+            maxPoolSize: 5,
+            
             async init() {
                 // Initialize Web Audio API
                 this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -238,38 +242,62 @@
                     deselect: 'sfx/mixkit-cybernetic-technology-affirmation-3116.wav'
                 };
                 
-                                
-                // Create audio objects for all sounds
+                // Initialize audio pools
                 Object.keys(this.soundFiles).forEach(key => {
-                    const audio = new Audio(this.soundFiles[key]);
-                    audio.preload = 'auto';
-                    audio.volume = this.volume;
-                    this.sounds[key] = audio;
+                    this.audioPool[key] = [];
+                    for (let i = 0; i < this.maxPoolSize; i++) {
+                        const audio = new Audio(this.soundFiles[key]);
+                        audio.preload = 'auto';
+                        audio.volume = this.volume;
+                        this.audioPool[key].push(audio);
+                    }
+                    // Keep one for compatibility
+                    this.sounds[key] = this.audioPool[key][0];
                 });
                 
                             },
             
             play(soundName, volume = 1.0, options = {}) {
-                if (!this.enabled || !this.sounds[soundName]) return null;
+                if (!this.enabled || !this.audioPool[soundName]) return null;
                 
                 const { loop = false } = options;
                 
                 try {
-                    const sound = this.sounds[soundName].cloneNode();
-                    sound.volume = this.volume * volume;
-                    sound.loop = loop;
-                    sound.currentTime = 0;
-                    sound.play().catch(e => console.log('Sound play failed:', e));
+                    // Get audio from pool
+                    let audio = this.audioPool[soundName].find(a => a.paused || a.ended);
+                    
+                    // If no available audio, use the first one (fallback)
+                    if (!audio) {
+                        audio = this.audioPool[soundName][0];
+                        // Stop any current playback
+                        audio.pause();
+                        audio.currentTime = 0;
+                    }
+                    
+                    audio.volume = this.volume * volume;
+                    audio.loop = loop;
+                    audio.currentTime = 0;
+                    
+                    // CRITICAL INP FIX: Defer sound play to next frame to avoid blocking interaction
+                    const playSound = () => {
+                        const playPromise = audio.play();
+                        if (playPromise) {
+                            playPromise.catch(e => console.log('Sound play failed:', e));
+                        }
+                    };
+                    
+                    // Use requestAnimationFrame for non-blocking playback
+                    requestAnimationFrame(playSound);
+                    
+                    // Alternative: Use setTimeout with 0ms for even faster response
+                    // setTimeout(playSound, 0);
                     
                     // Track the sound for stopping later
-                    this.activeSounds.add(sound);
-                    sound.addEventListener('ended', () => {
-                        if (!sound.loop) {
-                            this.activeSounds.delete(sound);
-                        }
-                    });
+                    if (loop) {
+                        this.activeSounds.add(audio);
+                    }
                     
-                    return sound;
+                    return audio;
                 } catch (error) {
                     console.log('Sound system error:', error);
                     return null;
@@ -297,8 +325,11 @@
 
                 this.stopWeldingLoop();
 
-                const a = this.sounds.welding.cloneNode();
-                const b = this.sounds.welding.cloneNode();
+                // Use pooled audio objects instead of cloning
+                const a = this.audioPool.welding?.[0];
+                const b = this.audioPool.welding?.[1];
+
+                if (!a || !b) return; // Fallback if pool not ready
 
                 a.volume = this.volume * volume;
                 b.volume = this.volume * volume;
@@ -308,9 +339,13 @@
 
                 this.weldingPlayers = [a, b];
 
+                // INP FIX: Defer welding loop start to avoid blocking interaction
                 const startPlayer = (player) => {
                     player.currentTime = 0;
-                    player.play().catch(e => console.log('Welding play failed:', e));
+                    // Use requestAnimationFrame to defer playback
+                    requestAnimationFrame(() => {
+                        player.play().catch(e => console.log('Welding play failed:', e));
+                    });
                     this.activeSounds.add(player);
                 };
 
@@ -333,7 +368,11 @@
 
                             next.volume = this.volume * volume;
                             next.currentTime = 0;
-                            next.play().catch(e => console.log('Welding overlap play failed:', e));
+                            
+                            // INP FIX: Defer overlap playback
+                            requestAnimationFrame(() => {
+                                next.play().catch(e => console.log('Welding overlap play failed:', e));
+                            });
                             this.activeSounds.add(next);
 
                             scheduleNext(nextIndex);
@@ -416,23 +455,35 @@
                     }
                     
                     console.log('Attempting to play background music...');
-                    await this.backgroundMusic.play();
-                    console.log('Background music started successfully');
-                } catch (error) {
-                    console.log('Background music play failed:', error);
                     
-                    // Try alternative approach for PC browsers
-                    try {
-                        // Create a new audio element with different format
-                        const fallbackMusic = new Audio('sfx/mixkit-pulsating-bass-transition-2295.wav');
-                        fallbackMusic.loop = true;
-                        fallbackMusic.volume = this.musicVolume;
-                        await fallbackMusic.play();
-                        this.backgroundMusic = fallbackMusic;
-                        console.log('Background music started with fallback');
-                    } catch (fallbackError) {
-                        console.log('Fallback also failed:', fallbackError);
-                    }
+                    // INP FIX: Defer background music play to avoid blocking interaction
+                    const playMusic = async () => {
+                        try {
+                            await this.backgroundMusic.play();
+                            console.log('Background music started successfully');
+                        } catch (error) {
+                            console.log('Background music play failed:', error);
+                            
+                            // Try alternative approach for PC browsers
+                            try {
+                                // Create a new audio element with different format
+                                const fallbackMusic = new Audio('sfx/mixkit-pulsating-bass-transition-2295.wav');
+                                fallbackMusic.loop = true;
+                                fallbackMusic.volume = this.musicVolume;
+                                await fallbackMusic.play();
+                                this.backgroundMusic = fallbackMusic;
+                                console.log('Background music started with fallback');
+                            } catch (fallbackError) {
+                                console.log('Fallback also failed:', fallbackError);
+                            }
+                        }
+                    };
+                    
+                    // Use setTimeout to defer music start and avoid blocking INP
+                    setTimeout(playMusic, 100);
+                    
+                } catch (error) {
+                    console.log('Background music setup failed:', error);
                 }
             },
             
@@ -1107,7 +1158,8 @@
   const[overlayMsgColor,setOverlayMsgColor]=useState("#6ee7b7");
   const[showTutorial,setShowTutorial]=useState(false);
   const[showMenu,setShowMenu]=useState(false);
-          const[isLoading,setIsLoading]=useState(true);
+          const [isLoading,setIsLoading]=useState(true);
+          const [renderedRows,setRenderedRows]=useState(0);
           const[isTransitioning,setIsTransitioning]=useState(false);
   const[showPauseRules,setShowPauseRules]=useState(false);
   const[showMenuRules,setShowMenuRules]=useState(false);
@@ -1291,62 +1343,104 @@ const lightningRef=useRef({active:false,start:null,end:null,frame:0});
           const firePart=useCallback((x,y,n,col)=>{particlesRef.current.push(...mkParticles(x,y,n,col))},[]);
 
           const spawnTick=useCallback(()=>{
-            if(phase!=="play"||paused||showQuitConfirmation||showCredits||creditsPaused)return;const now=Date.now();
-            setGrid(prev=>{const ng=prev.map(r=>r.map(c=>({...c})));
-              let f=0;let allFives=true;
+            if(phase!=="play"||paused||showQuitConfirmation||showCredits||creditsPaused)return;
+            const now=Date.now();
+            setGrid(prev=>{
+              let f=0, allFives=true, changedRows=new Set();
+              const cnt=Math.min(1+Math.floor(level/3),3);
+              let s=0;
+              const spawns=[];
+              
+              // Count cells and find spawn locations
               for(let y=0;y<ROWS;y++)for(let x=0;x<COLS;x++){
-                if(ng[y][x].e>0)f++;
-                if(ng[y][x].e!==MAX_E&&ng[y][x].e>0)allFives=false;
+                if(prev[y][x].e>0)f++;
+                if(prev[y][x].e!==MAX_E&&prev[y][x].e>0)allFives=false;
+                if(s<cnt){
+                  const x2=Math.floor(Math.random()*COLS), y2=Math.floor(Math.random()*ROWS);
+                  if(prev[y2][x2].e===0){
+                    spawns.push({x:x2,y:y2,cell:mkCell(level,now)});
+                    changedRows.add(y2);
+                    s++;
+                  }
+                }
               }
+              
+              // Game over check
               if(f>=ROWS*COLS&&allFives){
+                const ng=prev.map(row=>row.map(c=>({...c})));
                 for(let y=0;y<ROWS;y++)for(let x=0;x<COLS;x++)if(ng[y][x].e===MAX_E)ng[y][x].locked=true;
                 setPhase("over");
                 SoundManager.play('gameOver');
                 return ng;
               }
-              const cnt=Math.min(1+Math.floor(level/3),3);let s=0;
-              for(let a=0;a<40&&s<cnt;a++){const x=Math.floor(Math.random()*COLS),y=Math.floor(Math.random()*ROWS);
-                if(ng[y][x].e===0){ng[y][x]=mkCell(level,now);s++;SoundManager.play('spawn', 0.3)}}
-              return ng});
+              
+              // Only copy changed rows
+              if(changedRows.size===0)return prev;
+              const ng=prev.map((row,y)=>changedRows.has(y)?[...row]:row);
+              spawns.forEach(({x,y,cell})=>{
+                ng[y][x]=cell;
+                SoundManager.play('spawn', 0.3);
+              });
+              return ng;
+            });
           },[phase,paused,level,showQuitConfirmation,showCredits,creditsPaused]);
 
           const decayTick=useCallback(()=>{
-            if(phase!=="play"||paused||showQuitConfirmation||showCredits||creditsPaused)return;const now=Date.now();const ols=[];
-            setGrid(prev=>{const ng=prev.map(r=>r.map(c=>({...c})));let over=false;
-              for(let y=0;y<ROWS;y++)for(let x=0;x<COLS;x++){const c=ng[y][x];
+            if(phase!=="play"||paused||showQuitConfirmation||showCredits||creditsPaused)return;
+            const now=Date.now();
+            setGrid(prev=>{
+              const changedRows=new Set();
+              const changes=[];
+              let over=false;
+              
+              // Find all changes
+              for(let y=0;y<ROWS;y++)for(let x=0;x<COLS;x++){
+                const c=prev[y][x];
                 if(c.e>0&&c.decay>0&&now>c.decay){
-                  if(c.e===MAX_E){ng[y][x].locked=true;ng[y][x].born=now;ng[y][x].decay=now+Math.max(DECAY_MIN,DECAY_BASE-level*500);ols.push({x,y,e:c.e});
-                    // Trigger nearby effects for locked energy 5
-                    for(const[dx,dy]of[[-1,0],[1,0],[0,-1],[0,1]]){const nx=x+dx,ny=y+dy;
-                      if(nx>=0&&nx<COLS&&ny>=0&&ny<ROWS){
-                        if(ng[ny][nx].e===0){const nc=mkCell(level,now);nc.e=Math.min(c.e,2);ng[ny][nx]=nc}
-                        else if(ng[ny][nx].e<MAX_E){ng[ny][nx].e=Math.min(MAX_E,ng[ny][nx].e+1);ng[ny][nx].decay=Math.min(ng[ny][nx].decay,now+3500)}}}}
-                  else{over=true;ols.push({x,y,e:c.e});
-                    ng[y][x].decay=now+Math.max(DECAY_MIN,DECAY_BASE-level*500);ng[y][x].born=now;
-                    for(const[dx,dy]of[[-1,0],[1,0],[0,-1],[0,1]]){const nx=x+dx,ny=y+dy;
-                      if(nx>=0&&nx<COLS&&ny>=0&&ny<ROWS){
-                        if(ng[ny][nx].e===0){const nc=mkCell(level,now);nc.e=Math.min(c.e,2);ng[ny][nx]=nc}
-                        else if(ng[ny][nx].e<MAX_E){ng[ny][nx].e=Math.min(MAX_E,ng[ny][nx].e+1);ng[ny][nx].decay=Math.min(ng[ny][nx].decay,now+3500)}}}}}
-              }
-              if(over){setShake(true);setTimeout(()=>setShake(false),250);
-                let f=0;let allFives=true;
-                for(let y=0;y<ROWS;y++)for(let x=0;x<COLS;x++){
-                  if(ng[y][x].e>0)f++;
-                  if(ng[y][x].e!==MAX_E&&ng[y][x].e>0)allFives=false;
-                }
-                if(f>=ROWS*COLS&&allFives){
-                  for(let y=0;y<ROWS;y++)for(let x=0;x<COLS;x++)if(ng[y][x].e===MAX_E)ng[y][x].locked=true;
-                  setPhase("over");
-                  SoundManager.play('gameOver');
+                  changedRows.add(y);
+                  over=true;
+                  const newDecay=now+Math.max(DECAY_MIN,DECAY_BASE-level*500);
+                  changes.push({x,y,locked:c.e===MAX_E,newDecay,born:now,e:c.e});
+                  
+                  // Track nearby changes
+                  for(const[dx,dy]of[[-1,0],[1,0],[0,-1],[0,1]]){
+                    const nx=x+dx,ny=y+dy;
+                    if(nx>=0&&nx<COLS&&ny>=0&&ny<ROWS){
+                      changedRows.add(ny);
+                      const n=prev[ny][nx];
+                      if(n.e===0){
+                        changes.push({x:nx,y:ny,spawn:mkCell(level,now),spawnE:Math.min(c.e,2)});
+                      }else if(n.e<MAX_E){
+                        changes.push({x:nx,y:ny,boostE:Math.min(MAX_E,n.e+1),boostDecay:Math.min(n.decay,now+3500)});
+                      }
+                    }
+                  }
                 }
               }
-              return ng});
-            if(ols.length>0){for(const oc of ols){const cp=cellPos(oc.x,oc.y);
-              for(const[dx,dy]of[[-1,0],[1,0],[0,-1],[0,1]]){const nx=oc.x+dx,ny=oc.y+dy;
-                if(nx>=0&&nx<COLS&&ny>=0&&ny<ROWS){const np=cellPos(nx,ny);fireBolt(cp.px,cp.py,np.px,np.py,"#fca5a5",500,0.7)}}
-              firePart(cp.px,cp.py,12,"rgb(252,165,165)")}
-              setScreenFlash("rgba(220,38,38,0.3)");setTimeout(()=>setScreenFlash(null),100)}
-          },[phase,paused,level,cellPos,fireBolt,firePart,showQuitConfirmation,showCredits,creditsPaused]);
+              
+              if(!over)return prev;
+              
+              // Only copy changed rows
+              const ng=prev.map((row,y)=>changedRows.has(y)?[...row]:row);
+              
+              // Apply changes
+              changes.forEach(change=>{
+                if(change.locked){
+                  ng[change.y][change.x]={...ng[change.y][change.x],locked:true,born:change.born,decay:change.newDecay};
+                }else if(change.spawn){
+                  ng[change.y][change.x]=change.spawn;
+                  ng[change.y][change.x].e=change.spawnE;
+                }else{
+                  ng[change.y][change.x]={...ng[change.y][change.x],decay:change.newDecay,born:change.born};
+                  if(change.boostE)ng[change.y][change.x].e=change.boostE;
+                  if(change.boostDecay)ng[change.y][change.x].decay=change.boostDecay;
+                }
+              });
+              
+              setShake(true);setTimeout(()=>setShake(false),250);
+              return ng;
+            });
+          },[phase,paused,level,showQuitConfirmation,showCredits,creditsPaused]);
 
           useEffect(()=>{
             if(phase!=="play"||paused||showQuitConfirmation||showCredits||creditsPaused)return;
@@ -1402,6 +1496,19 @@ const lightningRef=useRef({active:false,start:null,end:null,frame:0});
             return()=>clearInterval(iv);
           },[phase,paused,showQuitConfirmation]);
 
+          // Progressive grid rendering for LCP optimization
+          useEffect(() => {
+            if (phase === "play" && renderedRows < ROWS) {
+              const timer = setTimeout(() => {
+                setRenderedRows(prev => Math.min(prev + 2, ROWS));
+              }, 50); // Render 2 rows every 50ms
+              return () => clearTimeout(timer);
+            }
+            if (phase === "menu") {
+              setRenderedRows(ROWS); // Show all rows in menu
+            }
+          }, [phase]); // Remove renderedRows dependency to prevent re-renders
+
           useEffect(()=>{let f=0;for(let y=0;y<ROWS;y++)for(let x=0;x<COLS;x++)if(grid[y][x].e>0)f++;setFillPct(f/(ROWS*COLS))},[grid]);
           useEffect(()=>{
             const nl=1+Math.floor(totalT/6);
@@ -1429,7 +1536,7 @@ const lightningRef=useRef({active:false,start:null,end:null,frame:0});
             for(let y=0;y<ROWS;y++)for(let x=0;x<COLS;x++){if(x===sx&&y===sy)continue;const d=grid[y][x];if(d.e<=0||d.e<dE)continue;
               const r=Math.sqrt((x-sx)**2+(y-sy)**2);let p=corrProb(r);p=Math.min(0.98,p+echoMap[y*COLS+x]);ds.push({x,y,prob:p,r,dE})}
             return ds.sort((a,b)=>b.prob-a.prob)},[grid,echoMap]);
-          const detMap=useCallback(()=>{if(!sel)return{};const ds=getDets(sel.x,sel.y);const m={};for(const d of ds)m[`${d.x},${d.y}`]=d;return m},[sel,getDets]);
+          const detMap=useMemo(()=>{if(!sel)return{};const ds=getDets(sel.x,sel.y);const m={};for(const d of ds)m[`${d.x},${d.y}`]=d;return m},[sel,getDets]);
 
           const execTrans=useCallback((sx,sy,dx,dy)=>{
             const now=Date.now(),src=grid[sy][sx],det=grid[dy][dx],dE=src.e,r=Math.sqrt((dx-sx)**2+(dy-sy)**2),mom=recoilP(det.mass,dE);
@@ -1440,8 +1547,8 @@ const lightningRef=useRef({active:false,start:null,end:null,frame:0});
             firePart(sp.px,sp.py,8+dE*3,pc);firePart(dp.px,dp.py,12+dE*4,pc);
             setScreenFlash(bc);setTimeout(()=>setScreenFlash(null),120);
             
-            setGrid(prev=>{const ng=prev.map(row=>row.map(c=>({...c})));ng[sy][sx]=empty();
-              const nE=det.e-dE;if(nE<=0){ng[dy][dx]=empty();} else{ng[dy][dx].e=nE;ng[dy][dx].born=now;ng[dy][dx].decay=now+Math.max(DECAY_MIN,DECAY_BASE-level*500);ng[dy][dx].locked=false} // Unlock if energy changes
+            setGrid(prev=>{const ng=prev.map((row,y)=>[...row]);ng[sy][sx]=empty();
+              const nE=det.e-dE;if(nE<=0){ng[dy][dx]=empty();} else{ng[dy][dx].e=nE;ng[dy][dx].born=now;ng[dy][dx].decay=now+Math.max(DECAY_MIN,DECAY_BASE-level*500);ng[dy][dx].locked=false}
               // Auto-unlock nearby locked energy 5 cells
               for(const[ddx,ddy]of[[-1,0],[1,0],[0,-1],[0,1],[-1,-1],[1,-1],[-1,1],[1,1]]){
                 const nx=dx+ddx,ny=dy+ddy;if(nx>=0&&nx<COLS&&ny>=0&&ny<ROWS&&ng[ny][nx].locked){
@@ -1483,7 +1590,7 @@ const lightningRef=useRef({active:false,start:null,end:null,frame:0});
             setLastSelectionTime(now);
 
             setGrid(prev => {
-              const ng = prev.map(row => row.map(c => ({ ...c })));
+              const ng = prev.map((row, rowIndex) => rowIndex === y ? [...row] : row);
               if (ng[y][x].e > 0) {
                 ng[y][x].born = now;
                 ng[y][x].decay = now + Math.max(DECAY_MIN, DECAY_BASE - level * 500);
@@ -1550,7 +1657,9 @@ const lightningRef=useRef({active:false,start:null,end:null,frame:0});
               const freshDecay = now + Math.max(DECAY_MIN, DECAY_BASE - level * 500);
 
               setGrid(prev => {
-                const ng = prev.map(row => row.map(c => ({ ...c })));
+                const ng = prev.map((row, rowIndex) => 
+                  rowIndex === sel.y || rowIndex === y ? [...row] : row
+                );
                 if (ng[sel.y][sel.x].e > 0) {
                   ng[sel.y][sel.x].born = now;
                   ng[sel.y][sel.x].decay = freshDecay;
@@ -1596,7 +1705,20 @@ const lightningRef=useRef({active:false,start:null,end:null,frame:0});
               const freshDecay = now + Math.max(DECAY_MIN, DECAY_BASE - level * 500);
 
               setGrid(prev => {
-                const ng = prev.map(row => row.map(c => ({ ...c })));
+                const changedRows = new Set([sel.y, y]);
+                const spawns = [];
+                const sc = 1 + Math.floor(Math.random() * 2);
+                for (let i = 0, a = 0; i < sc && a < 20; a++) {
+                  const sx2 = Math.floor(Math.random() * COLS), sy2 = Math.floor(Math.random() * ROWS);
+                  if (prev[sy2][sx2].e === 0) {
+                    spawns.push({x: sx2, y: sy2, cell: mkCell(level, now)});
+                    changedRows.add(sy2);
+                    i++;
+                  }
+                }
+                
+                const ng = prev.map((row, rowIndex) => changedRows.has(rowIndex) ? [...row] : row);
+                
                 if (ng[sel.y][sel.x].e > 0) {
                   ng[sel.y][sel.x].born = now;
                   ng[sel.y][sel.x].decay = freshDecay;
@@ -1609,14 +1731,11 @@ const lightningRef=useRef({active:false,start:null,end:null,frame:0});
                   if (ng[y][x].e < MAX_E) ng[y][x].e += 1;
                   if (ng[y][x].e === MAX_E) ng[y][x].locked = true;
                 }
-                const sc = 1 + Math.floor(Math.random() * 2);
-                for (let i = 0, a = 0; i < sc && a < 20; a++) {
-                  const sx2 = Math.floor(Math.random() * COLS), sy2 = Math.floor(Math.random() * ROWS);
-                  if (ng[sy2][sx2].e === 0) {
-                    ng[sy2][sx2] = mkCell(level, now);
-                    i++;
-                  }
-                }
+                
+                spawns.forEach(({x, y, cell}) => {
+                  ng[y][x] = cell;
+                });
+                
                 return ng;
               });
 
@@ -1683,12 +1802,15 @@ const lightningRef=useRef({active:false,start:null,end:null,frame:0});
   const touch = event.touches[0];
   if (!touch) return;
 
+  const {cw, ch} = dimsRef.current;
+  if (!cw || !ch) return; // Use cached dimensions
+
   const gridElement = gridRef.current;
   if (!gridElement) return;
 
   const rect = gridElement.getBoundingClientRect();
-  const cellWidth = rect.width / COLS;
-  const cellHeight = rect.height / ROWS;
+  const cellWidth = cw; // Use cached cellWidth
+  const cellHeight = ch; // Use cached cellHeight
 
   const x = Math.floor((touch.clientX - rect.left) / cellWidth);
   const y = Math.floor((touch.clientY - rect.top) / cellHeight);
@@ -1726,6 +1848,9 @@ const lightningRef=useRef({active:false,start:null,end:null,frame:0});
 }, [phase, paused, grid, sel, interactionMode, commitSourceSelection]);
         
         const handleMouseEnter = useCallback((x, y) => {
+            // Skip if we recently had touch interaction (prevents iOS phantom mouse events)
+            if (Date.now() - lastTouchTimeRef.current < 300) return;
+            
             // Debounce mouse events to 60fps to reduce re-renders
             const now = Date.now();
             if (now - lastMouseUpdateRef.current < 16) return;
@@ -1784,12 +1909,15 @@ const lightningRef=useRef({active:false,start:null,end:null,frame:0});
   const touch = event.touches[0];
   if (!touch) return;
 
+  const {cw, ch} = dimsRef.current;
+  if (!cw || !ch) return; // Use cached dimensions
+
   const gridElement = gridRef.current;
   if (!gridElement) return;
 
   const rect = gridElement.getBoundingClientRect();
-  const cellWidth = rect.width / COLS;
-  const cellHeight = rect.height / ROWS;
+  const cellWidth = cw; // Use cached cellWidth
+  const cellHeight = ch; // Use cached cellHeight
 
   const x = Math.floor((touch.clientX - rect.left) / cellWidth);
   const y = Math.floor((touch.clientY - rect.top) / cellHeight);
@@ -1868,7 +1996,9 @@ const lightningRef=useRef({active:false,start:null,end:null,frame:0});
               const freshDecay = now + Math.max(DECAY_MIN, DECAY_BASE - level * 500);
 
               setGrid(prev => {
-                const ng = prev.map(row => row.map(c => ({ ...c })));
+                const ng = prev.map((row, rowIndex) => 
+                  rowIndex === sy || rowIndex === targetY ? [...row] : row
+                );
                 if (ng[sy][sx].e > 0) {
                   ng[sy][sx].born = now;
                   ng[sy][sx].decay = freshDecay;
@@ -1914,7 +2044,20 @@ const lightningRef=useRef({active:false,start:null,end:null,frame:0});
               const freshDecay = now + Math.max(DECAY_MIN, DECAY_BASE - level * 500);
 
               setGrid(prev => {
-                const ng = prev.map(row => row.map(c => ({ ...c })));
+                const changedRows = new Set([sy, targetY]);
+                const spawns = [];
+                const sc = 1 + Math.floor(Math.random() * 2);
+                for (let i = 0, a = 0; i < sc && a < 20; a++) {
+                  const sx2 = Math.floor(Math.random() * COLS), sy2 = Math.floor(Math.random() * ROWS);
+                  if (prev[sy2][sx2].e === 0) {
+                    spawns.push({x: sx2, y: sy2, cell: mkCell(level, now)});
+                    changedRows.add(sy2);
+                    i++;
+                  }
+                }
+                
+                const ng = prev.map((row, rowIndex) => changedRows.has(rowIndex) ? [...row] : row);
+                
                 if (ng[sy][sx].e > 0) {
                   ng[sy][sx].born = now;
                   ng[sy][sx].decay = freshDecay;
@@ -1927,14 +2070,11 @@ const lightningRef=useRef({active:false,start:null,end:null,frame:0});
                   if (ng[targetY][targetX].e < MAX_E) ng[targetY][targetX].e += 1;
                   if (ng[targetY][targetX].e === MAX_E) ng[targetY][targetX].locked = true;
                 }
-                const sc = 1 + Math.floor(Math.random() * 2);
-                for (let i = 0, a = 0; i < sc && a < 20; a++) {
-                  const sx2 = Math.floor(Math.random() * COLS), sy2 = Math.floor(Math.random() * ROWS);
-                  if (ng[sy2][sx2].e === 0) {
-                    ng[sy2][sx2] = mkCell(level, now);
-                    i++;
-                  }
-                }
+                
+                spawns.forEach(({x, y, cell}) => {
+                  ng[y][x] = cell;
+                });
+                
                 return ng;
               });
 
@@ -1997,9 +2137,12 @@ const lightningRef=useRef({active:false,start:null,end:null,frame:0});
       return;
     }
 
+    const {cw, ch} = dimsRef.current;
+    if (!cw || !ch) return; // Use cached dimensions
+
     const rect = gridElement.getBoundingClientRect();
-    const cellWidth = rect.width / COLS;
-    const cellHeight = rect.height / ROWS;
+    const cellWidth = cw; // Use cached cellWidth
+    const cellHeight = ch; // Use cached cellHeight
 
     const x = Math.floor((touch.clientX - rect.left) / cellWidth);
     const y = Math.floor((touch.clientY - rect.top) / cellHeight);
@@ -2298,7 +2441,19 @@ const lightningRef=useRef({active:false,start:null,end:null,frame:0});
           const dreadBg=useMemo(()=>{if(fillPct<0.4)return"#030712";const r=Math.round(3+fillPct*60);
             return`rgb(${r},${Math.max(3,7-fillPct*5)},${Math.max(5,18-fillPct*15)})`},[fillPct]);
           const font="'IBM Plex Mono',monospace",tFont="'Orbitron',sans-serif";
-          const nowMs=Date.now();
+          const nowMsRef=useRef(Date.now());
+          
+          // Update nowMs only when needed (every frame for animations)
+          useEffect(() => {
+            const updateNow = () => {
+              nowMsRef.current = Date.now();
+              requestAnimationFrame(updateNow);
+            };
+            const raf = requestAnimationFrame(updateNow);
+            return () => cancelAnimationFrame(raf);
+          }, []);
+          
+          const nowMs = nowMsRef.current;
 
           // Calculate responsive font sizes based on viewport width
           const [viewportWidth, setViewportWidth] = useState(480);
@@ -2832,7 +2987,7 @@ const lightningRef=useRef({active:false,start:null,end:null,frame:0});
                   gridTemplateColumns:`repeat(${COLS},1fr)`,gridTemplateRows:`repeat(${ROWS},1fr)`,
                   backgroundColor:"rgba(15,23,42,0.25)",borderRadius:6,
                   border:fillPct>0.7?`1px solid rgba(185,28,28,${(fillPct-0.7)*2.5})`:"1px solid rgba(255,255,255,0.04)",transition:"border-color 1s"}}>
-                  {grid.map((row,y)=>row.map((cell,x)=>{
+                  {grid.slice(0, renderedRows).map((row,y)=>row.map((cell,x)=>{
                     const isSel=sel&&sel.x===x&&sel.y===y;const det=detMap[`${x},${y}`];
                     const dp=cell.e>0?Math.min(1,Math.max(0,(nowMs-cell.born)/(cell.decay-cell.born))):0;
                     const isNew=cell.e>0&&(nowMs-cell.born)<350;
