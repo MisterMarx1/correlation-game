@@ -552,6 +552,88 @@
   .sound-control.music-off .music-off {
     opacity: 1;
   }
+
+  /* === CREDITS POPUP === */
+  .credits-popup {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(3, 7, 18, 0.98);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .credits-popup.show {
+    opacity: 1;
+  }
+
+  .credits-content {
+    background: linear-gradient(145deg, rgba(15, 23, 42, 0.9), rgba(30, 41, 59, 0.9));
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    padding: 2rem;
+    max-width: 320px;
+    width: 90%;
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+  }
+
+  .credits-content h2 {
+    font-family: 'Baloo 2', cursive;
+    font-size: 2rem;
+    font-weight: 800;
+    color: #00ccff;
+    margin: 0 0 1rem 0;
+    letter-spacing: 0.1em;
+  }
+
+  .credits-content p {
+    color: #e2e8f0;
+    margin: 0.5rem 0;
+    line-height: 1.5;
+  }
+
+  .credits-content a {
+    color: #67e8f9;
+    text-decoration: none;
+    transition: color 0.3s ease;
+  }
+
+  .credits-content a:hover {
+    color: #00ccff;
+  }
+
+  .credits-close {
+    margin-top: 1.5rem;
+    padding: 0.75em 2em;
+    background: linear-gradient(135deg, #00ccff, #007bff);
+    color: #fff;
+    border: none;
+    border-radius: 50px;
+    font-family: 'Nunito', sans-serif;
+    font-weight: 700;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    letter-spacing: 0.05em;
+  }
+
+  .credits-close:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 204, 255, 0.3);
+  }
+
+  .credits-close:active {
+    transform: translateY(0);
+  }
 </style>
 </head>
 <body>
@@ -574,6 +656,16 @@
 <div class="sound-control" id="soundControl">
   <span class="music-icon music-on">🎵</span>
   <span class="music-icon music-off">🔇</span>
+</div>
+
+<!-- Credits Popup -->
+<div class="credits-popup" id="creditsPopup" style="display: none;">
+  <div class="credits-content">
+    <h2>Credits</h2>
+    <p>Sound Effects by Mixkit</p>
+    <p><a href="https://mixkit.co" target="_blank" rel="noopener noreferrer">https://mixkit.co</a></p>
+    <button class="credits-close" id="creditsClose">Close</button>
+  </div>
 </div>
 
 <!-- Main content -->
@@ -808,6 +900,77 @@
     }, 300);
     
     console.log('Music:', musicOn ? 'ON' : 'OFF', 'Sound Effects:', soundOn ? 'ON' : 'OFF');
+  });
+
+  // Credits popup functionality
+  const creditsPopup = document.getElementById('creditsPopup');
+  const creditsClose = document.getElementById('creditsClose');
+  
+  // Add credits button under sound control
+  const creditsButton = document.createElement('div');
+  creditsButton.style.cssText = `
+    position: fixed;
+    top: 80px;
+    left: 20px;
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, var(--mint), var(--yellow));
+    border: 2px solid rgba(255,255,255,0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    cursor: pointer;
+    z-index: 999;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  `;
+  creditsButton.innerHTML = '📋';
+  creditsButton.title = 'Credits';
+  
+  // Add hover effects
+  creditsButton.addEventListener('mouseenter', () => {
+    creditsButton.style.transform = 'scale(1.1)';
+    creditsButton.style.boxShadow = '0 6px 25px rgba(0,0,0,0.4)';
+  });
+  
+  creditsButton.addEventListener('mouseleave', () => {
+    creditsButton.style.transform = 'scale(1)';
+    creditsButton.style.boxShadow = '0 4px 20px rgba(0,0,0,0.3)';
+  });
+  
+  creditsButton.addEventListener('click', (e) => {
+    e.stopPropagation();
+    showCredits();
+  });
+  
+  // Add credits button to page
+  document.body.appendChild(creditsButton);
+  
+  function showCredits() {
+    creditsPopup.style.display = 'flex';
+    setTimeout(() => {
+      creditsPopup.classList.add('show');
+    }, 10);
+  }
+  
+  function hideCredits() {
+    creditsPopup.classList.remove('show');
+    setTimeout(() => {
+      creditsPopup.style.display = 'none';
+    }, 300);
+  }
+  
+  creditsClose.addEventListener('click', hideCredits);
+  
+  // Close credits when clicking outside
+  creditsPopup.addEventListener('click', (e) => {
+    if (e.target === creditsPopup) {
+      hideCredits();
+    }
   });
 
   function createMathBurst(x, y) {
