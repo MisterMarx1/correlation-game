@@ -1,0 +1,1143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SIGMA PRIME - Prime Number Math Game</title>
+    <meta name="description" content="A strategic puzzle game where you draw paths to satisfy mathematical conditions involving prime numbers and sums.">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+                'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+                sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            background: #04040c;
+            overflow: hidden;
+        }
+        
+        #root {
+            width: 100vw;
+            height: 100vh;
+        }
+        
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            color: #c8c8e0;
+            font-family: 'Georgia', serif;
+            font-size: 18px;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+        }
+        
+        .loading::after {
+            content: '';
+            animation: dots 1.5s infinite;
+        }
+        
+        @keyframes dots {
+            0%, 20% { content: ''; }
+            40% { content: '.'; }
+            60% { content: '..'; }
+            80%, 100% { content: '...'; }
+        }
+    </style>
+</head>
+<body>
+    <div id="root">
+        <div class="loading">Loading Σ PRIME</div>
+    </div>
+    
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <script type="text/babel">
+        // Paste the new.jsx content here
+        const W = 8;
+        const H = 8;
+        const MAX_LIFE = 10;
+        const ROUNDS = 10;
+        const BASE_TURN = 11000;
+
+        const ALL_PRIMES = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97];
+
+        function k(x, y) { return `${x},${y}`; }
+        function isPrime(n) {
+          n = Math.abs(n);
+          if (n < 2) return false;
+          if (n < 4) return true;
+          if (n % 2 === 0 || n % 3 === 0) return false;
+          for (let i = 5; i * i <= n; i += 6) if (n % i === 0 || n % (i + 2) === 0) return false;
+          return true;
+        }
+        function isComposite(n) {
+          if (n < 4) return false;
+          return !isPrime(n);
+        }
+        function randVal(maxPrime = 97) { 
+          const primes = ALL_PRIMES.filter(p => p <= maxPrime || (maxPrime === 3 && p === 2));
+          return primes[Math.floor(Math.random() * primes.length)];
+        }
+        function adj(a, b) { return Math.abs(a.x - b.x) <= 1 && Math.abs(a.y - b.y) <= 1 && (Math.abs(a.x - b.x) + Math.abs(a.y - b.y) > 0); }
+
+        function genTargets(maxPrime = 97) {
+          const t = [];
+          for (let i = 0; i < ROUNDS; i++) {
+            const diff = i;
+            // Helper to get a random composite number
+            const getRandComposite = (maxVal) => {
+              const composites = [];
+              for (let n = 4; n <= maxVal; n++) {
+                if (isComposite(n)) composites.push(n);
+              }
+              // If no composites found in range, use scaled fallback composites
+              if (composites.length === 0) {
+                // Scale composites based on available maxPrime
+                if (maxPrime <= 3) {
+                  // For 2 & 3: achievable composites are 4, 6, 8, 9, 10, 12, 14, 15, 16, 18
+                  const smallComposites = [4, 6, 8, 9, 10, 12, 14, 15, 16, 18];
+                  return smallComposites[Math.floor(Math.random() * smallComposites.length)];
+                } else if (maxPrime <= 5) {
+                  // For primes up to 5: can achieve larger composites
+                  const mediumComposites = [4, 6, 8, 9, 10, 12, 14, 15, 16, 18, 20, 21, 22, 24, 25, 26, 27, 28];
+                  return mediumComposites[Math.floor(Math.random() * mediumComposites.length)];
+                } else {
+                  // For larger primes: use full range
+                  const fallbackComposites = [4, 6, 8, 9, 10, 12, 14, 15, 16, 18, 20, 21, 22, 24, 25, 26, 27, 28, 30];
+                  return fallbackComposites[Math.floor(Math.random() * fallbackComposites.length)];
+                }
+              }
+              return composites[Math.floor(Math.random() * composites.length)];
+            };
+            
+            const types = [
+              () => ({ label: `Σ = composite (${getRandComposite(maxPrime <= 3 ? 12 : Math.min(20, maxPrime))})`, type: "sum", val: getRandComposite(maxPrime <= 3 ? 12 : Math.min(20, maxPrime)), min: 2 }),
+              () => ({ label: `Σ = composite (${getRandComposite(maxPrime <= 3 ? 18 : Math.min(40, maxPrime * 2))})`, type: "sum", val: getRandComposite(maxPrime <= 3 ? 18 : Math.min(40, maxPrime * 2)), min: 2 }),
+              () => ({ label: `Σ is composite`, type: "composite", val: 0, min: 2 }),
+              () => ({ label: `Σ ≡ 0 mod ${3 + Math.floor(Math.random() * 4)}`, type: "mod", val: 3 + Math.floor(Math.random() * 4), min: 2 }),
+              () => ({ label: `Σ = composite (min 3)`, type: "composite", val: 0, min: 3 }),
+              () => ({ label: `Σ = composite (${getRandComposite(maxPrime <= 3 ? 25 : Math.min(60, maxPrime * 3))})`, type: "sum", val: getRandComposite(maxPrime <= 3 ? 25 : Math.min(60, maxPrime * 3)), min: 2 + Math.floor(diff / 3) }),
+            ];
+            const pick = diff < 2 ? types[Math.floor(Math.random() * 2)]()
+              : diff < 5 ? types[Math.floor(Math.random() * 4)]()
+              : types[Math.floor(Math.random() * types.length)]();
+            t.push(pick);
+          }
+          return t;
+        }
+
+        function checkTarget(tgt, values) {
+          if (values.length < (tgt.min || 3)) return false;
+          const s = values.reduce((a, b) => a + b, 0);
+          if (tgt.type === "sum") return isComposite(s) && s === tgt.val;
+          if (tgt.type === "composite") return isComposite(s);
+          if (tgt.type === "mod") return s !== 0 && s % tgt.val === 0;
+          return false;
+        }
+
+        function initBoard(maxPrime = 97) {
+          const b = {};
+          for (let y = 0; y < H; y++)
+            for (let x = 0; x < W; x++)
+              b[k(x, y)] = { val: randVal(maxPrime), life: MAX_LIFE, dead: false };
+          return b;
+        }
+
+        const LBL = { fontSize: 9, letterSpacing: 3, color: "#333350", textTransform: "uppercase", marginBottom: 3 };
+
+        const CONTROL_ITEMS = [
+          {
+            title: "DRAG",
+            body: "Click and hold on a cell, then drag through adjacent cells (diagonals allowed) to draw a connected path."
+          },
+          {
+            title: "RELEASE",
+            body: "Release the mouse button to submit the path. The path must satisfy the target condition shown on the right."
+          },
+          {
+            title: "ESC",
+            body: "Press the Escape key to cancel the current path selection and start over."
+          }
+        ];
+
+        const RULE_ITEMS = [
+          {
+            title: "PRIME BOARD",
+            body: "Board contains only prime numbers. Each cell starts with 10 life that drains every turn. Cells die at 0 life."
+          },
+          {
+            title: "PATH DRAWING",
+            body: "Drag through adjacent cells (diagonals allowed) to draw a connected path. Release to submit the path."
+          },
+          {
+            title: "TARGET CONDITIONS",
+            body: "Path must satisfy the target condition shown on the right. Common targets: sum equals composite number, sum is composite, or sum divisible by a number."
+          },
+          {
+            title: "CELL REFRESH",
+            body: "Used cells refresh with new prime values and full life. Strategic path selection is key to survival."
+          },
+          {
+            title: "SURVIVAL",
+            body: "Survive 10 rounds to win. Each round gets faster with less turn time. Balance speed and accuracy."
+          }
+        ];
+
+        function ControlRuleCard({ item }) {
+          return React.createElement('div', {
+            style: {
+              display: "flex",
+              flexDirection: "column",
+              gap: 4,
+              padding: "10px 14px",
+              backgroundColor: "rgba(15,23,42,0.6)",
+              borderRadius: 6,
+              borderLeft: "3px solid #00f5d4"
+            }
+          }, [
+            React.createElement('span', {
+              key: 'title',
+              style: { fontSize: 15, fontWeight: 700, color: "#e2e8f0", fontFamily: "'Georgia', serif" }
+            }, item.title),
+            React.createElement('span', {
+              key: 'body',
+              style: { fontSize: 12, color: "#94a3b8", lineHeight: 1.5, fontFamily: "'Georgia', serif" }
+            }, item.body)
+          ]);
+        }
+
+        function ControlRulesPanel({ items, maxWidth = 480 }) {
+          return React.createElement('div', {
+            style: {
+              maxWidth,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 14,
+              width: "100%"
+            }
+          }, items.map(item => React.createElement(ControlRuleCard, { key: item.title, item })));
+        }
+
+        function RuleCard({ item }) {
+          return React.createElement('div', {
+            style: {
+              display: "flex",
+              flexDirection: "column",
+              gap: 4,
+              padding: "10px 14px",
+              backgroundColor: "rgba(15,23,42,0.6)",
+              borderRadius: 6,
+              borderLeft: "3px solid #9b5de5"
+            }
+          }, [
+            React.createElement('span', {
+              key: 'title',
+              style: { fontSize: 15, fontWeight: 700, color: "#e2e8f0", fontFamily: "'Georgia', serif" }
+            }, item.title),
+            React.createElement('span', {
+              key: 'body',
+              style: { fontSize: 12, color: "#94a3b8", lineHeight: 1.5, fontFamily: "'Georgia', serif" }
+            }, item.body)
+          ]);
+        }
+
+        function RulesPanel({ items, maxWidth = 480 }) {
+          return React.createElement('div', {
+            style: {
+              maxWidth,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 14,
+              width: "100%"
+            }
+          }, items.map(item => React.createElement(RuleCard, { key: item.title, item })));
+        }
+
+        function SigmaPrime() {
+          const [, bump] = React.useState(0);
+          const re = () => bump(c => c + 1);
+          const [showRules, setShowRules] = React.useState(false);
+          const [showControls, setShowControls] = React.useState(false);
+
+          const g = React.useRef({
+            board: {}, sel: [], score: 0, round: 0, turn: 0,
+            targets: [], gameOver: false, won: false, started: false,
+            flash: null, combo: 0, totalPaths: 0, lastTurn: 0, timeLeft: BASE_TURN,
+            dragging: false, shakeUntil: 0, clearAnim: [], turnTime: BASE_TURN,
+            deadCount: 0, maxPrime: 97,
+          }).current;
+
+          const timerRef = React.useRef(null);
+          const boardRef = React.useRef(null);
+
+          function turnTime() { return Math.max(4000, BASE_TURN - g.round * 700); }
+
+          function doTurn() {
+            let died = 0;
+            for (const ky in g.board) {
+              const c = g.board[ky];
+              if (!c.dead) { c.life -= 1; if (c.life <= 0) { c.dead = true; c.life = 0; died++; } }
+            }
+            g.deadCount += died;
+            g.turn += 1; g.sel = []; g.dragging = false;
+            let alive = false;
+            for (const ky in g.board) if (!g.board[ky].dead) { alive = true; break; }
+            if (!alive) { g.gameOver = true; stopTimer(); }
+            g.lastTurn = Date.now(); g.turnTime = turnTime(); g.timeLeft = g.turnTime;
+            re();
+          }
+
+          function startTimer() {
+            stopTimer();
+            g.lastTurn = Date.now(); g.turnTime = turnTime(); g.timeLeft = g.turnTime;
+            timerRef.current = setInterval(() => {
+              const el = Date.now() - g.lastTurn;
+              if (el >= g.turnTime) doTurn();
+              g.timeLeft = Math.max(0, g.turnTime - el);
+              re();
+            }, 80);
+          }
+
+          function stopTimer() { if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; } }
+
+          function isPath(sel) {
+            if (sel.length < 2) return false;
+            for (let i = 0; i < sel.length - 1; i++) if (!adj(sel[i], sel[i + 1])) return false;
+            return true;
+          }
+
+          function tryClose() {
+            const sel = g.sel;
+            if (!isPath(sel)) return false;
+            const vals = sel.map(s => g.board[k(s.x, s.y)].val);
+            const tgt = g.targets[g.round];
+            if (!checkTarget(tgt, vals)) {
+              g.flash = { text: "NOT SATISFIED", bad: true };
+              g.shakeUntil = Date.now() + 400;
+              setTimeout(() => { g.flash = null; re(); }, 800);
+              g.sel = []; g.combo = 0; g.dragging = false; re(); return false;
+            }
+            const pathSum = vals.reduce((a, b) => a + b, 0);
+            g.combo += 1;
+            const pts = sel.length * 40 + Math.abs(pathSum) * 8 + g.combo * 25 + g.round * 15;
+            g.score += pts; g.totalPaths += 1;
+            g.clearAnim = sel.map(s => ({ x: s.x, y: s.y, t: Date.now() }));
+            setTimeout(() => { g.clearAnim = []; re(); }, 500);
+            for (const s of sel) {
+              const c = g.board[k(s.x, s.y)];
+              c.val = randVal(g.maxPrime); c.life = MAX_LIFE; c.dead = false;
+            }
+            g.deadCount = Object.values(g.board).filter(c => c.dead).length;
+            g.flash = { text: `+${pts}${g.combo > 1 ? ` ×${g.combo}` : ""} [Σ=${pathSum}]`, bad: false };
+            setTimeout(() => { g.flash = null; re(); }, 1100);
+            g.sel = []; g.dragging = false;
+            g.round += 1;
+            if (g.round >= ROUNDS) { g.won = true; g.gameOver = true; stopTimer(); re(); return true; }
+            g.lastTurn = Date.now(); g.turnTime = turnTime(); g.timeLeft = g.turnTime;
+            re(); return true;
+          }
+
+          function cellFromEvent(e) {
+            const el = boardRef.current;
+            if (!el) return null;
+            const rect = el.getBoundingClientRect();
+            const cellW = rect.width / W, cellH = rect.height / H;
+            const mx = (e.clientX || e.touches?.[0]?.clientX) - rect.left;
+            const my = (e.clientY || e.touches?.[0]?.clientY) - rect.top;
+            const cx = Math.floor(mx / cellW), cy = Math.floor(my / cellH);
+            if (cx < 0 || cx >= W || cy < 0 || cy >= H) return null;
+            return { x: cx, y: cy };
+          }
+
+          function addToSel(x, y) {
+            const c = g.board[k(x, y)];
+            if (!c || c.dead) return;
+            const sel = g.sel;
+            const idx = sel.findIndex(s => s.x === x && s.y === y);
+            if (idx === 0 && sel.length >= 2 && adj(sel[sel.length - 1], sel[0])) {
+              tryClose(); return;
+            }
+            if (idx > 0) { g.sel = sel.slice(0, idx + 1); re(); return; }
+            if (sel.length === 0 || adj(sel[sel.length - 1], { x, y })) {
+              g.sel = [...sel, { x, y }]; re();
+            }
+          }
+
+          function onPointerDown(e) {
+            if (g.gameOver) return;
+            e.preventDefault();
+            const c = cellFromEvent(e);
+            if (!c) return;
+            if (g.sel.length >= 2 && g.sel[0].x === c.x && g.sel[0].y === c.y && adj(g.sel[g.sel.length - 1], g.sel[0])) {
+              tryClose(); return;
+            }
+            g.sel = []; g.combo = Math.max(0, g.combo);
+            g.dragging = true;
+            addToSel(c.x, c.y);
+          }
+
+          function onPointerMove(e) {
+            if (!g.dragging || g.gameOver) return;
+            e.preventDefault();
+            const c = cellFromEvent(e);
+            if (!c) return;
+            const last = g.sel[g.sel.length - 1];
+            if (last && last.x === c.x && last.y === c.y) return;
+            if (g.sel.length >= 2) {
+              const prev = g.sel[g.sel.length - 2];
+              if (prev.x === c.x && prev.y === c.y) {
+                g.sel = g.sel.slice(0, -1); re(); return;
+              }
+            }
+            addToSel(c.x, c.y);
+          }
+
+          function onPointerUp(e) {
+            if (!g.dragging) return;
+            g.dragging = false;
+            const sel = g.sel;
+            if (sel.length >= 2 && isPath(sel)) {
+              tryClose();
+            } else {
+              g.sel = []; re();
+            }
+            re();
+          }
+
+          function startGame() {
+            g.board = initBoard(g.maxPrime); g.sel = []; g.score = 0; g.round = 0; g.turn = 0;
+            g.targets = genTargets(g.maxPrime); g.gameOver = false; g.won = false; g.started = true;
+            g.flash = null; g.combo = 0; g.totalPaths = 0; g.dragging = false;
+            g.shakeUntil = 0; g.clearAnim = []; g.deadCount = 0;
+            startTimer(); re();
+          }
+
+          React.useEffect(() => {
+            const h = (e) => {
+              if (e.key === "Escape") { g.sel = []; g.combo = 0; g.dragging = false; re(); }
+            };
+            window.addEventListener("keydown", h);
+            return () => window.removeEventListener("keydown", h);
+          }, []);
+          React.useEffect(() => () => stopTimer(), []);
+
+          const selKeys = new Set(g.sel.map(s => k(s.x, s.y)));
+          const canClose = g.sel.length >= 2 && g.sel.length > 0 && adj(g.sel[g.sel.length - 1], g.sel[0]);
+          const selSum = g.sel.reduce((s, p) => s + (g.board[k(p.x, p.y)]?.val || 0), 0);
+          const target = g.targets[g.round] || { label: "—", min: 2 };
+          const timePct = g.timeLeft / g.turnTime;
+          const shaking = Date.now() < g.shakeUntil;
+          const clearKeys = new Set(g.clearAnim.map(c => k(c.x, c.y)));
+          const boardDarkness = Math.min(0.4, g.deadCount / (W * H) * 0.6);
+
+          const hintVals = new Set();
+          if (g.sel.length >= 2 && !g.gameOver) {
+            const tgt = g.targets[g.round];
+            if (tgt) {
+              for (let v = 2; v <= g.maxPrime; v++) {
+                if (isPrime(v)) {
+                  const testVals = [...g.sel.map(s => g.board[k(s.x, s.y)]?.val || 0), v];
+                  if (checkTarget({ ...tgt, min: 2 }, testVals)) hintVals.add(v);
+                }
+              }
+            }
+          }
+
+          const CELL_CSS = `min(calc((100vh - 200px) / ${H}), calc((100vw - 400px) / ${W}), 68px)`;
+          const BOARD_WIDTH = `calc(${CELL_CSS} * ${W})`;
+
+          if (!g.started) {
+            return React.createElement('div', {
+              style: {
+                width: "calc(100vw - 12px)", height: "100vh", overflow: "hidden",
+                background: "linear-gradient(160deg, #04040c 0%, #08081a 50%, #100818 100%)",
+                display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+                fontFamily: "Georgia, 'Times New Roman', serif", color: "#c8c8e0",
+                padding: "0 6px",
+              }
+            }, [
+              
+              React.createElement('h1', {
+                key: 'title',
+                style: {
+                  fontSize: "clamp(36px, 7vw, 56px)", fontWeight: 400, margin: "0 0 4px 0",
+                  background: "linear-gradient(90deg, #00f5d4, #9b5de5, #f15bb5)",
+                  WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", letterSpacing: 5,
+                }
+              }, "Σ PRIME"),
+              
+              React.createElement('div', {
+                key: 'subtitle',
+                style: { fontSize: 11, color: "#3a3a55", letterSpacing: 7, marginBottom: 14, textTransform: "uppercase" }
+              }, "sigma prime"),
+              
+              React.createElement('div', {
+                key: 'primes-info',
+                style: { maxWidth: 420, textAlign: "center", lineHeight: 1.9, fontSize: "clamp(10px, 1.2vw, 12px)", color: "#606080", marginBottom: 20 }
+              }, [
+                React.createElement('strong', { key: 'bold' }, "There are 25 prime numbers between 1 and 100:"),
+                React.createElement('br', { key: 'br1' }),
+                "2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97"
+              ]),
+
+              React.createElement('div', {
+                key: 'selector-container',
+                style: { marginBottom: 24 }
+              }, [
+                React.createElement('div', {
+                  key: 'selector-title',
+                  style: { fontSize: 12, color: "#9b5de5", marginBottom: 8, letterSpacing: 2, textTransform: "uppercase", textAlign: "center" }
+                }, "SELECT MAXIMUM PRIME"),
+                
+                React.createElement('div', {
+                  key: 'prime-buttons',
+                  style: {
+                    display: "flex", flexWrap: "wrap", gap: 6, justifyContent: "center",
+                    maxWidth: 500, padding: "12px", background: "rgba(15,23,42,0.4)", borderRadius: 12,
+                    border: "1px solid rgba(155,93,229,0.2)"
+                  }
+                }, ALL_PRIMES.filter(prime => prime !== 2).map(prime =>
+                  React.createElement('div', {
+                    key: prime,
+                    onClick: () => { g.maxPrime = prime; re(); },
+                    style: {
+                      padding: "6px 10px",
+                      fontSize: "clamp(10px, 1.2vw, 12px)",
+                      border: prime === g.maxPrime ? "2px solid #00f5d4" 
+                        : prime < g.maxPrime ? "1px solid rgba(0,245,212,0.4)" 
+                        : "1px solid rgba(155,93,229,0.3)",
+                      borderRadius: 6,
+                      background: prime === g.maxPrime ? "rgba(0,245,212,0.15)" 
+                        : prime < g.maxPrime ? "rgba(0,245,212,0.05)" 
+                        : "rgba(155,93,229,0.08)",
+                      color: prime === g.maxPrime ? "#00f5d4" 
+                        : prime < g.maxPrime ? "rgba(0,245,212,0.7)" 
+                        : "#9b5de5",
+                      cursor: "pointer",
+                      fontFamily: "'Courier New', monospace",
+                      fontWeight: prime === g.maxPrime ? 700 : prime < g.maxPrime ? 600 : 400,
+                      transition: "all 0.2s",
+                      textAlign: "center",
+                      minWidth: "28px"
+                    },
+                    onMouseEnter: (e) => {
+                      if (prime === g.maxPrime) {
+                        e.target.style.background = "rgba(0,245,212,0.2)";
+                      } else if (prime < g.maxPrime) {
+                        e.target.style.background = "rgba(0,245,212,0.1)";
+                        e.target.style.borderColor = "rgba(0,245,212,0.6)";
+                      } else {
+                        e.target.style.background = "rgba(155,93,229,0.15)";
+                        e.target.style.borderColor = "rgba(155,93,229,0.5)";
+                      }
+                    },
+                    onMouseLeave: (e) => {
+                      if (prime === g.maxPrime) {
+                        e.target.style.background = "rgba(0,245,212,0.15)";
+                      } else if (prime < g.maxPrime) {
+                        e.target.style.background = "rgba(0,245,212,0.05)";
+                        e.target.style.borderColor = "rgba(0,245,212,0.4)";
+                      } else {
+                        e.target.style.background = "rgba(155,93,229,0.08)";
+                        e.target.style.borderColor = "rgba(155,93,229,0.3)";
+                      }
+                    }
+                  }, prime === 3 ? "2 & 3" : prime.toString())
+                )),
+                
+                React.createElement('div', {
+                  key: 'selection-display',
+                  style: { fontSize: 10, color: "#666", marginTop: 6, textAlign: "center" }
+                }, [
+                  "Selected: ",
+                  React.createElement('span', {
+                    key: 'selected-text',
+                    style: { color: "#00f5d4", fontFamily: "'Courier New', monospace", fontWeight: 700 }
+                  }, g.maxPrime === 97 ? "Primes (2-97)" : g.maxPrime === 3 ? "Primes ≤ 3" : `Primes ≤ ${g.maxPrime}`)
+                ])
+              ]),
+
+
+              
+              React.createElement('div', {
+                key: 'begin-button',
+                onClick: () => startGame(),
+                style: {
+                  padding: "13px 48px", fontSize: 14, letterSpacing: 7,
+                  border: "1px solid #9b5de5", color: "#9b5de5", cursor: "pointer",
+                  borderRadius: 2, textTransform: "uppercase", fontFamily: "Georgia, serif",
+                }
+              }, "BEGIN"),
+
+              React.createElement('div', {
+                key: 'links-container',
+                style: { display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8, marginTop: 16, width: "100%", maxWidth: 240 }
+              }, [
+                React.createElement('div', {
+                  key: 'view-rules-link',
+                  onClick: () => setShowRules(true),
+                  style: {
+                    fontSize: 11, letterSpacing: 3, color: "#888", cursor: "pointer",
+                    textTransform: "uppercase", fontFamily: "Georgia, serif"
+                  }
+                }, "view rules"),
+                
+                React.createElement('div', {
+                  key: 'view-controls-link',
+                  onClick: () => setShowControls(true),
+                  style: {
+                    fontSize: 11, letterSpacing: 3, color: "#888", cursor: "pointer",
+                    textTransform: "uppercase", fontFamily: "Georgia, serif"
+                  }
+                }, "view controls")
+              ]),
+
+              /* Controls Popup */
+              showControls && React.createElement('div', {
+                key: 'controls-popup',
+                style: {
+                  position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
+                  background: "rgba(4,4,12,0.95)", backdropFilter: "blur(8px)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  zIndex: 1000, padding: 20
+                }
+              }, [
+                React.createElement('div', {
+                  key: 'controls-popup-content',
+                  style: {
+                    maxWidth: 500, width: "100%", maxHeight: "80vh", overflowY: "auto",
+                    background: "rgba(8,8,26,0.95)", borderRadius: 12, border: "1px solid rgba(0,245,212,0.3)",
+                    padding: 24, position: "relative"
+                  }
+                }, [
+                  React.createElement('div', {
+                    key: 'controls-close-button',
+                    style: {
+                      position: "absolute", top: 12, right: 12,
+                      width: 32, height: 32, borderRadius: "50%",
+                      background: "rgba(0,245,212,0.2)", border: "1px solid rgba(0,245,212,0.4)",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      cursor: "pointer", color: "#00f5d4", fontSize: 18, fontWeight: 700,
+                      fontFamily: "'Georgia', serif"
+                    },
+                    onClick: () => setShowControls(false)
+                  }, "×"),
+                  
+                  React.createElement('h2', {
+                    key: 'controls-title',
+                    style: {
+                      fontSize: "clamp(20px, 3vw, 28px)", letterSpacing: 4, color: "#00f5d4",
+                      textAlign: "center", margin: "0 0 20px 0", fontFamily: "Georgia, serif",
+                      fontWeight: 400
+                    }
+                  }, "CONTROLS"),
+                  
+                  React.createElement(ControlRulesPanel, {
+                    key: 'controls-panel',
+                    items: CONTROL_ITEMS,
+                    maxWidth: 400
+                  }),
+                  
+                  React.createElement('div', {
+                    key: 'controls-close-button-bottom',
+                    onClick: () => setShowControls(false),
+                    style: {
+                      marginTop: 20, padding: "10px 24px", fontSize: 12, letterSpacing: 4,
+                      border: "1px solid #00f5d4", color: "#00f5d4", cursor: "pointer",
+                      borderRadius: 2, textTransform: "uppercase", fontFamily: "Georgia, serif",
+                      margin: "20px auto 0 auto", textAlign: "center", width: "fit-content"
+                    }
+                  }, "CLOSE")
+                ])
+              ]),
+
+              /* Rules Popup */
+              showRules && React.createElement('div', {
+                key: 'rules-popup',
+                style: {
+                  position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
+                  background: "rgba(4,4,12,0.95)", backdropFilter: "blur(8px)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  zIndex: 1000, padding: 20
+                }
+              }, [
+                React.createElement('div', {
+                  key: 'popup-content',
+                  style: {
+                    maxWidth: 500, width: "100%", maxHeight: "80vh", overflowY: "auto",
+                    background: "rgba(8,8,26,0.95)", borderRadius: 12, border: "1px solid rgba(155,93,229,0.3)",
+                    padding: 24, position: "relative"
+                  }
+                }, [
+                  React.createElement('div', {
+                    key: 'close-button',
+                    style: {
+                      position: "absolute", top: 12, right: 12,
+                      width: 32, height: 32, borderRadius: "50%",
+                      background: "rgba(155,93,229,0.2)", border: "1px solid rgba(155,93,229,0.4)",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      cursor: "pointer", color: "#9b5de5", fontSize: 18, fontWeight: 700,
+                      fontFamily: "'Georgia', serif"
+                    },
+                    onClick: () => setShowRules(false)
+                  }, "×"),
+                  
+                  React.createElement('h2', {
+                    key: 'rules-title',
+                    style: {
+                      fontSize: "clamp(20px, 3vw, 28px)", letterSpacing: 4, color: "#9b5de5",
+                      textAlign: "center", margin: "0 0 20px 0", fontFamily: "Georgia, serif",
+                      fontWeight: 400
+                    }
+                  }, "RULES"),
+                  
+                  React.createElement(RulesPanel, {
+                    key: 'rules-panel',
+                    items: RULE_ITEMS,
+                    maxWidth: 400
+                  }),
+                  
+                  React.createElement('div', {
+                    key: 'close-button-bottom',
+                    onClick: () => setShowRules(false),
+                    style: {
+                      marginTop: 20, padding: "10px 24px", fontSize: 12, letterSpacing: 4,
+                      border: "1px solid #9b5de5", color: "#9b5de5", cursor: "pointer",
+                      borderRadius: 2, textTransform: "uppercase", fontFamily: "Georgia, serif",
+                      margin: "20px auto 0 auto", textAlign: "center", width: "fit-content"
+                    }
+                  }, "CLOSE")
+                ])
+              ])
+            ]);
+          }
+
+          return React.createElement('div', {
+            style: {
+              width: "100vw", height: "100vh", overflow: "hidden",
+              background: `linear-gradient(160deg, rgba(4,4,12,${1}) 0%, rgba(8,8,26,${1}) 50%, rgba(16,8,24,${1}) 100%)`,
+              display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+              fontFamily: "Georgia, serif", color: "#c8c8e0", userSelect: "none", padding: 8,
+            }
+          }, [
+            // Top Menu Bar
+            React.createElement('div', {
+              key: 'top-menu',
+              style: {
+                width: BOARD_WIDTH,
+                display: "flex", justifyContent: "space-between", alignItems: "flex-start",
+                gap: "clamp(12px, 2vw, 24px)", marginBottom: "clamp(8px, 1.5vw, 16px)",
+                padding: "12px 16px", background: "rgba(8,8,26,0.6)", borderRadius: 8,
+                border: "1px solid rgba(155,93,229,0.2)", backdropFilter: "blur(8px)",
+              }
+            }, [
+              // Left Section: Score, Round, Turn
+              React.createElement('div', {
+                key: 'left-stats',
+                style: { display: "flex", gap: "clamp(12px, 2vw, 20px)", alignItems: "center" }
+              }, [
+                React.createElement('div', { key: 'score' }, [
+                  React.createElement('div', { key: 'lbl', style: { ...LBL, marginBottom: 2 } }, 'Score'),
+                  React.createElement('div', { key: 'val', style: { fontSize: "clamp(14px, 2vw, 20px)", fontFamily: "'Courier New', monospace", color: "#00f5d4" } }, g.score)
+                ]),
+                React.createElement('div', { key: 'round' }, [
+                  React.createElement('div', { key: 'lbl', style: { ...LBL, marginBottom: 2 } }, 'Round'),
+                  React.createElement('div', { key: 'val', style: { fontSize: "clamp(12px, 1.6vw, 16px)", fontFamily: "'Courier New', monospace", color: "#9b5de5" } }, [
+                    g.round + 1,
+                    React.createElement('span', { key: 'max', style: { color: "#333", fontSize: 9 } }, `/${ROUNDS}`)
+                  ])
+                ]),
+                React.createElement('div', { key: 'turn' }, [
+                  React.createElement('div', { key: 'lbl', style: { ...LBL, marginBottom: 2 } }, 'Turn'),
+                  React.createElement('div', { key: 'val', style: { fontSize: "clamp(11px, 1.4vw, 14px)", fontFamily: "'Courier New', monospace", color: "#f15bb5" } }, g.turn)
+                ]),
+                g.combo > 1 && React.createElement('div', { key: 'combo', style: { fontSize: "clamp(10px, 1.2vw, 12px)", color: "#fee440", fontFamily: "monospace", fontWeight: 700 } }, `×${g.combo}`)
+              ]),
+
+              // Center Section: Target & Path Info
+              React.createElement('div', {
+                key: 'center-info',
+                style: { display: "flex", flexDirection: "column", alignItems: "center", gap: 8, flex: 1, maxWidth: 300 }
+              }, [
+                // Target
+                React.createElement('div', {
+                  key: 'target-display',
+                  style: {
+                    fontSize: "clamp(11px, 1.4vw, 14px)", color: "#fee440", fontFamily: "'Courier New', monospace",
+                    lineHeight: 1.5, textAlign: "center", padding: "4px 8px",
+                    background: "rgba(254,228,64,0.05)", borderRadius: 4, border: "1px solid rgba(254,228,64,0.2)"
+                  }
+                }, [
+                  target.label,
+                  target.min > 3 && React.createElement('div', { key: 'min', style: { fontSize: 8, color: "#666", marginTop: 1 } }, `min ${target.min} cells`)
+                ]),
+                // Path selection info
+                g.sel.length > 0 && React.createElement('div', {
+                  key: 'path-info',
+                  style: {
+                    fontSize: "clamp(10px, 1.2vw, 12px)", fontFamily: "'Courier New', monospace",
+                    color: canClose ? "#00f5d4" : "#888", textAlign: "center"
+                  }
+                }, [
+                  `Σ=${selSum}`,
+                  React.createElement('div', { key: 'cells', style: { fontSize: 8, color: "#444", marginTop: 1 } }, [
+                    `${g.sel.length} cells`,
+                    canClose && React.createElement('span', { key: 'check', style: { color: "#00f5d4" } }, " ✓")
+                  ])
+                ])
+              ]),
+
+              // Right Section: Progress, Next Targets
+              React.createElement('div', {
+                key: 'right-info',
+                style: { display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 8 }
+              }, [
+                // Progress dots
+                React.createElement('div', {
+                  key: 'progress',
+                  style: { display: "flex", gap: 2, alignItems: "center" }
+                }, [
+                  React.createElement('div', { key: 'lbl', style: { ...LBL, marginBottom: 0, marginRight: 4 } }, 'Progress'),
+                  React.createElement('div', { key: 'dots', style: { display: "flex", gap: 2 } }, 
+                    Array.from({ length: ROUNDS }, (_, i) =>
+                      React.createElement('div', { key: i, style: {
+                        width: 5, height: 5, borderRadius: "50%",
+                        background: i < g.round ? "#00f5d4" : i === g.round ? "#9b5de5" : "#1a1a2e",
+                        border: i === g.round ? "1px solid #9b5de5" : "none",
+                      } })
+                    )
+                  )
+                ]),
+                // Next targets
+                React.createElement('div', {
+                  key: 'next-targets',
+                  style: { display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 2 }
+                }, [
+                  React.createElement('div', { key: 'lbl', style: { ...LBL, marginBottom: 0, fontSize: 8 } }, 'Next'),
+                  ...g.targets.slice(g.round + 1, g.round + 3).map((t, i) =>
+                    React.createElement('div', {
+                      key: i,
+                      style: { fontSize: 8, color: "#3a3a55", fontFamily: "'Courier New', monospace", opacity: 1 - i * 0.3 }
+                    }, t.label)
+                  )
+                ])
+              ])
+            ]),
+
+            // Time Bar (between menu and board)
+            React.createElement('div', {
+              key: 'time-bar-container',
+              style: {
+                width: BOARD_WIDTH,
+                height: 12, marginBottom: "clamp(6px, 1vw, 12px)",
+                position: "relative"
+              }
+            }, [
+              React.createElement('div', {
+                key: 'time-bar-bg',
+                style: {
+                  width: "100%", height: 6, background: "#151522", borderRadius: 3,
+                  position: "absolute", top: "50%", transform: "translateY(-50%)",
+                  boxShadow: timePct < 0.2 ? "0 0 8px #ff6b6b44" : "none",
+                }
+              }, [
+                React.createElement('div', {
+                  key: 'time-bar-fill',
+                  style: {
+                    width: `${timePct * 100}%`, height: "100%",
+                    background: timePct < 0.2 ? "#ff6b6b" : timePct < 0.4 ? "#fee440" : "#00f5d4",
+                    borderRadius: 3, transition: "width 0.08s linear",
+                  }
+                })
+              ]),
+              // Time overlay (seconds)
+              React.createElement('div', {
+                key: 'time-overlay',
+                style: {
+                  position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)",
+                  fontSize: "clamp(8px, 1.2vw, 10px)", fontFamily: "'Courier New', monospace",
+                  color: "#c8c8e0", fontWeight: 700, letterSpacing: 1,
+                  textShadow: "0 0 4px rgba(0,0,0,0.8)"
+                }
+              }, Math.ceil(g.timeLeft / 1000).toString())
+            ]),
+
+            // Main game container with board and text
+            React.createElement('div', {
+              key: 'main',
+              style: {
+                display: "flex", flexDirection: "column", alignItems: "center",
+                transform: shaking ? `translate(${Math.random() * 6 - 3}px, ${Math.random() * 4 - 2}px)` : "none",
+                transition: shaking ? "none" : "transform 0.1s",
+              }
+            }, [
+              
+              // Board rendering
+              React.createElement('div', {
+                key: 'board',
+                ref: boardRef,
+                onMouseDown: onPointerDown,
+                onMouseMove: onPointerMove,
+                onMouseUp: onPointerUp,
+                onMouseLeave: () => { if (g.dragging) { g.dragging = false; re(); } },
+                onTouchStart: onPointerDown,
+                onTouchMove: onPointerMove,
+                onTouchEnd: onPointerUp,
+                style: {
+                  position: "relative", flexShrink: 1,
+                  filter: `brightness(${1 - boardDarkness})`,
+                  transition: "filter 0.5s",
+                  display: "grid",
+                  gridTemplateColumns: `repeat(${W}, ${CELL_CSS})`,
+                  gridTemplateRows: `repeat(${H}, ${CELL_CSS})`,
+                  gap: 0, touchAction: "none",
+                  borderRadius: 8,
+                  boxShadow: "0 0 40px rgba(0,0,0,0.5)",
+                }
+              }, 
+                Array.from({ length: H }, (_, y) =>
+                  Array.from({ length: W }, (_, x) => {
+                    const ky = k(x, y);
+                    const cell = g.board[ky];
+                    if (!cell) return React.createElement('div', { key: ky });
+
+                    const isSel = selKeys.has(ky);
+                    const isClearing = clearKeys.has(ky);
+                    const lifePct = cell.life / MAX_LIFE;
+                    const isHint = !isSel && !cell.dead && hintVals.has(cell.val);
+                    const isLow = cell.life <= 3 && !cell.dead;
+
+                    return React.createElement('div', {
+                      key: ky,
+                      style: {
+                        position: "relative", width: "100%", height: "100%",
+                        cursor: cell.dead ? "default" : "pointer",
+                      }
+                    }, [
+                      // Background
+                      React.createElement('div', {
+                        key: 'bg',
+                        style: {
+                          position: "absolute", inset: "7%", borderRadius: "16%",
+                          background: isClearing ? "rgba(254,228,64,0.4)"
+                            : cell.dead ? "#08080f"
+                            : isSel ? "rgba(155,93,229,0.3)"
+                            : isHint ? "rgba(0,245,212,0.06)"
+                            : "rgba(12,12,25,0.85)",
+                          border: isClearing ? "2px solid #fee440"
+                            : cell.dead ? "1px solid #0c0c18"
+                            : isSel ? "2px solid #9b5de5aa"
+                            : isHint ? "1px solid rgba(0,245,212,0.15)"
+                            : `1px solid rgba(80,80,130,${0.06 + lifePct * 0.1})`,
+                          boxShadow: isClearing ? "0 0 20px #fee44055"
+                            : isSel ? "0 0 10px rgba(155,93,229,0.2)"
+                            : "none",
+                          transition: "all 0.12s",
+                          animation: isClearing ? "pop 0.4s ease-out" : isLow ? "lowPulse 1.5s ease-in-out infinite" : "none",
+                        }
+                      }),
+
+                      // Life indicators
+                      ...(cell.dead ? [] : Array.from({ length: MAX_LIFE }, (_, i) => {
+                        const angle = (i / MAX_LIFE) * Math.PI * 2 - Math.PI / 2;
+                        const alive = i < cell.life;
+                        return React.createElement('div', {
+                          key: i,
+                          style: {
+                            position: "absolute",
+                            left: `${50 + Math.cos(angle) * 38}%`,
+                            top: `${50 + Math.sin(angle) * 38}%`,
+                            width: "7%", height: "7%", borderRadius: "50%",
+                            transform: "translate(-50%,-50%)",
+                            background: alive
+                              ? (cell.life <= 2 ? "#ff4444" : cell.life <= 4 ? "#ffaa33" : "#00f5d455")
+                              : "#12121f",
+                            transition: "background 0.3s",
+                          }
+                        });
+                      })),
+
+                      // Dead X
+                      cell.dead && React.createElement('div', {
+                        key: 'dead',
+                        style: {
+                          position: "absolute", inset: 0,
+                          display: "flex", alignItems: "center", justifyContent: "center",
+                          fontSize: "clamp(10px, 1.4vw, 16px)", color: "#1a1a28",
+                          fontFamily: "'Courier New', monospace",
+                        }
+                      }, '✕'),
+
+                      // Number
+                      !cell.dead && React.createElement('div', {
+                        key: 'number',
+                        style: {
+                          position: "absolute", inset: 0,
+                          display: "flex", alignItems: "center", justifyContent: "center",
+                          fontSize: "clamp(12px, 1.8vw, 18px)", fontWeight: 700,
+                          color: isSel ? "#ffffff" : `rgba(255,255,255,${0.35 + lifePct * 0.55})`,
+                          fontFamily: "'Courier New', monospace",
+                          textShadow: isSel ? "0 0 8px rgba(155,93,229,0.6)" : "none",
+                          transition: "color 0.15s",
+                        }
+                      }, cell.val)
+                    ]);
+                  })
+                ).flat()
+              ),
+              
+              // Text below game board
+              React.createElement('div', {
+                key: 'bottom-text',
+                style: {
+                  width: BOARD_WIDTH,
+                  marginTop: "clamp(8px, 1.5vw, 16px)",
+                  padding: "8px 12px",
+                  fontSize: "clamp(9px, 1.2vw, 11px)",
+                  color: "#666",
+                  fontFamily: "'Courier New', monospace",
+                  textAlign: "center",
+                  lineHeight: 1.4,
+                  background: "rgba(8,8,26,0.3)",
+                  borderRadius: 6,
+                  border: "1px solid rgba(155,93,229,0.1)"
+                }
+              }, [
+                "Drag paths through adjacent cells. Diagonals allowed. ",
+                `Minimum ${target.min || 2} cells required. `,
+                "Used cells refresh with full life. ",
+                "Sum primes to make composite numbers."
+              ]),
+              
+              // Controls Popup
+              showControls && React.createElement('div', {
+                key: 'game-controls-popup',
+                style: {
+                  position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
+                  background: "rgba(4,4,12,0.95)", backdropFilter: "blur(8px)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  zIndex: 1000, padding: 20
+                }
+              }, [
+                React.createElement('div', {
+                  key: 'game-controls-popup-content',
+                  style: {
+                    maxWidth: 500, width: "100%", maxHeight: "80vh", overflowY: "auto",
+                    background: "rgba(8,8,26,0.95)", borderRadius: 12, border: "1px solid rgba(0,245,212,0.3)",
+                    padding: 24, position: "relative"
+                  }
+                }, [
+                  React.createElement('div', {
+                    key: 'game-controls-close-button',
+                    style: {
+                      position: "absolute", top: 12, right: 12,
+                      width: 32, height: 32, borderRadius: "50%",
+                      background: "rgba(0,245,212,0.2)", border: "1px solid rgba(0,245,212,0.4)",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      cursor: "pointer", color: "#00f5d4", fontSize: 18, fontWeight: 700,
+                      fontFamily: "'Georgia', serif"
+                    },
+                    onClick: () => setShowControls(false)
+                  }, "×"),
+                  
+                  React.createElement('h2', {
+                    key: 'game-controls-title',
+                    style: {
+                      fontSize: "clamp(20px, 3vw, 28px)", letterSpacing: 4, color: "#00f5d4",
+                      textAlign: "center", margin: "0 0 20px 0", fontFamily: "Georgia, serif",
+                      fontWeight: 400
+                    }
+                  }, "CONTROLS"),
+                  
+                  React.createElement(RulesPanel, {
+                    key: 'game-controls-panel',
+                    items: CONTROL_ITEMS,
+                    maxWidth: 400
+                  }),
+                  
+                  React.createElement('div', {
+                    key: 'game-controls-close-button-bottom',
+                    onClick: () => setShowControls(false),
+                    style: {
+                      marginTop: 20, padding: "10px 24px", fontSize: 12, letterSpacing: 4,
+                      border: "1px solid #00f5d4", color: "#00f5d4", cursor: "pointer",
+                      borderRadius: 2, textTransform: "uppercase", fontFamily: "Georgia, serif",
+                      margin: "20px auto 0 auto", textAlign: "center", width: "fit-content"
+                    }
+                  }, "CLOSE")
+                ])
+              ]),
+              
+              showRules && React.createElement('div', {
+                key: 'game-rules-popup',
+                style: {
+                  position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
+                  background: "rgba(4,4,12,0.95)", backdropFilter: "blur(8px)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  zIndex: 1000, padding: 20
+                }
+              }, [
+                React.createElement('div', {
+                  key: 'game-popup-content',
+                  style: {
+                    maxWidth: 500, width: "100%", maxHeight: "80vh", overflowY: "auto",
+                    background: "rgba(8,8,26,0.95)", borderRadius: 12, border: "1px solid rgba(155,93,229,0.3)",
+                    padding: 24, position: "relative"
+                  }
+                }, [
+                  React.createElement('div', {
+                    key: 'game-close-button',
+                    style: {
+                      position: "absolute", top: 12, right: 12,
+                      width: 32, height: 32, borderRadius: "50%",
+                      background: "rgba(155,93,229,0.2)", border: "1px solid rgba(155,93,229,0.4)",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      cursor: "pointer", color: "#9b5de5", fontSize: 18, fontWeight: 700,
+                      fontFamily: "'Georgia', serif"
+                    },
+                    onClick: () => setShowRules(false)
+                  }, "×"),
+                  
+                  React.createElement('h2', {
+                    key: 'game-rules-title',
+                    style: {
+                      fontSize: "clamp(20px, 3vw, 28px)", letterSpacing: 4, color: "#9b5de5",
+                      textAlign: "center", margin: "0 0 20px 0", fontFamily: "Georgia, serif",
+                      fontWeight: 400
+                    }
+                  }, "RULES"),
+                  
+                  React.createElement(RulesPanel, {
+                    key: 'game-rules-panel',
+                    items: RULE_ITEMS,
+                    maxWidth: 400
+                  }),
+                  
+                  React.createElement('div', {
+                    key: 'game-close-button-bottom',
+                    onClick: () => setShowRules(false),
+                    style: {
+                      marginTop: 20, padding: "10px 24px", fontSize: 12, letterSpacing: 4,
+                      border: "1px solid #9b5de5", color: "#9b5de5", cursor: "pointer",
+                      borderRadius: 2, textTransform: "uppercase", fontFamily: "Georgia, serif",
+                      margin: "20px auto 0 auto", textAlign: "center", width: "fit-content"
+                    }
+                  }, "CLOSE")
+                ])
+              ])
+            ])
+          ])
+        };
+
+        ReactDOM.render(React.createElement(SigmaPrime), document.getElementById('root'));
+    </script>
+</body>
+</html>
