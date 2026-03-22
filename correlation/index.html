@@ -117,6 +117,23 @@
             user-select: auto;
         }
 
+        /* iOS-specific touch improvements */
+        @supports (-webkit-touch-callout: none) {
+            .interactive-cell {
+                -webkit-transform: translateZ(0);
+                transform: translateZ(0);
+                -webkit-backface-visibility: hidden;
+                backface-visibility: hidden;
+                -webkit-perspective: 1000;
+                perspective: 1000;
+            }
+            
+            .interactive-cell:active {
+                -webkit-transform: scale(0.95) translateZ(0);
+                transform: scale(0.95) translateZ(0);
+            }
+        }
+
         /* Keep pointer cursor for interactive elements */
         button, [role="button"], a {
             cursor: pointer;
@@ -578,7 +595,7 @@
                 transform:isSel?"scale(1.08)":isDragSource?"scale(1.05)":isDragHover?"scale(1.03)":"scale(1)",cursor:locked?"not-allowed":e>0?"pointer":"default",
                 filter:locked?"grayscale(100%)":"none",
                 opacity:locked?0.7:isDragHover?0.9:1,
-                transition:"background 0.3s,border 0.15s,box-shadow 0.25s,transform 0.1s ease-out",
+                transition:"background 0.3s,border 0.15s,box-shadow 0.25s,transform 0.05s ease-out",
                 touchAction:"none"}}>
               {e>0&&<div style={{display:"flex",flexDirection:"column",alignItems:"center",zIndex:2,position:"relative"}}>
                 <div style={{position:"relative",width:40,height:40}}>
@@ -938,10 +955,22 @@
                 fontFamily,
                 transition,
                 width,
+                whiteSpace: "nowrap",
+                overflowWrap: "normal",
+                wordWrap: "normal",
+                hyphens: "none",
                 ...style
               }}
             >
-              {children}
+              <span style={{
+                display: "inline-block",
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                maxWidth: "100%"
+              }}>
+                {children}
+              </span>
             </button>
           );
         }
@@ -1067,7 +1096,7 @@
 
           const [pointerDown, setPointerDown] = useState(false);
           const [lastSelectionTime, setLastSelectionTime] = useState(0);
-          const DRAG_THRESHOLD = 8;
+          const DRAG_THRESHOLD = 12;
           const[isDragging,setIsDragging]=useState(false);
           const[dragStart,setDragStart]=useState(null);
           const[dragEnd,setDragEnd]=useState(null);
@@ -1131,6 +1160,7 @@ const particlesRef=useRef([]);const boltsRef=useRef([]);
 const bgParticlesRef=useRef([]);
 const animRef=useRef(null);const dimsRef=useRef({cw:0,ch:0});
 const lastTouchTimeRef = useRef(0);
+const lastMouseUpdateRef = useRef(0);
 const lightningRef=useRef({active:false,start:null,end:null,frame:0});
 
           const updateDims=useCallback(()=>{
@@ -1642,7 +1672,7 @@ const lightningRef=useRef({active:false,start:null,end:null,frame:0});
 }, [phase, paused, showQuitConfirmation, showCredits, creditsPaused, grid, sel, interactionMode, commitSourceSelection]);
         
         const handleTouchStart = useCallback((event) => {
-  event.preventDefault();
+  // preventDefault() removed - CSS touchAction: "none" already handles this
   lastTouchTimeRef.current = Date.now();
 
   if (phase !== "play" || paused || showQuitConfirmation || showCredits || creditsPaused) return;
@@ -1696,6 +1726,11 @@ const lightningRef=useRef({active:false,start:null,end:null,frame:0});
 }, [phase, paused, grid, sel, interactionMode, commitSourceSelection]);
         
         const handleMouseEnter = useCallback((x, y) => {
+            // Debounce mouse events to 60fps to reduce re-renders
+            const now = Date.now();
+            if (now - lastMouseUpdateRef.current < 16) return;
+            lastMouseUpdateRef.current = now;
+            
             // Update lightning ref for armed mode with selection
             if (interactionMode === "armed" && sel) {
               setDragHover({ x, y });
@@ -1741,7 +1776,7 @@ const lightningRef=useRef({active:false,start:null,end:null,frame:0});
           }, [pointerDown, dragStart, sel, isDragging, interactionMode]);
         
         const handleTouchMove = useCallback((event) => {
-  event.preventDefault();
+  // preventDefault() removed - CSS touchAction: "none" already handles this
   lastTouchTimeRef.current = Date.now();
 
   if (!pointerDown || !dragStart || !sel) return;
@@ -1764,8 +1799,9 @@ const lightningRef=useRef({active:false,start:null,end:null,frame:0});
   if (dragStart.x !== sel.x || dragStart.y !== sel.y) return;
   if (dragStart.role !== "source") return;
 
-  const dx = touch.clientX - (dragStart.startClientX ?? touch.clientX);
-  const dy = touch.clientY - (dragStart.startClientY ?? touch.clientY);
+  // Fix: Use the actual start client coordinates
+  const dx = touch.clientX - (dragStart.startClientX || 0);
+  const dy = touch.clientY - (dragStart.startClientY || 0);
   const moved = Math.sqrt(dx * dx + dy * dy);
 
   if (!isDragging) {
@@ -1774,12 +1810,24 @@ const lightningRef=useRef({active:false,start:null,end:null,frame:0});
       setInteractionMode("dragging");
       setDragEnd({ x, y });
       setDragHover({ x, y });
+      // Update lightning for drag mode
+      lightningRef.current = {
+        active: true,
+        start: cellPos(sel.x, sel.y),
+        end: cellPos(x, y),
+        frame: Date.now()
+      };
     }
   } else {
     setDragEnd({ x, y });
     setDragHover({ x, y });
+    // Update lightning end position for visual feedback
+    if (lightningRef.current.active) {
+      lightningRef.current.end = cellPos(x, y);
+      lightningRef.current.frame = Date.now();
+    }
   }
-}, [pointerDown, dragStart, sel, isDragging]);
+}, [pointerDown, dragStart, sel, isDragging, cellPos]);
         
         const resolveDragRelease = useCallback((targetX, targetY) => {
             if (!sel || !dragStart) {
@@ -1921,11 +1969,16 @@ const lightningRef=useRef({active:false,start:null,end:null,frame:0});
 
             if (interactionMode === "armed" && sel) {
               setDragHover(null);
+              // If we have a target selection (pointerDown with target role), 
+              // cancel it when leaving the grid to prevent stuck state
+              if (pointerDown && dragStart && dragStart.role === "target") {
+                clearDragState();
+              }
             }
-          }, [interactionMode, sel]);
+          }, [interactionMode, sel, pointerDown, dragStart, clearDragState]);
         
         const handleTouchEnd = useCallback((event) => {
-  event.preventDefault();
+  // preventDefault() removed - CSS touchAction: "none" already handles this
   lastTouchTimeRef.current = Date.now();
 
   if (!pointerDown) return;
@@ -2069,6 +2122,16 @@ const lightningRef=useRef({active:false,start:null,end:null,frame:0});
               SoundManager.resume();
             };
             
+            // Global mouse up handler to catch releases outside the grid
+            const handleGlobalMouseUp = () => {
+              if (pointerDown) {
+                // If we have a target selection that was never completed, cancel it
+                if (dragStart && dragStart.role === "target" && interactionMode === "armed") {
+                  clearDragState();
+                }
+              }
+            };
+            
             // Page Visibility API
             document.addEventListener('visibilitychange', handleVisibilityChange);
             
@@ -2080,14 +2143,18 @@ const lightningRef=useRef({active:false,start:null,end:null,frame:0});
             window.addEventListener('blur', handleBlur);
             window.addEventListener('focus', handleFocus);
             
+            // Global mouse events
+            window.addEventListener('mouseup', handleGlobalMouseUp);
+            
             return () => {
               document.removeEventListener('visibilitychange', handleVisibilityChange);
               window.removeEventListener('pagehide', handlePageHide);
               window.removeEventListener('pageshow', handlePageShow);
               window.removeEventListener('blur', handleBlur);
               window.removeEventListener('focus', handleFocus);
+              window.removeEventListener('mouseup', handleGlobalMouseUp);
             };
-          }, [soundEnabled]);
+          }, [soundEnabled, pointerDown, dragStart, interactionMode, clearDragState]);
 
           useEffect(()=>{
             if (!paused && pauseTime) {
