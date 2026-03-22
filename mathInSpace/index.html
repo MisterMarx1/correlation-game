@@ -97,6 +97,8 @@
         .setup-content h2 {
             color: #ff9900;
             font-size: 1.1em;
+            margin: 0 2em;
+            padding: 0 1em;
         }
         .settings-grid {
             display: grid;
@@ -1865,6 +1867,12 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
             // --- Game Logic Functions ---
             const generateAndSetProblem = useCallback(() => {
                 setQuestionTimeLeft(QUESTION_TIMEOUT);
+                
+                // Reset selection state immediately to prevent stuck borders
+                setClickedShipId(null);
+                setClickedShipFeedback(null);
+                setCorrectShipId(null);
+                setShowFeedbackFlash(false);
 
                 const problem = generateProblem(selectedMaxDigits, selectedOperations);
                 const incorrect = generateIncorrectAnswers(
