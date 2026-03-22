@@ -308,6 +308,35 @@
                 opacity: 0;
             }
         }
+
+        /* --- Circular Progress Spinner --- */
+        .fog-progress-container {
+            position: absolute;
+            top: 65%;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10000;
+        }
+
+        .fog-progress-spinner {
+            width: 60px;
+            height: 60px;
+            position: relative;
+        }
+
+        .fog-progress-circle {
+            width: 100%;
+            height: 100%;
+            border: 3px solid rgba(147, 197, 253, 0.2);
+            border-top: 3px solid rgba(147, 197, 253, 0.8);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
@@ -3501,6 +3530,15 @@ const lightningRef=useRef({active:false,start:null,end:null,frame:0});
                   <div className={`fog-text ${isFogDisappearing ? 'disappearing' : ''} ${isPageLoaded ? 'loaded' : ''}`}>
                     PRESS ANYWHERE TO BEGIN<br/>CORRELATION
                   </div>
+                  
+                  {/* Circular Progress Spinner */}
+                  {!isPageLoaded && (
+                    <div className="fog-progress-container">
+                      <div className="fog-progress-spinner">
+                        <div className="fog-progress-circle"></div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
               <NullV3 />
