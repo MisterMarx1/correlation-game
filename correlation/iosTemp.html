@@ -793,17 +793,53 @@
 </div>
 
 <script>
-  // Force scroll to top on page load
-  window.addEventListener('load', function() {
+  // iOS Safari scroll-to-top fixes - multiple approaches for maximum compatibility
+  
+  // 1. Disable scroll restoration immediately (before any content loads)
+  if (history.scrollRestoration) {
+    history.scrollRestoration = 'manual';
+  }
+  
+  // 2. Force scroll to top immediately when script runs
+  window.scrollTo(0, 0);
+  document.body.scrollTop = 0;
+  document.documentElement.scrollTop = 0;
+  
+  // 3. Force scroll on DOMContentLoaded (before images load)
+  document.addEventListener('DOMContentLoaded', function() {
     window.scrollTo(0, 0);
     document.body.scrollTop = 0;
     document.documentElement.scrollTop = 0;
   });
   
-  // Also handle iOS Safari bounce scroll
-  if (history.scrollRestoration) {
-    history.scrollRestoration = 'manual';
-  }
+  // 4. Force scroll on window load (after everything loads)
+  window.addEventListener('load', function() {
+    setTimeout(function() {
+      window.scrollTo(0, 0);
+      document.body.scrollTop = 0;
+      document.documentElement.scrollTop = 0;
+    }, 0);
+  });
+  
+  // 5. Handle iOS Safari bounce scroll and orientation changes
+  window.addEventListener('orientationchange', function() {
+    setTimeout(function() {
+      window.scrollTo(0, 0);
+      document.body.scrollTop = 0;
+      document.documentElement.scrollTop = 0;
+    }, 100);
+  });
+  
+  // 6. Prevent scroll restoration on page show (iOS Safari back button)
+  window.addEventListener('pageshow', function(event) {
+    if (event.persisted) {
+      setTimeout(function() {
+        window.scrollTo(0, 0);
+        document.body.scrollTop = 0;
+        document.documentElement.scrollTop = 0;
+      }, 0);
+    }
+  });
   
   // Background music system with overlap
   class BackgroundMusic {
