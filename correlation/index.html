@@ -202,19 +202,30 @@
             font-family: 'Orbitron', monospace;
             font-size: clamp(1.5rem, 4vw, 2.5rem);
             font-weight: 900;
-            color: rgba(255, 255, 255, 0.8);
+            color: rgba(255, 255, 255, 0.3);
             text-align: center;
             letter-spacing: 0.2em;
             animation: textFlash 3s ease-in-out infinite;
-            text-shadow: 0 0 20px rgba(147, 197, 253, 0.5),
-                         0 0 40px rgba(147, 197, 253, 0.3),
-                         0 0 60px rgba(147, 197, 253, 0.2);
+            text-shadow: 0 0 20px rgba(147, 197, 253, 0.1),
+                         0 0 40px rgba(147, 197, 253, 0.05),
+                         0 0 60px rgba(147, 197, 253, 0.02);
             cursor: pointer;
             user-select: none;
             -webkit-user-select: none;
             padding: 2rem;
             border-radius: 8px;
             transition: all 0.3s ease, opacity 0.8s ease-out, transform 0.8s ease-out;
+            filter: blur(8px);
+            opacity: 0.4;
+        }
+
+        .fog-text.loaded {
+            color: rgba(255, 255, 255, 0.8);
+            text-shadow: 0 0 20px rgba(147, 197, 253, 0.5),
+                         0 0 40px rgba(147, 197, 253, 0.3),
+                         0 0 60px rgba(147, 197, 253, 0.2);
+            filter: blur(0px);
+            opacity: 1;
         }
 
         .fog-text.disappearing {
@@ -3408,8 +3419,23 @@ const lightningRef=useRef({active:false,start:null,end:null,frame:0});
           const [showCompanionPage, setShowCompanionPage] = React.useState(false);
           const [showFogOverlay, setShowFogOverlay] = React.useState(true);
           const [isFogDisappearing, setIsFogDisappearing] = React.useState(false);
+          const [isPageLoaded, setIsPageLoaded] = React.useState(false);
           const tFont = "'Orbitron',sans-serif";
           const font = "'IBM Plex Mono',monospace";
+          
+          // Handle page load
+          React.useEffect(() => {
+            const handleLoad = () => {
+              setIsPageLoaded(true);
+            };
+            
+            if (document.readyState === 'complete') {
+              handleLoad();
+            } else {
+              window.addEventListener('load', handleLoad);
+              return () => window.removeEventListener('load', handleLoad);
+            }
+          }, []);
           
           // Listen for credits events from NullV3
           React.useEffect(() => {
@@ -3454,7 +3480,7 @@ const lightningRef=useRef({active:false,start:null,end:null,frame:0});
               {/* Smokey Fog Overlay */}
               {showFogOverlay && (
                 <div className={`fog-overlay ${isFogDisappearing ? 'disappearing' : ''}`} onClick={() => {
-                  if (!isFogDisappearing) {
+                  if (!isFogDisappearing && isPageLoaded) {
                     setIsFogDisappearing(true);
                     const impactSound = new Audio('sfx/mixkit-cinematic-impact-waves-781 (1).wav');
                     impactSound.volume = 0.5;
@@ -3472,7 +3498,7 @@ const lightningRef=useRef({active:false,start:null,end:null,frame:0});
                     <div className={`fog-particle ${isFogDisappearing ? 'disappearing' : ''}`} style={{left: '70%', animationDelay: '9s'}}></div>
                     <div className={`fog-particle ${isFogDisappearing ? 'disappearing' : ''}`} style={{left: '90%', animationDelay: '12s'}}></div>
                   </div>
-                  <div className={`fog-text ${isFogDisappearing ? 'disappearing' : ''}`}>
+                  <div className={`fog-text ${isFogDisappearing ? 'disappearing' : ''} ${isPageLoaded ? 'loaded' : ''}`}>
                     PRESS ANYWHERE TO BEGIN<br/>CORRELATION
                   </div>
                 </div>
