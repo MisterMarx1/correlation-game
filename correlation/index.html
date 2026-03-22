@@ -143,6 +143,160 @@
         .interactive-cell {
             cursor: pointer !important;
         }
+
+        /* Smokey Fog Overlay */
+        .fog-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(ellipse at center, 
+                rgba(20, 25, 40, 0.95) 0%, 
+                rgba(10, 15, 30, 0.98) 40%, 
+                rgba(5, 10, 20, 1) 100%);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: fogDrift 8s ease-in-out infinite;
+            backdrop-filter: blur(3px);
+            -webkit-backdrop-filter: blur(3px);
+            transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+        }
+
+        .fog-overlay.disappearing {
+            opacity: 0;
+            transform: scale(1.1) rotate(2deg);
+            pointer-events: none;
+        }
+
+        @keyframes fogDrift {
+            0%, 100% { 
+                background: radial-gradient(ellipse at center, 
+                    rgba(20, 25, 40, 0.95) 0%, 
+                    rgba(10, 15, 30, 0.98) 40%, 
+                    rgba(5, 10, 20, 1) 100%);
+            }
+            25% { 
+                background: radial-gradient(ellipse at 30% 40%, 
+                    rgba(25, 30, 45, 0.93) 0%, 
+                    rgba(12, 18, 35, 0.97) 40%, 
+                    rgba(6, 12, 25, 1) 100%);
+            }
+            50% { 
+                background: radial-gradient(ellipse at 70% 60%, 
+                    rgba(22, 28, 42, 0.94) 0%, 
+                    rgba(11, 17, 32, 0.98) 40%, 
+                    rgba(5, 11, 22, 1) 100%);
+            }
+            75% { 
+                background: radial-gradient(ellipse at 40% 30%, 
+                    rgba(23, 29, 43, 0.92) 0%, 
+                    rgba(13, 19, 33, 0.97) 40%, 
+                    rgba(7, 13, 24, 1) 100%);
+            }
+        }
+
+        .fog-text {
+            font-family: 'Orbitron', monospace;
+            font-size: clamp(1.5rem, 4vw, 2.5rem);
+            font-weight: 900;
+            color: rgba(255, 255, 255, 0.8);
+            text-align: center;
+            letter-spacing: 0.2em;
+            animation: textFlash 3s ease-in-out infinite;
+            text-shadow: 0 0 20px rgba(147, 197, 253, 0.5),
+                         0 0 40px rgba(147, 197, 253, 0.3),
+                         0 0 60px rgba(147, 197, 253, 0.2);
+            cursor: pointer;
+            user-select: none;
+            -webkit-user-select: none;
+            padding: 2rem;
+            border-radius: 8px;
+            transition: all 0.3s ease, opacity 0.8s ease-out, transform 0.8s ease-out;
+        }
+
+        .fog-text.disappearing {
+            opacity: 0;
+            transform: scale(1.5) translateY(-20px);
+            filter: blur(8px);
+        }
+
+        .fog-text:hover {
+            color: rgba(255, 255, 255, 1);
+            text-shadow: 0 0 30px rgba(147, 197, 253, 0.8),
+                         0 0 60px rgba(147, 197, 253, 0.6),
+                         0 0 80px rgba(147, 197, 253, 0.4);
+            transform: scale(1.05);
+        }
+
+        @keyframes textFlash {
+            0%, 100% { 
+                opacity: 0.4;
+                text-shadow: 0 0 10px rgba(147, 197, 253, 0.3),
+                             0 0 20px rgba(147, 197, 253, 0.2);
+            }
+            25% { 
+                opacity: 0.7;
+                text-shadow: 0 0 15px rgba(147, 197, 253, 0.4),
+                             0 0 30px rgba(147, 197, 253, 0.3);
+            }
+            50% { 
+                opacity: 1;
+                text-shadow: 0 0 25px rgba(147, 197, 253, 0.6),
+                             0 0 50px rgba(147, 197, 253, 0.4),
+                             0 0 75px rgba(147, 197, 253, 0.3);
+            }
+            75% { 
+                opacity: 0.6;
+                text-shadow: 0 0 20px rgba(147, 197, 253, 0.5),
+                             0 0 40px rgba(147, 197, 253, 0.3);
+            }
+        }
+
+        .fog-particles {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            pointer-events: none;
+        }
+
+        .fog-particle {
+            position: absolute;
+            width: 100px;
+            height: 100px;
+            background: radial-gradient(circle, 
+                rgba(147, 197, 253, 0.1) 0%, 
+                transparent 70%);
+            border-radius: 50%;
+            animation: floatParticle 15s linear infinite;
+            transition: all 0.8s ease-out;
+        }
+
+        .fog-particle.disappearing {
+            opacity: 0;
+            transform: translateX(200px) translateY(-200px) scale(2);
+            filter: blur(12px);
+        }
+
+        @keyframes floatParticle {
+            0% {
+                transform: translateX(-100px) translateY(100vh) scale(0.5);
+                opacity: 0;
+            }
+            10% {
+                opacity: 0.3;
+            }
+            90% {
+                opacity: 0.3;
+            }
+            100% {
+                transform: translateX(100vw) translateY(-100px) scale(1.5);
+                opacity: 0;
+            }
+        }
     </style>
 </head>
 <body>
@@ -3252,6 +3406,8 @@ const lightningRef=useRef({active:false,start:null,end:null,frame:0});
           const [showMenuRules, setShowMenuRules] = React.useState(false);
           const [showMenuControls, setShowMenuControls] = React.useState(false);
           const [showCompanionPage, setShowCompanionPage] = React.useState(false);
+          const [showFogOverlay, setShowFogOverlay] = React.useState(true);
+          const [isFogDisappearing, setIsFogDisappearing] = React.useState(false);
           const tFont = "'Orbitron',sans-serif";
           const font = "'IBM Plex Mono',monospace";
           
@@ -3295,6 +3451,32 @@ const lightningRef=useRef({active:false,start:null,end:null,frame:0});
           
           return (
             <>
+              {/* Smokey Fog Overlay */}
+              {showFogOverlay && (
+                <div className={`fog-overlay ${isFogDisappearing ? 'disappearing' : ''}`} onClick={() => {
+                  if (!isFogDisappearing) {
+                    setIsFogDisappearing(true);
+                    const impactSound = new Audio('sfx/mixkit-cinematic-impact-waves-781 (1).wav');
+                    impactSound.volume = 0.5;
+                    impactSound.play().catch(e => console.log('Impact sound play failed:', e));
+                    setTimeout(() => {
+                      setShowFogOverlay(false);
+                      setIsFogDisappearing(false);
+                    }, 800);
+                  }
+                }}>
+                  <div className="fog-particles">
+                    <div className={`fog-particle ${isFogDisappearing ? 'disappearing' : ''}`} style={{left: '10%', animationDelay: '0s'}}></div>
+                    <div className={`fog-particle ${isFogDisappearing ? 'disappearing' : ''}`} style={{left: '30%', animationDelay: '3s'}}></div>
+                    <div className={`fog-particle ${isFogDisappearing ? 'disappearing' : ''}`} style={{left: '50%', animationDelay: '6s'}}></div>
+                    <div className={`fog-particle ${isFogDisappearing ? 'disappearing' : ''}`} style={{left: '70%', animationDelay: '9s'}}></div>
+                    <div className={`fog-particle ${isFogDisappearing ? 'disappearing' : ''}`} style={{left: '90%', animationDelay: '12s'}}></div>
+                  </div>
+                  <div className={`fog-text ${isFogDisappearing ? 'disappearing' : ''}`}>
+                    PRESS ANYWHERE TO BEGIN<br/>CORRELATION
+                  </div>
+                </div>
+              )}
               <NullV3 />
               {/* Credits popup at root level */}
               {showCredits && <div style={{position:"fixed",top:"var(--app-top, 0px)",left:0,right:0,height:"var(--app-height, 100dvh)",backgroundColor:"rgba(3,7,18,0.98)",
