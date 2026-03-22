@@ -799,19 +799,30 @@
             font-family: 'Orbitron', monospace;
             font-size: clamp(1.5rem, 4vw, 2.5rem);
             font-weight: 900;
-            color: rgba(255, 255, 255, 0.8);
+            color: rgba(255, 255, 255, 0.3);
             text-align: center;
             letter-spacing: 0.2em;
             animation: textFlash 3s ease-in-out infinite;
-            text-shadow: 0 0 20px rgba(147, 197, 253, 0.5),
-                         0 0 40px rgba(147, 197, 253, 0.3),
-                         0 0 60px rgba(147, 197, 253, 0.2);
+            text-shadow: 0 0 20px rgba(147, 197, 253, 0.1),
+                         0 0 40px rgba(147, 197, 253, 0.05),
+                         0 0 60px rgba(147, 197, 253, 0.02);
             cursor: pointer;
             user-select: none;
             -webkit-user-select: none;
             padding: 2rem;
             border-radius: 8px;
             transition: all 0.3s ease, opacity 0.8s ease-out, transform 0.8s ease-out;
+            filter: blur(8px);
+            opacity: 0.4;
+        }
+
+        .fog-text.loaded {
+            color: rgba(255, 255, 255, 0.8);
+            text-shadow: 0 0 20px rgba(147, 197, 253, 0.5),
+                         0 0 40px rgba(147, 197, 253, 0.3),
+                         0 0 60px rgba(147, 197, 253, 0.2);
+            filter: blur(0px);
+            opacity: 1;
         }
 
         .fog-text.disappearing {
@@ -2011,6 +2022,7 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
             // --- Fog Overlay State ---
             const [showFogOverlay, setShowFogOverlay] = useState(true);
             const [isFogDisappearing, setIsFogDisappearing] = useState(false);
+            const [isPageLoaded, setIsPageLoaded] = useState(false);
 
             // --- Refs ---
             const gameAreaRef = useRef(null);
@@ -2020,6 +2032,20 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
             const feedbackTimerRef = useRef(null);
             const laserTimeoutRef = useRef(null);
             const answerOptionRefs = useRef({});
+
+            // --- Handle page load ---
+            useEffect(() => {
+                const handleLoad = () => {
+                    setIsPageLoaded(true);
+                };
+                
+                if (document.readyState === 'complete') {
+                    handleLoad();
+                } else {
+                    window.addEventListener('load', handleLoad);
+                    return () => window.removeEventListener('load', handleLoad);
+                }
+            }, []);
 
             // --- Memos ---
             const totalQuestionsAnswered = useMemo(() => correctCount + incorrectCount + timeoutCount, [correctCount, incorrectCount, timeoutCount]);
@@ -2414,7 +2440,7 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
                     {/* Smokey Fog Overlay */}
                     {showFogOverlay && (
                         <div className={`fog-overlay ${isFogDisappearing ? 'disappearing' : ''}`} onClick={() => {
-                            if (!isFogDisappearing) {
+                            if (!isFogDisappearing && isPageLoaded) {
                                 setIsFogDisappearing(true);
                                 const impactSound = new Audio('sfx/mixkit-cinematic-impact-waves-781 (1).wav');
                                 impactSound.volume = 0.5;
@@ -2432,7 +2458,7 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
                                 <div className={`fog-particle ${isFogDisappearing ? 'disappearing' : ''}`} style={{left: '70%', animationDelay: '9s'}}></div>
                                 <div className={`fog-particle ${isFogDisappearing ? 'disappearing' : ''}`} style={{left: '90%', animationDelay: '12s'}}></div>
                             </div>
-                            <div className={`fog-text ${isFogDisappearing ? 'disappearing' : ''}`}>
+                            <div className={`fog-text ${isFogDisappearing ? 'disappearing' : ''} ${isPageLoaded ? 'loaded' : ''}`}>
                                 PRESS ANYWHERE TO BEGIN<br/>MATH IN SPACE
                             </div>
                         </div>
