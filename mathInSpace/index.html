@@ -740,6 +740,160 @@
         .paused-game * {
             animation-play-state: paused !important;
         }
+
+        /* Smokey Fog Overlay */
+        .fog-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(ellipse at center, 
+                rgba(20, 25, 40, 0.95) 0%, 
+                rgba(10, 15, 30, 0.98) 40%, 
+                rgba(5, 10, 20, 1) 100%);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: fogDrift 8s ease-in-out infinite;
+            backdrop-filter: blur(3px);
+            -webkit-backdrop-filter: blur(3px);
+            transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+        }
+
+        .fog-overlay.disappearing {
+            opacity: 0;
+            transform: scale(1.1) rotate(2deg);
+            pointer-events: none;
+        }
+
+        @keyframes fogDrift {
+            0%, 100% { 
+                background: radial-gradient(ellipse at center, 
+                    rgba(20, 25, 40, 0.95) 0%, 
+                    rgba(10, 15, 30, 0.98) 40%, 
+                    rgba(5, 10, 20, 1) 100%);
+            }
+            25% { 
+                background: radial-gradient(ellipse at 30% 40%, 
+                    rgba(25, 30, 45, 0.93) 0%, 
+                    rgba(12, 18, 35, 0.97) 40%, 
+                    rgba(6, 12, 25, 1) 100%);
+            }
+            50% { 
+                background: radial-gradient(ellipse at 70% 60%, 
+                    rgba(22, 28, 42, 0.94) 0%, 
+                    rgba(11, 17, 32, 0.98) 40%, 
+                    rgba(5, 11, 22, 1) 100%);
+            }
+            75% { 
+                background: radial-gradient(ellipse at 40% 30%, 
+                    rgba(23, 29, 43, 0.92) 0%, 
+                    rgba(13, 19, 33, 0.97) 40%, 
+                    rgba(7, 13, 24, 1) 100%);
+            }
+        }
+
+        .fog-text {
+            font-family: 'Orbitron', monospace;
+            font-size: clamp(1.5rem, 4vw, 2.5rem);
+            font-weight: 900;
+            color: rgba(255, 255, 255, 0.8);
+            text-align: center;
+            letter-spacing: 0.2em;
+            animation: textFlash 3s ease-in-out infinite;
+            text-shadow: 0 0 20px rgba(147, 197, 253, 0.5),
+                         0 0 40px rgba(147, 197, 253, 0.3),
+                         0 0 60px rgba(147, 197, 253, 0.2);
+            cursor: pointer;
+            user-select: none;
+            -webkit-user-select: none;
+            padding: 2rem;
+            border-radius: 8px;
+            transition: all 0.3s ease, opacity 0.8s ease-out, transform 0.8s ease-out;
+        }
+
+        .fog-text.disappearing {
+            opacity: 0;
+            transform: scale(1.5) translateY(-20px);
+            filter: blur(8px);
+        }
+
+        .fog-text:hover {
+            color: rgba(255, 255, 255, 1);
+            text-shadow: 0 0 30px rgba(147, 197, 253, 0.8),
+                         0 0 60px rgba(147, 197, 253, 0.6),
+                         0 0 80px rgba(147, 197, 253, 0.4);
+            transform: scale(1.05);
+        }
+
+        @keyframes textFlash {
+            0%, 100% { 
+                opacity: 0.4;
+                text-shadow: 0 0 10px rgba(147, 197, 253, 0.3),
+                             0 0 20px rgba(147, 197, 253, 0.2);
+            }
+            25% { 
+                opacity: 0.7;
+                text-shadow: 0 0 15px rgba(147, 197, 253, 0.4),
+                             0 0 30px rgba(147, 197, 253, 0.3);
+            }
+            50% { 
+                opacity: 1;
+                text-shadow: 0 0 25px rgba(147, 197, 253, 0.6),
+                             0 0 50px rgba(147, 197, 253, 0.4),
+                             0 0 75px rgba(147, 197, 253, 0.3);
+            }
+            75% { 
+                opacity: 0.6;
+                text-shadow: 0 0 20px rgba(147, 197, 253, 0.5),
+                             0 0 40px rgba(147, 197, 253, 0.3);
+            }
+        }
+
+        .fog-particles {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            pointer-events: none;
+        }
+
+        .fog-particle {
+            position: absolute;
+            width: 100px;
+            height: 100px;
+            background: radial-gradient(circle, 
+                rgba(147, 197, 253, 0.1) 0%, 
+                transparent 70%);
+            border-radius: 50%;
+            animation: floatParticle 15s linear infinite;
+            transition: all 0.8s ease-out;
+        }
+
+        .fog-particle.disappearing {
+            opacity: 0;
+            transform: translateX(200px) translateY(-200px) scale(2);
+            filter: blur(12px);
+        }
+
+        @keyframes floatParticle {
+            0% {
+                transform: translateX(-100px) translateY(100vh) scale(0.5);
+                opacity: 0;
+            }
+            10% {
+                opacity: 0.3;
+            }
+            90% {
+                opacity: 0.3;
+            }
+            100% {
+                transform: translateX(100vw) translateY(-100px) scale(1.5);
+                opacity: 0;
+            }
+        }
     </style>
 </head>
 <body>
@@ -777,10 +931,13 @@
             constructor() {
                 this.sounds = {};
                 this.backgroundMusicTrack = null;
+                this.backgroundMusicTrack2 = null; // Second track for overlapping
                 this.musicStarted = false;
                 this.userInteracted = false;
                 this.isMuted = false;
                 this.basePath = './sfx/'; // Adjust if needed
+                this.currentTrack = 1; // Track which audio is currently playing
+                this.loopTimer = null; // Timer for next track start
                 
                 this.loadAllSounds();
                 this.startBackgroundMusic(); // Start immediately on page load
@@ -790,16 +947,17 @@
                 // Load all sounds
                 Object.entries(SoundRoles).forEach(([role, filename]) => {
                     if (role === 'BACKGROUND_MUSIC') {
-                        // Background music track
-                        const audio = new Audio(this.basePath + filename);
-                        audio.loop = false; // We'll handle looping manually
-                        audio.volume = 0.3;
-                        this.backgroundMusicTrack = audio;
+                        // Create two background music tracks for overlapping
+                        const audio1 = new Audio(this.basePath + filename);
+                        const audio2 = new Audio(this.basePath + filename);
                         
-                        // Setup self-overlapping loop
-                        audio.addEventListener('ended', () => {
-                            this.playBackgroundTrack(150); // 150ms overlap with itself
-                        });
+                        audio1.loop = false; // We'll handle looping manually
+                        audio2.loop = false; // We'll handle looping manually
+                        audio1.volume = 0.3;
+                        audio2.volume = 0.3;
+                        
+                        this.backgroundMusicTrack = audio1;
+                        this.backgroundMusicTrack2 = audio2;
                     } else {
                         // Regular sound effects
                         const audio = new Audio(this.basePath + filename);
@@ -809,25 +967,28 @@
                 });
             }
 
-            toggleMute() {
-                this.isMuted = !this.isMuted;
-                this.updateVolumes();
-                return this.isMuted;
-            }
-
-            updateVolumes() {
+            setMuted(isMuted) {
+                this.isMuted = isMuted;
                 const volume = this.isMuted ? 0 : 0.3;
                 const effectsVolume = this.isMuted ? 0 : 0.5;
                 
-                // Update background music volume
+                // Update background music volume for both tracks
                 if (this.backgroundMusicTrack) {
                     this.backgroundMusicTrack.volume = volume;
                 }
+                if (this.backgroundMusicTrack2) {
+                    this.backgroundMusicTrack2.volume = volume;
+                }
                 
                 // Update sound effect volumes
-                Object.values(this.sounds).forEach(sound => {
-                    sound.volume = effectsVolume;
+                Object.values(this.sounds).forEach(audio => {
+                    audio.volume = effectsVolume;
                 });
+            }
+
+            toggleMute() {
+                this.setMuted(!this.isMuted);
+                return this.isMuted;
             }
 
             startBackgroundMusic() {
@@ -838,18 +999,42 @@
             }
 
             playBackgroundTrack(delay = 0) {
-                if (this.backgroundMusicTrack) {
-                    const track = this.backgroundMusicTrack;
+                // Clear any existing timer
+                if (this.loopTimer) {
+                    clearTimeout(this.loopTimer);
+                }
+                
+                // Alternate between tracks for seamless overlapping
+                const track = this.currentTrack === 1 ? this.backgroundMusicTrack : this.backgroundMusicTrack2;
+                
+                if (track) {
                     track.currentTime = 0;
                     
                     if (delay > 0) {
                         setTimeout(() => {
                             track.play().catch(e => console.log('Background music play failed:', e));
+                            this.scheduleNextTrack();
                         }, delay);
                     } else {
                         track.play().catch(e => console.log('Background music play failed:', e));
+                        this.scheduleNextTrack();
                     }
+                    
+                    // Switch to the other track for next play
+                    this.currentTrack = this.currentTrack === 1 ? 2 : 1;
                 }
+            }
+            
+            scheduleNextTrack() {
+                // The dark-space-motion track is approximately 32 seconds long
+                // Start next track 10 seconds before current ends (32 - 10 = 22 seconds)
+                const overlapDelay = 22000; // 22 seconds
+                
+                this.loopTimer = setTimeout(() => {
+                    if (this.musicStarted) {
+                        this.playBackgroundTrack(0); // Start overlapping track
+                    }
+                }, overlapDelay);
             }
 
             play(role) {
@@ -863,22 +1048,41 @@
             }
 
             stopBackgroundMusic() {
+                // Clear the loop timer
+                if (this.loopTimer) {
+                    clearTimeout(this.loopTimer);
+                    this.loopTimer = null;
+                }
+                
                 if (this.backgroundMusicTrack) {
                     this.backgroundMusicTrack.pause();
                     this.backgroundMusicTrack.currentTime = 0;
                 }
+                if (this.backgroundMusicTrack2) {
+                    this.backgroundMusicTrack2.pause();
+                    this.backgroundMusicTrack2.currentTime = 0;
+                }
                 this.musicStarted = false;
+                this.currentTrack = 1; // Reset to track 1
             }
 
             pause() {
+                // Pause both background tracks
                 if (this.backgroundMusicTrack && !this.backgroundMusicTrack.paused) {
                     this.backgroundMusicTrack.pause();
+                }
+                if (this.backgroundMusicTrack2 && !this.backgroundMusicTrack2.paused) {
+                    this.backgroundMusicTrack2.pause();
                 }
             }
 
             resume() {
-                if (this.backgroundMusicTrack && this.musicStarted && this.backgroundMusicTrack.paused) {
-                    this.backgroundMusicTrack.play().catch(e => console.log('Background music resume failed:', e));
+                // Resume the appropriate track based on which should be playing
+                if (this.musicStarted) {
+                    const activeTrack = this.currentTrack === 1 ? this.backgroundMusicTrack2 : this.backgroundMusicTrack;
+                    if (activeTrack && activeTrack.paused) {
+                        activeTrack.play().catch(e => console.log('Background music resume failed:', e));
+                    }
                 }
             }
         }
@@ -1804,6 +2008,10 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
             const [clickedShipFeedback, setClickedShipFeedback] = useState(null);
             const [correctShipId, setCorrectShipId] = useState(null);
 
+            // --- Fog Overlay State ---
+            const [showFogOverlay, setShowFogOverlay] = useState(true);
+            const [isFogDisappearing, setIsFogDisappearing] = useState(false);
+
             // --- Refs ---
             const gameAreaRef = useRef(null);
             const playerShipRef = useRef(null);
@@ -2203,6 +2411,32 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
                     className={`math-in-space-container ${gameState}-screen ${showFeedbackFlash ? `flash-${feedbackType}` : ''}`}
                     ref={gameAreaRef}
                 >
+                    {/* Smokey Fog Overlay */}
+                    {showFogOverlay && (
+                        <div className={`fog-overlay ${isFogDisappearing ? 'disappearing' : ''}`} onClick={() => {
+                            if (!isFogDisappearing) {
+                                setIsFogDisappearing(true);
+                                const impactSound = new Audio('sfx/mixkit-cinematic-impact-waves-781 (1).wav');
+                                impactSound.volume = 0.5;
+                                impactSound.play().catch(e => console.log('Impact sound play failed:', e));
+                                setTimeout(() => {
+                                    setShowFogOverlay(false);
+                                    setIsFogDisappearing(false);
+                                }, 800);
+                            }
+                        }}>
+                            <div className="fog-particles">
+                                <div className={`fog-particle ${isFogDisappearing ? 'disappearing' : ''}`} style={{left: '10%', animationDelay: '0s'}}></div>
+                                <div className={`fog-particle ${isFogDisappearing ? 'disappearing' : ''}`} style={{left: '30%', animationDelay: '3s'}}></div>
+                                <div className={`fog-particle ${isFogDisappearing ? 'disappearing' : ''}`} style={{left: '50%', animationDelay: '6s'}}></div>
+                                <div className={`fog-particle ${isFogDisappearing ? 'disappearing' : ''}`} style={{left: '70%', animationDelay: '9s'}}></div>
+                                <div className={`fog-particle ${isFogDisappearing ? 'disappearing' : ''}`} style={{left: '90%', animationDelay: '12s'}}></div>
+                            </div>
+                            <div className={`fog-text ${isFogDisappearing ? 'disappearing' : ''}`}>
+                                PRESS ANYWHERE TO BEGIN<br/>MATH IN SPACE
+                            </div>
+                        </div>
+                    )}
                     {gameState === 'playing' && <StarfieldBackground />}
 
                     {gameState === 'setup' && (
