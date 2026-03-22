@@ -847,7 +847,8 @@
                         flex: 1,
                         display: "flex",
                         justifyContent: "center",
-                        alignItems: "center"
+                        alignItems: "center",
+                        paddingLeft: "8px"
                       }}>
                         <span style={{
                           fontSize: "clamp(14px, 2vw, 18px)",
@@ -855,7 +856,8 @@
                           color: "#fee440",
                           fontWeight: 700,
                           textShadow: "0 0 10px rgba(254,228,64,0.3)",
-                          animation: g.sel.length > 0 ? "electricGlow 2s ease-in-out infinite" : "none"
+                          animation: g.sel.length > 0 ? "electricGlow 2s ease-in-out infinite" : "none",
+                          whiteSpace: "nowrap"
                         }}>
                           {target.label}
                         </span>

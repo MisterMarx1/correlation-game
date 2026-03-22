@@ -38,6 +38,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>CORRELATION</title>
     
+    <!-- Mobile detection -->
+    <script>
+        function isMobile() {
+            return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
+                   (navigator.maxTouchPoints && navigator.maxTouchPoints > 2);
+        }
+        
+        function isIPhone() {
+            return /iPhone/i.test(navigator.userAgent);
+        }
+        
+        // Redirect iPhone users to iosTemp.html
+        if (isIPhone()) {
+            window.location.replace('iosTemp.html');
+        }
+        
+        console.log('Is mobile device:', isMobile());
+        console.log('Is iPhone:', isIPhone());
+    </script>
+    
     <!-- Preload fonts to prevent layout shift -->
     <link rel="preload" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&family=Orbitron:wght@700;900&display=swap" as="style">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -51,6 +71,11 @@
             height: 100%;
             overflow: hidden;
             background: #000;
+            /* iOS tap highlight fix */
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
         }
 
         body {

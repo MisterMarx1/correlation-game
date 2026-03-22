@@ -30,7 +30,14 @@
       --max: 1180px;
     }
 
-    * { box-sizing: border-box; }
+    * { 
+      box-sizing: border-box;
+      /* iOS tap highlight fix */
+      -webkit-tap-highlight-color: transparent;
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
+    }
 
     html {
       scroll-behavior: smooth;
