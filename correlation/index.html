@@ -50,10 +50,9 @@
         }
         
         // Redirect iPhone users to iosTemp.html
-        // TEMPORARILY DISABLED FOR TESTING
-        // if (isIPhone()) {
-        //     window.location.replace('iosTemp.html');
-        // }
+        if (isIPhone()) {
+            window.location.replace('iosTemp.html');
+        }
         
         console.log('Is mobile device:', isMobile());
         console.log('Is iPhone:', isIPhone());
