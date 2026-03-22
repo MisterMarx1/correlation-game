@@ -587,6 +587,18 @@
 </div>
 
 <script>
+  // Force scroll to top on page load
+  window.addEventListener('load', function() {
+    window.scrollTo(0, 0);
+    document.body.scrollTop = 0;
+    document.documentElement.scrollTop = 0;
+  });
+  
+  // Also handle iOS Safari bounce scroll
+  if (history.scrollRestoration) {
+    history.scrollRestoration = 'manual';
+  }
+  
   // Generate sparkles
   const sparklesEl = document.getElementById('sparkles');
   for (let i = 0; i < 30; i++) {
