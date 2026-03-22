@@ -40,9 +40,10 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
     min-height: 100dvh;
     padding: 1.5rem;
+    padding-top: 4rem;
     position: relative;
   }
 
@@ -792,20 +793,6 @@
 </div>
 
 <script>
-  // Force scroll to top immediately (before page fully loads)
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', function() {
-      window.scrollTo(0, 0);
-      document.body.scrollTop = 0;
-      document.documentElement.scrollTop = 0;
-    });
-  } else {
-    // DOM already loaded
-    window.scrollTo(0, 0);
-    document.body.scrollTop = 0;
-    document.documentElement.scrollTop = 0;
-  }
-  
   // Force scroll to top on page load
   window.addEventListener('load', function() {
     window.scrollTo(0, 0);
@@ -817,20 +804,6 @@
   if (history.scrollRestoration) {
     history.scrollRestoration = 'manual';
   }
-  
-  // Prevent any scroll restoration
-  window.addEventListener('beforeunload', function() {
-    window.scrollTo(0, 0);
-  });
-  
-  // Additional scroll prevention for iOS
-  window.addEventListener('pageshow', function(event) {
-    if (event.persisted) {
-      window.scrollTo(0, 0);
-      document.body.scrollTop = 0;
-      document.documentElement.scrollTop = 0;
-    }
-  });
   
   // Background music system with overlap
   class BackgroundMusic {
