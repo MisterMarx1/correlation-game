@@ -501,6 +501,57 @@
     0% { transform: translateX(-100%); }
     100% { transform: translateX(100%); }
   }
+
+  /* === SOUND CONTROL BUTTON === */
+  .sound-control {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, var(--blue), var(--purple));
+    border: 2px solid rgba(255,255,255,0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    cursor: pointer;
+    z-index: 1000;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+
+  .sound-control:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 25px rgba(0,0,0,0.4);
+  }
+
+  .sound-control:active {
+    transform: scale(0.95);
+  }
+
+  .sound-control .music-icon {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    transition: opacity 0.3s ease;
+  }
+
+  .sound-control .music-off {
+    opacity: 0;
+  }
+
+  .sound-control.music-off .music-on {
+    opacity: 0;
+  }
+
+  .sound-control.music-off .music-off {
+    opacity: 1;
+  }
 </style>
 </head>
 <body>
@@ -518,6 +569,12 @@
 
 <!-- Floating emoji -->
 <div class="floaters" id="floaters"></div>
+
+<!-- Sound Control Button -->
+<div class="sound-control" id="soundControl">
+  <span class="music-icon music-on">🎵</span>
+  <span class="music-icon music-off">🔇</span>
+</div>
 
 <!-- Main content -->
 <div class="container">
@@ -599,6 +656,81 @@
     history.scrollRestoration = 'manual';
   }
   
+  // Background music system with overlap
+  class BackgroundMusic {
+    constructor() {
+      this.audio1 = new Audio('sfx/mixkit-magical-light-transition-2583.wav');
+      this.audio2 = new Audio('sfx/mixkit-magical-light-transition-2583.wav');
+      this.audio1.loop = true;
+      this.audio2.loop = true;
+      this.audio1.volume = 0.15;
+      this.audio2.volume = 0.15;
+      this.currentAudio = this.audio1;
+      this.nextAudio = this.audio2;
+      this.isPlaying = false;
+      this.soundEnabled = true;
+      this.musicEnabled = true;
+      
+      this.setupOverlap();
+    }
+    
+    setupOverlap() {
+      // When current audio ends, start the next one
+      this.audio1.addEventListener('ended', () => this.swap());
+      this.audio2.addEventListener('ended', () => this.swap());
+    }
+    
+    swap() {
+      if (!this.musicEnabled) return;
+      
+      // Start next audio slightly before current ends
+      this.nextAudio.currentTime = 0;
+      this.nextAudio.play().catch(() => {});
+      
+      // Swap roles
+      [this.currentAudio, this.nextAudio] = [this.nextAudio, this.currentAudio];
+    }
+    
+    start() {
+      if (!this.musicEnabled || this.isPlaying) return;
+      
+      this.currentAudio.currentTime = 0;
+      this.currentAudio.play().catch(() => {});
+      this.isPlaying = true;
+    }
+    
+    stop() {
+      this.audio1.pause();
+      this.audio2.pause();
+      this.audio1.currentTime = 0;
+      this.audio2.currentTime = 0;
+      this.isPlaying = false;
+    }
+    
+    toggleMusic() {
+      this.musicEnabled = !this.musicEnabled;
+      if (this.musicEnabled) {
+        this.start();
+      } else {
+        this.stop();
+      }
+      return this.musicEnabled;
+    }
+    
+    toggleSound() {
+      this.soundEnabled = !this.soundEnabled;
+      return this.soundEnabled;
+    }
+  }
+  
+  const bgMusic = new BackgroundMusic();
+  
+  // Start music on first user interaction
+  document.addEventListener('click', function startMusic() {
+    bgMusic.start();
+    document.removeEventListener('click', startMusic);
+  }, { once: true });
+  
   // Generate sparkles
   const sparklesEl = document.getElementById('sparkles');
   for (let i = 0; i < 30; i++) {
@@ -633,6 +765,15 @@
   const phoneMouth = document.querySelector('.phone-mouth');
   
   phoneCharacter.addEventListener('click', (e) => {
+    // Play magic bubbles sound only if sound is enabled
+    if (bgMusic.soundEnabled) {
+      const audio = new Audio('sfx/mixkit-magic-bubbles-spell-2999.wav');
+      audio.volume = 0.3;
+      audio.play().catch(err => console.log('Audio play failed:', err));
+    } else {
+      console.log('Sound effects disabled - skipping magic bubbles sound');
+    }
+    
     // Make funny face
     phoneCharacter.classList.add('funny');
     phoneMouth.classList.add('funny');
@@ -645,6 +786,28 @@
       phoneCharacter.classList.remove('funny');
       phoneMouth.classList.remove('funny');
     }, 2000);
+  });
+
+  // Sound control button functionality
+  const soundControl = document.getElementById('soundControl');
+  
+  soundControl.addEventListener('click', (e) => {
+    e.stopPropagation(); // Prevent triggering other click events
+    
+    // Simple approach: single click toggles both music AND sound effects
+    const musicOn = bgMusic.toggleMusic();
+    const soundOn = bgMusic.toggleSound();
+    
+    // Update button appearance
+    soundControl.classList.toggle('music-off', !musicOn);
+    
+    // Visual feedback
+    soundControl.style.transform = 'scale(1.2) rotate(180deg)';
+    setTimeout(() => {
+      soundControl.style.transform = '';
+    }, 300);
+    
+    console.log('Music:', musicOn ? 'ON' : 'OFF', 'Sound Effects:', soundOn ? 'ON' : 'OFF');
   });
 
   function createMathBurst(x, y) {
