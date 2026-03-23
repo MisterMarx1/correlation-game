@@ -975,6 +975,7 @@
                 this.musicStarted = false;
                 this.userInteracted = false;
                 this.isMuted = false;
+                this.isPaused = false; // Track pause state
                 this.basePath = './sfx/'; // Adjust if needed
                 this.currentTrack = 1; // Track which audio is currently playing
                 this.loopTimer = null; // Timer for next track start
@@ -1042,6 +1043,12 @@
                 // Clear any existing timer
                 if (this.loopTimer) {
                     clearTimeout(this.loopTimer);
+                    this.loopTimer = null;
+                }
+                
+                // Don't play if music is paused
+                if (this.isPaused) {
+                    return;
                 }
                 
                 // Alternate between tracks for seamless overlapping
@@ -1052,8 +1059,11 @@
                     
                     if (delay > 0) {
                         setTimeout(() => {
-                            track.play().catch(e => console.log('Background music play failed:', e));
-                            this.scheduleNextTrack();
+                            // Check again if not paused before playing
+                            if (!this.isPaused) {
+                                track.play().catch(e => console.log('Background music play failed:', e));
+                                this.scheduleNextTrack();
+                            }
                         }, delay);
                     } else {
                         track.play().catch(e => console.log('Background music play failed:', e));
@@ -1066,12 +1076,17 @@
             }
             
             scheduleNextTrack() {
+                // Don't schedule if music is paused
+                if (this.isPaused) {
+                    return;
+                }
+                
                 // The dark-space-motion track is approximately 32 seconds long
                 // Start next track 10 seconds before current ends (32 - 10 = 22 seconds)
                 const overlapDelay = 22000; // 22 seconds
                 
                 this.loopTimer = setTimeout(() => {
-                    if (this.musicStarted) {
+                    if (this.musicStarted && !this.isPaused) {
                         this.playBackgroundTrack(0); // Start overlapping track
                     }
                 }, overlapDelay);
@@ -1107,6 +1122,8 @@
             }
 
             pause() {
+                this.isPaused = true;
+                
                 // Clear the loop timer to prevent scheduled tracks from playing
                 if (this.loopTimer) {
                     clearTimeout(this.loopTimer);
@@ -1123,10 +1140,12 @@
             }
 
             resume() {
+                this.isPaused = false;
+                
                 // Resume the appropriate track based on which should be playing
                 if (this.musicStarted) {
                     // Check which track was playing and resume it, then schedule next
-                    const currentPlayingTrack = this.currentTrack === 1 ? this.backgroundMusicTrack : this.backgroundMusicTrack2;
+                    const currentPlayingTrack = this.currentTrack === 1 ? this.backgroundMusicTrack2 : this.backgroundMusicTrack1;
                     
                     if (currentPlayingTrack && currentPlayingTrack.paused) {
                         currentPlayingTrack.play().catch(e => console.log('Background music resume failed:', e));
