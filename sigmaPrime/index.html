@@ -1575,8 +1575,8 @@
           function stopTimer() { if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; } }
 
           function isPath(sel) {
-            if (sel.length < 2) return false; // Allow 2-cell paths
-            // Check adjacency between consecutive cells
+            if (sel.length < 1) return false; // Allow 1-cell paths
+            // Check adjacency between consecutive cells (only for multi-cell paths)
             for (let i = 0; i < sel.length - 1; i++) {
               if (!adj(sel[i], sel[i + 1])) return false;
             }
@@ -1720,30 +1720,10 @@
             const rect = el.getBoundingClientRect();
             const cellW = rect.width / W, cellH = rect.height / H;
             
-            // Handle both mouse and touch events properly
-            let clientX, clientY;
+            const clientX = e.clientX;
+            const clientY = e.clientY;
             
-            if (e.type === 'touchstart' || e.type === 'touchmove') {
-              // For touch events, use the first touch that exists
-              if (e.touches && e.touches.length > 0) {
-                clientX = e.touches[0].clientX;
-                clientY = e.touches[0].clientY;
-              } else {
-                return null;
-              }
-            } else if (e.type === 'touchend') {
-              // For touchend, use changedTouches since touches is empty
-              if (e.changedTouches && e.changedTouches.length > 0) {
-                clientX = e.changedTouches[0].clientX;
-                clientY = e.changedTouches[0].clientY;
-              } else {
-                return null;
-              }
-            } else {
-              // For mouse events
-              clientX = e.clientX;
-              clientY = e.clientY;
-            }
+            if (clientX == null || clientY == null) return null;
             
             const mx = clientX - rect.left;
             const my = clientY - rect.top;
@@ -1931,9 +1911,9 @@
             // Stop electric humming sound when pointer is released
             SoundManager.stopElectricHumLoop();
             
-            // Check if path is valid and satisfies target
+            // Check if path is valid and satisfies target (allow single cells too)
             const sel = g.sel;
-            if (sel.length >= 2 && isPath(sel)) {
+            if (sel.length >= 1 && isPath(sel)) {
               tryClose();
             } else {
               // Apply damage to first selected cell for invalid path
@@ -2102,7 +2082,7 @@
           }, [g.sel.length]);
 
           const selKeys = new Set(g.sel.map(s => k(s.x, s.y)));
-          const canClose = g.sel.length >= 2 && isPath(g.sel);
+          const canClose = g.sel.length >= 1 && isPath(g.sel);
           const selSum = g.sel.reduce((s, p) => s + (g.board[k(p.x, p.y)]?.val || 0), 0);
           const target = g.targets[g.round] || { label: "—", min: 3 };
           const timePct = g.timeLeft / g.turnTime;
@@ -2641,48 +2621,30 @@
                   display: "grid",
                   gridTemplateColumns: `repeat(${W}, ${CELL_CSS})`,
                   gridTemplateRows: `repeat(${H}, ${CELL_CSS})`,
-                  gap: 0, touchAction: "none",
+                  gap: 0, touchAction: "none", userSelect: "none", WebkitUserSelect: "none",
                   borderRadius: 8,
                   boxShadow: "0 0 40px rgba(0,0,0,0.5)",
                 }}
                   ref={boardRef}
-                  onMouseDown={onPointerDown} onMouseMove={onPointerMove} onMouseUp={onPointerUp}
-                  onMouseLeave={() => { 
-                    if (g.dragging) {
-                      // Apply damage to first selected cell before reset (consistent with other invalid drags)
-                      if (g.sel.length > 0) {
-                        const firstCell = g.sel[0];
-                        const cell = g.board[k(firstCell.x, firstCell.y)];
-                        if (cell && !cell.dead) {
-                          const oldLife = cell.life;
-                          cell.life -= 1;
-                          if (cell.life <= 0) {
-                            cell.dead = true;
-                            cell.life = 0;
-                            g.deadCount += 1;
-                          } else if (oldLife > cell.life) {
-                            // Add damage animation for the lost life circle
-                            const damageAnimations = [{ x: firstCell.x, y: firstCell.y, lostLifeIndex: oldLife - 1, t: Date.now() }];
-                            g.damageAnim = (g.damageAnim || []).concat(damageAnimations);
-                            setTimeout(() => { g.damageAnim = []; re(); }, 800);
-                          }
-                          // Play game over sound when life is lost from dragging off board
-                          SoundManager.play('mixkit-laser-game-over-1946.wav', 0.8);
-                        }
-                      }
-                      g.dragging = false; 
-                      g.sel = []; 
-                      g.combo = 0;
-                      // Stop electric humming sound when selection is cancelled
-                      SoundManager.stopElectricHumLoop();
-                      // Add red background flash for invalid drag
-                      g.flash = { text: "INVALID DRAG", bad: true };
-                      g.shakeUntil = Date.now() + 400;
-                      setTimeout(() => { g.flash = null; re(); }, 400);
-                      re(); 
-                    } 
+                  onPointerDown={(e) => {
+                    e.currentTarget.setPointerCapture?.(e.pointerId);
+                    onPointerDown(e);
                   }}
-                  onTouchStart={onPointerDown} onTouchMove={onPointerMove} onTouchEnd={onPointerUp}
+                  onPointerMove={onPointerMove}
+                  onPointerUp={(e) => {
+                    e.currentTarget.releasePointerCapture?.(e.pointerId);
+                    onPointerUp(e);
+                  }}
+                  onPointerCancel={(e) => {
+                    e.currentTarget.releasePointerCapture?.(e.pointerId);
+                    if (g.dragging) {
+                      g.dragging = false;
+                      g.sel = [];
+                      g.combo = 0;
+                      SoundManager.stopElectricHumLoop();
+                      re();
+                    }
+                  }}
                 >
                   {Array.from({ length: H }, (_, y) =>
                     Array.from({ length: W }, (_, x) => {
