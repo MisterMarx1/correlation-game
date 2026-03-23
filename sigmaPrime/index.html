@@ -27,16 +27,11 @@
             -webkit-touch-callout: none;
             -webkit-user-select: none;
             user-select: none;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            /* Prevent default touch behaviors */
+            touch-action: none;
             -webkit-text-size-adjust: 100%;
-            -webkit-tap-highlight-color: transparent;
-            -webkit-user-select: none;
             -moz-user-select: none;
             -ms-user-select: none;
-            user-select: none;
         }
 
         /* Reserve space for game grid to prevent layout shift */
@@ -94,6 +89,7 @@
         /* Ensure pointer cursor for interactive game cells */
         .interactive-cell {
             cursor: pointer !important;
+            touch-action: none; /* Prevent default touch behaviors */
         }
 
         /* Smokey Fog Overlay */
@@ -1724,24 +1720,29 @@
             const rect = el.getBoundingClientRect();
             const cellW = rect.width / W, cellH = rect.height / H;
             
-            // Handle both touch and mouse events properly
+            // Handle both mouse and touch events properly
             let clientX, clientY;
             
-            if (e.touches && e.touches.length > 0) {
-              // Touch move event - use first touch
-              clientX = e.touches[0].clientX;
-              clientY = e.touches[0].clientY;
-            } else if (e.changedTouches && e.changedTouches.length > 0) {
-              // Touch end event - use first changed touch
-              clientX = e.changedTouches[0].clientX;
-              clientY = e.changedTouches[0].clientY;
-            } else if (e.clientX !== undefined) {
-              // Mouse event
+            if (e.type === 'touchstart' || e.type === 'touchmove') {
+              // For touch events, use the first touch that exists
+              if (e.touches && e.touches.length > 0) {
+                clientX = e.touches[0].clientX;
+                clientY = e.touches[0].clientY;
+              } else {
+                return null;
+              }
+            } else if (e.type === 'touchend') {
+              // For touchend, use changedTouches since touches is empty
+              if (e.changedTouches && e.changedTouches.length > 0) {
+                clientX = e.changedTouches[0].clientX;
+                clientY = e.changedTouches[0].clientY;
+              } else {
+                return null;
+              }
+            } else {
+              // For mouse events
               clientX = e.clientX;
               clientY = e.clientY;
-            } else {
-              // No valid position data
-              return null;
             }
             
             const mx = clientX - rect.left;
@@ -1768,6 +1769,7 @@
           function onPointerDown(e) {
             if (g.gameOver || g.paused || g.showQuitConfirmation) return;
             e.preventDefault();
+            e.stopPropagation();
             const c = cellFromEvent(e);
             if (!c) return;
             
@@ -1786,6 +1788,7 @@
           function onPointerMove(e) {
             if (!g.dragging || g.gameOver || g.paused || g.showQuitConfirmation) return;
             e.preventDefault();
+            e.stopPropagation();
             const c = cellFromEvent(e);
             
             // If dragging off the board, cancel selection and apply damage (consistent with other invalid drags)
@@ -1922,6 +1925,8 @@
 
           function onPointerUp(e) {
             if (!g.dragging) return;
+            e.preventDefault();
+            e.stopPropagation();
             g.dragging = false;
             // Stop electric humming sound when pointer is released
             SoundManager.stopElectricHumLoop();
@@ -2935,10 +2940,24 @@
                 {/* Game over overlay */}
                 {g.gameOver && (
                   <div style={{
-                    position: "absolute", inset: 0, background: "rgba(4,4,12,0.95)", borderRadius: 8,
-                    display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-                    gap: 12, zIndex: 20,
+                    position: "absolute", 
+                    top: "50%", 
+                    left: "50%", 
+                    transform: "translate(-50%, -50%)",
+                    background: "rgba(4,4,12,0.98)", 
+                    borderRadius: 12,
+                    padding: "24px 32px",
+                    display: "flex", 
+                    flexDirection: "column", 
+                    alignItems: "center", 
+                    justifyContent: "center",
+                    gap: 16, 
+                    zIndex: 20,
                     animation: "fadeIn 0.6s ease-out",
+                    boxShadow: "0 0 40px rgba(0,0,0,0.8), 0 0 80px rgba(147, 197, 253, 0.1)",
+                    border: "1px solid rgba(147, 197, 253, 0.2)",
+                    minWidth: "280px",
+                    maxWidth: "90vw",
                   }}>
                     <div style={{ fontSize: "clamp(18px, 3vw, 28px)", letterSpacing: 5, color: g.won ? "#00f5d4" : "#f15bb5" }}>
                       {g.won ? "SUMMATION COMPLETE" : "SUMMATION FAILED"}
@@ -2953,9 +2972,18 @@
                       SoundManager.play('mixkit-game-user-interface-tone-2570.wav', 0.4);
                       g.started = false; re(); 
                     }} style={{
-                      marginTop: 6, padding: "10px 30px", fontSize: 12,
-                      border: "1px solid #9b5de5", color: "#9b5de5", cursor: "pointer",
-                      borderRadius: 2, letterSpacing: 4, textTransform: "uppercase", fontFamily: "Georgia, serif",
+                      marginTop: 8, 
+                      padding: "12px 24px", 
+                      fontSize: 11,
+                      border: "1px solid #9b5de5", 
+                      color: "#9b5de5", 
+                      cursor: "pointer",
+                      borderRadius: 4, 
+                      letterSpacing: 3, 
+                      textTransform: "uppercase", 
+                      fontFamily: "Georgia, serif",
+                      background: "rgba(155, 93, 229, 0.1)",
+                      transition: "all 0.2s ease",
                     }}>NEW GAME</div>
                   </div>
                 )}
