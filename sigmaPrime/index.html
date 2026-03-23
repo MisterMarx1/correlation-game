@@ -1723,8 +1723,29 @@
             if (!el) return null;
             const rect = el.getBoundingClientRect();
             const cellW = rect.width / W, cellH = rect.height / H;
-            const mx = (e.clientX || e.touches?.[0]?.clientX) - rect.left;
-            const my = (e.clientY || e.touches?.[0]?.clientY) - rect.top;
+            
+            // Handle both touch and mouse events properly
+            let clientX, clientY;
+            
+            if (e.touches && e.touches.length > 0) {
+              // Touch move event - use first touch
+              clientX = e.touches[0].clientX;
+              clientY = e.touches[0].clientY;
+            } else if (e.changedTouches && e.changedTouches.length > 0) {
+              // Touch end event - use first changed touch
+              clientX = e.changedTouches[0].clientX;
+              clientY = e.changedTouches[0].clientY;
+            } else if (e.clientX !== undefined) {
+              // Mouse event
+              clientX = e.clientX;
+              clientY = e.clientY;
+            } else {
+              // No valid position data
+              return null;
+            }
+            
+            const mx = clientX - rect.left;
+            const my = clientY - rect.top;
             const cx = Math.floor(mx / cellW), cy = Math.floor(my / cellH);
             if (cx < 0 || cx >= W || cy < 0 || cy >= H) return null;
             return { x: cx, y: cy };
