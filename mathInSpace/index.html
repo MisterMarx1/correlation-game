@@ -1150,7 +1150,7 @@
                 // Resume the appropriate track based on which should be playing
                 if (this.musicStarted) {
                     // Check which track was playing and resume it, then schedule next
-                    const currentPlayingTrack = this.currentTrack === 1 ? this.backgroundMusicTrack2 : this.backgroundMusicTrack1;
+                    const currentPlayingTrack = this.currentTrack === 1 ? this.backgroundMusicTrack2 : this.backgroundMusicTrack;
                     
                     if (currentPlayingTrack && currentPlayingTrack.paused) {
                         currentPlayingTrack.play().catch(e => console.log('Background music resume failed:', e));
