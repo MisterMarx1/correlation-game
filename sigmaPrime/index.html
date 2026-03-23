@@ -1981,12 +1981,20 @@
           React.useEffect(() => {
             const handleVisibilityChange = () => {
               if (document.hidden) {
-                // Page is hidden - pause background music
+                // Page is hidden - pause background music and game
                 SoundManager.pauseBackgroundMusic();
                 SoundManager.pause();
+                if (!g.paused && g.started && !g.gameOver) {
+                  g.paused = true;
+                  g.pauseStartTime = Date.now();
+                }
               } else {
                 // Page is visible - resume if sound was enabled
                 SoundManager.resume();
+                if (g.paused && g.started && !g.gameOver) {
+                  g.totalPausedTime += Date.now() - g.pauseStartTime;
+                  g.paused = false;
+                }
               }
             };
             
@@ -1994,22 +2002,38 @@
               // Window lost focus - pause everything
               SoundManager.pauseBackgroundMusic();
               SoundManager.pause();
+              if (!g.paused && g.started && !g.gameOver) {
+                g.paused = true;
+                g.pauseStartTime = Date.now();
+              }
             };
             
             const handleFocus = () => {
               // Window regained focus - resume if sound was enabled
               SoundManager.resume();
+              if (g.paused && g.started && !g.gameOver) {
+                g.totalPausedTime += Date.now() - g.pauseStartTime;
+                g.paused = false;
+              }
             };
             
             const handlePageHide = () => {
               // Page is being hidden (tab closing, navigation away)
               SoundManager.pauseBackgroundMusic();
               SoundManager.pause();
+              if (!g.paused && g.started && !g.gameOver) {
+                g.paused = true;
+                g.pauseStartTime = Date.now();
+              }
             };
             
             const handlePageShow = () => {
               // Page is being shown (tab returning, navigation back)
               SoundManager.resume();
+              if (g.paused && g.started && !g.gameOver) {
+                g.totalPausedTime += Date.now() - g.pauseStartTime;
+                g.paused = false;
+              }
             };
             
             // Page Visibility API for tab switching
