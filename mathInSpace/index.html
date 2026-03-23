@@ -1941,7 +1941,7 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
                                         ? 'show-correct'
                                         : ''
                                 } ${isWaitingForNextProblem ? 'disabled' : ''}`}
-                                onClick={() => { soundManager.play('LASER_SHOT'); handleAnswerSelect(option); }}
+                                onClick={() => { handleAnswerSelect(option); }}
                             >
                                 {(() => {
                                     const len = String(option.value).length;
