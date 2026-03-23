@@ -1851,7 +1851,7 @@
                   SoundManager.play('mixkit-laser-game-over-1946.wav', 0.8);
                 }
               }
-              g.sel = [];
+              // Keep selection for visual feedback during vibration
               g.dragging = false;
               g.combo = 0;
               // Stop electric humming sound when selection is cancelled
@@ -1859,7 +1859,12 @@
               // Add red background flash for invalid drag
               g.flash = { text: "INVALID DRAG", bad: true };
               g.shakeUntil = Date.now() + 400;
-              setTimeout(() => { g.flash = null; re(); }, 400);
+              // Clear selection AFTER vibration finishes
+              setTimeout(() => { 
+                g.sel = []; 
+                g.flash = null; 
+                re(); 
+              }, 400);
               re();
               return;
             }
@@ -1891,7 +1896,7 @@
                   SoundManager.play('mixkit-laser-game-over-1946.wav', 0.8);
                 }
               }
-              g.sel = [];
+              // Keep selection for visual feedback during vibration
               g.dragging = false;
               g.combo = 0;
               // Stop electric humming sound when selection is cancelled
@@ -1899,7 +1904,12 @@
               // Add red background flash for invalid drag
               g.flash = { text: "INVALID DRAG", bad: true };
               g.shakeUntil = Date.now() + 400;
-              setTimeout(() => { g.flash = null; re(); }, 400);
+              // Clear selection AFTER vibration finishes
+              setTimeout(() => { 
+                g.sel = []; 
+                g.flash = null; 
+                re(); 
+              }, 400);
               re();
               return;
             }
@@ -1934,7 +1944,7 @@
                   }
                 }
               }
-              g.sel = [];
+              // Keep selection for visual feedback during vibration
               g.dragging = false;
               g.combo = 0;
               // Play game over sound when life is lost from invalid drag
@@ -1944,7 +1954,12 @@
               // Add red background flash for invalid drag
               g.flash = { text: "INVALID DRAG", bad: true };
               g.shakeUntil = Date.now() + 400;
-              setTimeout(() => { g.flash = null; re(); }, 400);
+              // Clear selection AFTER vibration finishes
+              setTimeout(() => { 
+                g.sel = []; 
+                g.flash = null; 
+                re(); 
+              }, 400);
               re();
               return;
             }
@@ -2604,7 +2619,7 @@
                           y = rectHeight/2 - t * rectHeight;
                         }
                         
-                        const colors = selSum > target.val ? ["#ff4444"] : (selSum === target.val ? ["#00ff44"] : ["#9b5de5"]);
+                        const colors = g.flash?.bad ? ["#ff4444"] : (selSum > target.val ? ["#ff4444"] : (selSum === target.val ? ["#00ff44"] : ["#9b5de5"]));
                         const color = colors[i % colors.length];
                         
                         return (
@@ -2650,15 +2665,17 @@
                       <span style={{
                         fontSize: "clamp(16px, 2.5vw, 22px)",
                         fontFamily: "'Courier New', monospace",
-                        color: selSum > target.val ? "#ff4444" : (selSum === target.val ? "#00ff44" : (g.sel.length > 0 ? "#ffffff" : "#888")),
+                        color: g.flash?.bad ? "#ff4444" : (selSum > target.val ? "#ff4444" : (selSum === target.val ? "#00ff44" : (g.sel.length > 0 ? "#ffffff" : "#888"))),
                         fontWeight: 700,
-                        textShadow: selSum > target.val 
+                        textShadow: g.flash?.bad 
                           ? "0 0 20px rgba(255,68,68,0.6), 0 0 40px rgba(255,68,68,0.4), 0 0 60px rgba(255,68,68,0.2)"
-                          : (selSum === target.val 
-                            ? "0 0 20px rgba(0,255,68,0.6), 0 0 40px rgba(0,255,68,0.4), 0 0 60px rgba(0,255,68,0.2)"
-                            : (g.sel.length > 0 ? "0 0 20px rgba(0,245,212,0.4), 0 0 40px rgba(0,245,212,0.2), 0 0 60px rgba(155,93,229,0.1)" : "none")),
+                          : (selSum > target.val 
+                            ? "0 0 20px rgba(255,68,68,0.6), 0 0 40px rgba(255,68,68,0.4), 0 0 60px rgba(255,68,68,0.2)"
+                            : (selSum === target.val 
+                              ? "0 0 20px rgba(0,255,68,0.6), 0 0 40px rgba(0,255,68,0.4), 0 0 60px rgba(0,255,68,0.2)"
+                              : (g.sel.length > 0 ? "0 0 20px rgba(0,245,212,0.4), 0 0 40px rgba(0,245,212,0.2), 0 0 60px rgba(155,93,229,0.1)" : "none"))),
                         animation: g.sel.length > 0 ? "electricGlow 2s ease-in-out infinite" : "none",
-                        filter: selSum > target.val ? "brightness(1.4) contrast(1.2)" : (selSum === target.val ? "brightness(1.4) contrast(1.2)" : (g.sel.length > 0 ? "brightness(1.2) contrast(1.1)" : "none"))
+                        filter: g.flash?.bad ? "brightness(1.4) contrast(1.2)" : (selSum > target.val ? "brightness(1.4) contrast(1.2)" : (selSum === target.val ? "brightness(1.4) contrast(1.2)" : (g.sel.length > 0 ? "brightness(1.2) contrast(1.1)" : "none")))
                       }}>
                         {g.sel.length > 0 ? selSum : "-"}
                       </span>
@@ -2824,7 +2841,7 @@
                             position: "absolute", inset: "7%", borderRadius: "16%",
                             background: isClearing ? "rgba(0,255,68,0.6)"
                               : cell.dead ? "#020205"
-                              : isSel ? (selSum > target.val ? "rgba(255,68,68,0.4)" : (selSum === target.val ? "rgba(0,255,68,0.4)" : "rgba(155,93,229,0.3)"))
+                              : isSel ? (g.flash?.bad ? "rgba(255,68,68,0.4)" : (selSum > target.val ? "rgba(255,68,68,0.4)" : (selSum === target.val ? "rgba(0,255,68,0.4)" : "rgba(155,93,229,0.3)")))
                               : (() => {
                                 // Dim unselected cells unless adjacent (cardinal only) to current selected cell
                                 if (g.dragging && g.sel.length > 0) {
@@ -2840,10 +2857,10 @@
                               })(),
                             border: isClearing ? "3px solid #00ff44"
                               : cell.dead ? "1px solid #050508"
-                              : isSel ? (selSum > target.val ? "2px solid #ff4444aa" : (selSum === target.val ? "2px solid #00ff44aa" : "2px solid #9b5de5aa"))
+                              : isSel ? (g.flash?.bad ? "2px solid #ff4444aa" : (selSum > target.val ? "2px solid #ff4444aa" : (selSum === target.val ? "2px solid #00ff44aa" : "2px solid #9b5de5aa")))
                               : `1px solid rgba(80,80,130,${0.06 + lifePct * 0.1})`,
                             boxShadow: isClearing ? "0 0 30px #00ff4488, 0 0 60px #00ff4444, inset 0 0 20px #00ff4433"
-                              : isSel ? (selSum > target.val ? "0 0 15px rgba(255,68,68,0.4)" : (selSum === target.val ? "0 0 15px rgba(0,255,68,0.4)" : "0 0 10px rgba(155,93,229,0.2)"))
+                              : isSel ? (g.flash?.bad ? "0 0 15px rgba(255,68,68,0.4)" : (selSum > target.val ? "0 0 15px rgba(255,68,68,0.4)" : (selSum === target.val ? "0 0 15px rgba(0,255,68,0.4)" : "0 0 10px rgba(155,93,229,0.2)")))
                               : (() => {
                                 // Add electric lightning to dimmed cells AND dead cells when dragging
                                 if (g.dragging && g.sel.length > 0) {
