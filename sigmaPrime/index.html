@@ -1,3 +1,39 @@
+<!--
+  SIGMA PRIME - Prime Number Math Puzzle Game
+  
+  Copyright © 2026 Mister Marx LLC. All rights reserved.
+  
+  Description:
+  A strategic puzzle game where players draw paths through adjacent cells on an 8x8 grid
+  to satisfy mathematical conditions involving prime numbers and sums. Features time pressure,
+  dynamic target generation, and combo multipliers for educational prime number learning.
+  
+  Architecture:
+  - React 18 with functional components and hooks
+  - Single HTML file with embedded CSS and JavaScript
+  - Component-based UI with reusable elements
+  - Touch-friendly with mouse and touch event handling
+  - Visual effects: glow animations, shake effects, life indicators
+  
+  Best Practices:
+  - Component unification for consistent styling
+  - Performance-optimized rendering with useCallback/useMemo
+  - Responsive design with clamp() for scalable elements
+  - Touch-friendly interaction patterns
+  - Accessibility considerations for keyboard navigation
+  - Dynamic target generation with mathematical validation for solvability
+  - Real-time validation of path connectivity and target satisfaction
+  
+  Dependencies:
+  - React 18 (CDN)
+  - Babel Standalone (JSX transformation)
+  - Web Audio API (native)
+  - CSS animations and transitions
+  
+  Author: Mister Marx
+  Version: v1.0
+  Last Modified: 2026-03-23
+-->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -470,6 +506,14 @@
         @keyframes colorShift {
             0% { background-position: 0% 50%; }
             50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        @keyframes titleColorShift {
+            0% { background-position: 0% 50%; }
+            25% { background-position: 30% 50%; }
+            50% { background-position: 70% 50%; }
+            75% { background-position: 100% 50%; }
             100% { background-position: 0% 50%; }
         }
         
@@ -1400,38 +1444,50 @@
         const CONTROL_ITEMS = [
           {
             title: "DRAG",
-            body: "Click and hold on a cell, then drag through adjacent cells (no diagonals) to draw a connected path."
+            body: "Click or touch a live cell, then drag through orthogonally adjacent cells to build a path. Diagonals are not allowed."
+          },
+          {
+            title: "BACKTRACK",
+            body: "While dragging, move back to the previous cell to undo the last step and reshape your path before releasing."
           },
           {
             title: "RELEASE",
-            body: "Release the mouse button to submit the path. The path must satisfy the target condition shown on the right."
+            body: "Release to submit. Your path must contain at least 2 cells and its total must exactly match the current Σ target."
           },
           {
-            title: "ESC",
-            body: "Press the Escape key to cancel the current path selection and start over."
+            title: "AVOID ERRORS",
+            body: "Dragging off the board, into a dead cell, or into a non-adjacent cell breaks the attempt, clears the path, and damages your starting cell."
           }
         ];
 
         const RULE_ITEMS = [
           {
-            title: "PRIME BOARD",
-            body: "Board contains only prime numbers. Each cell starts with 10 life that drains every turn. Cells die at 0 life."
+            title: "PRIME GRID",
+            body: "The board is filled with prime numbers only. Each cell begins with 10 life. When a cell reaches 0 life, it becomes dead and cannot be used."
           },
           {
-            title: "PATH DRAWING",
-            body: "Drag through adjacent cells (no diagonals) to draw a connected path. Release to submit the path."
+            title: "MATCH THE TARGET",
+            body: "Each goal is a Σ target. Your selected path succeeds only if the sum of its values exactly equals the target shown."
           },
           {
-            title: "TARGET CONDITIONS",
-            body: "Path must satisfy the target condition shown on the right. Common targets: sum equals composite number, sum is composite, or sum divisible by a number."
+            title: "VALID PATHS ONLY",
+            body: "Paths must move one step at a time through orthogonally adjacent live cells only. Diagonals are invalid."
           },
           {
-            title: "CELL REFRESH",
-            body: "Used cells refresh with new prime values and full life. Strategic path selection is key to survival."
+            title: "ON SUCCESS",
+            body: "Used cells refresh to new prime values and return to full life. Cells touching the path gain life, and dead adjacent cells revive with 1 life."
           },
           {
-            title: "SURVIVAL",
-            body: "Survive 10 rounds to win. Each round gets faster with less turn time. Balance speed and accuracy."
+            title: "ON FAILURE",
+            body: "If the path is too short, misses the Σ target, leaves the board, hits a dead cell, or jumps to a non-adjacent cell, the attempt fails and your starting cell loses life."
+          },
+          {
+            title: "BOARD DECAY",
+            body: "After a successful path, every live cell not used and not adjacent to the path loses 1 life. When time runs out, all live cells lose 1 life and the game advances."
+          },
+          {
+            title: "WIN CONDITION",
+            body: "Complete 10 Σ goals to win. The timer gets faster as you progress, so survival depends on both accuracy and speed."
           }
         ];
 
@@ -1445,7 +1501,7 @@
                 padding: "10px 14px",
                 backgroundColor: "rgba(15,23,42,0.6)",
                 borderRadius: 6,
-                borderLeft: "3px solid #9b5de5"
+                borderLeft: "3px solid #00f5d4"
               }}
             >
               <span style={{ fontSize: 15, fontWeight: 700, color: "#e2e8f0", fontFamily: "'Georgia', serif" }}>
@@ -1458,14 +1514,14 @@
           );
         }
 
-        function RulesPanel({ items, maxWidth = 480 }) {
+        function RulesPanel({ items, maxWidth = 800 }) {
           return (
             <div
               style={{
                 maxWidth,
                 display: "flex",
                 flexDirection: "column",
-                alignItems: "center",
+                alignItems: "flex-start",
                 gap: 14,
                 width: "100%"
               }}
@@ -1951,15 +2007,7 @@
           }
 
           React.useEffect(() => {
-            const h = (e) => {
-              if (e.key === "Escape") { 
-                // Stop electric humming sound when selection is cancelled with Escape
-                SoundManager.stopElectricHumLoop();
-                g.sel = []; g.combo = 0; g.dragging = false; re(); 
-              }
-            };
-            window.addEventListener("keydown", h);
-            return () => window.removeEventListener("keydown", h);
+            // No keyboard shortcuts - user must commit to their selection
           }, []);
           
           // Set page as loaded after a short delay
@@ -2170,8 +2218,10 @@
               }}>
                 <h1 style={{
                   fontSize: "clamp(36px, 7vw, 56px)", fontWeight: 400, margin: "0 0 4px 0",
-                  background: "linear-gradient(90deg, #00f5d4, #9b5de5, #f15bb5)",
+                  background: "linear-gradient(90deg, #00f5d4, #9b5de5, #f15bb5, #00f5d4)",
+                  backgroundSize: "300% 300%",
                   WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", letterSpacing: 5,
+                  animation: "titleColorShift 8s ease-in-out infinite",
                 }}>Σ PRIME</h1>
                 <div style={{ fontSize: 11, color: "#c8c8e0", letterSpacing: 7, marginBottom: 28, textTransform: "uppercase" }}>Sigma Prime</div>
                 
@@ -2295,7 +2345,7 @@
                     zIndex: 1000, padding: 20
                   }} onClick={() => setShowRules(false)}>
                     <div style={{
-                      maxWidth: 500, width: "80%", maxHeight: "80vh", overflowY: "auto",
+                      maxWidth: 900, width: "80%", maxHeight: "80vh", overflowY: "auto",
                       background: "rgba(8,8,26,0.95)", borderRadius: 12, border: "1px solid rgba(155,93,229,0.3)",
                       padding: 24, position: "relative"
                     }} onClick={(e) => e.stopPropagation()}>
@@ -2306,7 +2356,7 @@
                         fontWeight: 400
                       }}>RULES</h2>
                       
-                      <RulesPanel items={RULE_ITEMS} maxWidth={400} />
+                      <RulesPanel items={RULE_ITEMS} maxWidth={900} />
                       
                       <div onClick={() => { 
                       SoundManager.play('mixkit-game-user-interface-tone-2570.wav', 0.4);
