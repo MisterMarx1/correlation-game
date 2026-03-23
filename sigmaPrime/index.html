@@ -114,7 +114,7 @@
         const ROUNDS = 10;
         const BASE_TURN = 11000;
 
-        const ALL_PRIMES = [2, 3, 5, 7, 11, 13, 17, 19, 23];
+        const ALL_PRIMES = [2, 3, 5, 7];
 
         function k(x, y) { return `${x},${y}`; }
         function isPrime(n) {
@@ -629,8 +629,8 @@
                 <div style={{ fontSize: 11, color: "#c8c8e0", letterSpacing: 7, marginBottom: 28, textTransform: "uppercase" }}>Sigma Prime</div>
                 
                 <div style={{ maxWidth: 420, textAlign: "center", lineHeight: 1.9, fontSize: 13, color: "#c8c8e0", marginBottom: 20 }}>
-                  <strong>There are 9 prime numbers between 1 and 25:</strong><br/>
-                  2, 3, 5, 7, 11, 13, 17, 19, 23
+                  <strong>There are 4 prime numbers between 1 and 10:</strong><br/>
+                  2, 3, 5, 7
                 </div>
 
                 <div style={{ marginBottom: 24 }}>
@@ -646,7 +646,7 @@
                         onClick={() => { g.maxPrime = prime; re(); }}
                         style={{
                           padding: "6px 10px",
-                          fontSize: "clamp(10px, 1.2vw, 12px)",
+                          fontSize: "11px",
                           border: prime === g.maxPrime ? "2px solid #00f5d4" 
                             : prime < g.maxPrime ? "1px solid rgba(0,245,212,0.4)" 
                             : "1px solid rgba(155,93,229,0.3)",
@@ -660,31 +660,8 @@
                           cursor: "pointer",
                           fontFamily: "'Courier New', monospace",
                           fontWeight: prime === g.maxPrime ? 700 : prime < g.maxPrime ? 600 : 400,
-                          transition: "all 0.2s",
                           textAlign: "center",
                           minWidth: "28px"
-                        }}
-                        onMouseEnter={(e) => {
-                          if (prime === g.maxPrime) {
-                            e.target.style.background = "rgba(0,245,212,0.2)";
-                          } else if (prime < g.maxPrime) {
-                            e.target.style.background = "rgba(0,245,212,0.1)";
-                            e.target.style.borderColor = "rgba(0,245,212,0.6)";
-                          } else {
-                            e.target.style.background = "rgba(155,93,229,0.15)";
-                            e.target.style.borderColor = "rgba(155,93,229,0.5)";
-                          }
-                        }}
-                        onMouseLeave={(e) => {
-                          if (prime === g.maxPrime) {
-                            e.target.style.background = "rgba(0,245,212,0.15)";
-                          } else if (prime < g.maxPrime) {
-                            e.target.style.background = "rgba(0,245,212,0.05)";
-                            e.target.style.borderColor = "rgba(0,245,212,0.4)";
-                          } else {
-                            e.target.style.background = "rgba(155,93,229,0.08)";
-                            e.target.style.borderColor = "rgba(155,93,229,0.3)";
-                          }
                         }}
                       >
                         {prime === 3 ? "2 & 3" : prime.toString()}
@@ -693,7 +670,7 @@
                   </div>
                   <div style={{ fontSize: 10, color: "#c8c8e0", marginTop: 6, textAlign: "center" }}>
                     Selected: <span style={{ color: "#00f5d4", fontFamily: "'Courier New', monospace", fontWeight: 700 }}>
-                      {g.maxPrime === 23 ? "Primes ≤ 23" : g.maxPrime === 3 ? "Primes ≤ 3" : `Primes ≤ ${g.maxPrime}`}
+                      {g.maxPrime === 7 ? "Primes ≤ 7" : g.maxPrime === 3 ? "Primes ≤ 3" : `Primes ≤ ${g.maxPrime}`}
                     </span>
                   </div>
                 </div>
