@@ -129,6 +129,11 @@
           const primes = ALL_PRIMES.filter(p => p <= maxPrime || (maxPrime === 3 && p === 2));
           return primes[Math.floor(Math.random() * primes.length)];
         }
+        function randValDifferent(currentVal, maxPrime = 23) {
+          const primes = ALL_PRIMES.filter(p => p <= maxPrime || (maxPrime === 3 && p === 2));
+          const availablePrimes = primes.filter(p => p !== currentVal);
+          return availablePrimes[Math.floor(Math.random() * availablePrimes.length)];
+        }
         function adj(a, b) { return Math.abs(a.x - b.x) <= 1 && Math.abs(a.y - b.y) <= 1 && (Math.abs(a.x - b.x) + Math.abs(a.y - b.y) > 0); }
 
         function isComposite(n) {
@@ -381,6 +386,7 @@
             flash: null, combo: 0, totalPaths: 0, lastTurn: 0, timeLeft: BASE_TURN,
             dragging: false, shakeUntil: 0, clearAnim: [], turnTime: BASE_TURN,
             deadCount: 0, maxPrime: 3, turnInProgress: false,
+            paused: false, showQuitConfirmation: false, quitMode: false, pauseStartTime: 0, totalPausedTime: 0,
           }).current;
 
           const timerRef = React.useRef(null);
@@ -405,20 +411,20 @@
             for (const ky in g.board) if (!g.board[ky].dead) { alive = true; break; }
             if (!alive) { g.gameOver = true; stopTimer(); }
             
-            // Advance to next round when time runs out (failed goal)
-            g.round += 1;
+            // Timer runs out - stay in same round, just advance turn
             if (g.round >= ROUNDS) { g.gameOver = true; stopTimer(); }
             
-            g.lastTurn = Date.now(); g.turnTime = turnTime(); g.timeLeft = g.turnTime;
+            g.lastTurn = Date.now(); g.turnTime = turnTime(); g.timeLeft = g.turnTime; g.totalPausedTime = 0; g.pauseStartTime = 0;
             g.turnInProgress = false; // Reset flag
             re();
           }
 
           function startTimer() {
             stopTimer();
-            g.lastTurn = Date.now(); g.turnTime = turnTime(); g.timeLeft = g.turnTime;
+            g.lastTurn = Date.now(); g.turnTime = turnTime(); g.timeLeft = g.turnTime; g.totalPausedTime = 0; g.pauseStartTime = 0;
             timerRef.current = setInterval(() => {
-              const el = Date.now() - g.lastTurn;
+              if (g.paused) return; // Don't update timer when paused
+              const el = Date.now() - g.lastTurn - g.totalPausedTime;
               if (el >= g.turnTime && !g.turnInProgress) {
                 g.shakeUntil = Date.now() + 600; // Light rumble for 600ms when time is up
                 g.flash = { text: "TIME'S UP", bad: true };
@@ -467,7 +473,7 @@
             setTimeout(() => { g.clearAnim = []; re(); }, 400); // Shorter duration for glow effect
             for (const s of sel) {
               const c = g.board[k(s.x, s.y)];
-              c.val = randVal(g.maxPrime); c.life = MAX_LIFE; c.dead = false;
+              c.val = randValDifferent(c.val, g.maxPrime); c.life = MAX_LIFE; c.dead = false;
             }
             g.deadCount = Object.values(g.board).filter(c => c.dead).length;
             g.flash = { text: `+${pts}${g.combo > 1 ? ` ×${g.combo}` : ""}${efficiencyBonus > 0 ? ` EFFICIENCY +${efficiencyBonus}` : ""} [Σ=${pathSum}]`, bad: false, success: true };
@@ -488,7 +494,7 @@
               }
             }
             
-            g.lastTurn = Date.now(); g.turnTime = turnTime(); g.timeLeft = g.turnTime;
+            g.lastTurn = Date.now(); g.turnTime = turnTime(); g.timeLeft = g.turnTime; g.totalPausedTime = 0; g.pauseStartTime = 0;
             re(); return true;
           }
 
@@ -519,7 +525,7 @@
           }
 
           function onPointerDown(e) {
-            if (g.gameOver) return;
+            if (g.gameOver || g.paused || g.showQuitConfirmation) return;
             e.preventDefault();
             const c = cellFromEvent(e);
             if (!c) return;
@@ -529,7 +535,7 @@
           }
 
           function onPointerMove(e) {
-            if (!g.dragging || g.gameOver) return;
+            if (!g.dragging || g.gameOver || g.paused || g.showQuitConfirmation) return;
             e.preventDefault();
             const c = cellFromEvent(e);
             if (!c) return;
@@ -809,7 +815,7 @@
               fontFamily: "Georgia, serif", color: "#c8c8e0", userSelect: "none", padding: 8,
               boxSizing: "border-box",
               transition: "background 0.2s ease-in-out"
-            }}>
+            }} className={(g.paused || g.showQuitConfirmation) ? "paused-game" : ""}>
               {/* Top Menu Bar - Centered */}
               <div style={{
                 width: BOARD_WIDTH,
@@ -821,12 +827,12 @@
                 overflow: "hidden"
               }}>
                 <div className={`marquee ${g.flash?.success ? 'success' : ''} ${(g.flash?.bad || g.flash?.success) ? 'flash' : ''}`} style={{
-                  animation: g.flash?.bad ? "none" : g.flash?.success ? "none" : "marquee 12s linear infinite, colorShift 8s ease-in-out infinite",
                   color: g.flash?.bad ? "#ff4444" : g.flash?.success ? "#00ff44" : undefined,
                   WebkitTextFillColor: g.flash?.bad ? "#ff4444" : g.flash?.success ? "#00ff44" : undefined,
                   background: g.flash?.bad ? "none" : g.flash?.success ? "none" : undefined,
                   WebkitBackgroundClip: g.flash?.bad ? "text" : g.flash?.success ? "text" : undefined,
                   animation: g.flash?.bad ? "blink 0.3s ease-in-out 3" : g.flash?.success ? "blink 0.3s ease-in-out 3" : "marquee 12s linear infinite, colorShift 8s ease-in-out infinite",
+                  animationPlayState: g.flash?.bad ? "running" : g.flash?.success ? "running" : (g.paused || g.showQuitConfirmation) ? "paused" : "running",
                   transform: (g.flash?.bad || g.flash?.success) ? "translateX(0)" : undefined,
                   justifyContent: (g.flash?.bad || g.flash?.success) ? "center" : undefined,
                   display: (g.flash?.bad || g.flash?.success) ? "flex" : undefined,
@@ -834,7 +840,7 @@
                 }}>
                   {g.flash?.bad ? (g.flash.text === "TIME'S UP" ? "TIME'S UP" : "NOT SATISFIED") : g.flash?.success ? g.flash.text : (() => {
                     const upcomingTargets = g.targets.slice(g.round + 1, g.round + 4);
-                    return `GOAL QUEUE: ${upcomingTargets.length > 0 ? upcomingTargets.map(t => `Σ = ${t.val}`).join(' → ') : 'EMPTY'}`;
+                    return `QUEUE: ${upcomingTargets.length > 0 ? upcomingTargets.map(t => `Σ = ${t.val}`).join(' → ') : 'EMPTY'}`;
                   })()}
                 </div>
                 
@@ -1087,15 +1093,15 @@
                           {/* Background */}
                           <div style={{
                             position: "absolute", inset: "7%", borderRadius: "16%",
-                            background: isClearing ? "rgba(254,228,64,0.6)"
+                            background: isClearing ? "rgba(0,255,68,0.6)"
                               : cell.dead ? "#08080f"
                               : isSel ? "rgba(155,93,229,0.3)"
                               : "rgba(12,12,25,0.85)",
-                            border: isClearing ? "3px solid #fee440"
+                            border: isClearing ? "3px solid #00ff44"
                               : cell.dead ? "1px solid #0c0c18"
                               : isSel ? "2px solid #9b5de5aa"
                               : `1px solid rgba(80,80,130,${0.06 + lifePct * 0.1})`,
-                            boxShadow: isClearing ? "0 0 30px #fee44088, 0 0 60px #fee44044, inset 0 0 20px #fee44033"
+                            boxShadow: isClearing ? "0 0 30px #00ff4488, 0 0 60px #00ff4444, inset 0 0 20px #00ff4433"
                               : isSel ? "0 0 10px rgba(155,93,229,0.2)"
                               : "none",
                             transition: "all 0.12s",
@@ -1145,6 +1151,27 @@
                               {cell.val}
                             </div>
                           )}
+
+                          {/* Smoke puff effect when clearing */}
+                          {isClearing && (
+                            <div style={{
+                              position: "absolute",
+                              inset: 0,
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              pointerEvents: "none",
+                            }}>
+                              <div style={{
+                                width: "60%",
+                                height: "60%",
+                                borderRadius: "50%",
+                                background: "radial-gradient(circle, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0.4) 30%, rgba(255,255,255,0.1) 60%, transparent 100%)",
+                                animation: "smokePuff 0.8s ease-out forwards",
+                                filter: "blur(2px)",
+                              }} />
+                            </div>
+                          )}
                         </div>
                       );
                     })
@@ -1164,8 +1191,7 @@
                       {g.won ? "SUMMATION COMPLETE" : "SUMMATION FAILED"}
                     </div>
                     <div style={{ fontSize: 13, color: "#555", fontFamily: "monospace", textAlign: "center", lineHeight: 1.8 }}>
-                      {g.score} pts · {g.totalPaths} goals met · {g.turn} turns · Primes ≤ {g.maxPrime}
-                      {!g.won && <><br />Round {g.round + 1}/{ROUNDS} · {Math.round((1 - g.deadCount / (W * H)) * 100)}% survived</>}
+                      {g.score} pts · {g.round}/{ROUNDS} rounds · {g.turn} turns · Primes ≤ {g.maxPrime}
                     </div>
                     <div onClick={() => { g.started = false; re(); }} style={{
                       marginTop: 6, padding: "10px 30px", fontSize: 12,
@@ -1183,6 +1209,66 @@
                 flexDirection: "column",
                 gap: "clamp(4px, 0.5vw, 8px)"
               }}>
+                {/* Control Buttons */}
+                <div style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  marginBottom: 4,
+                }}>
+                  <button
+                    onClick={() => { 
+                      if (!g.paused) {
+                        g.pauseStartTime = Date.now();
+                        g.paused = true; 
+                        g.quitMode = false;
+                        g.showQuitConfirmation = true; // Show popup
+                      }
+                      re(); 
+                    }}
+                    style={{
+                      padding: "8px 16px",
+                      fontSize: "clamp(10px, 1.2vw, 12px)",
+                      fontWeight: 700,
+                      fontFamily: "'Georgia', serif",
+                      letterSpacing: 1,
+                      textTransform: "uppercase",
+                      background: g.paused ? "rgba(0,245,212,0.2)" : "rgba(155,93,229,0.2)",
+                      color: g.paused ? "#00f5d4" : "#9b5de5",
+                      border: g.paused ? "1px solid #00f5d4" : "1px solid #9b5de5",
+                      borderRadius: 6,
+                      cursor: "pointer",
+                      transition: "all 0.2s ease"
+                    }}
+                  >
+                    ⏸ PAUSE
+                  </button>
+                  <button
+                    onClick={() => { 
+                      if (!g.paused) {
+                        g.pauseStartTime = Date.now();
+                        g.paused = true;
+                      }
+                      g.quitMode = true;
+                      g.showQuitConfirmation = true; re(); 
+                    }}
+                    style={{
+                      padding: "8px 16px",
+                      fontSize: "clamp(10px, 1.2vw, 12px)",
+                      fontWeight: 700,
+                      fontFamily: "'Georgia', serif",
+                      letterSpacing: 1,
+                      textTransform: "uppercase",
+                      background: "rgba(241,91,181,0.2)",
+                      color: "#f15bb5",
+                      border: "1px solid #f15bb5",
+                      borderRadius: 6,
+                      cursor: "pointer",
+                      transition: "all 0.2s ease"
+                    }}
+                  >
+                    ↺ QUIT
+                  </button>
+                </div>
                 {/* Turn bars at bottom */}
                 <div style={{
                   width: "100%",
@@ -1195,7 +1281,7 @@
                   {Array.from({ length: MAX_LIFE }, (_, i) => (
                     <div key={i} style={{
                       height: 6, borderRadius: 3,
-                      background: i < g.turn ? "#f15bb5" : "#2a2a3e",
+                      background: i <= g.turn ? "#f15bb5" : "#2a2a3e",
                       border: "none",
                       flex: 1,
                       margin: "0 1px"
@@ -1213,7 +1299,7 @@
                     textTransform: "uppercase",
                     fontWeight: 700,
                     textShadow: "0 0 4px rgba(0,0,0,0.8)"
-                  }}>TURNS THIS ROUND</div>
+                  }}>TURN THIS ROUND</div>
                 </div>
                 
                 {/* Progress bars at bottom */}
@@ -1248,6 +1334,7 @@
                     textShadow: "0 0 4px rgba(0,0,0,0.8)"
                   }}>ROUND</div>
                 </div>
+
               </div>
               
                             
@@ -1334,6 +1421,122 @@
                   </div>
                 </div>
               )}
+
+              {/* Quit Confirmation Popup */}
+              {g.showQuitConfirmation && (
+                <div style={{
+                  position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
+                  background: "rgba(4,4,12,0.95)", backdropFilter: "blur(8px)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  zIndex: 1000, padding: 20
+                }}>
+                  <div style={{
+                    background: "rgba(15,23,42,0.6)",
+                    border: "1px solid rgba(155,93,229,0.2)",
+                    borderRadius: 12,
+                    padding: "32px",
+                    maxWidth: 400,
+                    width: "100%",
+                    textAlign: "center",
+                    position: "relative"
+                  }}>
+                                        
+                    <h2 style={{
+                      fontSize: "clamp(24px, 4vw, 32px)", letterSpacing: 6, color: "#f8fafc",
+                      textAlign: "center", margin: "0 0 16px 0", fontFamily: "Georgia, serif",
+                      fontWeight: 900
+                    }}>{!g.quitMode ? "GAME PAUSED" : "ARE YOU SURE?"}</h2>
+                    
+                    <p style={{
+                      fontSize: "clamp(14px, 2vw, 16px)", color: "#94a3b8",
+                      fontFamily: "Georgia, serif", textAlign: "center",
+                      maxWidth: 320, lineHeight: 1.5, margin: "0 0 24px 0"
+                    }}>
+                      {!g.quitMode ? "" : "All progress will be lost and you'll return to the main menu"}
+                    </p>
+                    
+                    <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
+                      {!g.quitMode ? (
+                        <button
+                          onClick={() => {
+                            g.totalPausedTime += Date.now() - g.pauseStartTime;
+                            g.paused = false; 
+                            g.quitMode = false;
+                            g.showQuitConfirmation = false;
+                            re();
+                          }}
+                          style={{
+                            padding: "12px 24px",
+                            fontSize: "clamp(12px, 1.5vw, 14px)",
+                            fontWeight: 700,
+                            fontFamily: "Georgia, serif",
+                            letterSpacing: 2,
+                            textTransform: "uppercase",
+                            background: "rgba(0,245,212,0.2)",
+                            color: "#00f5d4",
+                            border: "1px solid #00f5d4",
+                            borderRadius: 6,
+                            cursor: "pointer",
+                            transition: "all 0.2s ease"
+                          }}
+                        >
+                          ▶ RESUME
+                        </button>
+                      ) : (
+                        <>
+                          <button
+                            onClick={() => {
+                              g.gameOver = false; g.won = false; g.started = false;
+                              g.paused = false; g.quitMode = false; g.showQuitConfirmation = false;
+                              re();
+                            }}
+                            style={{
+                              padding: "12px 24px",
+                              fontSize: "clamp(12px, 1.5vw, 14px)",
+                              fontWeight: 700,
+                              fontFamily: "Georgia, serif",
+                              letterSpacing: 2,
+                              textTransform: "uppercase",
+                              background: "rgba(241,91,181,0.2)",
+                              color: "#f15bb5",
+                              border: "1px solid #f15bb5",
+                              borderRadius: 6,
+                              cursor: "pointer",
+                              transition: "all 0.2s ease"
+                            }}
+                          >
+                            QUIT TO MENU
+                          </button>
+                          <button
+                            onClick={() => { 
+                            g.totalPausedTime += Date.now() - g.pauseStartTime;
+                            g.paused = false; 
+                            g.quitMode = false;
+                            g.showQuitConfirmation = false; re(); 
+                          }}
+                            style={{
+                              padding: "12px 24px",
+                              fontSize: "clamp(12px, 1.5vw, 14px)",
+                              fontWeight: 700,
+                              fontFamily: "Georgia, serif",
+                              letterSpacing: 2,
+                              textTransform: "uppercase",
+                              background: "rgba(155,93,229,0.2)",
+                              color: "#9b5de5",
+                              border: "1px solid #9b5de5",
+                              borderRadius: 6,
+                              cursor: "pointer",
+                              transition: "all 0.2s ease"
+                            }}
+                          >
+                            KEEP PLAYING
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           );
 
@@ -1343,6 +1546,8 @@
             @keyframes electricGlow{0%,100%{opacity:1}50%{opacity:0.6}}
             @keyframes fu{0%{opacity:1;transform:translate(-50%,-50%) scale(.85)}50%{opacity:1;transform:translate(-50%,-65%) scale(1.1)}100%{opacity:0;transform:translate(-50%,-85%) scale(1)}}
             @keyframes pop{0%{transform:scale(1)}40%{transform:scale(1.15);background:rgba(254,228,64,0.5)}100%{transform:scale(1);background:transparent}}
+            @keyframes smokePuff{0%{opacity:0;transform:scale(0.5);filter:blur(4px)}20%{opacity:0.8;transform:scale(1.2);filter:blur(2px)}40%{opacity:1;transform:scale(1.5);filter:blur(1px)}60%{opacity:0.6;transform:scale(2.5);filter:blur(3px)}100%{opacity:0;transform:scale(4);filter:blur(8px)}}
+            .paused-game * { animation-play-state: paused !important; }
             @keyframes successGlow{0%{background:rgba(0,255,68,0);box-shadow:0 0 0px transparent;border:1px solid rgba(0,255,68,0);transform:scale(1)}25%{background:rgba(0,255,68,0.5);box-shadow:0 0 20px #00ff4433;border:2px solid #00ff44;transform:scale(1.03)}50%{background:rgba(0,255,68,0.8);box-shadow:0 0 40px #00ff44,0 0 80px #00ff4444,inset 0 0 30px #00ff4433;border:3px solid #00ff44;transform:scale(1.06)}75%{background:rgba(0,255,68,0.4);box-shadow:0 0 20px #00ff4466,0 0 40px #00ff4433,inset 0 0 15px #00ff4444;border:2px solid #00ff44;transform:scale(1.03)}100%{background:rgba(12,12,25,0.85);box-shadow:none;border:1px solid rgba(80,80,130,0.1);transform:scale(1)}}
             @keyframes successFlash{0%{opacity:0;transform:translate(-50%,-50%) scale(0.5)}20%{opacity:1;transform:translate(-50%,-50%) scale(1.2);color:#00ff44;text-shadow:0 0 30px #00ff44,0 0 60px #00ff4466,0 0 90px #00ff4444}40%{opacity:1;transform:translate(-50%,-55%) scale(1.4);color:#00ff44;text-shadow:0 0 40px #00ff44,0 0 80px #00ff4466,0 0 120px #00ff4444}60%{opacity:0.8;transform:translate(-50%,-60%) scale(1.2);color:#00ff44;text-shadow:0 0 20px #00ff4444}100%{opacity:0;transform:translate(-50%,-70%) scale(0.8);color:#00ff44;text-shadow:none}}
             @keyframes lowPulse{0%,100%{border-color:rgba(255,68,68,0.15)}50%{border-color:rgba(255,68,68,0.35)}}
