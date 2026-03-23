@@ -364,6 +364,91 @@
     opacity: 1;
     transform: translateY(0);
   }
+
+  /* Companion Page Popup */
+  #companion-page-popup {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 100%;
+    background: rgba(2,6,23,0.98);
+    backdrop-filter: blur(10px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+  }
+
+  #companion-page-popup.visible {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  #companion-page-content {
+    width: 95%;
+    max-width: 900px;
+    height: 85%;
+    max-height: 700px;
+    background: rgba(15,23,42,0.95);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+  }
+
+  #companion-page-header {
+    padding: 20px 24px;
+    background: rgba(2,6,23,0.8);
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-shrink: 0;
+  }
+
+  #companion-page-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  #close-companion-page-btn {
+    background: none;
+    border: 1px solid rgba(255,255,255,0.2);
+    color: #fff;
+    padding: 8px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.2s ease;
+  }
+
+  #close-companion-page-btn:hover {
+    background: rgba(255,255,255,0.1);
+    border-color: rgba(255,255,255,0.3);
+  }
+
+  #companion-page-iframe-container {
+    flex: 1;
+    overflow: hidden;
+    background: #030712;
+  }
+
+  #companion-page-iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    background: #030712;
+  }
 </style>
 </head>
 <body>
@@ -412,6 +497,19 @@
     <span>v.01</span>
     <span>&copy; <a href="https://www.mistermarx.com/" target="_blank" style="color: inherit; text-decoration: none;">mistermarx.com</a> 2026</span>
   </div>
+  
+  <!-- Companion Page Popup -->
+  <div id="companion-page-popup">
+    <div id="companion-page-content">
+      <div id="companion-page-header">
+        <div id="companion-page-title">COMPANION PAGE</div>
+        <button id="close-companion-page-btn">Close</button>
+      </div>
+      <div id="companion-page-iframe-container">
+        <iframe id="companion-page-iframe" src="" title="Companion Page"></iframe>
+      </div>
+    </div>
+  </div>
 </div>
 <script>
 const GAMES=[
@@ -421,16 +519,20 @@ const GAMES=[
   {id:4,title:"Neon Saints",genre:"Shooter",colors:["#1a1a00","#ffea00","#6b5a1a","#1a1500"],accent:"#ffea00",icon:"🎮",lastPlayed:"Last week",progress:12,activities:["Campaign","Warzone","Co-op Missions","Armory"],description:"",screens:[]},
   {id:5,title:"Verdant",genre:"Simulation",colors:["#001a0a","#69f0ae","#1a6b2d","#0a2a10"],accent:"#69f0ae",icon:"🎮",lastPlayed:"2 weeks ago",progress:45,activities:["Continue Farm","Visit Friends","Seasonal Event","Market"],description:"",screens:[]},
   {id:6,title:"Obsidian Keep",genre:"Souls-like",colors:["#0d0d0d","#b0bec5","#3a3a3a","#111111"],accent:"#b0bec5",icon:"🎮",lastPlayed:"1 month ago",progress:21,activities:["Continue","PvP Arena","Boss Rush","Lore Codex"],description:"",screens:[]},
-  {id:7,title:"Starfield Echo",genre:"Sci-Fi RPG",colors:["#0a0a1e","#448aff","#1a2d6b","#060618"],accent:"#448aff",icon:"🎮",lastPlayed:"Just now",progress:5,activities:["Begin Journey","Ship Builder","Galaxy Map","Side Quests"],description:"",screens:[]},
-  {id:8,title:"Kitsune Trails",genre:"Platformer",colors:["#1e0a1a","#ff80ab","#6b1a5a","#150a12"],accent:"#ff80ab",icon:"🎮",lastPlayed:"4 days ago",progress:52,activities:["World 5","Speed Run","Hidden Levels","Costumes"],description:"",screens:[]},
+  {id:7,title:"Starfield Echo",genre:"Sci-Fi RPG",colors:["#0a0a1e","#448aff","#1a2d6b","#060618"],accent:"#448aff",icon:"🎮",lastPlayed:"Just now",progress:5,activities:["Begin Journey","Ship Builder","Galaxy Map","Side Quests","Companion Page"],description:"",screens:[]},
+  {id:8,title:"Kitsune Trails",genre:"Platformer",colors:["#1e0a1a","#ff80ab","#6b1a5a","#150a12"],accent:"#ff80ab",icon:"🎮",lastPlayed:"4 days ago",progress:52,activities:["World 5","Speed Run","Hidden Levels","Costumes","Companion Page"],description:"",screens:[]},
   {id:9,title:"New Game",genre:"New Genre",colors:["#123456","#654321","#111111","#222222"],accent:"#654321",icon:"🎮",lastPlayed:"Never",progress:0,activities:["Start Game"],description:"",screens:[]}
 ];
 
 let selectedIndex=0, showActivities=false, transitioning=false;
 let currentSlide=0, autoPlayInterval, isAutoPlaying=true;
+let showCompanionPage=false;
 const particlesEl=document.getElementById('particles');
 const carouselEl=document.getElementById('carousel');
 const slideshowEl=document.getElementById('game-slideshow');
+const companionPagePopup=document.getElementById('companion-page-popup');
+const companionPageContent=document.getElementById('companion-page-content');
+const closeCompanionPageBtn=document.getElementById('close-companion-page-btn');
 
 for(let i=0;i<20;i++){
   const p=document.createElement('div');
@@ -470,10 +572,24 @@ function render(){
   const companionBtn=document.getElementById('play-companion-btn');
   companionBtn.onclick=()=>{
     const game=GAMES[selectedIndex];
-    if(game.id===1) window.open('https://play.mistermarx.com/correlation/companion-page.html', '_blank');
-    else if(game.id===2) window.open('https://play.mistermarx.com/mathInSpace/companion-page.html', '_blank');
-    else window.open('#', '_blank');
+    let companionUrl = '';
+    if(game.id===1) companionUrl='https://play.mistermarx.com/correlation/companion-page.html';
+    else if(game.id===2) companionUrl='https://play.mistermarx.com/mathInSpace/companion-page.html';
+    else companionUrl='#';
+    
+    if(companionUrl !== '#') {
+      showCompanionPagePopup(companionUrl);
+    }
   };
+  
+  // Update About Our Games button to show popup
+  const aboutGamesLink = document.querySelector('a[href*="about-our-games"]');
+  if(aboutGamesLink) {
+    aboutGamesLink.onclick=(e)=>{
+      e.preventDefault();
+      showCompanionPagePopup('index.html');
+    };
+  }
   
   // Update slideshow visibility and content
   updateSlideshow();
@@ -639,6 +755,25 @@ function calculateSlideshowHeight(){
   slideshowContainer.style.height=finalHeight+'px';
 }
 
+// Companion Page Popup Functions
+function showCompanionPagePopup(url) {
+  const popup = document.getElementById('companion-page-popup');
+  const iframe = document.getElementById('companion-page-iframe');
+  
+  iframe.src = url;
+  popup.classList.add('visible');
+  showCompanionPage = true;
+}
+
+function hideCompanionPagePopup() {
+  const popup = document.getElementById('companion-page-popup');
+  const iframe = document.getElementById('companion-page-iframe');
+  
+  popup.classList.remove('visible');
+  iframe.src = '';
+  showCompanionPage = false;
+}
+
 document.getElementById('play-btn').addEventListener('click',()=>{
   const game=GAMES[selectedIndex];
   if(game.id===1) window.open('https://www.mistermarx.com/games/correlation', '_blank');
@@ -647,6 +782,18 @@ document.getElementById('play-btn').addEventListener('click',()=>{
 });
 document.getElementById('arrow-left').addEventListener('click',()=>{carouselEl.scrollBy({left:-160,behavior:'smooth'})});
 document.getElementById('arrow-right').addEventListener('click',()=>{carouselEl.scrollBy({left:160,behavior:'smooth'})});
+
+// Companion page close button event listener
+document.getElementById('close-companion-page-btn').addEventListener('click',()=>{
+  hideCompanionPagePopup();
+});
+
+// Close popup on Escape key
+document.addEventListener('keydown',(e)=>{
+  if(e.key==='Escape' && showCompanionPage) {
+    hideCompanionPagePopup();
+  }
+});
 
 // Window resize listener for dynamic height calculation
 window.addEventListener('resize',()=>{
