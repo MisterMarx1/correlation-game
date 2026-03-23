@@ -2471,9 +2471,6 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
                         <div className={`fog-overlay ${isFogDisappearing ? 'disappearing' : ''}`} onClick={() => {
                             if (!isFogDisappearing && isPageLoaded) {
                                 setIsFogDisappearing(true);
-                                const impactSound = new Audio('sfx/mixkit-cinematic-impact-waves-781 (1).wav');
-                                impactSound.volume = 0.5;
-                                impactSound.play().catch(e => console.log('Impact sound play failed:', e));
                                 setTimeout(() => {
                                     setShowFogOverlay(false);
                                     setIsFogDisappearing(false);
