@@ -980,7 +980,7 @@
                 this.loopTimer = null; // Timer for next track start
                 
                 this.loadAllSounds();
-                this.startBackgroundMusic(); // Start immediately on page load
+                // Don't start background music on page load - wait for user interaction
             }
 
             loadAllSounds() {
@@ -2471,6 +2471,8 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
                         <div className={`fog-overlay ${isFogDisappearing ? 'disappearing' : ''}`} onClick={() => {
                             if (!isFogDisappearing && isPageLoaded) {
                                 setIsFogDisappearing(true);
+                                // Initialize audio on user interaction
+                                soundManager.startBackgroundMusic();
                                 setTimeout(() => {
                                     setShowFogOverlay(false);
                                     setIsFogDisappearing(false);
