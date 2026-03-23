@@ -47,8 +47,9 @@
             max-height: var(--app-height, 100dvh);
             overflow: hidden;
             position: relative;
+            z-index: 10;
             /* Prevent CLS during loading */
-            background: #030712;
+            background: transparent;
         }
 
         /* Prevent font loading layout shift */
@@ -328,6 +329,109 @@
             }
         }
 
+        /* Dynamic Background Effects from Game Selection */
+        .bg-base {
+            position: fixed; inset: 0; z-index: 0;
+            background: #04040c;
+            transition: background 0.8s ease;
+        }
+        
+        .bg-blobs {
+            position: fixed; inset: 0; z-index: 1;
+            overflow: hidden; transition: opacity 0.5s ease;
+        }
+        
+        .blob {
+            position: absolute; border-radius: 50%;
+            transition: background 0.8s ease;
+        }
+        
+        .blob1 {
+            width: 120%; height: 120%; top: -20%; left: -15%; 
+            opacity: 0.12; filter: blur(80px); 
+            animation: blob1 12s ease-in-out infinite;
+            background: radial-gradient(circle, #9b5de5 0%, transparent 70%);
+        }
+        
+        .blob2 {
+            width: 90%; height: 90%; bottom: -30%; right: -20%; 
+            opacity: 0.15; filter: blur(60px); 
+            animation: blob2 15s ease-in-out infinite;
+            background: radial-gradient(circle, #00f5d4 0%, transparent 70%);
+        }
+        
+        .blob3 {
+            width: 70%; height: 70%; top: 20%; left: 15%; 
+            opacity: 0.18; filter: blur(70px); 
+            animation: blob3 18s ease-in-out infinite;
+            background: radial-gradient(circle, #04040c 0%, transparent 70%);
+        }
+        
+        .blob4 {
+            width: 60%; height: 60%; top: -10%; right: 5%; 
+            opacity: 0.08; filter: blur(90px); 
+            animation: blob4 20s ease-in-out infinite;
+            background: radial-gradient(circle, #f15bb5 0%, transparent 70%);
+        }
+        
+        .bg-noise {
+            position: fixed; inset: 0; z-index: 2; opacity: 0.03;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3Cfilter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+            background-size: 128px 128px;
+        }
+        
+        .bg-particles {
+            position: fixed; inset: 0; z-index: 3; pointer-events: none; overflow: hidden;
+        }
+        
+        .bg-particle {
+            position: absolute; border-radius: 50%; 
+            transition: background 0.8s ease;
+        }
+
+        @keyframes blob1 {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            25% { transform: translate(8%, -6%) scale(1.15); }
+            50% { transform: translate(-5%, 10%) scale(0.9); }
+            75% { transform: translate(10%, 5%) scale(1.1); }
+        }
+        
+        @keyframes blob2 {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(-10%, 8%) scale(1.2); }
+            66% { transform: translate(6%, -10%) scale(0.85); }
+        }
+        
+        @keyframes blob3 {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            20% { transform: translate(12%, 5%) scale(1.1); }
+            40% { transform: translate(-8%, -12%) scale(0.95); }
+            60% { transform: translate(5%, 15%) scale(1.15); }
+            80% { transform: translate(-10%, -5%) scale(0.9); }
+        }
+        
+        @keyframes blob4 {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(-15%, 10%) scale(1.25); }
+        }
+        
+        @keyframes float0 {
+            0%, 100% { transform: translateY(0) translateX(0); }
+            33% { transform: translateY(-20px) translateX(10px); }
+            66% { transform: translateY(10px) translateX(-5px); }
+        }
+        
+        @keyframes float1 {
+            0%, 100% { transform: translateY(0) translateX(0); }
+            50% { transform: translateY(-30px) translateX(-15px); }
+        }
+        
+        @keyframes float2 {
+            0%, 100% { transform: translateY(0); }
+            25% { transform: translateY(15px) translateX(8px); }
+            75% { transform: translateY(-10px) translateX(-12px); }
+        }
+
         /* --- Circular Progress Spinner --- */
         .fog-progress-container {
             position: absolute;
@@ -408,6 +512,17 @@
     </style>
 </head>
 <body>
+    <!-- Dynamic Background Effects -->
+    <div class="bg-base"></div>
+    <div class="bg-blobs">
+        <div class="blob blob1"></div>
+        <div class="blob blob2"></div>
+        <div class="blob blob3"></div>
+        <div class="blob blob4"></div>
+    </div>
+    <div class="bg-noise"></div>
+    <div class="bg-particles" id="bg-particles"></div>
+    
     <!-- Font loading guard to prevent CLS -->
     <div class="font-loading-guard" style="position:absolute;visibility:hidden;z-index:-1;">ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789</div>
     
@@ -440,6 +555,25 @@
         window.visualViewport.addEventListener('resize', syncAppHeight);
         window.visualViewport.addEventListener('scroll', syncAppHeight);
       }
+      
+      // Generate floating particles for dynamic background
+      const particlesEl = document.getElementById('bg-particles');
+      for(let i = 0; i < 20; i++){
+        const p = document.createElement('div');
+        p.className = 'bg-particle';
+        const s = 2 + Math.random() * 3;
+        Object.assign(p.style, {
+          width: s + 'px', 
+          height: s + 'px', 
+          opacity: 0.15 + Math.random() * 0.2, 
+          left: Math.random() * 100 + '%', 
+          top: Math.random() * 100 + '%', 
+          animation: 'float' + (i % 3) + ' ' + (6 + Math.random() * 8) + 's ease-in-out infinite', 
+          animationDelay: Math.random() * 5 + 's',
+          background: '#9b5de5'
+        });
+        particlesEl.appendChild(p);
+      }
     </script>
     
     <script type="text/babel">
@@ -465,6 +599,11 @@
             weldingCrossfadeTimer: null,
             weldingCrossfadeMs: 1000,
             
+            // Electric humming sound system
+            electricHumPlayers: [],
+            electricHumCrossfadeTimer: null,
+            electricHumCrossfadeMs: 3500, // 3.5 second overlap
+            
             // Audio object pooling for performance
             audioPool: {},
             maxPoolSize: 5,
@@ -488,7 +627,15 @@
                 this.musicOverlapMs = 3000; // 3 second overlap
                 
                 // Predefined sound file paths
-                this.soundFiles = {};
+                this.soundFiles = {
+                    'mixkit-record-player-needle-drop-on-vinyl-701.wav': 'sfx/mixkit-record-player-needle-drop-on-vinyl-701.wav',
+                    'mixkit-mouse-squeak-1019.wav': 'sfx/mixkit-mouse-squeak-1019.wav',
+                    'mixkit-laser-game-over-1946.wav': 'sfx/mixkit-laser-game-over-1946.wav',
+                    'mixkit-low-electricity-humming-2132.wav': 'sfx/mixkit-low-electricity-humming-2132.wav',
+                    'mixkit-melodic-bonus-collect-1938.wav': 'sfx/mixkit-melodic-bonus-collect-1938.wav',
+                    'mixkit-game-user-interface-tone-2570.wav': 'sfx/mixkit-game-user-interface-tone-2570.wav',
+                    'mixkit-explainer-video-game-reveal-235 (1).wav': 'sfx/mixkit-explainer-video-game-reveal-235 (1).wav'
+                };
                 
                 // Initialize audio pools
                 Object.keys(this.soundFiles).forEach(key => {
@@ -649,6 +796,91 @@
 
                 this.weldingPlayers = [];
                 this.weldingSound = null;
+            },
+            
+            startElectricHumLoop(volume = 0.45) {
+                if (!this.enabled || !this.sounds['mixkit-low-electricity-humming-2132.wav']) return;
+
+                this.stopElectricHumLoop();
+
+                // Use pooled audio objects instead of cloning
+                const a = this.audioPool['mixkit-low-electricity-humming-2132.wav']?.[0];
+                const b = this.audioPool['mixkit-low-electricity-humming-2132.wav']?.[1];
+
+                if (!a || !b) return; // Fallback if pool not ready
+
+                a.volume = this.volume * volume;
+                b.volume = this.volume * volume;
+
+                a.currentTime = 0;
+                b.currentTime = 0;
+
+                this.electricHumPlayers = [a, b];
+
+                // INP FIX: Defer electric hum loop start to avoid blocking interaction
+                const startPlayer = (player) => {
+                    player.currentTime = 0;
+                    // Use requestAnimationFrame to defer playback
+                    requestAnimationFrame(() => {
+                        player.play().catch(e => console.log('Electric hum play failed:', e));
+                    });
+                    this.activeSounds.add(player);
+                };
+
+                const scheduleNext = (currentIndex) => {
+                    const current = this.electricHumPlayers[currentIndex];
+                    const nextIndex = currentIndex === 0 ? 1 : 0;
+                    const next = this.electricHumPlayers[nextIndex];
+
+                    const loopOnceReady = () => {
+                        if (!current.duration || !isFinite(current.duration)) {
+                            this.electricHumCrossfadeTimer = setTimeout(() => loopOnceReady(), 50);
+                            return;
+                        }
+
+                        const overlapSeconds = this.electricHumCrossfadeMs / 1000;
+                        const delayMs = Math.max(0, (current.duration - overlapSeconds) * 1000);
+
+                        this.electricHumCrossfadeTimer = setTimeout(() => {
+                            if (!this.electricHumPlayers.length) return;
+
+                            next.volume = this.volume * volume;
+                            next.currentTime = 0;
+                            
+                            // INP FIX: Defer overlap playback
+                            requestAnimationFrame(() => {
+                                next.play().catch(e => console.log('Electric hum overlap play failed:', e));
+                            });
+                            this.activeSounds.add(next);
+
+                            scheduleNext(nextIndex);
+                        }, delayMs);
+                    };
+
+                    loopOnceReady();
+                };
+
+                startPlayer(a);
+                scheduleNext(0);
+            },
+
+            stopElectricHumLoop() {
+                if (this.electricHumCrossfadeTimer) {
+                    clearTimeout(this.electricHumCrossfadeTimer);
+                    this.electricHumCrossfadeTimer = null;
+                }
+
+                this.electricHumPlayers.forEach(player => {
+                    try {
+                        player.pause();
+                        player.currentTime = 0;
+                        this.activeSounds.delete(player);
+                    } catch (error) {
+                        console.log('Electric hum stop failed:', error);
+                    }
+                });
+
+                this.electricHumPlayers = [];
             },
             
             setVolume(vol) {
@@ -832,7 +1064,12 @@
                   color: "#94a3b8",
                   fontFamily: font,
                   letterSpacing: "0.05em",
-                  marginTop: 0
+                  marginTop: 0,
+                  paddingLeft: 8,
+                  paddingRight: 8,
+                  paddingTop: 4,
+                  paddingBottom: 4,
+                  boxSizing: "border-box"
                 }}
               >
                 <span>{version}</span>
@@ -904,7 +1141,10 @@
                 fontSize: 11,
                 color: "#94a3b8",
                 fontFamily: font,
-                paddingBottom: 20
+                paddingBottom: 20,
+                paddingLeft: 8,
+                paddingRight: 8,
+                boxSizing: "border-box"
               }}
             >
               <div
@@ -994,7 +1234,7 @@
           const availablePrimes = primes.filter(p => p !== currentVal);
           return availablePrimes[Math.floor(Math.random() * availablePrimes.length)];
         }
-        function adj(a, b) { return Math.abs(a.x - b.x) <= 1 && Math.abs(a.y - b.y) <= 1 && (Math.abs(a.x - b.x) + Math.abs(a.y - b.y) > 0); }
+        function adj(a, b) { return Math.abs(a.x - b.x) <= 1 && Math.abs(a.y - b.y) <= 1 && (Math.abs(a.x - b.x) + Math.abs(a.y - b.y) === 1); }
 
         function isComposite(n) {
           if (n < 4) return false;
@@ -1157,7 +1397,7 @@
         const CONTROL_ITEMS = [
           {
             title: "DRAG",
-            body: "Click and hold on a cell, then drag through adjacent cells (diagonals allowed) to draw a connected path."
+            body: "Click and hold on a cell, then drag through adjacent cells (no diagonals) to draw a connected path."
           },
           {
             title: "RELEASE",
@@ -1176,7 +1416,7 @@
           },
           {
             title: "PATH DRAWING",
-            body: "Drag through adjacent cells (diagonals allowed) to draw a connected path. Release to submit the path."
+            body: "Drag through adjacent cells (no diagonals) to draw a connected path. Release to submit the path."
           },
           {
             title: "TARGET CONDITIONS",
@@ -1249,7 +1489,7 @@
             board: {}, sel: [], score: 0, round: 0, turn: 0,
             targets: [], gameOver: false, won: false, started: false,
             flash: null, combo: 0, totalPaths: 0, lastTurn: 0, timeLeft: BASE_TURN,
-            dragging: false, shakeUntil: 0, clearAnim: [], turnTime: BASE_TURN,
+            dragging: false, shakeUntil: 0, clearAnim: [], healAnim: [], damageAnim: [], turnTime: BASE_TURN,
             deadCount: 0, maxPrime: 3, turnInProgress: false,
             paused: false, showQuitConfirmation: false, quitMode: false, pauseStartTime: 0, totalPausedTime: 0,
           }).current;
@@ -1266,18 +1506,46 @@
             g.turnInProgress = true;
             
             let died = 0;
+            const damageAnimations = [];
             for (const ky in g.board) {
               const c = g.board[ky];
-              if (!c.dead) { c.life -= 1; if (c.life <= 0) { c.dead = true; c.life = 0; died++; } }
+              if (!c.dead) { 
+                const oldLife = c.life;
+                c.life -= 1; 
+                if (c.life <= 0) { 
+                  c.dead = true; 
+                  c.life = 0; 
+                  died++; 
+                } else if (oldLife > c.life) {
+                  // Track cells that lost life for damage animation - show the circle that disappeared
+                  const [x, y] = ky.split(',').map(Number);
+                  damageAnimations.push({ x, y, lostLifeIndex: oldLife - 1, t: Date.now() });
+                }
+              }
             }
+            g.damageAnim = (g.damageAnim || []).concat(damageAnimations);
+            setTimeout(() => { g.damageAnim = []; re(); }, 800); // Clear damage animations after turn
             g.deadCount += died;
             g.turn += 1; g.sel = []; g.dragging = false;
             let alive = false;
             for (const ky in g.board) if (!g.board[ky].dead) { alive = true; break; }
             if (!alive) { g.gameOver = true; stopTimer(); }
             
-            // Timer runs out - stay in same round, just advance turn
+            // Timer runs out - advance to next target in queue
             if (g.round >= ROUNDS) { g.gameOver = true; stopTimer(); }
+            
+            // Advance to next target
+            g.round += 1;
+            if (g.round < ROUNDS && g.targets[g.round]) {
+              // Validate next round target is still achievable, regenerate if needed
+              if (!canAchieveTarget(g.board, g.targets[g.round], g.maxPrime)) {
+                // Regenerate remaining targets
+                const newTargets = [...g.targets.slice(0, g.round)];
+                const remainingTargets = genTargets(g.maxPrime, g.board);
+                newTargets.push(...remainingTargets.slice(0, ROUNDS - g.round));
+                g.targets = newTargets;
+              }
+            }
             
             g.lastTurn = Date.now(); g.turnTime = turnTime(); g.timeLeft = g.turnTime; g.totalPausedTime = 0; g.pauseStartTime = 0;
             g.turnInProgress = false; // Reset flag
@@ -1293,6 +1561,13 @@
               if (el >= g.turnTime && !g.turnInProgress) {
                 g.shakeUntil = Date.now() + 600; // Light rumble for 600ms when time is up
                 g.flash = { text: "TIME'S UP", bad: true };
+                SoundManager.play('mixkit-laser-game-over-1946.wav', 0.8);
+                // Stop electric humming sound when timer runs out
+                SoundManager.stopElectricHumLoop();
+                // Cancel any ongoing selection when time runs out
+                g.sel = [];
+                g.dragging = false;
+                g.combo = 0;
                 setTimeout(() => { g.flash = null; re(); }, 400);
                 doTurn();
               }
@@ -1318,9 +1593,32 @@
             const vals = sel.map(s => g.board[k(s.x, s.y)].val);
             const tgt = g.targets[g.round];
             if (!checkTarget(tgt, vals)) {
+              // Apply damage to first selected cell for unsatisfied target
+              if (sel.length > 0) {
+                const firstCell = sel[0];
+                const cell = g.board[k(firstCell.x, firstCell.y)];
+                if (cell && !cell.dead) {
+                  const oldLife = cell.life;
+                  cell.life -= 1;
+                  if (cell.life <= 0) {
+                    cell.dead = true;
+                    cell.life = 0;
+                    g.deadCount += 1;
+                  } else if (oldLife > cell.life) {
+                    // Add damage animation for the lost life circle
+                    const damageAnimations = [{ x: firstCell.x, y: firstCell.y, lostLifeIndex: oldLife - 1, t: Date.now() }];
+                    g.damageAnim = (g.damageAnim || []).concat(damageAnimations);
+                    setTimeout(() => { g.damageAnim = []; re(); }, 800);
+                  }
+                }
+              }
               g.flash = { text: "NOT SATISFIED", bad: true };
               g.shakeUntil = Date.now() + 400;
               g.combo = 0; g.dragging = false;
+              // Play game over sound when life is lost from unsatisfied target
+              SoundManager.play('mixkit-laser-game-over-1946.wav', 0.8);
+              // Stop electric humming sound when target is not satisfied
+              SoundManager.stopElectricHumLoop();
               setTimeout(() => { 
                 g.flash = null; 
                 g.sel = []; 
@@ -1336,15 +1634,72 @@
             g.score = Math.min(9999999, g.score + pts); g.totalPaths += 1;
             g.clearAnim = sel.map(s => ({ x: s.x, y: s.y, t: Date.now() }));
             setTimeout(() => { g.clearAnim = []; re(); }, 400); // Shorter duration for glow effect
-            for (const s of sel) {
-              const c = g.board[k(s.x, s.y)];
-              c.val = randValDifferent(c.val, g.maxPrime); c.life = MAX_LIFE; c.dead = false;
+            setTimeout(() => { g.healAnim = []; re(); }, 1000); // Heal animation duration
+            // Used cells get renewed, unused cells lose life, adjacent cells get healed
+            const usedKeys = new Set(g.sel.map(s => k(s.x, s.y)));
+            const adjacentCells = new Set();
+            
+            // Find all adjacent cells (including diagonals)
+            for (const s of g.sel) {
+              for (let dx = -1; dx <= 1; dx++) {
+                for (let dy = -1; dy <= 1; dy++) {
+                  if (dx === 0 && dy === 0) continue; // Skip the cell itself
+                  const nx = s.x + dx;
+                  const ny = s.y + dy;
+                  if (nx >= 0 && nx < W && ny >= 0 && ny < H) {
+                    const key = k(nx, ny);
+                    if (!usedKeys.has(key)) {
+                      adjacentCells.add(key);
+                    }
+                  }
+                }
+              }
             }
-            g.deadCount = Object.values(g.board).filter(c => c.dead).length;
+            
+            // Store heal animation data
+            const healAnimations = Array.from(adjacentCells).map(key => {
+              const [x, y] = key.split(',').map(Number);
+              return { x, y, t: Date.now() };
+            });
+            g.healAnim = (g.healAnim || []).concat(healAnimations);
+            
+            let died = 0;
+            
+            for (const ky in g.board) {
+              const c = g.board[ky];
+              if (usedKeys.has(ky)) {
+                // Used cells get renewed with full life
+                c.val = randValDifferent(c.val, g.maxPrime); 
+                c.life = MAX_LIFE; 
+                c.dead = false;
+              } else if (adjacentCells.has(ky)) {
+                // Adjacent cells get +1 life (max 10), and dead cells come back to life with 1 life
+                if (c.dead) {
+                  c.dead = false;
+                  c.life = 1;
+                  c.val = randVal(g.maxPrime);
+                } else {
+                  c.life = Math.min(MAX_LIFE, c.life + 1);
+                }
+              } else if (!c.dead) {
+                // Unused cells lose 1 life
+                c.life -= 1;
+                if (c.life <= 0) { 
+                  c.dead = true; 
+                  c.life = 0; 
+                  died++; 
+                }
+              }
+            }
+            g.deadCount += died;
             g.flash = { text: `+${pts}${g.combo > 1 ? ` ×${g.combo}` : ""}${efficiencyBonus > 0 ? ` EFFICIENCY +${efficiencyBonus}` : ""} [Σ=${pathSum}]`, bad: false, success: true };
             g.shakeUntil = Date.now() + 400;
             setTimeout(() => { g.flash = null; re(); }, 1800); // Longer duration for success animation
             g.sel = []; g.dragging = false;
+            // Play success sound when selection is successfully completed
+            SoundManager.play('mixkit-melodic-bonus-collect-1938.wav', 0.6);
+            // Stop electric humming sound when selection is successfully completed
+            SoundManager.stopElectricHumLoop();
             g.round += 1;
             if (g.round >= ROUNDS) { g.won = true; g.gameOver = true; stopTimer(); re(); return true; }
             
@@ -1376,17 +1731,17 @@
           }
 
           function addToSel(x, y) {
-            const c = g.board[k(x, y)];
-            if (!c || c.dead) return;
-            const sel = g.sel;
-            const idx = sel.findIndex(s => s.x === x && s.y === y);
-            if (idx > 0) { g.sel = sel.slice(0, idx + 1); re(); return; }
-            if (sel.length === 0 || adj(sel[sel.length - 1], { x, y })) {
-              // Don't add duplicates
-              if (!sel.find(s => s.x === x && s.y === y)) {
-                g.sel = [...sel, { x, y }]; re();
-              }
-            }
+            const key = k(x, y);
+            const cell = g.board[key];
+            
+            // Don't add dead cells to selection
+            if (cell && cell.dead) return;
+            
+            const idx = g.sel.findIndex(s => s.x === x && s.y === y);
+            if (idx >= 0) return;
+            g.sel.push({ x, y });
+            SoundManager.play('mixkit-record-player-needle-drop-on-vinyl-701.wav', 0.5); // Play selection sound (louder)
+            re();
           }
 
           function onPointerDown(e) {
@@ -1394,22 +1749,150 @@
             e.preventDefault();
             const c = cellFromEvent(e);
             if (!c) return;
+            
+            // Check if clicked cell is dead - if so, do nothing
+            const clickedCell = g.board[k(c.x, c.y)];
+            if (clickedCell && clickedCell.dead) return;
+            
             g.sel = []; g.combo = Math.max(0, g.combo);
             g.dragging = true;
             addToSel(c.x, c.y);
+            
+            // Start electric humming sound when dragging begins
+            SoundManager.startElectricHumLoop();
           }
 
           function onPointerMove(e) {
             if (!g.dragging || g.gameOver || g.paused || g.showQuitConfirmation) return;
             e.preventDefault();
             const c = cellFromEvent(e);
-            if (!c) return;
+            
+            // If dragging off the board, cancel selection and apply damage (consistent with other invalid drags)
+            if (!c) {
+              // Apply damage to first selected cell before reset
+              if (g.sel.length > 0) {
+                const firstCell = g.sel[0];
+                const cell = g.board[k(firstCell.x, firstCell.y)];
+                if (cell && !cell.dead) {
+                  const oldLife = cell.life;
+                  cell.life -= 1;
+                  if (cell.life <= 0) {
+                    cell.dead = true;
+                    cell.life = 0;
+                    g.deadCount += 1;
+                  } else if (oldLife > cell.life) {
+                    // Add damage animation for the lost life circle
+                    const damageAnimations = [{ x: firstCell.x, y: firstCell.y, lostLifeIndex: oldLife - 1, t: Date.now() }];
+                    g.damageAnim = (g.damageAnim || []).concat(damageAnimations);
+                    setTimeout(() => { g.damageAnim = []; re(); }, 800);
+                  }
+                  // Play game over sound when life is lost from dragging off board
+                  SoundManager.play('mixkit-laser-game-over-1946.wav', 0.8);
+                }
+              }
+              g.sel = [];
+              g.dragging = false;
+              g.combo = 0;
+              // Stop electric humming sound when selection is cancelled
+              SoundManager.stopElectricHumLoop();
+              // Add red background flash for invalid drag
+              g.flash = { text: "INVALID DRAG", bad: true };
+              g.shakeUntil = Date.now() + 400;
+              setTimeout(() => { g.flash = null; re(); }, 400);
+              re();
+              return;
+            }
+            
             const last = g.sel[g.sel.length - 1];
             if (last && last.x === c.x && last.y === c.y) return;
+            
+            // Check if dragging over a dead cell - if so, cancel selection and apply damage
+            const draggedCell = g.board[k(c.x, c.y)];
+            if (draggedCell && draggedCell.dead) {
+              // Apply damage to first selected cell before reset
+              if (g.sel.length > 0) {
+                const firstCell = g.sel[0];
+                const cell = g.board[k(firstCell.x, firstCell.y)];
+                if (cell && !cell.dead) {
+                  const oldLife = cell.life;
+                  cell.life -= 1;
+                  if (cell.life <= 0) {
+                    cell.dead = true;
+                    cell.life = 0;
+                    g.deadCount += 1;
+                  } else if (oldLife > cell.life) {
+                    // Add damage animation for the lost life circle
+                    const damageAnimations = [{ x: firstCell.x, y: firstCell.y, lostLifeIndex: oldLife - 1, t: Date.now() }];
+                    g.damageAnim = (g.damageAnim || []).concat(damageAnimations);
+                    setTimeout(() => { g.damageAnim = []; re(); }, 800);
+                  }
+                  // Play game over sound when life is lost from dragging over dead cell
+                  SoundManager.play('mixkit-laser-game-over-1946.wav', 0.8);
+                }
+              }
+              g.sel = [];
+              g.dragging = false;
+              g.combo = 0;
+              // Stop electric humming sound when selection is cancelled
+              SoundManager.stopElectricHumLoop();
+              // Add red background flash for invalid drag
+              g.flash = { text: "INVALID DRAG", bad: true };
+              g.shakeUntil = Date.now() + 400;
+              setTimeout(() => { g.flash = null; re(); }, 400);
+              re();
+              return;
+            }
+            
+            // Check if new cell is adjacent to the LAST selected cell (match visual dimming logic)
+            let isAdjacentToSelection = false;
+            if (g.sel.length > 0) {
+              const lastCell = g.sel[g.sel.length - 1];
+              const dx = c.x - lastCell.x;
+              const dy = c.y - lastCell.y;
+              isAdjacentToSelection = (dx === 0 && Math.abs(dy) === 1) || (dy === 0 && Math.abs(dx) === 1);
+            }
+            
+            // If not adjacent to any selected cell, reset selection and apply damage
+            if (!isAdjacentToSelection) {
+              // Apply damage to first selected cell before reset
+              if (g.sel.length > 0) {
+                const firstCell = g.sel[0];
+                const cell = g.board[k(firstCell.x, firstCell.y)];
+                if (cell && !cell.dead) {
+                  const oldLife = cell.life;
+                  cell.life -= 1;
+                  if (cell.life <= 0) {
+                    cell.dead = true;
+                    cell.life = 0;
+                    g.deadCount += 1;
+                  } else if (oldLife > cell.life) {
+                    // Add damage animation for the lost life circle
+                    const damageAnimations = [{ x: firstCell.x, y: firstCell.y, lostLifeIndex: oldLife - 1, t: Date.now() }];
+                    g.damageAnim = (g.damageAnim || []).concat(damageAnimations);
+                    setTimeout(() => { g.damageAnim = []; re(); }, 800);
+                  }
+                }
+              }
+              g.sel = [];
+              g.dragging = false;
+              g.combo = 0;
+              // Play game over sound when life is lost from invalid drag
+              SoundManager.play('mixkit-laser-game-over-1946.wav', 0.8);
+              // Stop electric humming sound when selection is cancelled
+              SoundManager.stopElectricHumLoop();
+              // Add red background flash for invalid drag
+              g.flash = { text: "INVALID DRAG", bad: true };
+              g.shakeUntil = Date.now() + 400;
+              setTimeout(() => { g.flash = null; re(); }, 400);
+              re();
+              return;
+            }
+            
             // Allow backtracking
             if (g.sel.length >= 2) {
               const prev = g.sel[g.sel.length - 2];
               if (prev.x === c.x && prev.y === c.y) {
+                SoundManager.play('mixkit-mouse-squeak-1019.wav', 0.15); // Play backtrack sound
                 g.sel = g.sel.slice(0, -1); re(); return;
               }
             }
@@ -1419,11 +1902,35 @@
           function onPointerUp(e) {
             if (!g.dragging) return;
             g.dragging = false;
+            // Stop electric humming sound when pointer is released
+            SoundManager.stopElectricHumLoop();
+            
             // Check if path is valid and satisfies target
             const sel = g.sel;
             if (sel.length >= 2 && isPath(sel)) {
               tryClose();
             } else {
+              // Apply damage to first selected cell for invalid path
+              if (sel.length > 0) {
+                const firstCell = sel[0];
+                const cell = g.board[k(firstCell.x, firstCell.y)];
+                if (cell && !cell.dead) {
+                  const oldLife = cell.life;
+                  cell.life -= 1;
+                  if (cell.life <= 0) {
+                    cell.dead = true;
+                    cell.life = 0;
+                    g.deadCount += 1;
+                  } else if (oldLife > cell.life) {
+                    // Add damage animation for the lost life circle
+                    const damageAnimations = [{ x: firstCell.x, y: firstCell.y, lostLifeIndex: oldLife - 1, t: Date.now() }];
+                    g.damageAnim = (g.damageAnim || []).concat(damageAnimations);
+                    setTimeout(() => { g.damageAnim = []; re(); }, 800);
+                  }
+                  // Play game over sound when life is lost from invalid path release
+                  SoundManager.play('mixkit-laser-game-over-1946.wav', 0.8);
+                }
+              }
               g.sel = []; re();
             }
           }
@@ -1438,7 +1945,11 @@
 
           React.useEffect(() => {
             const h = (e) => {
-              if (e.key === "Escape") { g.sel = []; g.combo = 0; g.dragging = false; re(); }
+              if (e.key === "Escape") { 
+                // Stop electric humming sound when selection is cancelled with Escape
+                SoundManager.stopElectricHumLoop();
+                g.sel = []; g.combo = 0; g.dragging = false; re(); 
+              }
             };
             window.addEventListener("keydown", h);
             return () => window.removeEventListener("keydown", h);
@@ -1458,10 +1969,69 @@
           }, []);
 
           const handleShowCredits = React.useCallback(() => {
+            SoundManager.play('mixkit-game-user-interface-tone-2570.wav', 0.4);
+            // Pause the game when credits are shown
+            if (!g.paused) {
+              g.pauseStartTime = Date.now();
+              g.paused = true;
+            }
             setShowCredits(true);
           }, []);
           
-          React.useEffect(() => () => stopTimer(), []);
+          React.useEffect(() => {
+            const handleVisibilityChange = () => {
+              if (document.hidden) {
+                // Page is hidden - pause background music
+                SoundManager.pauseBackgroundMusic();
+                SoundManager.pause();
+              } else {
+                // Page is visible - resume if sound was enabled
+                SoundManager.resume();
+              }
+            };
+            
+            const handleBlur = () => {
+              // Window lost focus - pause everything
+              SoundManager.pauseBackgroundMusic();
+              SoundManager.pause();
+            };
+            
+            const handleFocus = () => {
+              // Window regained focus - resume if sound was enabled
+              SoundManager.resume();
+            };
+            
+            const handlePageHide = () => {
+              // Page is being hidden (tab closing, navigation away)
+              SoundManager.pauseBackgroundMusic();
+              SoundManager.pause();
+            };
+            
+            const handlePageShow = () => {
+              // Page is being shown (tab returning, navigation back)
+              SoundManager.resume();
+            };
+            
+            // Page Visibility API for tab switching
+            document.addEventListener('visibilitychange', handleVisibilityChange);
+            
+            // Page lifecycle events for mobile/tab behavior
+            window.addEventListener('pagehide', handlePageHide);
+            window.addEventListener('pageshow', handlePageShow);
+            
+            // Window focus/blur events for desktop
+            window.addEventListener('blur', handleBlur);
+            window.addEventListener('focus', handleFocus);
+            
+            // Cleanup event listeners
+            return () => {
+              document.removeEventListener('visibilitychange', handleVisibilityChange);
+              window.removeEventListener('pagehide', handlePageHide);
+              window.removeEventListener('pageshow', handlePageShow);
+              window.removeEventListener('blur', handleBlur);
+              window.removeEventListener('focus', handleFocus);
+            };
+          }, []);
 
           // Animation loop for rotating balls
           React.useEffect(() => {
@@ -1488,11 +2058,13 @@
           const timePct = g.timeLeft / g.turnTime;
           const shaking = Date.now() < g.shakeUntil;
           const clearKeys = new Set(g.clearAnim.map(c => k(c.x, c.y)));
+          const healKeys = new Set((g.healAnim || []).map(h => k(h.x, h.y)));
+          const damageKeys = new Set((g.damageAnim || []).map(d => k(d.x, d.y)));
           const boardDarkness = Math.min(0.4, g.deadCount / (W * H) * 0.6);
 
 
-          // Board pixel calc
-          const CELL_CSS = `min(calc((100vh - 200px) / ${H}), calc((100vw - 400px) / ${W}), 68px)`;
+          // Board pixel calc - 8px margins from screen edges
+          const CELL_CSS = `min(calc((100vh - 200px) / ${H}), calc((100vw - 16px) / ${W}), 68px)`;
           const BOARD_WIDTH = `calc(${CELL_CSS} * ${W})`;
 
           if (!g.started) {
@@ -1536,7 +2108,7 @@
               
               <div style={{
                 width: "calc(100vw - 12px)", height: "100vh", overflow: "hidden",
-                background: "linear-gradient(160deg, #04040c 0%, #08081a 50%, #100818 100%)",
+                background: "transparent",
                 display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
                 fontFamily: "Georgia, 'Times New Roman', serif", color: "#c8c8e0",
                 padding: "0 6px",
@@ -1548,9 +2120,9 @@
                 }}>Σ PRIME</h1>
                 <div style={{ fontSize: 11, color: "#c8c8e0", letterSpacing: 7, marginBottom: 28, textTransform: "uppercase" }}>Sigma Prime</div>
                 
-                <div style={{ maxWidth: 420, textAlign: "center", lineHeight: 1.9, fontSize: 13, color: "#c8c8e0", marginBottom: 20 }}>
-                  <strong>There are 4 prime numbers between 1 and 10:</strong><br/>
-                  2, 3, 5, 7
+                <div style={{ maxWidth: 420, textAlign: "center", lineHeight: 1.9, fontSize: 13, color: "#c8c8e0", marginBottom: 20, paddingLeft: 16, paddingRight: 16 }}>
+                  <strong>There are 4 prime numbers</strong><br/>
+                  <strong>between 1 and 10:</strong><br/>2, 3, 5, 7
                 </div>
 
                 <div style={{ marginBottom: 24 }}>
@@ -1563,7 +2135,11 @@
                     {ALL_PRIMES.filter(prime => prime !== 2).map(prime => (
                       <div
                         key={prime}
-                        onClick={() => { g.maxPrime = prime; re(); }}
+                        onClick={() => { 
+                          g.maxPrime = prime; 
+                          SoundManager.play('mixkit-game-user-interface-tone-2570.wav', 0.4);
+                          re(); 
+                        }}
                         style={{
                           padding: "6px 10px",
                           fontSize: "11px",
@@ -1595,24 +2171,33 @@
                   </div>
                 </div>
 
-                <div onClick={() => startGame()} style={{
+                <div onClick={() => { 
+                  SoundManager.play('mixkit-explainer-video-game-reveal-235 (1).wav', 0.5);
+                  startGame(); 
+                }} style={{
                   padding: "13px 48px", fontSize: 14, letterSpacing: 7,
                   border: "1px solid #9b5de5", color: "#9b5de5", cursor: "pointer",
                   borderRadius: 2, textTransform: "uppercase", fontFamily: "Georgia, serif",
                 }}>BEGIN</div>
 
                 <div style={{ display: "flex", alignItems: "center", gap: 16, marginTop: 16 }}>
-                  <div onClick={() => setShowRules(true)} style={{
-                    fontSize: 11, letterSpacing: 3, color: "#c8c8e0", cursor: "pointer",
-                    textTransform: "uppercase", fontFamily: "Georgia, serif"
-                  }}>view rules</div>
+                  <div onClick={() => { 
+                      SoundManager.play('mixkit-game-user-interface-tone-2570.wav', 0.4);
+                      setShowRules(true); 
+                    }} style={{
+                      fontSize: 11, letterSpacing: 3, color: "#c8c8e0", cursor: "pointer",
+                      textTransform: "uppercase", fontFamily: "Georgia, serif"
+                    }}>view rules</div>
                   
                   <span style={{ color: "#9b5de5", fontSize: 16 }}>•</span>
                   
-                  <div onClick={() => setShowControls(true)} style={{
-                    fontSize: 11, letterSpacing: 3, color: "#c8c8e0", cursor: "pointer",
-                    textTransform: "uppercase", fontFamily: "Georgia, serif"
-                  }}>view controls</div>
+                  <div onClick={() => { 
+                      SoundManager.play('mixkit-game-user-interface-tone-2570.wav', 0.4);
+                      setShowControls(true); 
+                    }} style={{
+                      fontSize: 11, letterSpacing: 3, color: "#c8c8e0", cursor: "pointer",
+                      textTransform: "uppercase", fontFamily: "Georgia, serif"
+                    }}>view controls</div>
                 </div>
 
                 {/* Rules Popup */}
@@ -1620,25 +2205,15 @@
                   <div style={{
                     position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
                     background: "rgba(4,4,12,0.95)", backdropFilter: "blur(8px)",
-                    display: "flex", alignItems: "center", justifyContent: "flex-start",
+                    display: "flex", alignItems: "center", justifyContent: "center",
                     zIndex: 1000, padding: 20
                   }} onClick={() => setShowRules(false)}>
                     <div style={{
-                      maxWidth: 500, width: "50%", maxHeight: "80vh", overflowY: "auto",
+                      maxWidth: 500, width: "80%", maxHeight: "80vh", overflowY: "auto",
                       background: "rgba(8,8,26,0.95)", borderRadius: 12, border: "1px solid rgba(155,93,229,0.3)",
-                      padding: 24, position: "relative", marginLeft: "25%"
+                      padding: 24, position: "relative"
                     }} onClick={(e) => e.stopPropagation()}>
-                      <div style={{
-                        position: "absolute", top: 12, right: 12,
-                        width: 32, height: 32, borderRadius: "50%",
-                        background: "rgba(155,93,229,0.2)", border: "1px solid rgba(155,93,229,0.4)",
-                        display: "flex", alignItems: "center", justifyContent: "center",
-                        cursor: "pointer", color: "#9b5de5", fontSize: 18, fontWeight: 700,
-                        fontFamily: "'Georgia', serif"
-                      }} onClick={() => setShowRules(false)}>
-                        ×
-                      </div>
-                      
+                                            
                       <h2 style={{
                         fontSize: "clamp(20px, 3vw, 28px)", letterSpacing: 4, color: "#9b5de5",
                         textAlign: "center", margin: "0 0 20px 0", fontFamily: "Georgia, serif",
@@ -1647,7 +2222,10 @@
                       
                       <RulesPanel items={RULE_ITEMS} maxWidth={400} />
                       
-                      <div onClick={() => setShowRules(false)} style={{
+                      <div onClick={() => { 
+                      SoundManager.play('mixkit-game-user-interface-tone-2570.wav', 0.4);
+                      setShowRules(false); 
+                    }} style={{
                         marginTop: 20, padding: "10px 24px", fontSize: 12, letterSpacing: 4,
                         border: "1px solid #9b5de5", color: "#9b5de5", cursor: "pointer",
                         borderRadius: 2, textTransform: "uppercase", fontFamily: "Georgia, serif",
@@ -1662,25 +2240,15 @@
                   <div style={{
                     position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
                     background: "rgba(4,4,12,0.95)", backdropFilter: "blur(8px)",
-                    display: "flex", alignItems: "center", justifyContent: "flex-end",
+                    display: "flex", alignItems: "center", justifyContent: "center",
                     zIndex: 1000, padding: 20
                   }} onClick={() => setShowControls(false)}>
                     <div style={{
-                      maxWidth: 500, width: "50%", maxHeight: "80vh", overflowY: "auto",
+                      maxWidth: 500, width: "80%", maxHeight: "80vh", overflowY: "auto",
                       background: "rgba(8,8,26,0.95)", borderRadius: 12, border: "1px solid rgba(0,245,212,0.3)",
-                      padding: 24, position: "relative", marginRight: "25%"
+                      padding: 24, position: "relative"
                     }} onClick={(e) => e.stopPropagation()}>
-                      <div style={{
-                        position: "absolute", top: 12, right: 12,
-                        width: 32, height: 32, borderRadius: "50%",
-                        background: "rgba(0,245,212,0.2)", border: "1px solid rgba(0,245,212,0.4)",
-                        display: "flex", alignItems: "center", justifyContent: "center",
-                        cursor: "pointer", color: "#00f5d4", fontSize: 18, fontWeight: 700,
-                        fontFamily: "'Georgia', serif"
-                      }} onClick={() => setShowControls(false)}>
-                        ×
-                      </div>
-                      
+                                            
                       <h2 style={{
                         fontSize: "clamp(20px, 3vw, 28px)", letterSpacing: 4, color: "#00f5d4",
                         textAlign: "center", margin: "0 0 20px 0", fontFamily: "Georgia, serif",
@@ -1689,7 +2257,10 @@
                       
                       <RulesPanel items={CONTROL_ITEMS} maxWidth={400} />
                       
-                      <div onClick={() => setShowControls(false)} style={{
+                      <div onClick={() => { 
+                      SoundManager.play('mixkit-game-user-interface-tone-2570.wav', 0.4);
+                      setShowControls(false); 
+                    }} style={{
                         marginTop: 20, padding: "10px 24px", fontSize: 12, letterSpacing: 4,
                         border: "1px solid #00f5d4", color: "#00f5d4", cursor: "pointer",
                         borderRadius: 2, textTransform: "uppercase", fontFamily: "Georgia, serif",
@@ -1721,14 +2292,30 @@
               {showCredits && (
                 <div style={{
                   position: "fixed", top: "var(--app-top, 0px)", left: 0, right: 0, height: "var(--app-height, 100dvh)", backgroundColor: "rgba(3,7,18,0.98)",
-                  display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 20, zIndex: 1000
-                }} onClick={() => setShowCredits(false)}>
+                  display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 20, zIndex: 10000
+                }} onClick={() => {
+                  // Resume the game when credits are closed
+                  if (g.paused) {
+                    g.totalPausedTime += Date.now() - g.pauseStartTime;
+                    g.paused = false;
+                  }
+                  SoundManager.resume(); // Resume all sounds
+                  setShowCredits(false);
+                }}>
                   <span style={{fontSize: 32, fontWeight: 900, letterSpacing: "0.3em", color: "#f8fafc", fontFamily: "'IBM Plex Mono',monospace"}}>CREDITS</span>
                   <span style={{fontSize: 16, color: "#94a3b8", fontFamily: "'IBM Plex Mono',monospace", textAlign: "center", maxWidth: 320, lineHeight: 1.5}}>Sound Effects by Mixkit<br/>https://mixkit.co</span>
                   
                   <div style={{display: "flex", flexDirection: "column", gap: 12, alignItems: "center"}}>
                     <button
-                      onClick={() => setShowCredits(false)}
+                      onClick={() => {
+                        SoundManager.play('mixkit-game-user-interface-tone-2570.wav', 0.4);
+                        // Resume the game when credits are closed
+                        if (g.paused) {
+                          g.totalPausedTime += Date.now() - g.pauseStartTime;
+                          g.paused = false;
+                        }
+                        setShowCredits(false);
+                      }}
                       style={{
                         padding: "12px 24px", fontSize: 12, letterSpacing: 4,
                         border: "1px solid #00f5d4", color: "#00f5d4", cursor: "pointer",
@@ -1752,15 +2339,15 @@
                 ? "rgba(255,68,68,0.05)"
                 : g.flash?.success
                 ? "rgba(0,255,68,0.05)"
-                : "#04040c",
+                : "transparent",
               display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "space-between",
-              fontFamily: "Georgia, serif", color: "#c8c8e0", userSelect: "none", padding: 8,
+              fontFamily: "Georgia, serif", color: "#c8c8e0", userSelect: "none", padding: "0px",
               boxSizing: "border-box",
               transition: "background 0.2s ease-in-out"
             }} className={(g.paused || g.showQuitConfirmation) ? "paused-game" : ""}>
-              {/* Top Menu Bar - Centered */}
+              {/* Top Menu Bar - Full Width */}
               <div style={{
-                width: BOARD_WIDTH,
+                width: "calc(100% - 16px)",
                 display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center",
                 padding: "12px 12px 50px 12px", background: "rgba(8,8,26,0.6)", borderRadius: 8,
                 border: "1px solid rgba(155,93,229,0.2)", backdropFilter: "blur(8px)",
@@ -2011,7 +2598,41 @@
                 }}
                   ref={boardRef}
                   onMouseDown={onPointerDown} onMouseMove={onPointerMove} onMouseUp={onPointerUp}
-                  onMouseLeave={() => { if (g.dragging) { g.dragging = false; g.sel = []; g.combo = 0; re(); } }}
+                  onMouseLeave={() => { 
+                    if (g.dragging) {
+                      // Apply damage to first selected cell before reset (consistent with other invalid drags)
+                      if (g.sel.length > 0) {
+                        const firstCell = g.sel[0];
+                        const cell = g.board[k(firstCell.x, firstCell.y)];
+                        if (cell && !cell.dead) {
+                          const oldLife = cell.life;
+                          cell.life -= 1;
+                          if (cell.life <= 0) {
+                            cell.dead = true;
+                            cell.life = 0;
+                            g.deadCount += 1;
+                          } else if (oldLife > cell.life) {
+                            // Add damage animation for the lost life circle
+                            const damageAnimations = [{ x: firstCell.x, y: firstCell.y, lostLifeIndex: oldLife - 1, t: Date.now() }];
+                            g.damageAnim = (g.damageAnim || []).concat(damageAnimations);
+                            setTimeout(() => { g.damageAnim = []; re(); }, 800);
+                          }
+                          // Play game over sound when life is lost from dragging off board
+                          SoundManager.play('mixkit-laser-game-over-1946.wav', 0.8);
+                        }
+                      }
+                      g.dragging = false; 
+                      g.sel = []; 
+                      g.combo = 0;
+                      // Stop electric humming sound when selection is cancelled
+                      SoundManager.stopElectricHumLoop();
+                      // Add red background flash for invalid drag
+                      g.flash = { text: "INVALID DRAG", bad: true };
+                      g.shakeUntil = Date.now() + 400;
+                      setTimeout(() => { g.flash = null; re(); }, 400);
+                      re(); 
+                    } 
+                  }}
                   onTouchStart={onPointerDown} onTouchMove={onPointerMove} onTouchEnd={onPointerUp}
                 >
                   {Array.from({ length: H }, (_, y) =>
@@ -2028,32 +2649,123 @@
                       return (
                         <div key={ky} style={{
                           position: "relative", width: "100%", height: "100%",
-                          cursor: cell.dead ? "default" : "pointer",
+                          cursor: "pointer",
                           transition: shaking && (isSel || isClearing) ? "none" : "all 0.12s",
                           transform: shaking && (isSel || isClearing) ? `translate(${Math.sin(Date.now() * 0.05) * 2}px, ${Math.cos(Date.now() * 0.05) * 2}px)` : "translate(0,0)",
-                        }}>
+                        }} className={!cell.dead ? "interactive-cell" : ""}>
+                          {/* Path direction arrows */}
+                          {g.dragging && g.sel.length > 1 && (() => {
+                            const currentIndex = g.sel.findIndex(s => s.x === x && s.y === y);
+                            if (currentIndex >= 0 && currentIndex < g.sel.length - 1) {
+                              // This cell is in the path but not the current one - show arrow to next cell
+                              const nextCell = g.sel[currentIndex + 1];
+                              const dx = nextCell.x - x;
+                              const dy = nextCell.y - y;
+                              const angle = Math.atan2(dy, dx) * (180 / Math.PI);
+                              return (
+                                <>
+                                  {/* Black arrow background */}
+                                  <div style={{
+                                    position: "absolute",
+                                    top: "50%",
+                                    left: "50%",
+                                    transform: `translate(-50%, -50%) rotate(${angle}deg) translateX(-2px)`,
+                                    fontSize: "clamp(32px, 4vw, 36px)",
+                                    color: "#000000",
+                                    fontWeight: "900",
+                                    pointerEvents: "none",
+                                    zIndex: 10,
+                                    opacity: 0.9,
+                                    lineHeight: 1
+                                  }}>➤</div>
+                                  {/* Number on top */}
+                                  <div style={{
+                                    position: "absolute",
+                                    top: "50%",
+                                    left: "50%",
+                                    transform: "translate(-50%, -50%)",
+                                    fontSize: "clamp(14px, 1.8vw, 16px)",
+                                    color: "#ffffff",
+                                    fontWeight: "bold",
+                                    textShadow: "0 0 4px #000000, 0 0 8px #000000",
+                                    pointerEvents: "none",
+                                    zIndex: 11,
+                                    opacity: 1
+                                  }}>{cell.val}</div>
+                                </>
+                              );
+                            }
+                            return null;
+                          })()}
                           {/* Background */}
                           <div style={{
                             position: "absolute", inset: "7%", borderRadius: "16%",
                             background: isClearing ? "rgba(0,255,68,0.6)"
-                              : cell.dead ? "#08080f"
+                              : cell.dead ? "#020205"
                               : isSel ? "rgba(155,93,229,0.3)"
-                              : "rgba(12,12,25,0.85)",
+                              : (() => {
+                                // Dim unselected cells unless adjacent (cardinal only) to current selected cell
+                                if (g.dragging && g.sel.length > 0) {
+                                  const currentCell = g.sel[g.sel.length - 1];
+                                  const dx = x - currentCell.x;
+                                  const dy = y - currentCell.y;
+                                  const isCardinalAdjacent = (dx === 0 && Math.abs(dy) === 1) || (dy === 0 && Math.abs(dx) === 1);
+                                  if (!isCardinalAdjacent) {
+                                    return "rgba(12,12,25,0.08)"; // Even more dimmed
+                                  }
+                                }
+                                return "rgba(12,12,25,0.95)"; // Slightly brighter
+                              })(),
                             border: isClearing ? "3px solid #00ff44"
-                              : cell.dead ? "1px solid #0c0c18"
+                              : cell.dead ? "1px solid #050508"
                               : isSel ? "2px solid #9b5de5aa"
                               : `1px solid rgba(80,80,130,${0.06 + lifePct * 0.1})`,
                             boxShadow: isClearing ? "0 0 30px #00ff4488, 0 0 60px #00ff4444, inset 0 0 20px #00ff4433"
                               : isSel ? "0 0 10px rgba(155,93,229,0.2)"
-                              : "none",
+                              : (() => {
+                                // Add electric lightning to dimmed cells AND dead cells when dragging
+                                if (g.dragging && g.sel.length > 0) {
+                                  // Always show lightning on dead cells (danger!)
+                                  if (cell.dead) {
+                                    return "inset 0 0 20px rgba(59,130,246,0.3), inset 0 0 40px rgba(147,51,234,0.2), 0 0 15px rgba(59,130,246,0.2), 0 0 30px rgba(147,51,234,0.1)";
+                                  }
+                                  // Show blue/purple lightning on dimmed non-dead cells
+                                  const currentCell = g.sel[g.sel.length - 1];
+                                  const dx = x - currentCell.x;
+                                  const dy = y - currentCell.y;
+                                  const isCardinalAdjacent = (dx === 0 && Math.abs(dy) === 1) || (dy === 0 && Math.abs(dx) === 1);
+                                  if (!isCardinalAdjacent) {
+                                    return "inset 0 0 20px rgba(59,130,246,0.3), inset 0 0 40px rgba(147,51,234,0.2), 0 0 15px rgba(59,130,246,0.2), 0 0 30px rgba(147,51,234,0.1)";
+                                  }
+                                }
+                                return "none";
+                              })(),
                             transition: "all 0.12s",
-                            animation: isClearing ? "successGlow 0.4s ease-out forwards" : isLow ? "lowPulse 1.5s ease-in-out infinite" : "none",
+                            animation: isClearing ? "successGlow 0.4s ease-out forwards" : isLow ? "lowPulse 1.5s ease-in-out infinite" : (() => {
+                              // Add electric animation to dimmed cells AND dead cells
+                              if (g.dragging && g.sel.length > 0) {
+                                // Always show lightning on dead cells (danger!)
+                                if (cell.dead) {
+                                  return "electricLightning 2s ease-in-out infinite";
+                                }
+                                // Show blue/purple lightning on dimmed non-dead cells
+                                const currentCell = g.sel[g.sel.length - 1];
+                                const dx = x - currentCell.x;
+                                const dy = y - currentCell.y;
+                                const isCardinalAdjacent = (dx === 0 && Math.abs(dy) === 1) || (dy === 0 && Math.abs(dx) === 1);
+                                if (!isCardinalAdjacent) {
+                                  return "electricLightning 2s ease-in-out infinite";
+                                }
+                              }
+                              return "none";
+                            })(),
                           }} />
 
                           {/* Life indicators */}
                           {!cell.dead && Array.from({ length: MAX_LIFE }, (_, i) => {
                             const angle = (i / MAX_LIFE) * Math.PI * 2 - Math.PI / 2;
                             const alive = i < cell.life;
+                            const isHealing = g.healAnim?.some(h => h.x === x && h.y === y) && i === cell.life - 1;
                             return (
                               <div key={i} style={{
                                 position: "absolute",
@@ -2062,7 +2774,7 @@
                                 width: "7%", height: "7%", borderRadius: "50%",
                                 transform: "translate(-50%,-50%)",
                                 background: alive
-                                  ? (cell.life <= 2 ? "#ff4444" : cell.life <= 4 ? "#ffaa33" : "#00f5d455")
+                                  ? (cell.life <= 2 ? "#ff9500" : cell.life <= 4 ? "#ffcc00" : "#00f5d455")
                                   : "#12121f",
                                 transition: "background 0.3s",
                               }} />
@@ -2074,17 +2786,28 @@
                             <div style={{
                               position: "absolute", inset: 0,
                               display: "flex", alignItems: "center", justifyContent: "center",
-                              fontSize: "clamp(10px, 1.4vw, 16px)", color: "#1a1a28",
+                              fontSize: "clamp(12px, 1.8vw, 18px)",
+                              fontWeight: 700,
+                              color: "rgba(255,255,255,0.35)",
                               fontFamily: "'Courier New', monospace",
+                              textShadow: "none",
+                              transition: "color 0.15s",
                             }}>✕</div>
                           )}
 
-                          {/* Number */}
-                          {!cell.dead && (
+                          {/* Number - hide only for node with arrow */}
+                          {!cell.dead && !(g.dragging && g.sel.length > 1 && (() => {
+                            const currentIndex = g.sel.findIndex(s => s.x === x && s.y === y);
+                            return currentIndex >= 0 && currentIndex < g.sel.length - 1;
+                          })()) && (
                             <div style={{
-                              position: "absolute", inset: 0,
-                              display: "flex", alignItems: "center", justifyContent: "center",
-                              fontSize: "clamp(12px, 1.8vw, 18px)", fontWeight: 700,
+                              position: "absolute",
+                              inset: 0,
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              fontSize: "clamp(12px, 1.8vw, 18px)",
+                              fontWeight: 700,
                               color: isSel ? "#ffffff" : `rgba(255,255,255,${0.35 + lifePct * 0.55})`,
                               fontFamily: "'Courier New', monospace",
                               textShadow: isSel ? "0 0 8px rgba(155,93,229,0.6)" : "none",
@@ -2114,6 +2837,50 @@
                               }} />
                             </div>
                           )}
+                          
+                          {/* Damage animation - red glow for life loss */}
+                          {g.damageAnim?.some(d => d.x === x && d.y === y) && !cell.dead && (
+                            <div style={{
+                              position: "absolute",
+                              inset: 0,
+                              pointerEvents: "none",
+                            }}>
+                              {/* Show the life circle that disappeared with red glow */}
+                              {g.damageAnim.filter(d => d.x === x && d.y === y).map((d, i) => (
+                                <div key={i} style={{
+                                  position: "absolute",
+                                  left: `${50 + Math.cos(d.lostLifeIndex / MAX_LIFE * Math.PI * 2 - Math.PI / 2) * 38}%`,
+                                  top: `${50 + Math.sin(d.lostLifeIndex / MAX_LIFE * Math.PI * 2 - Math.PI / 2) * 38}%`,
+                                  width: "7%", height: "7%", borderRadius: "50%",
+                                  transform: "translate(-50%,-50%)",
+                                  background: "#ff4444",
+                                  boxShadow: "0 0 12px #ff4444, 0 0 24px #ff444488, inset 0 0 8px #ff4444",
+                                  animation: "damageFade 0.8s ease-out forwards",
+                                }} />
+                              ))}
+                            </div>
+                          )}
+                          
+                          {/* Heal animation - glowing renewed life indicator */}
+                          {g.healAnim?.some(h => h.x === x && h.y === y) && !cell.dead && (
+                            <div style={{
+                              position: "absolute",
+                              inset: 0,
+                              pointerEvents: "none",
+                            }}>
+                              {/* Only show the newly added life indicator with glow */}
+                              <div style={{
+                                position: "absolute",
+                                left: `${50 + Math.cos((cell.life - 1) / MAX_LIFE * Math.PI * 2 - Math.PI / 2) * 38}%`,
+                                top: `${50 + Math.sin((cell.life - 1) / MAX_LIFE * Math.PI * 2 - Math.PI / 2) * 38}%`,
+                                width: "7%", height: "7%", borderRadius: "50%",
+                                transform: "translate(-50%,-50%)",
+                                background: "#00ff44",
+                                boxShadow: "0 0 12px #00ff44, 0 0 24px #00ff4488, inset 0 0 8px #00ff44",
+                                animation: "healGlow 0.8s ease-out forwards",
+                              }} />
+                            </div>
+                          )}
                         </div>
                       );
                     })
@@ -2133,9 +2900,15 @@
                       {g.won ? "SUMMATION COMPLETE" : "SUMMATION FAILED"}
                     </div>
                     <div style={{ fontSize: 13, color: "#555", fontFamily: "monospace", textAlign: "center", lineHeight: 1.8 }}>
-                      {g.score} pts · {g.round}/{ROUNDS} rounds · {g.turn} turns · Primes ≤ {g.maxPrime}
+                      <div>{g.score} pts</div>
+                      <div>{g.round}/{ROUNDS} rounds</div>
+                      <div>{g.turn} turns</div>
+                      <div>Primes ≤ {g.maxPrime}</div>
                     </div>
-                    <div onClick={() => { g.started = false; re(); }} style={{
+                    <div onClick={() => { 
+                      SoundManager.play('mixkit-game-user-interface-tone-2570.wav', 0.4);
+                      g.started = false; re(); 
+                    }} style={{
                       marginTop: 6, padding: "10px 30px", fontSize: 12,
                       border: "1px solid #9b5de5", color: "#9b5de5", cursor: "pointer",
                       borderRadius: 2, letterSpacing: 4, textTransform: "uppercase", fontFamily: "Georgia, serif",
@@ -2146,7 +2919,7 @@
               
               {/* Bottom Progress Bars - Centered */}
               <div style={{
-                width: BOARD_WIDTH,
+                width: "100%",
                 display: "flex",
                 flexDirection: "column",
                 gap: "clamp(4px, 0.5vw, 8px)"
@@ -2156,14 +2929,18 @@
                   display: "flex",
                   justifyContent: "space-between",
                   marginBottom: 4,
+                  marginLeft: 4,
+                  marginRight: 4
                 }}>
                   <button
                     onClick={() => { 
+                      SoundManager.play('mixkit-game-user-interface-tone-2570.wav', 0.4);
                       if (!g.paused) {
                         g.pauseStartTime = Date.now();
                         g.paused = true; 
                         g.quitMode = false;
                         g.showQuitConfirmation = true; // Show popup
+                        SoundManager.pause(); // Pause all sounds
                       }
                       re(); 
                     }}
@@ -2186,12 +2963,15 @@
                   </button>
                   <button
                     onClick={() => { 
+                      SoundManager.play('mixkit-game-user-interface-tone-2570.wav', 0.4);
                       if (!g.paused) {
                         g.pauseStartTime = Date.now();
                         g.paused = true;
                       }
                       g.quitMode = true;
-                      g.showQuitConfirmation = true; re(); 
+                      g.showQuitConfirmation = true; 
+                      SoundManager.pause(); // Pause all sounds
+                      re(); 
                     }}
                     style={{
                       padding: "8px 16px",
@@ -2213,7 +2993,7 @@
                 </div>
                 {/* Turn bars at bottom */}
                 <div style={{
-                  width: "100%",
+                  width: "calc(100% - 4px)",
                   display: "flex",
                   justifyContent: "space-between",
                   gap: 0,
@@ -2246,7 +3026,7 @@
                 
                 {/* Progress bars at bottom */}
                 <div style={{
-                  width: "100%",
+                  width: "calc(100% - 4px)",
                   display: "flex",
                   justifyContent: "space-between",
                   gap: 0,
@@ -2312,58 +3092,20 @@
                     
                     <RulesPanel items={RULE_ITEMS} maxWidth={400} />
                     
-                    <div onClick={() => setShowRules(false)} style={{
-                      marginTop: 20, padding: "10px 24px", fontSize: 12, letterSpacing: 4,
-                      border: "1px solid #00f5d4", color: "#00f5d4", cursor: "pointer",
-                      borderRadius: 2, textTransform: "uppercase", fontFamily: "Georgia, serif",
-                      margin: "20px auto 0 auto", textAlign: "center", width: "fit-content"
-                    }}>CLOSE</div>
+                    <div onClick={() => { 
+                      SoundManager.play('mixkit-game-user-interface-tone-2570.wav', 0.4);
+                      setShowRules(false); 
+                    }} style={{
+                        marginTop: 20, padding: "10px 24px", fontSize: 12, letterSpacing: 4,
+                        border: "1px solid #00f5d4", color: "#00f5d4", cursor: "pointer",
+                        borderRadius: 2, textTransform: "uppercase", fontFamily: "Georgia, serif",
+                        margin: "20px auto 0 auto", textAlign: "center", width: "fit-content"
+                      }}>CLOSE</div>
                   </div>
                 </div>
               )}
 
-              {/* Controls Popup */}
-              {showControls && (
-                <div style={{
-                  position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
-                  background: "rgba(4,4,12,0.95)", backdropFilter: "blur(8px)",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  zIndex: 1000, padding: 20
-                }}>
-                  <div style={{
-                    maxWidth: 500, width: "100%", maxHeight: "80vh", overflowY: "auto",
-                    background: "rgba(8,8,26,0.95)", borderRadius: 12, border: "1px solid rgba(155,93,229,0.3)",
-                    padding: 24, position: "relative"
-                  }}>
-                    <div style={{
-                      position: "absolute", top: 12, right: 12,
-                      width: 32, height: 32, borderRadius: "50%",
-                      background: "rgba(155,93,229,0.2)", border: "1px solid rgba(155,93,229,0.4)",
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                      cursor: "pointer", color: "#9b5de5", fontSize: 18, fontWeight: 700,
-                      fontFamily: "'Georgia', serif"
-                    }} onClick={() => setShowControls(false)}>
-                      ×
-                    </div>
-                    
-                    <h2 style={{
-                      fontSize: "clamp(20px, 3vw, 28px)", letterSpacing: 4, color: "#9b5de5",
-                      textAlign: "center", margin: "0 0 20px 0", fontFamily: "Georgia, serif",
-                      fontWeight: 400
-                    }}>CONTROLS</h2>
-                    
-                    <RulesPanel items={CONTROL_ITEMS} maxWidth={400} />
-                    
-                    <div onClick={() => setShowControls(false)} style={{
-                      marginTop: 20, padding: "10px 24px", fontSize: 12, letterSpacing: 4,
-                      border: "1px solid #9b5de5", color: "#9b5de5", cursor: "pointer",
-                      borderRadius: 2, textTransform: "uppercase", fontFamily: "Georgia, serif",
-                      margin: "20px auto 0 auto", textAlign: "center", width: "fit-content"
-                    }}>CLOSE</div>
-                  </div>
-                </div>
-              )}
-
+              
               {/* Quit Confirmation Popup */}
               {g.showQuitConfirmation && (
                 <div style={{
@@ -2386,7 +3128,7 @@
                     <h2 style={{
                       fontSize: "clamp(24px, 4vw, 32px)", letterSpacing: 6, color: "#f8fafc",
                       textAlign: "center", margin: "0 0 16px 0", fontFamily: "Georgia, serif",
-                      fontWeight: 900
+                      fontWeight: 900, whiteSpace: "nowrap"
                     }}>{!g.quitMode ? "GAME PAUSED" : "ARE YOU SURE?"}</h2>
                     
                     <p style={{
@@ -2401,10 +3143,12 @@
                       {!g.quitMode ? (
                         <button
                           onClick={() => {
+                            SoundManager.play('mixkit-game-user-interface-tone-2570.wav', 0.4);
                             g.totalPausedTime += Date.now() - g.pauseStartTime;
                             g.paused = false; 
                             g.quitMode = false;
                             g.showQuitConfirmation = false;
+                            SoundManager.resume(); // Resume all sounds
                             re();
                           }}
                           style={{
@@ -2428,8 +3172,12 @@
                         <>
                           <button
                             onClick={() => {
+                              SoundManager.play('mixkit-game-user-interface-tone-2570.wav', 0.4);
                               g.gameOver = false; g.won = false; g.started = false;
                               g.paused = false; g.quitMode = false; g.showQuitConfirmation = false;
+                              stopTimer(); // Stop the game timer
+                              SoundManager.stopAllSounds(); // Stop all game sounds
+                              SoundManager.playBackgroundMusic(); // Restart background music for menu
                               re();
                             }}
                             style={{
@@ -2444,17 +3192,23 @@
                               border: "1px solid #f15bb5",
                               borderRadius: 6,
                               cursor: "pointer",
-                              transition: "all 0.2s ease"
+                              transition: "all 0.2s ease",
+                              whiteSpace: "normal",
+                              textAlign: "center",
+                              lineHeight: 1.2
                             }}
                           >
                             QUIT TO MENU
                           </button>
                           <button
                             onClick={() => { 
+                            SoundManager.play('mixkit-game-user-interface-tone-2570.wav', 0.4);
                             g.totalPausedTime += Date.now() - g.pauseStartTime;
                             g.paused = false; 
                             g.quitMode = false;
-                            g.showQuitConfirmation = false; re(); 
+                            g.showQuitConfirmation = false; 
+                            SoundManager.resume(); // Resume all sounds
+                            re(); 
                           }}
                             style={{
                               padding: "12px 24px",
@@ -2481,23 +3235,56 @@
               )}
               
               {/* Footer Bar - Game View */}
-              <div style={{ 
-                position: 'absolute',
-                bottom: 0,
-                left: 0,
-                right: 0,
-                zIndex: 100
-              }}>
-                <FooterBar
-                  version={GAME_VERSION}
-                  copyright={COPYRIGHT_TEXT}
-                  soundEnabled={soundEnabled}
-                  onToggleSound={handleToggleSound}
-                  onShowCredits={handleShowCredits}
-                  compact={true}
-                  font="'IBM Plex Mono',monospace"
-                />
-              </div>
+              <FooterBar
+                version={GAME_VERSION}
+                copyright={COPYRIGHT_TEXT}
+                soundEnabled={soundEnabled}
+                onToggleSound={handleToggleSound}
+                onShowCredits={handleShowCredits}
+                compact={true}
+                font="'IBM Plex Mono',monospace"
+              />
+              
+              {/* Credits Modal - Game View */}
+              {showCredits && (
+                <div style={{
+                  position: "fixed", top: "var(--app-top, 0px)", left: 0, right: 0, height: "var(--app-height, 100dvh)", backgroundColor: "rgba(3,7,18,0.98)",
+                  display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 20, zIndex: 10000
+                }} onClick={() => {
+                  // Resume the game when credits are closed
+                  if (g.paused) {
+                    g.totalPausedTime += Date.now() - g.pauseStartTime;
+                    g.paused = false;
+                  }
+                  SoundManager.resume(); // Resume all sounds
+                  setShowCredits(false);
+                }}>
+                  <span style={{fontSize: 32, fontWeight: 900, letterSpacing: "0.3em", color: "#f8fafc", fontFamily: "'IBM Plex Mono',monospace"}}>CREDITS</span>
+                  <span style={{fontSize: 16, color: "#94a3b8", fontFamily: "'IBM Plex Mono',monospace", textAlign: "center", maxWidth: 320, lineHeight: 1.5}}>Sound Effects by Mixkit<br/>https://mixkit.co</span>
+                  
+                  <div style={{display: "flex", flexDirection: "column", gap: 12, alignItems: "center"}}>
+                    <button
+                      onClick={() => {
+                        SoundManager.play('mixkit-game-user-interface-tone-2570.wav', 0.4);
+                        // Resume the game when credits are closed
+                        if (g.paused) {
+                          g.totalPausedTime += Date.now() - g.pauseStartTime;
+                          g.paused = false;
+                        }
+                        setShowCredits(false);
+                      }}
+                      style={{
+                        padding: "12px 24px", fontSize: 12, letterSpacing: 4,
+                        border: "1px solid #00f5d4", color: "#00f5d4", cursor: "pointer",
+                        borderRadius: 2, textTransform: "uppercase", fontFamily: "'IBM Plex Mono',monospace",
+                        backgroundColor: "transparent"
+                      }}
+                    >
+                      CLOSE
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           );
 
@@ -2508,7 +3295,30 @@
             @keyframes fu{0%{opacity:1;transform:translate(-50%,-50%) scale(.85)}50%{opacity:1;transform:translate(-50%,-65%) scale(1.1)}100%{opacity:0;transform:translate(-50%,-85%) scale(1)}}
             @keyframes pop{0%{transform:scale(1)}40%{transform:scale(1.15);background:rgba(254,228,64,0.5)}100%{transform:scale(1);background:transparent}}
             @keyframes smokePuff{0%{opacity:0;transform:scale(0.5);filter:blur(4px)}20%{opacity:0.8;transform:scale(1.2);filter:blur(2px)}40%{opacity:1;transform:scale(1.5);filter:blur(1px)}60%{opacity:0.6;transform:scale(2.5);filter:blur(3px)}100%{opacity:0;transform:scale(4);filter:blur(8px)}}
-            .paused-game * { animation-play-state: paused !important; }
+            @keyframes healGlow{0%{box-shadow:0 0 8px #00ff44, 0 0 16px #00ff4488, inset 0 0 4px #00ff44;transform:scale(1)}50%{box-shadow:0 0 20px #00ff44, 0 0 40px #00ff4488, inset 0 0 12px #00ff44;transform:scale(1.1)}100%{box-shadow:0 0 8px #00ff44, 0 0 16px #00ff4488, inset 0 0 4px #00ff44;transform:scale(1)}}
+            @keyframes damageGlow{0%{box-shadow:0 0 8px #ff4444, 0 0 16px #ff444488, inset 0 0 4px #ff4444;transform:scale(1)}50%{box-shadow:0 0 20px #ff4444, 0 0 40px #ff444488, inset 0 0 12px #ff4444;transform:scale(1.15)}100%{box-shadow:0 0 8px #ff4444, 0 0 16px #ff444488, inset 0 0 4px #ff4444;transform:scale(1)}}
+            @keyframes damageFade{0%{opacity:1;box-shadow:0 0 12px #ff4444, 0 0 24px #ff444488, inset 0 0 8px #ff4444;transform:scale(1)}50%{opacity:1;box-shadow:0 0 20px #ff4444, 0 0 40px #ff444488, inset 0 0 12px #ff4444;transform:scale(1.2)}100%{opacity:0;box-shadow:0 0 8px #ff4444, 0 0 16px #ff444488, inset 0 0 4px #ff4444;transform:scale(0.8)}}
+            @keyframes electricLightning{0%{box-shadow:inset 0 0 20px rgba(59,130,246,0.3), inset 0 0 40px rgba(147,51,234,0.2), 0 0 15px rgba(59,130,246,0.2), 0 0 30px rgba(147,51,234,0.1)}20%{box-shadow:inset 0 0 30px rgba(59,130,246,0.6), inset 0 0 60px rgba(147,51,234,0.4), 0 0 25px rgba(59,130,246,0.4), 0 0 50px rgba(147,51,234,0.2)}40%{box-shadow:inset 0 0 15px rgba(59,130,246,0.2), inset 0 0 30px rgba(147,51,234,0.1), 0 0 10px rgba(59,130,246,0.1), 0 0 20px rgba(147,51,234,0.05)}60%{box-shadow:inset 0 0 35px rgba(147,51,234,0.7), inset 0 0 70px rgba(59,130,246,0.5), 0 0 30px rgba(147,51,234,0.5), 0 0 60px rgba(59,130,246,0.3)}80%{box-shadow:inset 0 0 25px rgba(59,130,246,0.4), inset 0 0 50px rgba(147,51,234,0.3), 0 0 20px rgba(59,130,246,0.3), 0 0 40px rgba(147,51,234,0.2)}100%{box-shadow:inset 0 0 20px rgba(59,130,246,0.3), inset 0 0 40px rgba(147,51,234,0.2), 0 0 15px rgba(59,130,246,0.2), 0 0 30px rgba(147,51,234,0.1)}}
+            @keyframes deadCellLightning{0%{box-shadow:inset 0 0 25px rgba(255,68,68,0.4), inset 0 0 50px rgba(255,0,0,0.3), 0 0 20px rgba(255,68,68,0.3), 0 0 40px rgba(255,0,0,0.2)}25%{box-shadow:inset 0 0 40px rgba(255,0,0,0.7), inset 0 0 80px rgba(255,68,68,0.5), 0 0 35px rgba(255,0,0,0.5), 0 0 70px rgba(255,68,68,0.3)}50%{box-shadow:inset 0 0 20px rgba(255,68,68,0.2), inset 0 0 40px rgba(255,0,0,0.1), 0 0 15px rgba(255,68,68,0.1), 0 0 30px rgba(255,0,0,0.05)}75%{box-shadow:inset 0 0 45px rgba(255,68,68,0.8), inset 0 0 90px rgba(255,0,0,0.6), 0 0 40px rgba(255,68,68,0.6), 0 0 80px rgba(255,0,0,0.4)}100%{box-shadow:inset 0 0 25px rgba(255,68,68,0.4), inset 0 0 50px rgba(255,0,0,0.3), 0 0 20px rgba(255,68,68,0.3), 0 0 40px rgba(255,0,0,0.2)}}
+            /* iOS-specific touch improvements */
+        @supports (-webkit-touch-callout: none) {
+            .interactive-cell {
+                -webkit-transform: translateZ(0);
+                transform: translateZ(0);
+                -webkit-backface-visibility: hidden;
+                backface-visibility: hidden;
+                -webkit-perspective: 1000;
+                perspective: 1000;
+            }
+        }
+        
+        /* Enhanced touch targets for mobile */
+        @media (hover: none) and (pointer: coarse) {
+            .interactive-cell {
+                min-height: 44px;
+                min-width: 44px;
+            }
+        }
             @keyframes successGlow{0%{background:rgba(0,255,68,0);box-shadow:0 0 0px transparent;border:1px solid rgba(0,255,68,0);transform:scale(1)}25%{background:rgba(0,255,68,0.5);box-shadow:0 0 20px #00ff4433;border:2px solid #00ff44;transform:scale(1.03)}50%{background:rgba(0,255,68,0.8);box-shadow:0 0 40px #00ff44,0 0 80px #00ff4444,inset 0 0 30px #00ff4433;border:3px solid #00ff44;transform:scale(1.06)}75%{background:rgba(0,255,68,0.4);box-shadow:0 0 20px #00ff4466,0 0 40px #00ff4433,inset 0 0 15px #00ff4444;border:2px solid #00ff44;transform:scale(1.03)}100%{background:rgba(12,12,25,0.85);box-shadow:none;border:1px solid rgba(80,80,130,0.1);transform:scale(1)}}
             @keyframes successFlash{0%{opacity:0;transform:translate(-50%,-50%) scale(0.5)}20%{opacity:1;transform:translate(-50%,-50%) scale(1.2);color:#00ff44;text-shadow:0 0 30px #00ff44,0 0 60px #00ff4466,0 0 90px #00ff4444}40%{opacity:1;transform:translate(-50%,-55%) scale(1.4);color:#00ff44;text-shadow:0 0 40px #00ff44,0 0 80px #00ff4466,0 0 120px #00ff4444}60%{opacity:0.8;transform:translate(-50%,-60%) scale(1.2);color:#00ff44;text-shadow:0 0 20px #00ff4444}100%{opacity:0;transform:translate(-50%,-70%) scale(0.8);color:#00ff44;text-shadow:none}}
             @keyframes lowPulse{0%,100%{border-color:rgba(255,68,68,0.15)}50%{border-color:rgba(255,68,68,0.35)}}
