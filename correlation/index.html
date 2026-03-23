@@ -395,12 +395,9 @@
             sounds: {},
             audioContext: null,
             volume: 0.5,
-            musicVolume: 0.15,
-            isInitialized: false,
-            firstInteraction: false,
+            musicVolume: 0.3,
+            enabled: true,
             backgroundMusic: null,
-            soundFiles: {},
-            poolSize: 3,
             activeSounds: new Set(),
             weldingSound: null,
             weldingPlayers: [],
@@ -702,15 +699,12 @@
             },
             
             resume() {
-                // Only resume if this isn't the first interaction
-                if (this.firstInteraction) {
-                    this.playBackgroundMusic();
-                }
+                this.playBackgroundMusic();
             }
         };
 
         const GAME_VERSION = "v0.2";
-        const COPYRIGHT_TEXT = " MisterMarx.com, 2026";
+        const COPYRIGHT_TEXT = "© MisterMarx.com, 2026";
         const GAME_TITLE = "CORRELATION";
 
         const RULE_ITEMS = [
@@ -2557,7 +2551,8 @@ const lightningRef=useRef({active:false,start:null,end:null,frame:0});
             setSel(null);setEchoes([]);setPhase("play");setInfo(null);setCascTxt(null);setPaused(false);setFillPct(0);setScreenFlash(null);setTick(0);setShowMenu(false);setShowTutorial(false);setShowQuitConfirmation(false);setShowPauseRules(false);setShowOverRules(false);
             particlesRef.current=[];boltsRef.current=[];
             
-            // Background music already started by fog click interaction
+            // Start background music on game start (user interaction)
+            SoundManager.playBackgroundMusic();
             
             // Start countdown animation
             setCountdown(3);
@@ -3515,9 +3510,10 @@ const lightningRef=useRef({active:false,start:null,end:null,frame:0});
               {showFogOverlay && (
                 <div className={`fog-overlay ${isFogDisappearing ? 'disappearing' : ''}`} onClick={() => {
                   if (!isFogDisappearing && isPageLoaded) {
-                    // Mark first interaction to prevent multiple resume calls
-                    SoundManager.firstInteraction = true;
                     setIsFogDisappearing(true);
+                    const impactSound = new Audio('sfx/mixkit-cinematic-impact-waves-781 (1).wav');
+                    impactSound.volume = 0.5;
+                    impactSound.play().catch(e => console.log('Impact sound play failed:', e));
                     setTimeout(() => {
                       setShowFogOverlay(false);
                       setIsFogDisappearing(false);
