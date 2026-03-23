@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Game Hub — mistermarx.com</title>
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; }
+  body {
+    font-family: 'SST', 'Helvetica Neue', Arial, sans-serif;
+    color: #fff; user-select: none; cursor: default;
+  }
+  #app {
+    width: 100%; min-height: 100vh;
+    position: relative; display: flex; flex-direction: column;
+  }
+  #bg-base {
+    position: absolute; inset: 0; z-index: 0;
+    transition: background 0.8s ease;
+  }
+  #bg-blobs {
+    position: absolute; inset: 0; z-index: 0;
+    overflow: hidden; transition: opacity 0.5s ease;
+  }
+  .blob {
+    position: absolute; border-radius: 50%;
+    transition: background 0.8s ease;
+  }
+  #blob1 { width: 120%; height: 120%; top: -20%; left: -15%; opacity: 0.12; filter: blur(80px); animation: blob1 12s ease-in-out infinite; }
+  #blob2 { width: 90%; height: 90%; bottom: -30%; right: -20%; opacity: 0.18; filter: blur(60px); animation: blob2 15s ease-in-out infinite; }
+  #blob3 { width: 70%; height: 70%; top: 20%; left: 15%; opacity: 0.2; filter: blur(70px); animation: blob3 18s ease-in-out infinite; }
+  #blob4 { width: 60%; height: 60%; top: -10%; right: 5%; opacity: 0.08; filter: blur(90px); animation: blob4 20s ease-in-out infinite; }
+  #bg-noise {
+    position: absolute; inset: 0; z-index: 0; opacity: 0.03;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-size: 128px 128px;
+  }
+  #particles { position: absolute; inset: 0; z-index: 1; pointer-events: none; overflow: hidden; }
+  .particle { position: absolute; border-radius: 50%; transition: background 0.8s ease; }
+  #top-bar {
+    position: relative; z-index: 10;
+    display: flex; justify-content: flex-start; align-items: center;
+    padding: 10px 10px 10px 10px;
+    white-space: nowrap;
+    overflow: hidden;
+    min-width: 0;
+    flex-wrap: nowrap;
+  }
+  #top-bar a {
+    font-size: 13px; opacity: 0.5; letter-spacing: 0.5px;
+    color: #fff; text-decoration: none;
+    display: flex; align-items: center; gap: 6px;
+    transition: opacity 0.2s ease;
+    min-width: 0;
+    flex-shrink: 1;
+  }
+  #top-bar a:hover { opacity: 0.85; }
+  #game-info {
+    position: relative; z-index: 10; padding: 8px 30px 0;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    flex-shrink: 0;
+  }
+  #game-info.transitioning { opacity: 0; transform: translateY(10px); }
+  #game-genre {
+    font-size: 11px; text-transform: uppercase; letter-spacing: 3px;
+    opacity: 0.5; margin-bottom: 8px;
+  }
+  #game-title {
+    font-size: clamp(28px, 5vw, 48px); font-weight: 700;
+    letter-spacing: -1px; line-height: 1.1;
+  }
+  #game-meta {
+    margin-top: 12px; display: flex; gap: 16px; align-items: center;
+    font-size: 13px; opacity: 0.6;
+  }
+  #play-btn {
+    margin-top: 0px; padding: 0px 20px;
+    background: rgba(255,255,255,0.95); color: #000;
+    border: none; border-radius: 8px; font-size: 15px; font-weight: 600;
+    cursor: pointer; display: inline-flex; align-items: center; gap: 8px;
+    transition: all 0.2s ease;
+    margin-right: 12px;
+    height: 44px;
+    flex-wrap: nowrap;
+    white-space: nowrap;
+  }
+  #play-btn:hover {
+    background: rgba(255,255,255,1);
+    transform: translateY(-2px);
+  }
+  #play-companion-wrapper {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  #play-companion-btn {
+    margin-top: 0px; padding: 10px 10px;
+    background: rgba(255,255,255,0.1); color: #fff;
+    border: 1px solid rgba(255,255,255,0.2); border-radius: 8px;
+    font-size: clamp(12px, 2.5vw, 15px); font-weight: 600; cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center;
+    transition: all 0.2s ease; backdrop-filter: blur(10px);
+    letter-spacing: 0.5px;
+    line-height: 1.2; white-space: nowrap;
+    text-align: center;
+    height: 44px;
+    flex-wrap: nowrap;
+  }
+  #play-companion-btn:hover {
+    background: rgba(255,255,255,0.2);
+    border-color: rgba(255,255,255,0.4);
+    transform: translateY(-2px);
+  }
+  #companion-btn {
+    position: relative; z-index: 10;
+    display: flex; justify-content: center; align-items: center;
+    padding: 0px 40px 0px 40px;
+    flex-shrink: 0;
+  }
+  .companion-button {
+    padding: 10px 24px;
+    background: rgba(255,255,255,0.1);
+    color: #fff;
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    backdrop-filter: blur(10px);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .companion-button:hover {
+    background: rgba(255,255,255,0.2);
+    border-color: rgba(255,255,255,0.4);
+    transform: translateY(-2px);
+  }
+  #carousel-wrap {
+    position: relative; z-index: 10;
+    display: flex; justify-content: center;
+    padding: 0px 0;
+    flex-shrink: 0;
+  }
+  #carousel {
+    display: flex; gap: 10px; align-items: center;
+    overflow-x: auto; overflow-y: visible;
+    scrollbar-width: none; -webkit-overflow-scrolling: touch;
+    padding: 10px 50px 10px 50px; min-height: 100px;
+    scroll-snap-type: x mandatory;
+  }
+  #carousel::-webkit-scrollbar { display: none; }
+  .game-tile {
+    flex-shrink: 0; width: 64px; height: 64px; border-radius: 12px;
+    border: 2.5px solid transparent;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px; cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    scroll-snap-align: center;
+  }
+  .game-tile:hover {
+    transform: translateY(-2px);
+  }
+  .game-tile.selected {
+    width: 80px; height: 80px; border-radius: 16px; font-size: 32px;
+  }
+  .game-tile.disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+    filter: grayscale(100%);
+  }
+  .game-tile.disabled:hover {
+    transform: none;
+  }
+  .carousel-arrow {
+    position: absolute; top: 50%; transform: translateY(-50%);
+    width: 36px; height: 36px; border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.2);
+    background: rgba(0,0,0,0.4); backdrop-filter: blur(10px);
+    color: #fff; font-size: 18px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s ease; z-index: 2;
+  }
+  .carousel-arrow:hover { background: rgba(0,0,0,0.6); border-color: rgba(255,255,255,0.4); }
+  #arrow-left { left: 4px; }
+  #arrow-right { right: 4px; }
+  #bottom-bar {
+    position: relative; z-index: 10;
+    display: flex; justify-content: space-between; align-items: center;
+    opacity: 0.35; font-size: 11px; letter-spacing: 0.5px;
+    padding: 0px 10px 10px 10px;
+    flex-shrink: 0;
+  }
+  @keyframes float0 {
+    0%, 100% { transform: translateY(0) translateX(0); }
+    33% { transform: translateY(-20px) translateX(10px); }
+    66% { transform: translateY(10px) translateX(-5px); }
+  }
+  @keyframes float1 {
+    0%, 100% { transform: translateY(0) translateX(0); }
+    50% { transform: translateY(-30px) translateX(-15px); }
+  }
+  @keyframes float2 {
+    0%, 100% { transform: translateY(0); }
+    25% { transform: translateY(15px) translateX(8px); }
+    75% { transform: translateY(-10px) translateX(-12px); }
+  }
+  @keyframes blob1 {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    25% { transform: translate(8%, -6%) scale(1.15); }
+    50% { transform: translate(-5%, 10%) scale(0.9); }
+    75% { transform: translate(10%, 5%) scale(1.1); }
+  }
+  @keyframes blob2 {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    33% { transform: translate(-10%, 8%) scale(1.2); }
+    66% { transform: translate(6%, -10%) scale(0.85); }
+  }
+  @keyframes blob3 {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    20% { transform: translate(12%, 5%) scale(1.1); }
+    40% { transform: translate(-8%, -12%) scale(0.95); }
+    60% { transform: translate(5%, 15%) scale(1.15); }
+    80% { transform: translate(-10%, -5%) scale(0.9); }
+  }
+  @keyframes blob4 {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    50% { transform: translate(-15%, 10%) scale(1.25); }
+  }
+
+  @media (max-width: 480px) {
+    #top-bar a {
+      font-size: 11px;
+      letter-spacing: 0.3px;
+    }
+  }
+  @media (max-width: 400px) {
+    #top-bar a {
+      font-size: 10px;
+      letter-spacing: 0.2px;
+    }
+  }
+
+  .slideshow-container {
+    position: relative;
+    height: calc(100% - 16px);
+    max-height: 592px;
+    margin: 20px auto;
+    padding: 0 8px;
+    border-radius: 12px;
+    overflow: hidden;
+    background: rgba(2,6,23,0.36);
+    border: 1px solid rgba(255,255,255,0.1);
+    z-index: 5;
+    width: calc(100% - 16px);
+    max-width: 592px;
+  }
+
+  .slide {
+    position: absolute;
+    height: 100%;
+    opacity: 0;
+    transition: opacity 0.8s ease-in-out;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .slide.active {
+    opacity: 1;
+  }
+
+  .slide img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 12px;
+  }
+
+  .slideshow-controls {
+    position: absolute;
+    bottom: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    background: rgba(2,6,23,0.6);
+    padding: 8px 12px;
+    border-radius: 999px;
+    border: 1px solid rgba(255,255,255,0.2);
+    backdrop-filter: blur(10px);
+    opacity: 0.8;
+    z-index: 10;
+  }
+
+  .slideshow-btn {
+    background: none;
+    border: none;
+    color: #fff;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 14px;
+    transition: all 0.2s;
+    opacity: 0.8;
+  }
+
+  .slideshow-btn:hover {
+    background: rgba(255,255,255,0.2);
+    opacity: 1;
+  }
+
+  .slideshow-counter {
+    color: rgba(255,255,255,0.7);
+    font-size: 12px;
+    font-weight: 600;
+    min-width: 32px;
+    text-align: center;
+  }
+
+  .slideshow-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(2,6,23,0.6);
+    border: 1px solid rgba(255,255,255,0.2);
+    color: #fff;
+    cursor: pointer;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 16px;
+    transition: all 0.2s;
+    backdrop-filter: blur(10px);
+    opacity: 0.7;
+    z-index: 10;
+  }
+
+  .slideshow-nav:hover {
+    background: rgba(255,255,255,0.2);
+    opacity: 1;
+  }
+
+  .slideshow-nav.prev {
+    left: 12px;
+  }
+
+  .slideshow-nav.next {
+    right: 12px;
+  }
+
+  #game-slideshow {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+    flex-grow: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  #game-slideshow.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="bg-base"></div>
+  <div id="bg-blobs">
+    <div class="blob" id="blob1"></div>
+    <div class="blob" id="blob2"></div>
+    <div class="blob" id="blob3"></div>
+    <div class="blob" id="blob4"></div>
+  </div>
+  <div id="bg-noise"></div>
+  <div id="particles"></div>
+  <div id="top-bar">
+    <a href="https://mistermarx.com" target="_blank">&larr; back to MisterMarx.com</a>
+    <a href="https://www.mistermarx.com/games/about-our-games" style="margin-left: auto;">About Our Games &rarr;</a>
+  </div>
+  <div style="font-size: 20px; font-weight: 600; margin-bottom: 8px; opacity: 0.7; text-align: center; padding: 10px 40px 00px 40px;">MisterMarx.com Games</div>
+  <div id="game-info">
+    <div id="game-genre"></div>
+    <h1 id="game-title"></h1>
+    <div id="game-meta"></div>
+    <div id="play-companion-wrapper">
+      <button id="play-btn">&#9654; Play</button>
+      <button id="play-companion-btn">⬛ Companion Page</button>
+    </div>
+  </div>
+  <div id="game-slideshow" class="slideshow-container">
+    <div class="slide active">
+      <img src="" alt="Game Screenshot">
+    </div>
+    <button class="slideshow-nav prev" onclick="changeSlide(-1)">‹</button>
+    <button class="slideshow-nav next" onclick="changeSlide(1)">›</button>
+    <div class="slideshow-controls">
+      <button class="slideshow-btn" onclick="toggleAutoPlay()" id="autoPlayBtn">⏸</button>
+      <span class="slideshow-counter" id="slideCounter">1/1</span>
+      <button class="slideshow-btn" onclick="resetSlideshow()">⟲</button>
+    </div>
+  </div>
+  <div id="carousel-wrap">
+    <div id="carousel"></div>
+    <button class="carousel-arrow" id="arrow-left">&lsaquo;</button>
+    <button class="carousel-arrow" id="arrow-right">&rsaquo;</button>
+  </div>
+  <div id="bottom-bar">
+    <span>v.01</span>
+    <span>&copy; <a href="https://www.mistermarx.com/" target="_blank" style="color: inherit; text-decoration: none;">mistermarx.com</a> 2026</span>
+  </div>
+</div>
+<script>
+const GAMES=[
+  {id:1,title:"CORRELATION",genre:"Strategic Puzzle",colors:["#020617","#14b8a6","#0f4c5c","#06111f"],accent:"#14b8a6",icon:"\u269B",lastPlayed:"2 hours ago",progress:67,activities:["Continue Game","New Game","Tutorial","Companion Page"],description:"A fast-paced system management game built around active decisions, timing, pattern recognition, and consequence.",screens:["correlation/images/Screenshot_20260317-213643.png","correlation/images/Screenshot_20260317-214702.png","correlation/images/Screenshot_20260317-214717.png","correlation/images/Screenshot_20260317-214727.png"]},
+  {id:2,title:"MATH IN SPACE",genre:"Educational",colors:["#0a0a1e","#448aff","#1a2d6b","#060618"],accent:"#448aff",icon:"\ud83d\ude80",lastPlayed:"Yesterday",progress:34,activities:["Continue Journey","Practice Mode","Leaderboard","Companion Page"],description:"A mathematical journey where players solve equations in space to practice basic arithmetic operations.",screens:["mathInSpace/images/Screenshot_20260321-160806.png","mathInSpace/images/Screenshot_20260321-160835.png","mathInSpace/images/Screenshot_20260321-160841.png","mathInSpace/images/Screenshot_20260321-160948.png"]},
+  {id:3,title:"Phantom Tides",genre:"Adventure",colors:["#001a2e","#00e5ff","#005577","#001a1a"],accent:"#00e5ff",icon:"🎮",lastPlayed:"3 days ago",progress:89,activities:["Continue Chapter 9","New Game+","Collectibles","Challenges"],description:"",screens:[]},
+  {id:4,title:"Neon Saints",genre:"Shooter",colors:["#1a1a00","#ffea00","#6b5a1a","#1a1500"],accent:"#ffea00",icon:"🎮",lastPlayed:"Last week",progress:12,activities:["Campaign","Warzone","Co-op Missions","Armory"],description:"",screens:[]},
+  {id:5,title:"Verdant",genre:"Simulation",colors:["#001a0a","#69f0ae","#1a6b2d","#0a2a10"],accent:"#69f0ae",icon:"🎮",lastPlayed:"2 weeks ago",progress:45,activities:["Continue Farm","Visit Friends","Seasonal Event","Market"],description:"",screens:[]},
+  {id:6,title:"Obsidian Keep",genre:"Souls-like",colors:["#0d0d0d","#b0bec5","#3a3a3a","#111111"],accent:"#b0bec5",icon:"🎮",lastPlayed:"1 month ago",progress:21,activities:["Continue","PvP Arena","Boss Rush","Lore Codex"],description:"",screens:[]},
+  {id:7,title:"Starfield Echo",genre:"Sci-Fi RPG",colors:["#0a0a1e","#448aff","#1a2d6b","#060618"],accent:"#448aff",icon:"🎮",lastPlayed:"Just now",progress:5,activities:["Begin Journey","Ship Builder","Galaxy Map","Side Quests"],description:"",screens:[]},
+  {id:8,title:"Kitsune Trails",genre:"Platformer",colors:["#1e0a1a","#ff80ab","#6b1a5a","#150a12"],accent:"#ff80ab",icon:"🎮",lastPlayed:"4 days ago",progress:52,activities:["World 5","Speed Run","Hidden Levels","Costumes"],description:"",screens:[]},
+  {id:9,title:"New Game",genre:"New Genre",colors:["#123456","#654321","#111111","#222222"],accent:"#654321",icon:"🎮",lastPlayed:"Never",progress:0,activities:["Start Game"],description:"",screens:[]}
+];
+
+let selectedIndex=0, showActivities=false, transitioning=false;
+let currentSlide=0, autoPlayInterval, isAutoPlaying=true;
+const particlesEl=document.getElementById('particles');
+const carouselEl=document.getElementById('carousel');
+const slideshowEl=document.getElementById('game-slideshow');
+
+for(let i=0;i<20;i++){
+  const p=document.createElement('div');
+  p.className='particle';
+  const s=2+Math.random()*3;
+  Object.assign(p.style,{width:s+'px',height:s+'px',opacity:0.15+Math.random()*0.2,left:Math.random()*100+'%',top:Math.random()*100+'%',animation:'float'+(i%3)+' '+(6+Math.random()*8)+'s ease-in-out infinite',animationDelay:Math.random()*5+'s'});
+  particlesEl.appendChild(p);
+}
+
+GAMES.forEach((g,i)=>{
+  const t=document.createElement('div');
+  t.className='game-tile';
+  if(i >= 2) t.classList.add('disabled'); // Disable games 3-8
+  t.textContent=g.icon;
+  if(i < 2) t.addEventListener('click',()=>selectGame(i)); // Only make first 2 games clickable
+  carouselEl.appendChild(t);
+});
+
+function render(){
+  const game=GAMES[selectedIndex];
+  document.getElementById('bg-base').style.background=game.colors[3];
+  document.getElementById('bg-blobs').style.opacity=transitioning?'0.3':'1';
+  document.getElementById('blob1').style.background='radial-gradient(circle,'+game.accent+' 0%,transparent 70%)';
+  document.getElementById('blob2').style.background='radial-gradient(circle,'+game.colors[2]+' 0%,transparent 70%)';
+  document.getElementById('blob3').style.background='radial-gradient(circle,'+game.colors[0]+' 0%,transparent 70%)';
+  document.getElementById('blob4').style.background='radial-gradient(circle,'+game.accent+' 0%,transparent 70%)';
+  document.querySelectorAll('.particle').forEach(p=>{p.style.background=game.accent});
+  const info=document.getElementById('game-info');
+  info.classList.toggle('transitioning',transitioning);
+  document.getElementById('game-genre').textContent=game.genre;
+  document.getElementById('game-title').textContent=game.title;
+  const pb=document.getElementById('play-btn');
+  pb.onmouseenter=()=>{};
+  pb.onmouseleave=()=>{};
+  
+  // Update companion button
+  const companionBtn=document.getElementById('play-companion-btn');
+  companionBtn.onclick=()=>{
+    const game=GAMES[selectedIndex];
+    if(game.id===1) window.open('https://play.mistermarx.com/correlation/companion-page.html', '_blank');
+    else if(game.id===2) window.open('https://play.mistermarx.com/mathInSpace/companion-page.html', '_blank');
+    else window.open('#', '_blank');
+  };
+  
+  // Update slideshow visibility and content
+  updateSlideshow();
+  
+  document.querySelectorAll('.game-tile').forEach((t,i)=>{
+    const g=GAMES[i],sel=i===selectedIndex;
+    t.className='game-tile'+(sel?' selected':'');
+    if(i >= 2) t.classList.add('disabled'); // Keep disabled state for games 3-8
+    t.style.background='linear-gradient(135deg,'+g.accent+'40,'+g.accent+'15)';
+    t.style.borderColor=sel?g.accent:'transparent';
+    t.style.boxShadow='none';
+  });
+}
+
+function selectGame(index){
+  if(index===selectedIndex)return;
+  transitioning=true;showActivities=false;
+  selectedIndex=index;
+  render();
+  // Reset slideshow to first slide when changing games
+  currentSlide=0;
+  updateSlideCounter();
+  // Simple scroll to selected game
+  setTimeout(()=>{
+    const selectedTile=carouselEl.children[selectedIndex];
+    if(selectedTile){
+      carouselEl.scrollTo({
+        left:selectedTile.offsetLeft-carouselEl.offsetWidth/2+selectedTile.offsetWidth/2,
+        behavior:'smooth'
+      });
+    }
+    transitioning=false;
+    render(); // Re-render to show the game info
+  },100);
+}
+
+function updateSlideshow(){
+  const game=GAMES[selectedIndex];
+  const slideshowContainer=document.getElementById('game-slideshow');
+
+  if(game.description && (game.screens && game.screens.length>0)){
+    slideshowContainer.classList.add('visible');
+    
+    // Clear existing slides
+    const existingSlides=slideshowContainer.querySelectorAll('.slide');
+    existingSlides.forEach(slide=>slide.remove());
+    
+    // Add description slide first
+    const descSlide=document.createElement('div');
+    descSlide.className='slide active';
+    descSlide.style.cssText='position: relative; background-size: cover; background-position: center; background-image: url('+game.screens[0]+');';
+    const bgOverlay=document.createElement('div');
+    bgOverlay.style.cssText='position: absolute; inset: 0; background: rgba(2,6,23,0.7); backdrop-filter: blur(5px);';
+    descSlide.appendChild(bgOverlay);
+    const textContainer=document.createElement('div');
+    textContainer.style.cssText='position: relative; z-index: 1; padding: 40px; text-align: center; display: flex; align-items: center; justify-content: center; min-height: 100%';
+    const descDiv=document.createElement('div');
+    descDiv.style.cssText='background: rgba(0,0,0,0.6); backdrop-filter: blur(10px); padding: 30px; border-radius: 12px; max-width: 80%; color: #fff; font-size: 18px; line-height: 1.6;';
+    descDiv.textContent=game.description;
+    textContainer.appendChild(descDiv);
+    descSlide.appendChild(textContainer);
+    slideshowContainer.insertBefore(descSlide,slideshowContainer.querySelector('.slideshow-nav'));
+    
+    // Add screenshot slides
+    game.screens.forEach((screenPath,i)=>{
+      const slide=document.createElement('div');
+      slide.className='slide';
+      const img=document.createElement('img');
+      img.src=screenPath;
+      img.alt=`${game.title} Screenshot ${i+1}`;
+      img.onload=()=>calculateSlideshowHeight(); // Recalculate when images load
+      slide.appendChild(img);
+      slideshowContainer.insertBefore(slide,slideshowContainer.querySelector('.slideshow-nav'));
+    });
+    
+    currentSlide=0;
+    updateSlideCounter();
+    calculateSlideshowHeight(); // Initial height calculation
+    if(isAutoPlaying) startAutoPlay();
+  }else{
+    slideshowContainer.classList.remove('visible');
+    clearInterval(autoPlayInterval);
+  }
+}
+
+function showSlide(index){
+  const slides=document.querySelectorAll('#game-slideshow .slide');
+  if(slides.length===0) return;
+  
+  slides.forEach(slide=>slide.classList.remove('active'));
+  currentSlide=(index+slides.length)%slides.length;
+  slides[currentSlide].classList.add('active');
+  updateSlideCounter();
+}
+
+function updateSlideCounter(){
+  const slides=document.querySelectorAll('#game-slideshow .slide');
+  const counter=document.getElementById('slideCounter');
+  if(counter && slides.length>0){
+    counter.textContent=`${currentSlide+1}/${slides.length}`;
+  }
+}
+
+function changeSlide(direction){
+  showSlide(currentSlide+direction);
+  if(isAutoPlaying){
+    resetAutoPlay();
+  }
+}
+
+function nextSlide(){
+  showSlide(currentSlide+1);
+}
+
+function toggleAutoPlay(){
+  const btn=document.getElementById('autoPlayBtn');
+  if(isAutoPlaying){
+    clearInterval(autoPlayInterval);
+    btn.textContent='▶';
+    isAutoPlaying=false;
+  }else{
+    startAutoPlay();
+    btn.textContent='⏸';
+    isAutoPlaying=true;
+  }
+}
+
+function startAutoPlay(){
+  clearInterval(autoPlayInterval); // Clear any existing interval first
+  autoPlayInterval=setInterval(nextSlide,3000);
+}
+
+function resetAutoPlay(){
+  if(isAutoPlaying){
+    clearInterval(autoPlayInterval);
+    startAutoPlay();
+  }
+}
+
+function resetSlideshow(){
+  showSlide(0);
+  resetAutoPlay();
+}
+
+function calculateSlideshowHeight(){
+  const slideshowContainer=document.getElementById('game-slideshow');
+  const gameInfo=document.getElementById('game-info');
+  const carouselWrap=document.getElementById('carousel-wrap');
+  
+  // Get available space between game info and carousel
+  const gameInfoBottom=gameInfo.offsetTop+gameInfo.offsetHeight;
+  const carouselTop=carouselWrap.offsetTop;
+  const availableSpace=carouselTop-gameInfoBottom-80; // 80px for margins
+  
+  // Calculate height based on viewport width with aspect ratio
+  const viewportWidth=window.innerWidth;
+  const calculatedHeight=viewportWidth
+  
+  // Use the smaller of available space or calculated height
+  const finalHeight=Math.min(availableSpace,calculatedHeight,500); // Max 500px
+  const minHeight=Math.max(availableSpace,calculatedHeight,200); // Min 200px
+  
+  slideshowContainer.style.height=finalHeight+'px';
+}
+
+document.getElementById('play-btn').addEventListener('click',()=>{
+  const game=GAMES[selectedIndex];
+  if(game.id===1) window.open('https://www.mistermarx.com/games/correlation', '_blank');
+  else if(game.id===2) window.open('https://www.mistermarx.com/games/math-in-space', '_blank');
+  else window.open('#', '_blank');
+});
+document.getElementById('arrow-left').addEventListener('click',()=>{carouselEl.scrollBy({left:-160,behavior:'smooth'})});
+document.getElementById('arrow-right').addEventListener('click',()=>{carouselEl.scrollBy({left:160,behavior:'smooth'})});
+
+// Window resize listener for dynamic height calculation
+window.addEventListener('resize',()=>{
+  calculateSlideshowHeight();
+});
+
+document.addEventListener('keydown',(e)=>{
+  if(e.key==='ArrowRight'&&selectedIndex<GAMES.length-1)selectGame(selectedIndex+1);
+  else if(e.key==='ArrowLeft'&&selectedIndex>0)selectGame(selectedIndex-1);
+  else if(e.key==='Enter'||e.key===' '){e.preventDefault(); /*showActivities=!showActivities;render()*/}
+});
+render();
+</script>
+</body>
+</html>
