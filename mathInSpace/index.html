@@ -1107,6 +1107,12 @@
             }
 
             pause() {
+                // Clear the loop timer to prevent scheduled tracks from playing
+                if (this.loopTimer) {
+                    clearTimeout(this.loopTimer);
+                    this.loopTimer = null;
+                }
+                
                 // Pause both background tracks
                 if (this.backgroundMusicTrack && !this.backgroundMusicTrack.paused) {
                     this.backgroundMusicTrack.pause();
@@ -1119,9 +1125,13 @@
             resume() {
                 // Resume the appropriate track based on which should be playing
                 if (this.musicStarted) {
-                    const activeTrack = this.currentTrack === 1 ? this.backgroundMusicTrack2 : this.backgroundMusicTrack;
-                    if (activeTrack && activeTrack.paused) {
-                        activeTrack.play().catch(e => console.log('Background music resume failed:', e));
+                    // Check which track was playing and resume it, then schedule next
+                    const currentPlayingTrack = this.currentTrack === 1 ? this.backgroundMusicTrack : this.backgroundMusicTrack2;
+                    
+                    if (currentPlayingTrack && currentPlayingTrack.paused) {
+                        currentPlayingTrack.play().catch(e => console.log('Background music resume failed:', e));
+                        // Reschedule the next track
+                        this.scheduleNextTrack();
                     }
                 }
             }
