@@ -975,10 +975,10 @@
                 this.musicStarted = false;
                 this.userInteracted = false;
                 this.isMuted = false;
-                this.firstInteraction = false;
                 this.basePath = './sfx/'; // Adjust if needed
                 this.currentTrack = 1; // Track which audio is currently playing
                 this.loopTimer = null; // Timer for next track start
+                this.firstInteraction = false;
                 
                 this.loadAllSounds();
                 this.startBackgroundMusic(); // Start immediately on page load
@@ -1123,8 +1123,9 @@
                     // Resume the appropriate track based on which should be playing
                     if (this.musicStarted) {
                         const activeTrack = this.currentTrack === 1 ? this.backgroundMusicTrack2 : this.backgroundMusicTrack;
-                    if (activeTrack && activeTrack.paused) {
-                        activeTrack.play().catch(e => console.log('Background music resume failed:', e));
+                        if (activeTrack) {
+                            activeTrack.play().catch(e => console.log('Resume play failed:', e));
+                        }
                     }
                 }
             }
