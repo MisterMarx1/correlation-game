@@ -433,7 +433,8 @@
                     countdown: 'sfx/mixkit-electronic-lock-success-beeps-2852.wav',
                     startSound: 'sfx/mixkit-arcade-mechanical-bling-210.wav',
                     welding: 'sfx/mixkit-electric-welding-and-sparkles-2603.wav',
-                    deselect: 'sfx/mixkit-cybernetic-technology-affirmation-3116.wav'
+                    deselect: 'sfx/mixkit-cybernetic-technology-affirmation-3116.wav',
+                    fogImpact: 'sfx/mixkit-cinematic-impact-waves-781 (1).wav'
                 };
                 
                 // Initialize audio pools
@@ -2551,9 +2552,6 @@ const lightningRef=useRef({active:false,start:null,end:null,frame:0});
             setSel(null);setEchoes([]);setPhase("play");setInfo(null);setCascTxt(null);setPaused(false);setFillPct(0);setScreenFlash(null);setTick(0);setShowMenu(false);setShowTutorial(false);setShowQuitConfirmation(false);setShowPauseRules(false);setShowOverRules(false);
             particlesRef.current=[];boltsRef.current=[];
             
-            // Start background music on game start (user interaction)
-            SoundManager.playBackgroundMusic();
-            
             // Start countdown animation
             setCountdown(3);
             SoundManager.play('countdown', 0.6); // Play beep for 3
@@ -3511,9 +3509,6 @@ const lightningRef=useRef({active:false,start:null,end:null,frame:0});
                 <div className={`fog-overlay ${isFogDisappearing ? 'disappearing' : ''}`} onClick={() => {
                   if (!isFogDisappearing && isPageLoaded) {
                     setIsFogDisappearing(true);
-                    const impactSound = new Audio('sfx/mixkit-cinematic-impact-waves-781 (1).wav');
-                    impactSound.volume = 0.5;
-                    impactSound.play().catch(e => console.log('Impact sound play failed:', e));
                     setTimeout(() => {
                       setShowFogOverlay(false);
                       setIsFogDisappearing(false);
