@@ -72,16 +72,16 @@
             overflow: hidden;
             white-space: nowrap;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
-            font-size: 30px;
+            font-size: 20px;
             font-weight: bold;
-            letter-spacing: 8px;
+            letter-spacing: 4px;
             text-transform: uppercase;
             background: linear-gradient(90deg, #00f5d4, #9b5de5, #f15bb5, #00f5d4, #9b5de5, #f15bb5);
             background-size: 300% 300%;
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-            animation: marquee 12s linear infinite, colorShift 8s ease-in-out infinite;
+            animation: marquee 8s linear infinite, colorShift 8s ease-in-out infinite;
         }
         
         .marquee.success {
@@ -242,8 +242,11 @@
                 : diff < 5 ? types[Math.floor(Math.random() * 3)]()
                 : types[Math.floor(Math.random() * types.length)]();
               
-              // If we have a board, validate the target is achievable
-              if (!board || canAchieveTarget(board, pick, maxPrime)) {
+              // Check if this target is identical to the previous one
+              const isIdenticalToPrevious = t.length > 0 && t[t.length - 1].val === pick.val;
+              
+              // If we have a board, validate the target is achievable and not identical to previous
+              if (!board || (canAchieveTarget(board, pick, maxPrime) && !isIdenticalToPrevious)) {
                 validTarget = pick;
               }
               attempts++;
@@ -251,8 +254,18 @@
             
             // Fallback to a simple composite target if validation fails
             if (!validTarget) {
-              const sum = randAchievableSum(maxPrime, 20);
-              validTarget = { label: `Σ = ${sum}`, type: "sum", val: sum };
+              let fallbackAttempts = 0;
+              while (fallbackAttempts < 10) {
+                const sum = randAchievableSum(maxPrime, 20);
+                const fallbackTarget = { label: `Σ = ${sum}`, type: "sum", val: sum };
+                const isIdenticalToPrevious = t.length > 0 && t[t.length - 1].val === fallbackTarget.val;
+                
+                if (!isIdenticalToPrevious && (!board || canAchieveTarget(board, fallbackTarget, maxPrime))) {
+                  validTarget = fallbackTarget;
+                  break;
+                }
+                fallbackAttempts++;
+              }
             }
             
             t.push(validTarget);
@@ -391,6 +404,11 @@
             let alive = false;
             for (const ky in g.board) if (!g.board[ky].dead) { alive = true; break; }
             if (!alive) { g.gameOver = true; stopTimer(); }
+            
+            // Advance to next round when time runs out (failed goal)
+            g.round += 1;
+            if (g.round >= ROUNDS) { g.gameOver = true; stopTimer(); }
+            
             g.lastTurn = Date.now(); g.turnTime = turnTime(); g.timeLeft = g.turnTime;
             g.turnInProgress = false; // Reset flag
             re();
@@ -465,7 +483,7 @@
                 // Regenerate remaining targets
                 const newTargets = [...g.targets.slice(0, g.round)];
                 const remainingTargets = genTargets(g.maxPrime, g.board);
-                newTargets.push(...remainingTargets.slice(ROUNDS - g.round));
+                newTargets.push(...remainingTargets.slice(0, ROUNDS - g.round));
                 g.targets = newTargets;
               }
             }
@@ -814,7 +832,10 @@
                   display: (g.flash?.bad || g.flash?.success) ? "flex" : undefined,
                   alignItems: (g.flash?.bad || g.flash?.success) ? "center" : undefined
                 }}>
-                  {g.flash?.bad ? (g.flash.text === "TIME'S UP" ? "TIME'S UP" : "NOT SATISFIED") : g.flash?.success ? g.flash.text : "Σ PRIME"}
+                  {g.flash?.bad ? (g.flash.text === "TIME'S UP" ? "TIME'S UP" : "NOT SATISFIED") : g.flash?.success ? g.flash.text : (() => {
+                    const upcomingTargets = g.targets.slice(g.round + 1, g.round + 4);
+                    return `GOAL QUEUE: ${upcomingTargets.length > 0 ? upcomingTargets.map(t => `Σ = ${t.val}`).join(' → ') : 'EMPTY'}`;
+                  })()}
                 </div>
                 
                 
@@ -874,54 +895,64 @@
                     flex: 1, 
                     justifyContent: "center"
                   }}>
-                    {/* Orbiting Balls */}
-                    {g.sel.length > 0 && Array.from({ length: g.sel.length }, (_, i) => {
-                      const time = Date.now() / 1000;
-                      const delay = (i / g.sel.length) * 3; // Distribute balls evenly around the rectangle
-                      const progress = (time + delay) % 3; // 3-second orbit cycle
-                      const rectWidth = 56;
-                      const rectHeight = 32;
-                      
-                      let x, y;
-                      if (progress < 0.75) { // Top edge: 0 to 0.75
-                        const t = progress / 0.75;
-                        x = -rectWidth/2 + t * rectWidth;
-                        y = -rectHeight/2;
-                      } else if (progress < 1.5) { // Right edge: 0.75 to 1.5
-                        const t = (progress - 0.75) / 0.75;
-                        x = rectWidth/2;
-                        y = -rectHeight/2 + t * rectHeight;
-                      } else if (progress < 2.25) { // Bottom edge: 1.5 to 2.25
-                        const t = (progress - 1.5) / 0.75;
-                        x = rectWidth/2 - t * rectWidth;
-                        y = rectHeight/2;
-                      } else { // Left edge: 2.25 to 3
-                        const t = (progress - 2.25) / 0.75;
-                        x = -rectWidth/2;
-                        y = rectHeight/2 - t * rectHeight;
-                      }
-                      
-                      const colors = ["#9b5de5"];
-                      const color = colors[i % colors.length];
-                      
-                      return (
-                        <div
-                          key={i}
-                          style={{
-                            position: "absolute",
-                            width: 4,
-                            height: 4,
-                            backgroundColor: color,
-                            borderRadius: "50%",
-                            boxShadow: `0 0 6px ${color}`,
-                            transform: `translate(${x}px, ${y}px)`,
-                            zIndex: 10,
-                            opacity: 0.8,
-                            transition: "transform 0.3s ease-out, opacity 0.3s ease-out"
-                          }}
-                        />
-                      );
-                    })}
+                    {/* Orbiting Balls Container - positioned relative to sum display */}
+                    <div style={{
+                      position: "absolute",
+                      left: "50%",
+                      top: "50%",
+                      transform: "translate(-50%, -50%)",
+                      pointerEvents: "none"
+                    }}>
+                      {/* Orbiting Balls */}
+                      {g.sel.length > 0 && Array.from({ length: g.sel.length }, (_, i) => {
+                        const time = Date.now() / 1000;
+                        const delay = (i / g.sel.length) * 3; // Distribute balls evenly around the rectangle
+                        const progress = (time + delay) % 3; // 3-second orbit cycle
+                        const rectWidth = 56 * 1.05;
+                        const rectHeight = 32 * 1.05 + 2;
+                        const totalPerimeter = 2 * (rectWidth + rectHeight);
+                        const distance = (progress / 3) * totalPerimeter;
+                        
+                        let x, y;
+                        if (distance < rectWidth) { // Top edge
+                          const t = distance / rectWidth;
+                          x = -rectWidth/2 + t * rectWidth;
+                          y = -rectHeight/2;
+                        } else if (distance < rectWidth + rectHeight) { // Right edge
+                          const t = (distance - rectWidth) / rectHeight;
+                          x = rectWidth/2;
+                          y = -rectHeight/2 + t * rectHeight;
+                        } else if (distance < 2 * rectWidth + rectHeight) { // Bottom edge
+                          const t = (distance - rectWidth - rectHeight) / rectWidth;
+                          x = rectWidth/2 - t * rectWidth;
+                          y = rectHeight/2;
+                        } else { // Left edge
+                          const t = (distance - 2 * rectWidth - rectHeight) / rectHeight;
+                          x = -rectWidth/2;
+                          y = rectHeight/2 - t * rectHeight;
+                        }
+                        
+                        const colors = ["#9b5de5"];
+                        const color = colors[i % colors.length];
+                        
+                        return (
+                          <div
+                            key={i}
+                            style={{
+                              position: "absolute",
+                              width: 4,
+                              height: 4,
+                              backgroundColor: color,
+                              borderRadius: "50%",
+                              boxShadow: `0 0 6px ${color}`,
+                              transform: `translate(${x-2}px, ${y - 2}px)`,
+                              zIndex: 10,
+                              opacity: 0.8
+                            }}
+                          />
+                        );
+                      })}
+                    </div>
                     
                     <div style={{
                       display: "flex",
@@ -1133,14 +1164,14 @@
                       {g.won ? "SUMMATION COMPLETE" : "SUMMATION FAILED"}
                     </div>
                     <div style={{ fontSize: 13, color: "#555", fontFamily: "monospace", textAlign: "center", lineHeight: 1.8 }}>
-                      {g.score} pts · {g.totalPaths} paths · {g.turn} turns
+                      {g.score} pts · {g.totalPaths} goals met · {g.turn} turns · Primes ≤ {g.maxPrime}
                       {!g.won && <><br />Round {g.round + 1}/{ROUNDS} · {Math.round((1 - g.deadCount / (W * H)) * 100)}% survived</>}
                     </div>
-                    <div onClick={() => startGame()} style={{
+                    <div onClick={() => { g.started = false; re(); }} style={{
                       marginTop: 6, padding: "10px 30px", fontSize: 12,
                       border: "1px solid #9b5de5", color: "#9b5de5", cursor: "pointer",
                       borderRadius: 2, letterSpacing: 4, textTransform: "uppercase", fontFamily: "Georgia, serif",
-                    }}>AGAIN</div>
+                    }}>NEW GAME</div>
                   </div>
                 )}
               </div>

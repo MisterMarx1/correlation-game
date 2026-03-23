@@ -2222,42 +2222,53 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
                 setShowFeedbackFlash(false);
                 setGameState('playing');
                 generateAndSetProblem();
+            }, [selectedDuration, generateAndSetProblem]);
+
+            // --- Main Game Timer Management ---
+            useEffect(() => {
+                if (gameState !== 'playing') return;
 
                 if (timerRef.current) clearInterval(timerRef.current);
 
                 timerRef.current = setInterval(() => {
-                    setTimeLeft((prevTime) => {
-                        if (prevTime <= 1) {
-                            clearInterval(timerRef.current);
-                            if (currentProblem && gameState === 'playing') {
-                                setTimeoutCount(c => c + 1);
-                                setGameLog(prevLog => [
-                                    ...prevLog, {
-                                        timestamp: new Date().toISOString(),
-                                        problem: { ...currentProblem },
-                                        userAnswer: 'TIMEOUT',
-                                        submittedAnswerParsed: 'TIMEOUT',
-                                        isCorrect: false,
-                                        timeTakenMs: selectedDuration * 1000 - (performance.now() - problemStartTimeRef.current),
-                                        awardedSpeedBonus: false,
-                                        pointsChange: 0,
-                                        scoreAfter: score,
-                                        timedOut: true,
-                                    },
-                                ]);
-                                triggerFeedback('timeout');
+                    if (!isPaused) {
+                        setTimeLeft((prevTime) => {
+                            if (prevTime <= 1) {
+                                clearInterval(timerRef.current);
+                                if (currentProblem && gameState === 'playing') {
+                                    setTimeoutCount(c => c + 1);
+                                    setGameLog(prevLog => [
+                                        ...prevLog, {
+                                            timestamp: new Date().toISOString(),
+                                            problem: { ...currentProblem },
+                                            userAnswer: 'TIMEOUT',
+                                            submittedAnswerParsed: 'TIMEOUT',
+                                            isCorrect: false,
+                                            timeTakenMs: selectedDuration * 1000 - (performance.now() - problemStartTimeRef.current),
+                                            awardedSpeedBonus: false,
+                                            pointsChange: 0,
+                                            scoreAfter: score,
+                                            timedOut: true,
+                                        },
+                                    ]);
+                                    triggerFeedback('timeout');
+                                }
+                                soundManager.play('GAME_OVER');
+                                setGameState('results');
+                                return 0;
                             }
-                            soundManager.play('GAME_OVER');
-                            setGameState('results');
-                            return 0;
-                        }
-                        return prevTime - 1;
-                    });
+                            return prevTime - 1;
+                        });
+                    }
                 }, 1000);
-            }, [selectedDuration, generateAndSetProblem, score, currentProblem, gameState, triggerFeedback]);
+
+                return () => {
+                    if (timerRef.current) clearInterval(timerRef.current);
+                };
+            }, [gameState, isPaused, selectedDuration, currentProblem, score, triggerFeedback]);
 
             const handleAnswerSelect = useCallback((selectedOption) => {
-                if (gameState !== 'playing' || !currentProblem || isWaitingForNextProblem) return;
+                if (gameState !== 'playing' || !currentProblem || isWaitingForNextProblem || isPaused) return;
 
                 const selectedValue = selectedOption.value;
                 const timeTakenMs = performance.now() - problemStartTimeRef.current;
@@ -2379,18 +2390,20 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
                 if (gameState !== 'playing') return;
 
                 const qTimer = setInterval(() => {
-                    setQuestionTimeLeft(t => {
-                        if (t <= 0) {
-                            clearInterval(qTimer);
-                            handleAnswerSelect({ value: 'TIMEOUT', id: null });
-                            return 0;
-                        }
-                        return t - 0.1;
-                    });
+                    if (!isPaused) {
+                        setQuestionTimeLeft(t => {
+                            if (t <= 0) {
+                                clearInterval(qTimer);
+                                handleAnswerSelect({ value: 'TIMEOUT', id: null });
+                                return 0;
+                            }
+                            return t - 0.1;
+                        });
+                    }
                 }, 100);
 
                 return () => clearInterval(qTimer);
-            }, [gameState, currentProblem, handleAnswerSelect]);
+            }, [gameState, currentProblem, handleAnswerSelect, isPaused]);
 
             useEffect(() => {
                 if (gameState === 'results') {
