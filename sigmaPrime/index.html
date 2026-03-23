@@ -5,6 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SIGMA PRIME - Prime Number Math Game</title>
     <meta name="description" content="A strategic puzzle game where you draw paths to satisfy mathematical conditions involving prime numbers and sums.">
+    
+    <!-- Preload fonts to prevent layout shift -->
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&family=Orbitron:wght@700;900&display=swap" as="style">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <style>
         body {
             margin: 0;
@@ -17,35 +22,339 @@
             background: #04040c;
             overflow: hidden;
             transition: background-color 0.2s ease-in-out;
+            /* iOS tap highlight fix */
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
         }
-        
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            -webkit-text-size-adjust: 100%;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+
+        /* Reserve space for game grid to prevent layout shift */
         #root {
-            width: 100vw;
-            height: 100vh;
+            width: 100%;
+            height: var(--app-height, 100dvh);
+            min-height: var(--app-height, 100dvh);
+            max-height: var(--app-height, 100dvh);
+            overflow: hidden;
+            position: relative;
+            /* Prevent CLS during loading */
+            background: #030712;
         }
-        
-        .loading {
+
+        /* Prevent font loading layout shift */
+        .font-loading-guard {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            visibility: hidden;
+            position: absolute;
+            height: 0;
+            overflow: hidden;
+        }
+
+        /* Allow text selection for inputs and buttons */
+        input, textarea, button, select {
+            -webkit-user-select: auto;
+            -moz-user-select: auto;
+            -ms-user-select: auto;
+            user-select: auto;
+        }
+
+        /* iOS-specific touch improvements */
+        @supports (-webkit-touch-callout: none) {
+            .interactive-cell {
+                -webkit-transform: translateZ(0);
+                transform: translateZ(0);
+                -webkit-backface-visibility: hidden;
+                backface-visibility: hidden;
+                -webkit-perspective: 1000;
+                perspective: 1000;
+            }
+            
+            .interactive-cell:active {
+                -webkit-transform: scale(0.95) translateZ(0);
+                transform: scale(0.95) translateZ(0);
+            }
+        }
+
+        /* Keep pointer cursor for interactive elements */
+        button, [role="button"], a {
+            cursor: pointer;
+        }
+
+        /* Ensure pointer cursor for interactive game cells */
+        .interactive-cell {
+            cursor: pointer !important;
+        }
+
+        /* Smokey Fog Overlay */
+        .fog-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(ellipse at center, 
+                rgba(20, 25, 40, 0.95) 0%, 
+                rgba(10, 15, 30, 0.98) 40%, 
+                rgba(5, 10, 20, 1) 100%);
+            z-index: 9999;
             display: flex;
             align-items: center;
             justify-content: center;
-            height: 100vh;
-            color: #c8c8e0;
-            font-family: 'Georgia', serif;
-            font-size: 18px;
-            letter-spacing: 4px;
-            text-transform: uppercase;
+            animation: fogDrift 8s ease-in-out infinite;
+            backdrop-filter: blur(3px);
+            -webkit-backdrop-filter: blur(3px);
+            transition: opacity 0.8s ease-out, transform 0.8s ease-out;
         }
-        
-        .loading::after {
-            content: '';
-            animation: dots 1.5s infinite;
+
+        .fog-overlay.disappearing {
+            opacity: 0;
+            transform: scale(1.1) rotate(2deg);
+            pointer-events: none;
         }
-        
-        @keyframes dots {
-            0%, 20% { content: ''; }
-            40% { content: '.'; }
-            60% { content: '..'; }
-            80%, 100% { content: '...'; }
+
+        @keyframes fogDrift {
+            0%, 100% { 
+                background: radial-gradient(ellipse at center, 
+                    rgba(20, 25, 40, 0.95) 0%, 
+                    rgba(10, 15, 30, 0.98) 40%, 
+                    rgba(5, 10, 20, 1) 100%);
+            }
+            25% { 
+                background: radial-gradient(ellipse at 30% 40%, 
+                    rgba(25, 30, 45, 0.93) 0%, 
+                    rgba(12, 18, 35, 0.97) 40%, 
+                    rgba(6, 12, 25, 1) 100%);
+            }
+            50% { 
+                background: radial-gradient(ellipse at 70% 60%, 
+                    rgba(22, 28, 42, 0.94) 0%, 
+                    rgba(11, 17, 32, 0.98) 40%, 
+                    rgba(5, 11, 22, 1) 100%);
+            }
+            75% { 
+                background: radial-gradient(ellipse at 40% 30%, 
+                    rgba(23, 29, 43, 0.92) 0%, 
+                    rgba(13, 19, 33, 0.97) 40%, 
+                    rgba(7, 13, 24, 1) 100%);
+            }
+        }
+
+        .fog-text {
+            font-family: 'Orbitron', monospace;
+            font-size: clamp(1.5rem, 4vw, 2.5rem);
+            font-weight: 900;
+            color: rgba(255, 255, 255, 0.3);
+            text-align: center;
+            letter-spacing: 0.2em;
+            animation: textFlash 3s ease-in-out infinite;
+            text-shadow: 0 0 20px rgba(147, 197, 253, 0.1),
+                         0 0 40px rgba(147, 197, 253, 0.05),
+                         0 0 60px rgba(147, 197, 253, 0.02);
+            cursor: pointer;
+            user-select: none;
+            -webkit-user-select: none;
+            padding: 2rem;
+            border-radius: 8px;
+            transition: all 0.3s ease, opacity 0.8s ease-out, transform 0.8s ease-out;
+            filter: blur(8px);
+            opacity: 0.4;
+        }
+
+        .fog-text.loaded {
+            color: rgba(255, 255, 255, 0.8);
+            text-shadow: 0 0 20px rgba(147, 197, 253, 0.5),
+                         0 0 40px rgba(147, 197, 253, 0.3),
+                         0 0 60px rgba(147, 197, 253, 0.2);
+            filter: blur(0px);
+            opacity: 1;
+        }
+
+        .fog-text.disappearing {
+            opacity: 0;
+            transform: scale(1.5) translateY(-20px);
+            filter: blur(8px);
+        }
+
+        .fog-text:hover {
+            color: rgba(255, 255, 255, 1);
+            text-shadow: 0 0 30px rgba(147, 197, 253, 0.8),
+                         0 0 60px rgba(147, 197, 253, 0.6),
+                         0 0 80px rgba(147, 197, 253, 0.4);
+            transform: scale(1.05);
+        }
+
+        @keyframes textFlash {
+            0%, 100% { 
+                opacity: 0.4;
+                text-shadow: 0 0 10px rgba(147, 197, 253, 0.3),
+                             0 0 20px rgba(147, 197, 253, 0.2);
+            }
+            25% { 
+                opacity: 0.7;
+                text-shadow: 0 0 15px rgba(147, 197, 253, 0.4),
+                             0 0 30px rgba(147, 197, 253, 0.3);
+            }
+            50% { 
+                opacity: 1;
+                text-shadow: 0 0 25px rgba(147, 197, 253, 0.6),
+                             0 0 50px rgba(147, 197, 253, 0.4),
+                             0 0 75px rgba(147, 197, 253, 0.3);
+            }
+            75% { 
+                opacity: 0.6;
+                text-shadow: 0 0 20px rgba(147, 197, 253, 0.5),
+                             0 0 40px rgba(147, 197, 253, 0.3);
+            }
+        }
+
+        .fog-particles {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            pointer-events: none;
+        }
+
+        .fog-particle {
+            position: absolute;
+            width: 100px;
+            height: 100px;
+            background: radial-gradient(circle, 
+                rgba(147, 197, 253, 0.1) 0%, 
+                transparent 70%);
+            border-radius: 50%;
+            animation: floatParticle 15s linear infinite;
+            transition: all 0.8s ease-out;
+        }
+
+        .fog-particle.disappearing {
+            opacity: 0;
+            transform: translateX(200px) translateY(-200px) scale(2);
+            filter: blur(12px);
+        }
+
+        @keyframes floatParticle {
+            0% {
+                transform: translateX(-100px) translateY(100vh) scale(0.5);
+                opacity: 0;
+            }
+            10% {
+                opacity: 0.3;
+            }
+            90% {
+                opacity: 0.3;
+            }
+            100% {
+                transform: translateX(100vw) translateY(-100px) scale(1.5);
+                opacity: 0;
+            }
+        }
+
+        @keyframes floatParticle2 {
+            0% {
+                transform: translateX(-100px) translateY(80vh) scale(0.6);
+                opacity: 0;
+            }
+            10% {
+                opacity: 0.25;
+            }
+            90% {
+                opacity: 0.25;
+            }
+            100% {
+                transform: translateX(100vw) translateY(-150px) scale(1.4);
+                opacity: 0;
+            }
+        }
+
+        @keyframes floatParticle3 {
+            0% {
+                transform: translateX(-100px) translateY(120vh) scale(0.4);
+                opacity: 0;
+            }
+            10% {
+                opacity: 0.35;
+            }
+            90% {
+                opacity: 0.35;
+            }
+            100% {
+                transform: translateX(100vw) translateY(-50px) scale(1.6);
+                opacity: 0;
+            }
+        }
+
+        @keyframes floatParticle4 {
+            0% {
+                transform: translateX(-100px) translateY(90vh) scale(0.55);
+                opacity: 0;
+            }
+            10% {
+                opacity: 0.28;
+            }
+            90% {
+                opacity: 0.28;
+            }
+            100% {
+                transform: translateX(100vw) translateY(-120px) scale(1.45);
+                opacity: 0;
+            }
+        }
+
+        @keyframes floatParticle5 {
+            0% {
+                transform: translateX(-100px) translateY(110vh) scale(0.45);
+                opacity: 0;
+            }
+            10% {
+                opacity: 0.32;
+            }
+            90% {
+                opacity: 0.32;
+            }
+            100% {
+                transform: translateX(100vw) translateY(-80px) scale(1.55);
+                opacity: 0;
+            }
+        }
+
+        /* --- Circular Progress Spinner --- */
+        .fog-progress-container {
+            position: absolute;
+            top: 65%;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10000;
+        }
+
+        .fog-progress-spinner {
+            width: 60px;
+            height: 60px;
+            position: relative;
+        }
+
+        .fog-progress-circle {
+            width: 100%;
+            height: 100%;
+            border: 3px solid rgba(147, 197, 253, 0.2);
+            border-top: 3px solid rgba(147, 197, 253, 0.8);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
         
         @keyframes marquee {
@@ -99,13 +408,39 @@
     </style>
 </head>
 <body>
+    <!-- Font loading guard to prevent CLS -->
+    <div class="font-loading-guard" style="position:absolute;visibility:hidden;z-index:-1;">ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789</div>
+    
     <div id="root">
         <div class="loading">Loading Σ PRIME</div>
     </div>
     
+    <!-- React and ReactDOM -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Viewport Sync Script -->
+    <script>
+      function syncAppHeight() {
+        const vv = window.visualViewport;
+        const h = vv ? vv.height : window.innerHeight;
+        const top = vv ? vv.offsetTop : 0;
+
+        document.documentElement.style.setProperty('--app-height', `${h}px`);
+        document.documentElement.style.setProperty('--app-top', `${top}px`);
+      }
+
+      syncAppHeight();
+
+      window.addEventListener('resize', syncAppHeight);
+      window.addEventListener('orientationchange', syncAppHeight);
+
+      if (window.visualViewport) {
+        window.visualViewport.addEventListener('resize', syncAppHeight);
+        window.visualViewport.addEventListener('scroll', syncAppHeight);
+      }
+    </script>
     
     <script type="text/babel">
         const W = 8;
@@ -115,6 +450,531 @@
         const BASE_TURN = 11000;
 
         const ALL_PRIMES = [2, 3, 5, 7];
+
+        // Sound Management System
+        const SoundManager = {
+            sounds: {},
+            audioContext: null,
+            volume: 0.5,
+            musicVolume: 0.3,
+            enabled: true,
+            backgroundMusic: null,
+            activeSounds: new Set(),
+            weldingSound: null,
+            weldingPlayers: [],
+            weldingCrossfadeTimer: null,
+            weldingCrossfadeMs: 1000,
+            
+            // Audio object pooling for performance
+            audioPool: {},
+            maxPoolSize: 5,
+            
+            async init() {
+                // Initialize Web Audio API
+                this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                
+                // Initialize background music with overlapping tracks
+                this.backgroundMusic = new Audio('sfx/mixkit-asteroid-space-atmosphere-2004.wav');
+                this.backgroundMusic.loop = true;
+                this.backgroundMusic.volume = this.musicVolume;
+                this.backgroundMusic.preload = 'auto';
+                
+                this.backgroundMusic2 = new Audio('sfx/mixkit-asteroid-space-atmosphere-2004.wav');
+                this.backgroundMusic2.loop = true;
+                this.backgroundMusic2.volume = this.musicVolume;
+                this.backgroundMusic2.preload = 'auto';
+                
+                this.musicOverlapTimer = null;
+                this.musicOverlapMs = 3000; // 3 second overlap
+                
+                // Predefined sound file paths
+                this.soundFiles = {};
+                
+                // Initialize audio pools
+                Object.keys(this.soundFiles).forEach(key => {
+                    this.audioPool[key] = [];
+                    for (let i = 0; i < this.maxPoolSize; i++) {
+                        const audio = new Audio(this.soundFiles[key]);
+                        audio.preload = 'auto';
+                        audio.volume = this.volume;
+                        this.audioPool[key].push(audio);
+                    }
+                    // Keep one for compatibility
+                    this.sounds[key] = this.audioPool[key][0];
+                });
+                
+                            },
+            
+            play(soundName, volume = 1.0, options = {}) {
+                if (!this.enabled || !this.audioPool[soundName]) return null;
+                
+                const { loop = false } = options;
+                
+                try {
+                    // Get audio from pool
+                    let audio = this.audioPool[soundName].find(a => a.paused || a.ended);
+                    
+                    // If no available audio, use the first one (fallback)
+                    if (!audio) {
+                        audio = this.audioPool[soundName][0];
+                        // Stop any current playback
+                        audio.pause();
+                        audio.currentTime = 0;
+                    }
+                    
+                    audio.volume = this.volume * volume;
+                    audio.loop = loop;
+                    audio.currentTime = 0;
+                    
+                    // CRITICAL INP FIX: Defer sound play to next frame to avoid blocking interaction
+                    const playSound = () => {
+                        const playPromise = audio.play();
+                        if (playPromise) {
+                            playPromise.catch(e => console.log('Sound play failed:', e));
+                        }
+                    };
+                    
+                    // Use requestAnimationFrame for non-blocking playback
+                    requestAnimationFrame(playSound);
+                    
+                    // Track the sound for stopping later
+                    if (loop) {
+                        this.activeSounds.add(audio);
+                    }
+                    
+                    return audio;
+                } catch (error) {
+                    console.log('Sound system error:', error);
+                    return null;
+                }
+            },
+            
+            stopSound(sound) {
+                if (sound) {
+                    sound.pause();
+                    sound.currentTime = 0;
+                    this.activeSounds.delete(sound);
+                }
+            },
+            
+            stopAllSounds() {
+                this.activeSounds.forEach(sound => {
+                    sound.pause();
+                    sound.currentTime = 0;
+                });
+                this.activeSounds.clear();
+            },
+            
+            startWeldingLoop(volume = 0.25) {
+                if (!this.enabled || !this.sounds.welding) return;
+
+                this.stopWeldingLoop();
+
+                // Use pooled audio objects instead of cloning
+                const a = this.audioPool.welding?.[0];
+                const b = this.audioPool.welding?.[1];
+
+                if (!a || !b) return; // Fallback if pool not ready
+
+                a.volume = this.volume * volume;
+                b.volume = this.volume * volume;
+
+                a.currentTime = 0;
+                b.currentTime = 0;
+
+                this.weldingPlayers = [a, b];
+
+                // INP FIX: Defer welding loop start to avoid blocking interaction
+                const startPlayer = (player) => {
+                    player.currentTime = 0;
+                    // Use requestAnimationFrame to defer playback
+                    requestAnimationFrame(() => {
+                        player.play().catch(e => console.log('Welding play failed:', e));
+                    });
+                    this.activeSounds.add(player);
+                };
+
+                const scheduleNext = (currentIndex) => {
+                    const current = this.weldingPlayers[currentIndex];
+                    const nextIndex = currentIndex === 0 ? 1 : 0;
+                    const next = this.weldingPlayers[nextIndex];
+
+                    const loopOnceReady = () => {
+                        if (!current.duration || !isFinite(current.duration)) {
+                            this.weldingCrossfadeTimer = setTimeout(() => loopOnceReady(), 50);
+                            return;
+                        }
+
+                        const overlapSeconds = this.weldingCrossfadeMs / 1000;
+                        const delayMs = Math.max(0, (current.duration - overlapSeconds) * 1000);
+
+                        this.weldingCrossfadeTimer = setTimeout(() => {
+                            if (!this.weldingPlayers.length) return;
+
+                            next.volume = this.volume * volume;
+                            next.currentTime = 0;
+                            
+                            // INP FIX: Defer overlap playback
+                            requestAnimationFrame(() => {
+                                next.play().catch(e => console.log('Welding overlap play failed:', e));
+                            });
+                            this.activeSounds.add(next);
+
+                            scheduleNext(nextIndex);
+                        }, delayMs);
+                    };
+
+                    loopOnceReady();
+                };
+
+                startPlayer(a);
+                scheduleNext(0);
+            },
+
+            stopWeldingLoop() {
+                if (this.weldingCrossfadeTimer) {
+                    clearTimeout(this.weldingCrossfadeTimer);
+                    this.weldingCrossfadeTimer = null;
+                }
+
+                this.weldingPlayers.forEach(player => {
+                    try {
+                        player.pause();
+                        player.currentTime = 0;
+                        this.activeSounds.delete(player);
+                    } catch (error) {
+                        console.log('Welding stop failed:', error);
+                    }
+                });
+
+                this.weldingPlayers = [];
+                this.weldingSound = null;
+            },
+            
+            setVolume(vol) {
+                this.volume = Math.max(0, Math.min(1, vol));
+                Object.values(this.sounds).forEach(audio => {
+                    audio.volume = this.volume;
+                });
+            },
+            
+                        
+            toggle() {
+                this.enabled = !this.enabled;
+                if (!this.enabled) {
+                    this.pauseBackgroundMusic();
+                } else {
+                    this.playBackgroundMusic();
+                }
+                return this.enabled;
+            },
+            
+            setEnabled(enabled) {
+                this.enabled = enabled;
+                if (!enabled) {
+                    this.pauseBackgroundMusic();
+                } else {
+                    this.playBackgroundMusic();
+                }
+            },
+            
+            async playBackgroundMusic() {
+                if (!this.enabled || !this.backgroundMusic || !this.backgroundMusic2) {
+                    // Ensure background music is paused if sound is disabled
+                    if (this.backgroundMusic && !this.enabled) {
+                        this.backgroundMusic.pause();
+                        this.backgroundMusic2.pause();
+                    }
+                    return;
+                }
+                
+                // Check if music is already playing to prevent double playback on mobile
+                if ((this.backgroundMusic.currentTime > 0 && !this.backgroundMusic.paused) ||
+                    (this.backgroundMusic2.currentTime > 0 && !this.backgroundMusic2.paused)) {
+                    console.log('Background music already playing, skipping...');
+                    return;
+                }
+                
+                try {
+                    // Handle autoplay policies
+                    if (this.audioContext && this.audioContext.state === 'suspended') {
+                        await this.audioContext.resume();
+                    }
+                    
+                    console.log('Attempting to play background music...');
+                    
+                    // INP FIX: Defer background music play to avoid blocking interaction
+                    const playMusic = async () => {
+                        try {
+                            // Start first track immediately
+                            await this.backgroundMusic.play();
+                            console.log('Background music track 1 started successfully');
+                            
+                            // Schedule second track to start after 3 seconds overlap
+                            this.musicOverlapTimer = setTimeout(() => {
+                                if (this.enabled && this.backgroundMusic2) {
+                                    this.backgroundMusic2.currentTime = 0;
+                                    this.backgroundMusic2.play().catch(e => console.log('Background music track 2 failed:', e));
+                                    console.log('Background music track 2 started with overlap');
+                                }
+                            }, this.musicOverlapMs);
+                            
+                        } catch (error) {
+                            console.log('Background music play failed:', error);
+                            
+                            // Try alternative approach for PC browsers
+                            try {
+                                // Create new audio elements with different format
+                                const fallbackMusic = new Audio('sfx/mixkit-asteroid-space-atmosphere-2004.wav');
+                                const fallbackMusic2 = new Audio('sfx/mixkit-asteroid-space-atmosphere-2004.wav');
+                                
+                                fallbackMusic.loop = true;
+                                fallbackMusic2.loop = true;
+                                fallbackMusic.volume = this.musicVolume;
+                                fallbackMusic2.volume = this.musicVolume;
+                                
+                                await fallbackMusic.play();
+                                console.log('Background music started with fallback');
+                                
+                                // Schedule fallback second track
+                                setTimeout(() => {
+                                    if (this.enabled && fallbackMusic2) {
+                                        fallbackMusic2.currentTime = 0;
+                                        fallbackMusic2.play().catch(e => console.log('Fallback music track 2 failed:', e));
+                                    }
+                                }, this.musicOverlapMs);
+                                
+                                this.backgroundMusic = fallbackMusic;
+                                this.backgroundMusic2 = fallbackMusic2;
+                                
+                            } catch (fallbackError) {
+                                console.log('Fallback also failed:', fallbackError);
+                            }
+                        }
+                    };
+                    
+                    // Use setTimeout to defer music start and avoid blocking INP
+                    setTimeout(playMusic, 100);
+                    
+                } catch (error) {
+                    console.log('Background music setup failed:', error);
+                }
+            },
+            
+            pauseBackgroundMusic() {
+                if (this.musicOverlapTimer) {
+                    clearTimeout(this.musicOverlapTimer);
+                    this.musicOverlapTimer = null;
+                }
+                if (this.backgroundMusic) {
+                    this.backgroundMusic.pause();
+                }
+                if (this.backgroundMusic2) {
+                    this.backgroundMusic2.pause();
+                }
+            },
+            
+            setMusicVolume(vol) {
+                this.musicVolume = Math.max(0, Math.min(1, vol));
+                if (this.backgroundMusic) {
+                    this.backgroundMusic.volume = this.musicVolume;
+                }
+                if (this.backgroundMusic2) {
+                    this.backgroundMusic2.volume = this.musicVolume;
+                }
+            },
+            
+            pause() {
+                this.pauseBackgroundMusic();
+            },
+            
+            resume() {
+                this.playBackgroundMusic();
+            }
+        };
+
+        const GAME_VERSION = "v0.2";
+        const COPYRIGHT_TEXT = "© MisterMarx.com, 2026";
+        const GAME_TITLE = "SIGMA PRIME";
+
+        function FooterBar({
+          version,
+          copyright,
+          soundEnabled,
+          onToggleSound,
+          onShowCredits,
+          compact = false,
+          font
+        }) {
+          // Calculate responsive copyright font size
+          const [viewportWidth, setViewportWidth] = React.useState(480);
+          React.useEffect(() => {
+            const updateWidth = () => {
+              const width = Math.min(window.innerWidth, 480);
+              setViewportWidth(width);
+            };
+            updateWidth();
+            window.addEventListener('resize', updateWidth);
+            return () => window.removeEventListener('resize', updateWidth);
+          }, []);
+          
+          const copyrightFontSize = Math.max(7, Math.min(10, viewportWidth / 48));
+
+          if (compact) {
+            return (
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  width: "100%",
+                  fontSize: 10,
+                  color: "#94a3b8",
+                  fontFamily: font,
+                  letterSpacing: "0.05em",
+                  marginTop: 0
+                }}
+              >
+                <span>{version}</span>
+
+                <div style={{ position: "absolute", left: "50%", transform: "translateX(-50%)" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                    <button
+                      onClick={onToggleSound}
+                      style={{
+                        background: "none",
+                        border: "none",
+                        color: "#94a3b8",
+                        fontSize: 10,
+                        cursor: "pointer",
+                        padding: 0,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        width: "auto",
+                        height: "auto"
+                      }}
+                    >
+                      {soundEnabled ? "🔊" : "🔇"}
+                    </button>
+                    
+                    <button
+                      onClick={onShowCredits}
+                      style={{
+                        background: "none",
+                        border: "none",
+                        color: "#94a3b8",
+                        fontSize: 10,
+                        cursor: "pointer",
+                        padding: 0,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        width: "auto",
+                        height: "auto"
+                      }}
+                    >
+                      📋
+                    </button>
+                  </div>
+                </div>
+
+                <a
+                  href="https://www.mistermarx.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    color: "#94a3b8",
+                    textDecoration: "none",
+                    cursor: "pointer",
+                    fontSize: copyrightFontSize,
+                    whiteSpace: "nowrap"
+                  }}
+                >
+                  {copyright}
+                </a>
+              </div>
+            );
+          }
+
+          return (
+            <div
+              style={{
+                textAlign: "center",
+                fontSize: 11,
+                color: "#94a3b8",
+                fontFamily: font,
+                paddingBottom: 20
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  gap: 20,
+                  fontSize: 10,
+                  letterSpacing: "0.05em"
+                }}
+              >
+                <span>{version}</span>
+
+                <button
+                  onClick={onToggleSound}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    color: "#94a3b8",
+                    fontSize: 10,
+                    cursor: "pointer",
+                    padding: 0,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    width: "auto",
+                    height: "auto"
+                  }}
+                >
+                  {soundEnabled ? "🔊" : "🔇"}
+                </button>
+
+                <button
+                  onClick={onShowCredits}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    color: "#94a3b8",
+                    fontSize: 10,
+                    cursor: "pointer",
+                    padding: 0,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    width: "auto",
+                    height: "auto"
+                  }}
+                >
+                  📋
+                </button>
+
+                <a
+                  href="https://www.mistermarx.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    color: "#94a3b8",
+                    textDecoration: "none",
+                    cursor: "pointer",
+                    fontSize: copyrightFontSize,
+                    whiteSpace: "nowrap"
+                  }}
+                >
+                  {copyright}
+                </a>
+              </div>
+            </div>
+          );
+        }
 
         function k(x, y) { return `${x},${y}`; }
         function isPrime(n) {
@@ -379,6 +1239,11 @@
           const re = () => bump(c => c + 1);
           const [showRules, setShowRules] = React.useState(false);
           const [showControls, setShowControls] = React.useState(false);
+          const [showFogOverlay, setShowFogOverlay] = React.useState(true);
+          const [isFogDisappearing, setIsFogDisappearing] = React.useState(false);
+          const [isPageLoaded, setIsPageLoaded] = React.useState(false);
+          const [soundEnabled, setSoundEnabled] = React.useState(true);
+          const [showCredits, setShowCredits] = React.useState(false);
 
           const g = React.useRef({
             board: {}, sel: [], score: 0, round: 0, turn: 0,
@@ -578,6 +1443,24 @@
             window.addEventListener("keydown", h);
             return () => window.removeEventListener("keydown", h);
           }, []);
+          
+          // Set page as loaded after a short delay
+          React.useEffect(() => {
+            const timer = setTimeout(() => {
+              setIsPageLoaded(true);
+            }, 1000);
+            return () => clearTimeout(timer);
+          }, []);
+
+          const handleToggleSound = React.useCallback(() => {
+            const enabled = SoundManager.toggle();
+            setSoundEnabled(enabled);
+          }, []);
+
+          const handleShowCredits = React.useCallback(() => {
+            setShowCredits(true);
+          }, []);
+          
           React.useEffect(() => () => stopTimer(), []);
 
           // Animation loop for rotating balls
@@ -614,6 +1497,43 @@
 
           if (!g.started) {
             return (
+            <>
+              {/* Smokey Fog Overlay */}
+              {showFogOverlay && (
+                <div className={`fog-overlay ${isFogDisappearing ? 'disappearing' : ''}`} onClick={() => {
+                  if (!isFogDisappearing && isPageLoaded) {
+                    setIsFogDisappearing(true);
+                    // Initialize audio on user interaction and start background music
+                    SoundManager.init();
+                    SoundManager.playBackgroundMusic();
+                    setTimeout(() => {
+                      setShowFogOverlay(false);
+                      setIsFogDisappearing(false);
+                    }, 800);
+                  }
+                }}>
+                  <div className="fog-particles">
+                    <div className={`fog-particle ${isFogDisappearing ? 'disappearing' : ''}`} style={{left: '10%', animation: 'floatParticle 15s linear infinite'}}></div>
+                    <div className={`fog-particle ${isFogDisappearing ? 'disappearing' : ''}`} style={{left: '30%', animation: 'floatParticle2 16s linear infinite'}}></div>
+                    <div className={`fog-particle ${isFogDisappearing ? 'disappearing' : ''}`} style={{left: '50%', animation: 'floatParticle3 14s linear infinite'}}></div>
+                    <div className={`fog-particle ${isFogDisappearing ? 'disappearing' : ''}`} style={{left: '70%', animation: 'floatParticle4 17s linear infinite'}}></div>
+                    <div className={`fog-particle ${isFogDisappearing ? 'disappearing' : ''}`} style={{left: '90%', animation: 'floatParticle5 15.5s linear infinite'}}></div>
+                  </div>
+                  <div className={`fog-text ${isFogDisappearing ? 'disappearing' : ''} ${isPageLoaded ? 'loaded' : ''}`}>
+                    PRESS ANYWHERE TO BEGIN<br/>SIGMA PRIME
+                  </div>
+                  
+                  {/* Circular Progress Spinner */}
+                  {!isPageLoaded && (
+                    <div className="fog-progress-container">
+                      <div className="fog-progress-spinner">
+                        <div className="fog-progress-circle"></div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+              
               <div style={{
                 width: "calc(100vw - 12px)", height: "100vh", overflow: "hidden",
                 background: "linear-gradient(160deg, #04040c 0%, #08081a 50%, #100818 100%)",
@@ -681,11 +1601,13 @@
                   borderRadius: 2, textTransform: "uppercase", fontFamily: "Georgia, serif",
                 }}>BEGIN</div>
 
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8, marginTop: 16 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 16, marginTop: 16 }}>
                   <div onClick={() => setShowRules(true)} style={{
                     fontSize: 11, letterSpacing: 3, color: "#c8c8e0", cursor: "pointer",
                     textTransform: "uppercase", fontFamily: "Georgia, serif"
                   }}>view rules</div>
+                  
+                  <span style={{ color: "#9b5de5", fontSize: 16 }}>•</span>
                   
                   <div onClick={() => setShowControls(true)} style={{
                     fontSize: 11, letterSpacing: 3, color: "#c8c8e0", cursor: "pointer",
@@ -698,14 +1620,14 @@
                   <div style={{
                     position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
                     background: "rgba(4,4,12,0.95)", backdropFilter: "blur(8px)",
-                    display: "flex", alignItems: "center", justifyContent: "center",
+                    display: "flex", alignItems: "center", justifyContent: "flex-start",
                     zIndex: 1000, padding: 20
-                  }}>
+                  }} onClick={() => setShowRules(false)}>
                     <div style={{
-                      maxWidth: 500, width: "100%", maxHeight: "80vh", overflowY: "auto",
+                      maxWidth: 500, width: "50%", maxHeight: "80vh", overflowY: "auto",
                       background: "rgba(8,8,26,0.95)", borderRadius: 12, border: "1px solid rgba(155,93,229,0.3)",
-                      padding: 24, position: "relative"
-                    }}>
+                      padding: 24, position: "relative", marginLeft: "25%"
+                    }} onClick={(e) => e.stopPropagation()}>
                       <div style={{
                         position: "absolute", top: 12, right: 12,
                         width: 32, height: 32, borderRadius: "50%",
@@ -740,14 +1662,14 @@
                   <div style={{
                     position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
                     background: "rgba(4,4,12,0.95)", backdropFilter: "blur(8px)",
-                    display: "flex", alignItems: "center", justifyContent: "center",
+                    display: "flex", alignItems: "center", justifyContent: "flex-end",
                     zIndex: 1000, padding: 20
-                  }}>
+                  }} onClick={() => setShowControls(false)}>
                     <div style={{
-                      maxWidth: 500, width: "100%", maxHeight: "80vh", overflowY: "auto",
+                      maxWidth: 500, width: "50%", maxHeight: "80vh", overflowY: "auto",
                       background: "rgba(8,8,26,0.95)", borderRadius: 12, border: "1px solid rgba(0,245,212,0.3)",
-                      padding: 24, position: "relative"
-                    }}>
+                      padding: 24, position: "relative", marginRight: "25%"
+                    }} onClick={(e) => e.stopPropagation()}>
                       <div style={{
                         position: "absolute", top: 12, right: 12,
                         width: 32, height: 32, borderRadius: "50%",
@@ -777,6 +1699,49 @@
                   </div>
                 )}
               </div>
+              
+              {/* Footer Bar - Main Menu */}
+              <div style={{ 
+                position: 'absolute',
+                bottom: 20,
+                left: 0,
+                right: 0,
+                zIndex: 100
+              }}>
+                <FooterBar
+                  version={GAME_VERSION}
+                  copyright={COPYRIGHT_TEXT}
+                  soundEnabled={soundEnabled}
+                  onToggleSound={handleToggleSound}
+                  onShowCredits={handleShowCredits}
+                  font="'IBM Plex Mono',monospace"
+                />
+              </div>
+              
+              {showCredits && (
+                <div style={{
+                  position: "fixed", top: "var(--app-top, 0px)", left: 0, right: 0, height: "var(--app-height, 100dvh)", backgroundColor: "rgba(3,7,18,0.98)",
+                  display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 20, zIndex: 1000
+                }} onClick={() => setShowCredits(false)}>
+                  <span style={{fontSize: 32, fontWeight: 900, letterSpacing: "0.3em", color: "#f8fafc", fontFamily: "'IBM Plex Mono',monospace"}}>CREDITS</span>
+                  <span style={{fontSize: 16, color: "#94a3b8", fontFamily: "'IBM Plex Mono',monospace", textAlign: "center", maxWidth: 320, lineHeight: 1.5}}>Sound Effects by Mixkit<br/>https://mixkit.co</span>
+                  
+                  <div style={{display: "flex", flexDirection: "column", gap: 12, alignItems: "center"}}>
+                    <button
+                      onClick={() => setShowCredits(false)}
+                      style={{
+                        padding: "12px 24px", fontSize: 12, letterSpacing: 4,
+                        border: "1px solid #00f5d4", color: "#00f5d4", cursor: "pointer",
+                        borderRadius: 2, textTransform: "uppercase", fontFamily: "'IBM Plex Mono',monospace",
+                        backgroundColor: "transparent"
+                      }}
+                    >
+                      CLOSE
+                    </button>
+                  </div>
+                </div>
+              )}
+              </>
             );
           }
 
@@ -1514,6 +2479,25 @@
                   </div>
                 </div>
               )}
+              
+              {/* Footer Bar - Game View */}
+              <div style={{ 
+                position: 'absolute',
+                bottom: 0,
+                left: 0,
+                right: 0,
+                zIndex: 100
+              }}>
+                <FooterBar
+                  version={GAME_VERSION}
+                  copyright={COPYRIGHT_TEXT}
+                  soundEnabled={soundEnabled}
+                  onToggleSound={handleToggleSound}
+                  onShowCredits={handleShowCredits}
+                  compact={true}
+                  font="'IBM Plex Mono',monospace"
+                />
+              </div>
             </div>
           );
 
