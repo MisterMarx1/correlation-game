@@ -577,8 +577,15 @@
         const H = 8;
         const MAX_LIFE = 10;
         const ROUNDS = 10;
-        const BASE_TURN = 11000;
-
+        // Speed difficulty settings
+        const SPEED_SETTINGS = {
+          easy: { baseTurn: 11000, roundDecrease: 700, minTime: 4000 },
+          medium: { baseTurn: 8000, roundDecrease: 850, minTime: 3000 },
+          hard: { baseTurn: 6000, roundDecrease: 1000, minTime: 2000 }
+        };
+        
+        let currentSpeed = 'easy'; // Default to easy
+        
         const ALL_PRIMES = [2, 3, 5, 7];
 
         // Sound Management System
@@ -1482,10 +1489,10 @@
           const [showCredits, setShowCredits] = React.useState(false);
 
           const g = React.useRef({
-            board: {}, sel: [], score: 0, round: 0, turn: 0,
+            board: {}, sel: [], score: 0, round: 0, turn: 0, goalIndex: 0,
             targets: [], gameOver: false, won: false, started: false,
-            flash: null, combo: 0, totalPaths: 0, lastTurn: 0, timeLeft: BASE_TURN,
-            dragging: false, shakeUntil: 0, clearAnim: [], healAnim: [], damageAnim: [], turnTime: BASE_TURN,
+            flash: null, combo: 0, totalPaths: 0, lastTurn: 0, timeLeft: SPEED_SETTINGS[currentSpeed].baseTurn,
+            dragging: false, shakeUntil: 0, clearAnim: [], healAnim: [], damageAnim: [], turnTime: SPEED_SETTINGS[currentSpeed].baseTurn,
             deadCount: 0, maxPrime: 3, turnInProgress: false,
             paused: false, showQuitConfirmation: false, quitMode: false, pauseStartTime: 0, totalPausedTime: 0,
           }).current;
@@ -1494,7 +1501,10 @@
           const boardRef = React.useRef(null);
           const animationRef = React.useRef(null);
 
-          function turnTime() { return Math.max(4000, BASE_TURN - g.round * 700); }
+          function turnTime() { 
+            const settings = SPEED_SETTINGS[currentSpeed];
+            return Math.max(settings.minTime, settings.baseTurn - g.round * settings.roundDecrease); 
+          }
 
   
         function doTurn() {
@@ -1527,21 +1537,9 @@
             for (const ky in g.board) if (!g.board[ky].dead) { alive = true; break; }
             if (!alive) { g.gameOver = true; stopTimer(); }
             
-            // Timer runs out - advance to next target in queue
-            if (g.round >= ROUNDS) { g.gameOver = true; stopTimer(); }
-            
-            // Advance to next target
-            g.round += 1;
-            if (g.round < ROUNDS && g.targets[g.round]) {
-              // Validate next round target is still achievable, regenerate if needed
-              if (!canAchieveTarget(g.board, g.targets[g.round], g.maxPrime)) {
-                // Regenerate remaining targets
-                const newTargets = [...g.targets.slice(0, g.round)];
-                const remainingTargets = genTargets(g.maxPrime, g.board);
-                newTargets.push(...remainingTargets.slice(0, ROUNDS - g.round));
-                g.targets = newTargets;
-              }
-            }
+            // Advance to next goal each turn, but stay in same round
+            g.goalIndex += 1;
+            if (g.goalIndex >= ROUNDS) { g.gameOver = true; stopTimer(); }
             
             g.lastTurn = Date.now(); g.turnTime = turnTime(); g.timeLeft = g.turnTime; g.totalPausedTime = 0; g.pauseStartTime = 0;
             g.turnInProgress = false; // Reset flag
@@ -1587,7 +1585,7 @@
             const sel = g.sel;
             if (!isPath(sel)) return false;
             const vals = sel.map(s => g.board[k(s.x, s.y)].val);
-            const tgt = g.targets[g.round];
+            const tgt = g.targets[g.goalIndex];
             if (!checkTarget(tgt, vals)) {
               // Apply damage to first selected cell for unsatisfied target
               if (sel.length > 0) {
@@ -1696,16 +1694,19 @@
             SoundManager.play('mixkit-melodic-bonus-collect-1938.wav', 0.6);
             // Stop electric humming sound when selection is successfully completed
             SoundManager.stopElectricHumLoop();
+            // Success: advance round and reset turn
             g.round += 1;
+            g.turn = 0; // Reset turn counter for new round
+            g.goalIndex = g.round; // Sync goalIndex with round
             if (g.round >= ROUNDS) { g.won = true; g.gameOver = true; stopTimer(); re(); return true; }
             
-            // Validate next round target is still achievable, regenerate if needed
-            if (g.round < ROUNDS && g.targets[g.round]) {
-              if (!canAchieveTarget(g.board, g.targets[g.round], g.maxPrime)) {
+            // Validate next goal target is still achievable, regenerate if needed
+            if (g.goalIndex < ROUNDS && g.targets[g.goalIndex]) {
+              if (!canAchieveTarget(g.board, g.targets[g.goalIndex], g.maxPrime)) {
                 // Regenerate remaining targets
-                const newTargets = [...g.targets.slice(0, g.round)];
+                const newTargets = [...g.targets.slice(0, g.goalIndex)];
                 const remainingTargets = genTargets(g.maxPrime, g.board);
-                newTargets.push(...remainingTargets.slice(0, ROUNDS - g.round));
+                newTargets.push(...remainingTargets.slice(0, ROUNDS - g.goalIndex));
                 g.targets = newTargets;
               }
             }
@@ -1942,7 +1943,7 @@
           }
 
           function startGame() {
-            g.board = initBoard(g.maxPrime); g.sel = []; g.score = 0; g.round = 0; g.turn = 0;
+            g.board = initBoard(g.maxPrime); g.sel = []; g.score = 0; g.round = 0; g.turn = 0; g.goalIndex = 0;
             g.targets = genTargets(g.maxPrime, g.board); g.gameOver = false; g.won = false; g.started = true;
             g.flash = null; g.combo = 0; g.totalPaths = 0; g.dragging = false;
             g.shakeUntil = 0; g.clearAnim = []; g.deadCount = 0;
@@ -2000,6 +2001,14 @@
                 if (g.paused && g.started && !g.gameOver) {
                   g.totalPausedTime += Date.now() - g.pauseStartTime;
                   g.paused = false;
+                  // Reset marquee animation to prevent jump when resuming
+                  const marqueeEl = document.querySelector('.marquee');
+                  if (marqueeEl) {
+                    const currentAnimation = marqueeEl.style.animation;
+                    marqueeEl.style.animation = 'none';
+                    marqueeEl.offsetHeight; // Force reflow
+                    marqueeEl.style.animation = currentAnimation;
+                  }
                 }
               }
             };
@@ -2020,6 +2029,14 @@
               if (g.paused && g.started && !g.gameOver) {
                 g.totalPausedTime += Date.now() - g.pauseStartTime;
                 g.paused = false;
+                // Reset marquee animation to prevent jump when resuming
+                const marqueeEl = document.querySelector('.marquee');
+                if (marqueeEl) {
+                  const currentAnimation = marqueeEl.style.animation;
+                  marqueeEl.style.animation = 'none';
+                  marqueeEl.offsetHeight; // Force reflow
+                  marqueeEl.style.animation = currentAnimation;
+                }
               }
             };
             
@@ -2039,6 +2056,14 @@
               if (g.paused && g.started && !g.gameOver) {
                 g.totalPausedTime += Date.now() - g.pauseStartTime;
                 g.paused = false;
+                // Reset marquee animation to prevent jump when resuming
+                const marqueeEl = document.querySelector('.marquee');
+                if (marqueeEl) {
+                  const currentAnimation = marqueeEl.style.animation;
+                  marqueeEl.style.animation = 'none';
+                  marqueeEl.offsetHeight; // Force reflow
+                  marqueeEl.style.animation = currentAnimation;
+                }
               }
             };
             
@@ -2084,7 +2109,7 @@
           const selKeys = new Set(g.sel.map(s => k(s.x, s.y)));
           const canClose = g.sel.length >= 1 && isPath(g.sel);
           const selSum = g.sel.reduce((s, p) => s + (g.board[k(p.x, p.y)]?.val || 0), 0);
-          const target = g.targets[g.round] || { label: "—", min: 3 };
+          const target = g.targets[g.goalIndex] || { label: "—", min: 3 };
           const timePct = g.timeLeft / g.turnTime;
           const shaking = Date.now() < g.shakeUntil;
           const clearKeys = new Set(g.clearAnim.map(c => k(c.x, c.y)));
@@ -2194,10 +2219,41 @@
                       </div>
                     ))}
                   </div>
-                  <div style={{ fontSize: 10, color: "#c8c8e0", marginTop: 6, textAlign: "center" }}>
-                    Selected: <span style={{ color: "#00f5d4", fontFamily: "'Courier New', monospace", fontWeight: 700 }}>
-                      {g.maxPrime === 7 ? "Primes ≤ 7" : g.maxPrime === 3 ? "Primes ≤ 3" : `Primes ≤ ${g.maxPrime}`}
-                    </span>
+                </div>
+
+                <div style={{ marginBottom: 24 }}>
+                  <div style={{ fontSize: 12, color: "#9b5de5", marginBottom: 8, letterSpacing: 2, textTransform: "uppercase", textAlign: "center" }}>SELECT DIFFICULTY</div>
+                  <div style={{
+                    display: "flex", flexWrap: "wrap", gap: 6, justifyContent: "center",
+                    maxWidth: 500, padding: "12px", background: "rgba(15,23,42,0.4)", borderRadius: 12,
+                    border: "1px solid rgba(155,93,229,0.2)"
+                  }}>
+                    {Object.keys(SPEED_SETTINGS).map(speed => (
+                      <div
+                        key={speed}
+                        onClick={() => { 
+                          currentSpeed = speed; 
+                          SoundManager.play('mixkit-game-user-interface-tone-2570.wav', 0.4);
+                          re(); 
+                        }}
+                        style={{
+                          padding: "6px 10px",
+                          fontSize: "11px",
+                          border: speed === currentSpeed ? "2px solid #00f5d4" : "1px solid rgba(155,93,229,0.3)",
+                          borderRadius: 6,
+                          background: speed === currentSpeed ? "rgba(0,245,212,0.15)" : "rgba(155,93,229,0.08)",
+                          color: speed === currentSpeed ? "#00f5d4" : "#9b5de5",
+                          cursor: "pointer",
+                          fontFamily: "'Courier New', monospace",
+                          fontWeight: speed === currentSpeed ? 700 : 400,
+                          textAlign: "center",
+                          minWidth: "60px",
+                          textTransform: "uppercase"
+                        }}
+                      >
+                        {speed}
+                      </div>
+                    ))}
                   </div>
                 </div>
 
@@ -2398,7 +2454,7 @@
                   alignItems: (g.flash?.bad || g.flash?.success) ? "center" : undefined
                 }}>
                   {g.flash?.bad ? (g.flash.text === "TIME'S UP" ? "TIME'S UP" : "NOT SATISFIED") : g.flash?.success ? g.flash.text : (() => {
-                    const upcomingTargets = g.targets.slice(g.round + 1, g.round + 4);
+                    const upcomingTargets = g.targets.slice(g.goalIndex + 1, g.goalIndex + 4);
                     return `QUEUE: ${upcomingTargets.length > 0 ? upcomingTargets.map(t => `Σ = ${t.val}`).join(' → ') : 'EMPTY'}`;
                   })()}
                 </div>
@@ -2418,7 +2474,8 @@
                       borderRadius: 8,
                       border: "1px solid rgba(254,228,64,0.2)",
                       padding: "6px 12px",
-                      width: "100%"
+                      width: "fit-content",
+                      minWidth: "auto"
                     }}>
                       <span style={{
                         fontSize: "clamp(8px, 1vw, 10px)",
@@ -2497,7 +2554,7 @@
                           y = rectHeight/2 - t * rectHeight;
                         }
                         
-                        const colors = ["#9b5de5"];
+                        const colors = selSum > target.val ? ["#ff4444"] : (selSum === target.val ? ["#00ff44"] : ["#9b5de5"]);
                         const color = colors[i % colors.length];
                         
                         return (
@@ -2543,11 +2600,15 @@
                       <span style={{
                         fontSize: "clamp(16px, 2.5vw, 22px)",
                         fontFamily: "'Courier New', monospace",
-                        color: g.sel.length > 0 ? "#ffffff" : "#888",
+                        color: selSum > target.val ? "#ff4444" : (selSum === target.val ? "#00ff44" : (g.sel.length > 0 ? "#ffffff" : "#888")),
                         fontWeight: 700,
-                        textShadow: g.sel.length > 0 ? "0 0 20px rgba(0,245,212,0.4), 0 0 40px rgba(0,245,212,0.2), 0 0 60px rgba(155,93,229,0.1)" : "none",
+                        textShadow: selSum > target.val 
+                          ? "0 0 20px rgba(255,68,68,0.6), 0 0 40px rgba(255,68,68,0.4), 0 0 60px rgba(255,68,68,0.2)"
+                          : (selSum === target.val 
+                            ? "0 0 20px rgba(0,255,68,0.6), 0 0 40px rgba(0,255,68,0.4), 0 0 60px rgba(0,255,68,0.2)"
+                            : (g.sel.length > 0 ? "0 0 20px rgba(0,245,212,0.4), 0 0 40px rgba(0,245,212,0.2), 0 0 60px rgba(155,93,229,0.1)" : "none")),
                         animation: g.sel.length > 0 ? "electricGlow 2s ease-in-out infinite" : "none",
-                        filter: g.sel.length > 0 ? "brightness(1.2) contrast(1.1)" : "none"
+                        filter: selSum > target.val ? "brightness(1.4) contrast(1.2)" : (selSum === target.val ? "brightness(1.4) contrast(1.2)" : (g.sel.length > 0 ? "brightness(1.2) contrast(1.1)" : "none"))
                       }}>
                         {g.sel.length > 0 ? selSum : "-"}
                       </span>
@@ -2713,7 +2774,7 @@
                             position: "absolute", inset: "7%", borderRadius: "16%",
                             background: isClearing ? "rgba(0,255,68,0.6)"
                               : cell.dead ? "#020205"
-                              : isSel ? "rgba(155,93,229,0.3)"
+                              : isSel ? (selSum > target.val ? "rgba(255,68,68,0.4)" : (selSum === target.val ? "rgba(0,255,68,0.4)" : "rgba(155,93,229,0.3)"))
                               : (() => {
                                 // Dim unselected cells unless adjacent (cardinal only) to current selected cell
                                 if (g.dragging && g.sel.length > 0) {
@@ -2729,10 +2790,10 @@
                               })(),
                             border: isClearing ? "3px solid #00ff44"
                               : cell.dead ? "1px solid #050508"
-                              : isSel ? "2px solid #9b5de5aa"
+                              : isSel ? (selSum > target.val ? "2px solid #ff4444aa" : (selSum === target.val ? "2px solid #00ff44aa" : "2px solid #9b5de5aa"))
                               : `1px solid rgba(80,80,130,${0.06 + lifePct * 0.1})`,
                             boxShadow: isClearing ? "0 0 30px #00ff4488, 0 0 60px #00ff4444, inset 0 0 20px #00ff4433"
-                              : isSel ? "0 0 10px rgba(155,93,229,0.2)"
+                              : isSel ? (selSum > target.val ? "0 0 15px rgba(255,68,68,0.4)" : (selSum === target.val ? "0 0 15px rgba(0,255,68,0.4)" : "0 0 10px rgba(155,93,229,0.2)"))
                               : (() => {
                                 // Add electric lightning to dimmed cells AND dead cells when dragging
                                 if (g.dragging && g.sel.length > 0) {
@@ -3055,7 +3116,7 @@
                     textTransform: "uppercase",
                     fontWeight: 700,
                     textShadow: "0 0 4px rgba(0,0,0,0.8)"
-                  }}>TURN THIS ROUND</div>
+                  }}>CURRENT TURN THIS ROUND</div>
                 </div>
                 
                 {/* Progress bars at bottom */}
