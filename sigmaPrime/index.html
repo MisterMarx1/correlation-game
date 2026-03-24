@@ -383,8 +383,8 @@
             transition: background 0.8s ease;
             contain: layout paint style;
             isolation: isolate;
-            will-change: transform, opacity;
-            transform: translateZ(0);
+            will-change: transform;
+            transform: translate3d(0,0,0);
             backface-visibility: hidden;
         }
         
@@ -427,31 +427,11 @@
             backface-visibility: hidden;
         }
         
-        .bg-particles {
-            position: fixed; inset: 0; z-index: 3; pointer-events: none; overflow: hidden;
-            contain: layout paint style;
-            isolation: isolate;
-            will-change: transform, opacity;
-            transform: translateZ(0);
-            backface-visibility: hidden;
-        }
-        
-        .bg-particle {
-            position: absolute; border-radius: 50%; 
-            transition: background 0.8s ease;
-        }
-
         @keyframes blob1 {
             0%, 100% { transform: translate(0, 0) scale(1); }
             25% { transform: translate(8%, -6%) scale(1.15); }
             50% { transform: translate(-5%, 10%) scale(0.9); }
             75% { transform: translate(10%, 5%) scale(1.1); }
-        }
-        
-        @keyframes blob2 {
-            0%, 100% { transform: translate(0, 0) scale(1); }
-            33% { transform: translate(-10%, 8%) scale(1.2); }
-            66% { transform: translate(6%, -10%) scale(0.85); }
         }
         
         @keyframes blob3 {
@@ -1754,9 +1734,9 @@
               setTimeout(() => { 
                 g.flash = null; 
                 g.sel = []; 
-                re(); 
+                visualRe(); 
               }, 400); // Clear selection after rumble finishes
-              re(); return false;
+              visualRe(); return false;
             }
             const pathSum = vals.reduce((a, b) => a + b, 0);
             const cellCount = sel.length;
@@ -1974,9 +1954,9 @@
               setTimeout(() => { 
                 g.sel = []; 
                 g.flash = null; 
-                re(); 
+                visualRe(); 
               }, 400);
-              re();
+              visualRe();
               return;
             }
             
@@ -2020,9 +2000,9 @@
               setTimeout(() => { 
                 g.sel = []; 
                 g.flash = null; 
-                re(); 
+                visualRe(); 
               }, 400);
-              re();
+              visualRe();
               return;
             }
             
@@ -2062,9 +2042,9 @@
               setTimeout(() => { 
                 g.sel = []; 
                 g.flash = null; 
-                re(); 
+                visualRe(); 
               }, 400);
-              re();
+              visualRe();
               return;
             }
             
