@@ -813,7 +813,7 @@
           return out;
         }
 
-        const Cell=memo(function Cell({e,mass,isSel,isDet,detProb,echoB,dp,isNew,locked,onMouseDown,onMouseEnter,onMouseUp,onMouseLeave,onTouchStart,onTouchMove,onTouchEnd,x,y,dragStart,dragHover}) {
+        const Cell=memo(function Cell({e,mass,isSel,isDet,detProb,echoB,dp,isNew,locked,onMouseDown,onMouseEnter,onMouseUp,onMouseLeave,onTouchStart,onTouchMove,onTouchEnd,x,y,dragStart,dragHover,orbitScale}) {
           // Create conic gradient that sweeps clockwise
           const getGradient = (decayProgress, energy, isLocked) => {
             const baseColor = isLocked ? "rgba(128,128,128,0.6)" : (EC[energy] || "rgba(15,23,42,0.3)");
@@ -850,23 +850,25 @@
               {e>0&&<div style={{display:"flex",flexDirection:"column",alignItems:"center",zIndex:2,position:"relative"}}>
                 <div style={{position:"relative",width:40,height:40}}>
                   <span style={{position:"absolute",top:"50%",left:"50%",transform:"translate(-50%,-50%)",fontSize:13,fontWeight:800,color:"#fff",textShadow:"0 1px 3px rgba(0,0,0,0.5)",zIndex:2}}>{e}</span>
-                  {mass>=1&&<div style={{
-                    position:"absolute",width:3,height:3,backgroundColor:"#fff",borderRadius:"50%",
-                    animation:"orbit1 2s linear infinite",
-                    boxShadow:"0 0 3px rgba(255,255,255,0.8)"
-                  }}/>}
-                  {mass>=2&&<div style={{
-                    position:"absolute",width:3,height:3,backgroundColor:"#fff",borderRadius:"50%",
-                    animation:"orbit2 2s linear infinite",
-                    animationDelay:"0.5s",
-                    boxShadow:"0 0 3px rgba(255,255,255,0.8)"
-                  }}/>}
-                  {mass>=3&&<div style={{
-                    position:"absolute",width:3,height:3,backgroundColor:"#fff",borderRadius:"50%",
-                    animation:"orbit3 2s linear infinite",
-                    animationDelay:"1s",
-                    boxShadow:"0 0 3px rgba(255,255,255,0.8)"
-                  }}/>}
+                  <div style={{position:"absolute",top:0,left:0,width:40,height:40,transform:`scale(${orbitScale})`,transformOrigin:"center center"}}>
+                    {mass>=1&&<div style={{
+                      position:"absolute",width:3,height:3,backgroundColor:"#fff",borderRadius:"50%",
+                      animation:"orbit1 2s linear infinite",
+                      boxShadow:"0 0 3px rgba(255,255,255,0.8)"
+                    }}/>}
+                    {mass>=2&&<div style={{
+                      position:"absolute",width:3,height:3,backgroundColor:"#fff",borderRadius:"50%",
+                      animation:"orbit2 2s linear infinite",
+                      animationDelay:"0.5s",
+                      boxShadow:"0 0 3px rgba(255,255,255,0.8)"
+                    }}/>}
+                    {mass>=3&&<div style={{
+                      position:"absolute",width:3,height:3,backgroundColor:"#fff",borderRadius:"50%",
+                      animation:"orbit3 2s linear infinite",
+                      animationDelay:"1s",
+                      boxShadow:"0 0 3px rgba(255,255,255,0.8)"
+                    }}/>}
+                  </div>
                 </div>
               </div>}
               {isDet&&<div style={{position:"absolute",top:-3,right:-3,fontSize:7,fontWeight:700,color:"#fff",
@@ -1617,7 +1619,8 @@ const lightningRef=useRef({active:false,start:null,end:null,frame:0});
                 }
               }
               
-              if(!over)return prev;
+              // Always update to refresh conic timers, even if no decay events
+if(!over)return prev.map(row => [...row]); // Force re-render for timer updates
               
               // Only copy changed rows
               const ng=prev.map((row,y)=>changedRows.has(y)?[...row]:row);
@@ -1790,10 +1793,7 @@ const lightningRef=useRef({active:false,start:null,end:null,frame:0});
 
             setGrid(prev => {
               const ng = prev.map((row, rowIndex) => rowIndex === y ? [...row] : row);
-              if (ng[y][x].e > 0) {
-                ng[y][x].born = now;
-                ng[y][x].decay = now + Math.max(DECAY_MIN, DECAY_BASE - level * 500);
-              }
+              // Don't reset decay timer on selection - let conic timer continue naturally
               return ng;
             });
 
@@ -1988,7 +1988,7 @@ const lightningRef=useRef({active:false,start:null,end:null,frame:0});
     return;
   }
 }, [phase, paused, showQuitConfirmation, showCredits, creditsPaused, grid, sel, interactionMode, commitSourceSelection]);
-        
+
         const handleTouchStart = useCallback((event) => {
   // preventDefault() removed - CSS touchAction: "none" already handles this
   lastTouchTimeRef.current = Date.now();
@@ -2558,13 +2558,10 @@ const lightningRef=useRef({active:false,start:null,end:null,frame:0});
             
             // Start countdown animation
             setCountdown(3);
-            SoundManager.play('countdown', 0.6); // Play beep for 3
             setTimeout(() => {
               setCountdown(2);
-              SoundManager.play('countdown', 0.6); // Play beep for 2
               setTimeout(() => {
                 setCountdown(1);
-                SoundManager.play('countdown', 0.6); // Play beep for 1
                 setTimeout(() => {
                   setCountdown("START!");
                   SoundManager.play('startSound', 0.8); // Play START sound
@@ -2577,6 +2574,7 @@ const lightningRef=useRef({active:false,start:null,end:null,frame:0});
           const restart=useCallback(()=>{setGrid(mkGrid());setScore(0);setLevel(1);setTotalT(0);setCombo(0);setComboT(0);setTransitionHistory([]);
             setSel(null);setEchoes([]);setPhase("menu");setInfo(null);setCascTxt(null);setPaused(false);setFillPct(0);setScreenFlash(null);setTick(0);setShowMenu(true);setShowTutorial(false);setShowQuitConfirmation(false);setShowPauseRules(false);setShowOverRules(false);
             particlesRef.current=[];boltsRef.current=[]},[]);
+
           useEffect(() => {
             let transitionTimer;
 
@@ -2610,19 +2608,33 @@ const lightningRef=useRef({active:false,start:null,end:null,frame:0});
               @keyframes flash{0%{opacity:0.25}100%{opacity:0}}
               @keyframes orbit1{0%{transform:translate(0px,0px)}25%{transform:translate(37px,0px)}50%{transform:translate(37px,37px)}75%{transform:translate(0px,37px)}100%{transform:translate(0px,0px)}}
               @keyframes orbit2{0%{transform:translate(0px,0px)}25%{transform:translate(37px,0px)}50%{transform:translate(37px,37px)}75%{transform:translate(0px,37px)}100%{transform:translate(0px,0px)}}
+
               @keyframes orbit3{0%{transform:translate(0px,0px)}25%{transform:translate(37px,0px)}50%{transform:translate(37px,37px)}75%{transform:translate(0px,37px)}100%{transform:translate(0px,0px)}}
+
               @keyframes levelUp{0%{transform:scale(1);opacity:1}50%{transform:scale(1.5);opacity:0.8}100%{transform:scale(1);opacity:1}}
+
               @keyframes lvlOrbit1{0%{transform:rotate(0deg) translateX(12px) rotate(0deg)}100%{transform:rotate(360deg) translateX(12px) rotate(-360deg)}}
+
               @keyframes lvlOrbit2{0%{transform:rotate(0deg) translateX(12px) rotate(0deg)}100%{transform:rotate(360deg) translateX(12px) rotate(-360deg)}}
+
               @keyframes lvlOrbit3{0%{transform:rotate(0deg) translateX(12px) rotate(0deg)}100%{transform:rotate(360deg) translateX(12px) rotate(-360deg)}}
+
               @keyframes lvlOrbit4{0%{transform:rotate(0deg) translateX(12px) rotate(0deg)}100%{transform:rotate(360deg) translateX(12px) rotate(-360deg)}}
+
               @keyframes lvlOrbit5{0%{transform:rotate(0deg) translateX(12px) rotate(0deg)}100%{transform:rotate(360deg) translateX(12px) rotate(-360deg)}}
+
               @keyframes lvlSmashIn{0%{transform:rotate(0deg) translateX(12px) rotate(0deg) scale(1);opacity:1}50%{transform:rotate(180deg) translateX(6px) rotate(-180deg) scale(0.8);opacity:1}100%{transform:rotate(360deg) translateX(0px) rotate(-360deg) scale(0);opacity:0}}
+
               @keyframes lvlExplode{0%{transform:scale(0);opacity:0}50%{transform:scale(1.5);opacity:1}100%{transform:scale(2);opacity:0}}
+
               @keyframes cascTxt{0%{opacity:0;transform:translateX(-50%) translateY(-50%) scale(0.4)}15%{opacity:1;transform:translateX(-50%) translateY(-50%) scale(1.15)}75%{opacity:1;transform:translateX(-50%) translateY(-50%) scale(1)}100%{opacity:0;transform:translateX(-50%) translateY(-50%) scale(0.9) translateY(-15px)}}
+
               @keyframes textShimmer{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+
               @keyframes recoilText{0%{opacity:0;transform:translateX(-50%) translateY(-50%) scale(0.3) rotate(0deg)}10%{opacity:1;transform:translateX(-50%) translateY(-50%) scale(1.2) rotate(5deg)}20%{transform:translateX(-50%) translateY(-50%) scale(1) rotate(-5deg)}30%{transform:translateX(-50%) translateY(-50%) scale(1.1) rotate(3deg)}40%{transform:translateX(-50%) translateY(-50%) scale(1) rotate(-3deg)}50%{transform:translateX(-50%) translateY(-50%) scale(1.05) rotate(2deg)}60%{transform:translateX(-50%) translateY(-50%) scale(1) rotate(-2deg)}70%{transform:translateX(-50%) translateY(-50%) scale(1) rotate(1deg)}80%{opacity:1;transform:translateX(-50%) translateY(-50%) scale(1) rotate(-1deg)}90%{transform:translateX(-50%) translateY(-50%) scale(1) rotate(0deg)}100%{opacity:0;transform:translateX(-50%) translateY(-50%) scale(0.8) translateY(-20px) rotate(0deg)}}
+
               @keyframes smokePuff{0%{opacity:0;transform:translate(-50%, -50%) scale(0.5)}20%{opacity:1;transform:translate(-50%, -50%) scale(1.2)}60%{opacity:0.8;transform:translate(-50%, -50%) scale(1.5)}100%{opacity:0;transform:translate(-50%, -50%) scale(2)}}
+
               @keyframes rotateBorder{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
               @keyframes glowPulse{0%{text-shadow:0 0 6px rgba(255,255,255,0.7),0 0 12px rgba(255,255,255,0.4)}50%{text-shadow:0 0 4px rgba(255,255,255,0.5),0 0 8px rgba(255,255,255,0.25)}100%{text-shadow:0 0 6px rgba(255,255,255,0.7),0 0 12px rgba(255,255,255,0.4)}}
               .n3-countdown{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-family:'Orbitron',sans-serif;font-size:120px;font-weight:900;color:#0e7490;text-shadow:0 0 50px rgba(14,116,144,0.8),0 0 100px rgba(14,116,144,0.4),inset 0 0 20px rgba(255,255,255,0.2);z-index:1000;pointer-events:none;animation:countdown 0.3s ease-out}
@@ -2662,6 +2674,7 @@ const lightningRef=useRef({active:false,start:null,end:null,frame:0});
           }, []);
           
           const titleFontSize = Math.max(12, Math.min(22, viewportWidth / 34));
+          const orbitScale = Math.min(1, viewportWidth / 500);
           const diffFontSize = 8;
 
           // Loading Screen
@@ -3114,46 +3127,46 @@ const lightningRef=useRef({active:false,start:null,end:null,frame:0});
                               </svg>
                             );
                           })()}
-                          {l==="COMBO"&&!combo&&comboT===0&&Date.now()-lastComboExpire<1000&&(
-            <div style={{
-              position:"absolute",
-              top:"50%",
-              left:"50%",
-              transform:"translate(-50%, -50%)",
-              width:40,
-              height:40,
-              borderRadius:"50%",
-              background:"radial-gradient(circle, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0.2) 40%, transparent 70%)",
-              animation:"smokePuff 1s ease-out forwards",
-              pointerEvents:"none",
-              zIndex:1
-            }}/>
-          )}
-                          <span style={{fontSize:15,fontWeight:700,color:l==="COMBO"&&combo>0?"#fbbf24":"#f1f5f9",position:"relative",zIndex:2,whiteSpace:"nowrap"}}>{v}</span>
-                          {l==="LVL"&&transitionHistory.map((lvl, i) => (
-                            <div key={i} style={{
-                              position:"absolute",
-                              width:3,
-                              height:3,
-                              backgroundColor:EB[Math.min(lvl, 5)] || "#93c5fd",
-                              borderRadius:"50%",
-                              animation:isLevelingUp ? `lvlSmashIn 0.8s ease-in forwards` : `lvlOrbit${i+1} 3s linear infinite`,
-                              transformOrigin:"center"
-                            }}/>
-                          ))}
-                          {l==="LVL" && isLevelingUp && (
-                            <div style={{
-                              position:"absolute",
-                              width:20,
-                              height:20,
-                              borderRadius:"50%",
-                              background:"radial-gradient(circle, rgba(251,191,36,0.8) 0%, rgba(251,191,36,0) 70%)",
-                              animation:"lvlExplode 0.8s ease-out forwards",
-                              transformOrigin:"center"
-                            }}/>
-                          )}
-                        </div>
-                      </div>))}</div>
+                        {l==="COMBO"&&!combo&&comboT===0&&Date.now()-lastComboExpire<1000&&(
+                          <div style={{
+                            position:"absolute",
+                            top:"50%",
+                            left:"50%",
+                            transform:"translate(-50%, -50%)",
+                            width:40,
+                            height:40,
+                            borderRadius:"50%",
+                            background:"radial-gradient(circle, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0.2) 40%, transparent 70%)",
+                            animation:"smokePuff 1s ease-out forwards",
+                            pointerEvents:"none",
+                            zIndex:1
+                          }}/>
+                        )}
+                        <span style={{fontSize:15,fontWeight:700,color:l==="COMBO"&&combo>0?"#fbbf24":"#f1f5f9",position:"relative",zIndex:2,whiteSpace:"nowrap"}}>{v}</span>
+                        {l==="LVL"&&transitionHistory.map((lvl, i) => (
+                          <div key={i} style={{
+                            position:"absolute",
+                            width:3,
+                            height:3,
+                            backgroundColor:EB[Math.min(lvl, 5)] || "#93c5fd",
+                            borderRadius:"50%",
+                            animation:isLevelingUp ? `lvlSmashIn 0.8s ease-in forwards` : `lvlOrbit${i+1} 3s linear infinite`,
+                            transformOrigin:"center"
+                          }}/>
+                        ))}
+                        {l==="LVL" && isLevelingUp && (
+                          <div style={{
+                            position:"absolute",
+                            width:20,
+                            height:20,
+                            borderRadius:"50%",
+                            background:"radial-gradient(circle, rgba(251,191,36,0.8) 0%, rgba(251,191,36,0) 70%)",
+                            animation:"lvlExplode 0.8s ease-out forwards",
+                            transformOrigin:"center"
+                          }}/>
+                        )}
+                      </div>
+                    </div>))}</div>
                 </div>
               </div>
 
@@ -3191,7 +3204,7 @@ const lightningRef=useRef({active:false,start:null,end:null,frame:0});
                       onMouseDown={()=>handleMouseDown(x,y)} onMouseEnter={()=>handleMouseEnter(x,y)} onMouseUp={()=>handleMouseUp(x,y)} 
                       onMouseLeave={handleMouseLeave} onTouchStart={handleTouchStart} 
                       onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd} 
-                      x={x} y={y} dragStart={dragStart} dragHover={dragHover}/>;
+                      x={x} y={y} dragStart={dragStart} dragHover={dragHover} orbitScale={orbitScale}/>;
                   }))}</div></div>
 
               <div style={{width:"100%",maxWidth:480,marginTop:8,zIndex:10,position:"relative"}}>
@@ -3214,7 +3227,7 @@ const lightningRef=useRef({active:false,start:null,end:null,frame:0});
 
               {showQuitConfirmation&&<div style={{position:"fixed",top:"var(--app-top, 0px)",left:0,right:0,height:"var(--app-height, 100dvh)",backgroundColor:"rgba(3,7,18,0.92)",
                 display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:20,zIndex:100}}>
-                <span style={{fontSize:32,fontWeight:900,letterSpacing:"0.3em",color:"#f8fafc",fontFamily:tFont}}>ARE YOU SURE?</span>
+                <span style={{fontSize:32,fontWeight:900,letterSpacing:"0.3em",color:"#f8fafc",fontFamily:tFont,textAlign:"center",width:"100%",display:"block"}}>ARE YOU SURE?</span>
                 <span style={{fontSize:16,color:"#94a3b8",fontFamily:font,textAlign:"center",maxWidth:320,lineHeight:1.5}}>All progress will be lost</span>
                 
                 <div style={{display:"flex",flexDirection:"column",gap:12,alignItems:"center"}}>
