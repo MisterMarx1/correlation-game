@@ -1548,7 +1548,7 @@
             board: {}, sel: [], score: 0, round: 0, turn: 0, goalIndex: 0,
             targets: [], gameOver: false, won: false, started: false,
             flash: null, combo: 0, totalPaths: 0, lastTurn: 0, timeLeft: SPEED_SETTINGS[currentSpeed].baseTurn,
-            dragging: false, shakeUntil: 0, clearAnim: [], healAnim: [], damageAnim: [], turnTime: SPEED_SETTINGS[currentSpeed].baseTurn,
+            dragging: false, shakeUntil: 0, clearAnim: [], healAnim: [], renewAnim: [], damageAnim: [], turnTime: SPEED_SETTINGS[currentSpeed].baseTurn,
             deadCount: 0, maxPrime: 3, turnInProgress: false,
             paused: false, showQuitConfirmation: false, quitMode: false, pauseStartTime: 0, totalPausedTime: 0,
           }).current;
@@ -1685,6 +1685,7 @@
             g.clearAnim = sel.map(s => ({ x: s.x, y: s.y, t: Date.now() }));
             setTimeout(() => { g.clearAnim = []; re(); }, 400); // Shorter duration for glow effect
             setTimeout(() => { g.healAnim = []; re(); }, 1000); // Heal animation duration
+            setTimeout(() => { g.renewAnim = []; re(); }, 1000); // Renew animation duration
             // Used cells get renewed, unused cells lose life, adjacent cells get healed
             const usedKeys = new Set(g.sel.map(s => k(s.x, s.y)));
             const adjacentCells = new Set();
@@ -1706,12 +1707,17 @@
               }
             }
             
-            // Store heal animation data
+            // Store heal animation data for adjacent cells only
             const healAnimations = Array.from(adjacentCells).map(key => {
               const [x, y] = key.split(',').map(Number);
               return { x, y, t: Date.now() };
             });
+            
+            // Add selected cells to renew animation for full-life glow effect
+            const renewAnimations = g.sel.map(s => ({ x: s.x, y: s.y, t: Date.now() }));
+            
             g.healAnim = (g.healAnim || []).concat(healAnimations);
+            g.renewAnim = (g.renewAnim || []).concat(renewAnimations);
             
             let died = 0;
             
@@ -2177,6 +2183,7 @@
           const shaking = Date.now() < g.shakeUntil;
           const clearKeys = new Set(g.clearAnim.map(c => k(c.x, c.y)));
           const healKeys = new Set((g.healAnim || []).map(h => k(h.x, h.y)));
+          const renewKeys = new Set((g.renewAnim || []).map(r => k(r.x, r.y)));
           const damageKeys = new Set((g.damageAnim || []).map(d => k(d.x, d.y)));
           const boardDarkness = Math.min(0.4, g.deadCount / (W * H) * 0.6);
 
@@ -2997,6 +3004,32 @@
                                   animation: "damageFade 0.8s ease-out forwards",
                                 }} />
                               ))}
+                            </div>
+                          )}
+                          
+                          {/* Full renewal animation - ALL 10 life dots glow green for selected cells */}
+                          {renewKeys.has(k(x, y)) && !cell.dead && (
+                            <div style={{
+                              position: "absolute",
+                              inset: 0,
+                              pointerEvents: "none",
+                            }}>
+                              {/* Show ALL life dots glowing green */}
+                              {Array.from({ length: MAX_LIFE }, (_, i) => {
+                                const angle = (i / MAX_LIFE) * Math.PI * 2 - Math.PI / 2;
+                                return (
+                                  <div key={i} style={{
+                                    position: "absolute",
+                                    left: `${50 + Math.cos(angle) * 38}%`,
+                                    top: `${50 + Math.sin(angle) * 38}%`,
+                                    width: "7%", height: "7%", borderRadius: "50%",
+                                    transform: "translate(-50%, -50%)",
+                                    background: "#00ff44",
+                                    boxShadow: "0 0 12px #00ff44, 0 0 24px #00ff4488, inset 0 0 8px #00ff44",
+                                    animation: "healGlow 1s ease-out forwards",
+                                  }} />
+                                );
+                              })}
                             </div>
                           )}
                           
