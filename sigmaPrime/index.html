@@ -1845,6 +1845,7 @@
             }
             
             g.lastTurn = Date.now(); g.turnTime = turnTime(); g.timeLeft = g.turnTime; g.totalPausedTime = 0; g.pauseStartTime = 0;
+            startTimer(); // Restart timer for new round
             re(); return true;
           }
 
