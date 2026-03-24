@@ -1,0 +1,2133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SIGMA PRIME | Educational Companion | MisterMarx.com</title>
+  <meta
+    name="description"
+    content="Educational companion page for SIGMA PRIME by MisterMarx.com. A constraint-based prime path strategy game centered on exact summation, spatial planning, board-state management, decay pressure, and Mathematical Habits of Mind."
+  />
+  <style>
+    :root {
+      --bg: #020617;
+      --panel: rgba(15, 23, 42, 0.82);
+      --panel-2: rgba(30, 41, 59, 0.78);
+      --line: rgba(148, 163, 184, 0.18);
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+      --soft: #cbd5e1;
+      --cyan: #67e8f9;
+      --teal: #14b8a6;
+      --blue: #60a5fa;
+      --green: #34d399;
+      --amber: #fbbf24;
+      --red: #f87171;
+      --purple: #c084fc;
+      --shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+      --radius: 18px;
+      --radius-sm: 12px;
+      --max: 1180px;
+    }
+
+    * { 
+      box-sizing: border-box;
+      /* iOS tap highlight fix */
+      -webkit-tap-highlight-color: transparent;
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background:
+        radial-gradient(circle at top, rgba(20,184,166,0.10), transparent 30%),
+        radial-gradient(circle at 80% 20%, rgba(96,165,250,0.12), transparent 26%),
+        linear-gradient(180deg, #020617 0%, #06111f 100%);
+      color: var(--text);
+      line-height: 1.6;
+    }
+
+    a {
+      color: var(--cyan);
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    .wrap {
+      max-width: var(--max);
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    .hero {
+      position: relative;
+      overflow: hidden;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .hero::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(135deg, rgba(103,232,249,0.08), transparent 30%),
+        linear-gradient(315deg, rgba(96,165,250,0.10), transparent 34%);
+      pointer-events: none;
+    }
+
+    .hero-inner {
+      position: relative;
+      max-width: var(--max);
+      margin: 0 auto;
+      padding: 36px 24px 42px;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(15,23,42,0.65);
+      color: var(--soft);
+      font-size: 12px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      font-weight: 700;
+    }
+
+    h1, h2, h3, h4 {
+      margin: 0 0 12px;
+      line-height: 1.15;
+    }
+
+    h1 {
+      margin-top: 18px;
+      font-size: clamp(2.2rem, 6vw, 4.8rem);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-weight: 900;
+      background: linear-gradient(90deg, #f8fafc 0%, #bae6fd 40%, #67e8f9 70%, #f8fafc 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .hero-sub {
+      color: var(--soft);
+      font-size: clamp(1rem, 1.8vw, 1.18rem);
+      margin: 14px 0 0;
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 26px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 12px 18px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: rgba(15,23,42,0.84);
+      color: var(--text);
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      box-shadow: var(--shadow);
+    }
+
+    .btn.primary {
+      background: linear-gradient(135deg, rgba(20,184,166,0.24), rgba(14,116,144,0.34));
+      border-color: rgba(103,232,249,0.28);
+    }
+
+    .grid {
+      display: grid;
+      gap: 20px;
+    }
+
+    .overview-grid {
+      grid-template-columns: 1fr 1fr 1fr;
+      align-items: start;
+      margin-top: 28px;
+    }
+
+    .slideshow-container {
+      position: relative;
+      width: 100%;
+      min-height: 240px;
+      border-radius: 12px;
+      overflow: hidden;
+      background: rgba(2,6,23,0.36);
+      border: 1px solid var(--line);
+    }
+
+    .slide {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      transition: opacity 0.8s ease-in-out;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .slide.active {
+      opacity: 1;
+    }
+
+    .slide img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 12px;
+    }
+
+    .slideshow-controls {
+      position: absolute;
+      bottom: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      background: rgba(2,6,23,0.4);
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      backdrop-filter: blur(10px);
+      opacity: 0.6;
+    }
+
+    .slideshow-btn {
+      background: none;
+      border: none;
+      color: var(--text);
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 14px;
+      transition: all 0.2s;
+      opacity: 0.8;
+    }
+
+    .slideshow-btn:hover {
+      background: rgba(103,232,249,0.2);
+      opacity: 1;
+    }
+
+    .slideshow-counter {
+      color: var(--soft);
+      font-size: 12px;
+      font-weight: 600;
+      min-width: 32px;
+      text-align: center;
+    }
+
+    .slideshow-nav {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(2,6,23,0.6);
+      border: 1px solid var(--line);
+      color: var(--text);
+      cursor: pointer;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 16px;
+      transition: all 0.2s;
+      backdrop-filter: blur(10px);
+      opacity: 0.7;
+    }
+
+    .slideshow-nav:hover {
+      background: rgba(103,232,249,0.2);
+      opacity: 1;
+    }
+
+    .slideshow-nav.prev {
+      left: 12px;
+    }
+
+    .slideshow-nav.next {
+      right: 12px;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+    }
+
+    .panel.pad {
+      padding: 22px;
+    }
+
+    .kicker {
+      color: var(--cyan);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .lead {
+      color: var(--soft);
+      margin: 0;
+    }
+
+    .quickfacts {
+      display: grid;
+      gap: 14px;
+    }
+
+    .fact {
+      padding: 14px 16px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--line);
+      background: rgba(2,6,23,0.34);
+    }
+
+    .fact .label {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .toc {
+      position: sticky;
+      top: 18px;
+    }
+
+    .toc a {
+      display: block;
+      padding: 10px 12px;
+      border-radius: 10px;
+      color: var(--soft);
+    }
+
+    .toc a:hover {
+      background: rgba(148,163,184,0.08);
+      text-decoration: none;
+    }
+
+    main {
+      padding: 28px 0 56px;
+    }
+
+    section {
+      margin-bottom: 26px;
+    }
+
+    .section-card {
+      padding: 24px;
+    }
+
+    .section-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: end;
+      gap: 16px;
+      margin-bottom: 18px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .section-title {
+      font-size: clamp(1.35rem, 2vw, 2rem);
+      font-weight: 900;
+      letter-spacing: 0.02em;
+    }
+
+    .section-note {
+      color: var(--muted);
+      font-size: 0.95rem;
+      max-width: 520px;
+      text-align: right;
+    }
+
+    .priority-banner {
+      margin: 18px 0 0;
+      padding: 14px 16px;
+      border-radius: 14px;
+      border: 1px solid rgba(103,232,249,0.24);
+      background: linear-gradient(135deg, rgba(20,184,166,0.12), rgba(96,165,250,0.10));
+      color: var(--soft);
+      font-weight: 600;
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .chip {
+      padding: 9px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: rgba(2,6,23,0.36);
+      color: var(--text);
+      font-size: 0.95rem;
+      font-weight: 700;
+    }
+
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+    }
+
+    .three-col {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 18px;
+    }
+
+    .callout {
+      padding: 18px;
+      border-radius: 16px;
+      border: 1px solid var(--line);
+      background: var(--panel-2);
+    }
+
+    .callout h3 {
+      font-size: 1.04rem;
+      margin-bottom: 10px;
+    }
+
+    .habit-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+      margin-top: 12px;
+    }
+
+    .habit {
+      padding: 16px;
+      border-radius: 16px;
+      border: 1px solid var(--line);
+      background: rgba(2,6,23,0.30);
+    }
+
+    .habit h4 {
+      font-size: 1rem;
+      margin-bottom: 6px;
+      color: #f8fafc;
+    }
+
+    .habit p {
+      margin: 0;
+      color: var(--soft);
+      font-size: 0.96rem;
+    }
+
+    .separate-band {
+      border: 1px solid rgba(251,191,36,0.24);
+      background: linear-gradient(135deg, rgba(251,191,36,0.10), rgba(192,132,252,0.08));
+      color: #f8fafc;
+      padding: 16px 18px;
+      border-radius: 16px;
+      margin-bottom: 16px;
+      font-weight: 700;
+    }
+
+    .audience-card {
+      padding: 18px;
+      border-radius: 16px;
+      border: 1px solid var(--line);
+      background: rgba(2,6,23,0.34);
+    }
+
+    .audience-card h3 {
+      margin-bottom: 10px;
+      font-size: 1.05rem;
+    }
+
+    .audience-card ul,
+    .callout ul,
+    .pro-con ul,
+    .question-list,
+    .practice-list,
+    .score-list {
+      margin: 0;
+      padding-left: 18px;
+    }
+
+    .audience-card li,
+    .callout li,
+    .pro-con li,
+    .question-list li,
+    .practice-list li,
+    .score-list li {
+      margin: 8px 0;
+      color: var(--soft);
+    }
+
+    .pro-con {
+      padding: 18px;
+      border-radius: 16px;
+      border: 1px solid var(--line);
+      min-height: 100%;
+    }
+
+    .pro {
+      background: rgba(52,211,153,0.08);
+      border-color: rgba(52,211,153,0.24);
+    }
+
+    .con {
+      background: rgba(248,113,113,0.08);
+      border-color: rgba(248,113,113,0.24);
+    }
+
+    .score-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+    }
+
+    .score-item {
+      padding: 14px 16px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: rgba(2,6,23,0.34);
+    }
+
+    .score-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .score-name {
+      font-weight: 800;
+      color: var(--text);
+    }
+
+    .score-value {
+      color: var(--cyan);
+      font-weight: 900;
+    }
+
+    .bar {
+      height: 8px;
+      border-radius: 999px;
+      background: rgba(148,163,184,0.12);
+      overflow: hidden;
+    }
+
+    .fill {
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--blue), var(--cyan));
+    }
+
+    .mhom-score-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+      margin-top: 18px;
+    }
+
+    .mhom-score-item {
+      padding: 16px;
+      border-radius: 16px;
+      border: 1px solid rgba(103,232,249,0.18);
+      background: linear-gradient(135deg, rgba(20,184,166,0.08), rgba(96,165,250,0.08));
+    }
+
+    .mhom-score-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .mhom-score-name {
+      font-weight: 800;
+      color: var(--text);
+    }
+
+    .mhom-score-value {
+      color: var(--cyan);
+      font-weight: 900;
+    }
+
+    .mhom-bar {
+      height: 8px;
+      border-radius: 999px;
+      background: rgba(148,163,184,0.12);
+      overflow: hidden;
+      margin-bottom: 10px;
+    }
+
+    .mhom-fill {
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--teal), var(--cyan));
+    }
+
+    .mhom-score-desc {
+      margin: 0;
+      color: var(--soft);
+      font-size: 0.95rem;
+    }
+
+    .ccss-score-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+      margin-top: 18px;
+    }
+
+    .ccss-score-item {
+      padding: 16px;
+      border-radius: 16px;
+      border: 1px solid rgba(251,191,36,0.18);
+      background: linear-gradient(135deg, rgba(251,191,36,0.08), rgba(96,165,250,0.08));
+    }
+
+    .ccss-score-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .ccss-score-name {
+      font-weight: 800;
+      color: var(--text);
+    }
+
+    .ccss-score-value {
+      color: var(--amber);
+      font-weight: 900;
+    }
+
+    .ccss-bar {
+      height: 8px;
+      border-radius: 999px;
+      background: rgba(148,163,184,0.12);
+      overflow: hidden;
+      margin-bottom: 10px;
+    }
+
+    .ccss-fill {
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--amber), var(--blue));
+    }
+
+    .ccss-score-desc {
+      margin: 0;
+      color: var(--soft);
+      font-size: 0.95rem;
+    }
+
+    .ccss-evidence {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid rgba(148,163,184,0.12);
+    }
+
+    .ccss-evidence p {
+      margin: 8px 0;
+      color: var(--soft);
+    }
+
+    .ccss-evidence ul {
+      margin: 8px 0;
+      padding-left: 18px;
+    }
+
+    .ccss-evidence li {
+      margin: 4px 0;
+      color: var(--soft);
+    }
+
+    .reflection {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+    }
+
+    .footer {
+      border-top: 1px solid var(--line);
+      padding: 28px 0 42px;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .small {
+      font-size: 0.92rem;
+      color: var(--muted);
+    }
+
+    .mono {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+
+    @media (max-width: 980px) {
+      .overview-grid,
+      .two-col,
+      .three-col,
+      .habit-grid,
+      .reflection,
+      .score-grid,
+      .mhom-score-grid,
+      .ccss-score-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .toc {
+        position: static;
+      }
+
+      .section-head {
+        align-items: start;
+        flex-direction: column;
+      }
+
+      .section-note {
+        text-align: left;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .wrap,
+      .hero-inner {
+        padding-left: 16px;
+        padding-right: 16px;
+      }
+
+      .panel.pad,
+      .section-card {
+        padding: 18px;
+      }
+
+      h1 {
+        letter-spacing: 0.04em;
+      }
+
+      .hero-inner > div:first-child {
+        flex-wrap: nowrap;
+        gap: 10px;
+      }
+
+      .hero-inner > div:first-child .eyebrow {
+        white-space: nowrap;
+        font-size: 0.75em;
+      }
+
+      /* Stack navigation buttons when screen is too small */
+      .hero-inner > div:first-child {
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+      }
+    }
+
+    @media (max-width: 400px) {
+      /* Additional stacking for very small screens */
+      .hero-inner > div:first-child .eyebrow {
+        text-align: center;
+        font-size: 0.7em;
+      }
+    }
+
+    /* Fix long URL overflow in references */
+    #references li {
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+      word-break: break-word;
+    }
+    
+    #references a {
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+      word-break: break-word;
+    }
+  </style>
+</head>
+<body>
+  <header class="hero">
+    <div class="hero-inner">
+      <div style="display: flex; justify-content: center; align-items: center; gap: 10px;">
+        <div class="eyebrow" style="background: rgba(251,191,36,0.12); color: var(--amber); padding: 4px 12px; border-radius: 12px; cursor: pointer; transition: all 0.2s;">
+          <a href="https://www.mistermarx.com/games" style="color: inherit; text-decoration: none;">
+            Back to Games
+          </a>
+        </div>
+        <div class="eyebrow" style="background: rgba(96,165,250,0.12); color: var(--cyan); padding: 4px 12px; border-radius: 12px; cursor: pointer; transition: all 0.2s;">
+          <a href="https://www.mistermarx.com" target="_blank" rel="noopener noreferrer" style="color: inherit; text-decoration: none;">
+            Back to MisterMarx.com
+          </a>
+        </div>
+      </div>
+      <h1>SIGMA PRIME <span style="font-size: 0.6em; font-weight: 400; letter-spacing: 0; text-transform: none;">v0.1</span></h1>
+      
+          <div style="text-align: left; margin-left: 20px;">
+            <a href="https://www.mistermarx.com/games/sigma-prime" target="_blank" rel="noopener noreferrer" 
+               style="display: inline-block; background: linear-gradient(135deg, var(--teal), var(--cyan)); 
+                      color: white; padding: 6px 18px; border-radius: 12px; 
+                      font-weight: 700; font-size: 1.1rem; text-decoration: none;
+                      transition: all 0.2s; box-shadow: 0 4px 12px rgba(20,184,166,0.3);">
+              PLAY GAME
+            </a>
+          </div>
+      <p class="hero-sub">
+        This page is designed to help parents, teachers, and students understand
+        what <strong>SIGMA PRIME</strong> develops during play. The primary focus is
+        <strong>Mathematical Habits of Mind</strong>. Additional cognitive and strategic
+        benefits are included secondarily.
+      </p>
+
+      <p></p>
+      <p class="lead" style="margin: 0 0 18px 0;">
+        SIGMA PRIME is a constraint-based prime path strategy game in which players build orthogonally connected paths through live cells to exactly match a current Σ target while managing decay pressure, recovery opportunities, and board-state change across 10 goals.
+      </p>
+
+      <div class="callout" style="margin: 18px 0;">
+        <p class="lead" style="margin: 0;">
+          <strong>Important:</strong> SIGMA PRIME is not best understood as an answer-selection or arithmetic-drill game.
+          Its core play is constraint-based mathematical strategy: players must construct valid prime-valued paths,
+          satisfy exact summation targets, and manage a changing board under time pressure. It develops reasoning,
+          planning, pattern recognition, decision-making, and reflection through play, while repeated addition and
+          prime composition function inside that larger strategic system.
+          <br><br>
+          These are exactly the kinds of habits Mathematical Habits of Mind literature argues mathematics education should cultivate.
+        </p>
+      </div>
+
+      <div class="grid overview-grid">
+        <div class="panel pad">
+          <div class="kicker">Game Experience</div>
+          <h2 style="font-size: 1.5rem;">What playing this game actually feels like</h2>
+          <p class="lead">
+            SIGMA PRIME feels like managing a live mathematical system under pressure. The player scans the board,
+            commits to a starting cell, builds a path through orthogonally adjacent prime-valued cells, backtracks when needed,
+            watches the running total, and tries to land exactly on the current Σ target before decay and timing pressures
+            make the board less forgiving. Success feels corrective and stabilizing. Failure has consequences. The player is coordinating exact summation, spatial legality, timing, and board-state strategy.
+          </p>
+          <div class="priority-banner">
+            Instructional priority: this companion page treats the play experience itself as the source of learning.
+          </div>
+        </div>
+
+        <div class="panel pad">
+          <div class="kicker">Game Preview</div>
+          <div class="slideshow-container" id="gameSlideshow">
+            <div class="slide active">
+              <img src="images/Screenshot_20260323-201948.png" alt="SIGMA PRIME Game Screenshot 1">
+            </div>
+            <div class="slide">
+              <img src="images/Screenshot_20260323-202029.png" alt="SIGMA PRIME Game Screenshot 2">
+            </div>
+            <div class="slide">
+              <img src="images/Screenshot_20260323-202048.png" alt="SIGMA PRIME Game Screenshot 3">
+            </div>
+            <div class="slide">
+              <img src="images/Screenshot_20260323-202304.png" alt="SIGMA PRIME Game Screenshot 4">
+            </div>
+            <div class="slide">
+              <img src="images/Screenshot_20260323-202314.png" alt="SIGMA PRIME Game Screenshot 5">
+            </div>
+            
+            <button class="slideshow-nav prev" onclick="changeSlide(-1)">‹</button>
+            <button class="slideshow-nav next" onclick="changeSlide(1)">›</button>
+            
+            <div class="slideshow-controls">
+              <button class="slideshow-btn" onclick="toggleAutoPlay()" id="autoPlayBtn">⏸</button>
+              <span class="slideshow-counter" id="slideCounter">1/5</span>
+              <button class="slideshow-btn" onclick="resetSlideshow()">⟲</button>
+            </div>
+          </div>
+        </div>
+
+        <aside class="panel pad toc">
+          <div class="kicker">Page Map</div>
+          <a href="#overview">1. Overview</a>
+          <a href="#math-habits">2. Mathematical Habits of Mind</a>
+          <a href="#ccss-alignment">3. Mathematical Structure & Learning Alignment</a>
+          <a href="#teacher-guide">4. Teacher Guide</a>
+          <a href="#parent-guide">5. Parent Guide</a>
+          <a href="#student-guide">6. Student Guide</a>
+          <a href="#five-practices">7. 5 Practices for Orchestrating Productive Mathematical Discussions</a>
+          <a href="#additional-benefits">8. Additional Benefits</a>
+          <a href="#positives-negatives">9. Positives & Negatives</a>
+          <a href="#reflection">10. Reflection Questions</a>
+          <a href="#references">11. Research Sources</a>
+        </aside>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section id="overview" class="panel section-card">
+      <div class="section-head">
+        <div>
+          <div class="kicker">Overview</div>
+          <h2 class="section-title">What players are doing during play</h2>
+        </div>
+      </div>
+
+      <div class="two-col">
+        <div class="callout">
+          <h3>Core play loop</h3>
+          <p class="lead mono">scan → path-build → sum-check → submit → board-change → next target</p>
+          <p class="small" style="margin-top: 10px;">
+            The game is timed, state-dependent, and progressive. The player scans live cells,
+            constructs a path through orthogonally adjacent primes, checks the running total against
+            the Σ target, submits for an exact match, and then responds to the resulting refresh,
+            healing, revival, decay, and timer pressure before the next target.
+          </p>
+        </div>
+        <div class="callout">
+          <h3>Dominant experience</h3>
+          <p class="lead">
+            This is not a worksheet-style answer game. It is a timed mathematical strategy game where the player
+            must balance exact summation, spatial planning, board preservation, recovery decisions, and speed under pressure.
+          </p>
+        </div>
+      </div>
+<p></p>
+      <p class="lead">
+        This companion page explains the play experience, the habits of mind the game can develop,
+        and the mathematical structures players engage with during gameplay.
+      </p>
+<p></p>
+
+      <!-- Key skills -->
+        <h3>Key Skills</h3>
+
+      <div class="chips">
+        <div class="chip">Exact summation</div>
+        <div class="chip">Prime composition</div>
+        <div class="chip">Spatial planning</div>
+        <div class="chip">Constraint reasoning</div>
+        <div class="chip">Backtracking and revision</div>
+        <div class="chip">Board-state management</div>
+        <div class="chip">Timed decision making</div>
+        <div class="chip">Pattern recognition</div>
+      </div>
+
+      <!-- Player experience -->
+       <p></p>
+       <h3>Player Experience</h3>
+      <div class="three-col" style="margin-top: 18px;">
+        <div class="fact">
+          <span class="label">Player task</span>
+          Build valid orthogonal paths through live prime-valued cells to exactly match the current Σ target.
+        </div>
+        <div class="fact">
+          <span class="label">Emotional rhythm</span>
+          Focus during path construction, tension during target pursuit, relief on exact success, urgency as decay and timer pressure build.
+        </div>
+        <div class="fact">
+          <span class="label">Growth arc</span>
+          Beginners often chase totals locally. Stronger players learn to anticipate reachable sums, preserve the board, and use success for recovery and future control.
+        </div>
+      </div>
+    </section>
+
+    <section id="math-habits" class="panel section-card">
+      <div class="section-head">
+        <div>
+          <div class="kicker">Primary Focus</div>
+          <h2 class="section-title">Mathematical Habits of Mind</h2>
+        </div>
+      </div>
+
+
+      <p class="lead" style="margin-bottom: 14px;">
+    The Mathematical Habits of Mind framework originates from
+    research on mathematics curriculum design emphasizing
+    reasoning, conjecture, and structural thinking
+    <a href="https://www.sciencedirect.com/science/article/pii/S0732312396900231" target="_blank">
+    (Cuoco, Goldenberg, & Mark, 1996)
+    </a>
+    and is further developed in MisterMarx.com's educational approach
+    <a href="https://www.mistermarx.com/mathematicalhabitsofmind" target="_blank">
+    (MisterMarx.com, 2026)
+    </a>.
+    This approach is especially relevant for SIGMA PRIME because the game does not center on answer selection or routine arithmetic rehearsal. Instead, it places players inside a live mathematical system where they must coordinate exact summation, spatial constraint, path revision, board preservation, and time pressure.
+  </p>
+
+      <div class="callout" style="margin-top: 18px;">
+    <h3>Research Foundation</h3>
+    <p class="lead">
+      This companion page builds on established research in mathematics education,
+      cognitive development, and game-based learning, but interprets those ideas through
+      the actual structure of SIGMA PRIME: a constraint-based prime path strategy game.
+    </p>
+
+    <p class="small" style="margin-top: 12px;">
+      <strong>Mathematical Habits of Mind:</strong> Mathematics education should cultivate
+      ways of thinking, not just procedures
+      <a href="https://www.sciencedirect.com/science/article/pii/S0732312396900231" target="_blank">
+      (Cuoco, Goldenberg, & Mark, 1996)
+      </a>.
+    </p>
+
+    <p class="small">
+      <strong>Mathematical Discussion Theory:</strong> Structured discussion can turn
+      activity into reasoning when players compare strategies, explain choices, and analyze outcomes
+      <a href="https://eric.ed.gov/?id=EJ815183" target="_blank">
+      (Stein, Engle, Smith, & Hughes, 2008)
+      </a>.
+    </p>
+
+    <p class="small">
+      <strong>Game-Based Learning:</strong> Games create situated problem-solving environments
+      <a href="https://www.researchgate.net/publication/220686314_What_Video_Games_Have_to_Teach_Us_About_Learning_and_Literacy" target="_blank">
+      (Gee, 2003)
+      </a>.
+    </p>
+
+    <p class="small">
+      <strong>Cognitive Skill Development:</strong> Real-time games can strengthen attention,
+      monitoring, and decision making
+      <a href="https://www.nature.com/articles/nature01647" target="_blank">
+      (Green & Bavelier, 2003)
+      </a>.
+    </p>
+  </div>
+
+      <p class="lead" style="margin-bottom: 14px;">
+    SIGMA PRIME supports Mathematical Habits of Mind not through answer-choice arithmetic,
+    but through exact additive construction inside a constrained spatial system. Players must
+    evaluate reachable sums, test candidate paths, backtrack when needed, preserve live cells,
+    recover dead zones, and decide when a mathematically valid path is strategically worth using.
+    This places reasoning, structure, and decision-making at the center of play
+    <a href="https://nrich.maths.org/content/id/9971/HabitsOfMind.pdf" target="_blank">
+    (Cuoco, Goldenberg, & Mark, 1996)
+    </a>
+    as applied in MisterMarx.com's educational approach
+    <a href="https://www.mistermarx.com/mathematicalhabitsofmind" target="_blank">
+    (MisterMarx.com, 2026)
+    </a>.
+  </p>
+
+      <p class="lead" style="margin-bottom: 18px;">
+    The ratings below show which Mathematical Habits of Mind are most strongly activated by the actual play experience of SIGMA PRIME.
+  </p>
+
+      <div class="callout" style="margin-top: 18px;">
+    <h3>How to read these ratings</h3>
+    <p class="lead">
+      These scores are not claims about all games in general. They describe how strongly SIGMA PRIME appears to activate each Mathematical Habit of Mind through its actual play experience: exact summation, orthogonal path construction, board-state management, decay pressure, recovery, and strategic revision.
+    </p>
+  </div>
+
+      <div class="mhom-score-grid">
+        <div class="mhom-score-item">
+          <div class="mhom-score-top">
+            <span class="mhom-score-name">MAKE SENSE</span>
+            <span class="mhom-score-value">10/10</span>
+          </div>
+          <div class="mhom-bar"><div class="mhom-fill" style="width: 100%;"></div></div>
+          <p class="mhom-score-desc">The player must continuously make sense of a changing prime-valued board, the current Σ target, reachable paths, and whether a partial sum can still be completed exactly
+          <a href="https://www.mistermarx.com/mathematicalhabitsofmind/make-sense" target="_blank">
+          (MisterMarx.com, 2026)
+          </a>.</p>
+        </div>
+
+        <div class="mhom-score-item">
+          <div class="mhom-score-top">
+            <span class="mhom-score-name">JUSTIFY WHY</span>
+            <span class="mhom-score-value">9/10</span>
+          </div>
+          <div class="mhom-bar"><div class="mhom-fill" style="width: 90%;"></div></div>
+          <p class="mhom-score-desc">Strong play depends on being able to justify why a chosen path is valid, why it reaches the exact target, and why it is strategically preferable to competing options
+          <a href="https://www.mistermarx.com/mathematicalhabitsofmind/justify-why" target="_blank">
+          (MisterMarx.com, 2026)
+          </a>.</p>
+        </div>
+
+        <div class="mhom-score-item">
+          <div class="mhom-score-top">
+            <span class="mhom-score-name">REGULARITY / PATTERNS / STRUCTURE</span>
+            <span class="mhom-score-value">10/10</span>
+          </div>
+          <div class="mhom-bar"><div class="mhom-fill" style="width: 100%;"></div></div>
+          <p class="mhom-score-desc">Players improve by recognizing repeatable additive structures, prime combinations, local board patterns, and recurring path possibilities under orthogonal movement constraints
+          <a href="https://www.mistermarx.com/mathematicalhabitsofmind/regularity-patterns" target="_blank">
+          (MisterMarx.com, 2026)
+          </a>.</p>
+        </div>
+
+        <div class="mhom-score-item">
+          <div class="mhom-score-top">
+            <span class="mhom-score-name">PERSEVERE & SEEK MORE</span>
+            <span class="mhom-score-value">9/10</span>
+          </div>
+          <div class="mhom-bar"><div class="mhom-fill" style="width: 90%;"></div></div>
+          <p class="mhom-score-desc">The game repeatedly asks players to recover from failed sums, board decay, and path dead-ends, then continue searching for exact and strategically useful solutions
+          <a href="https://www.mistermarx.com/mathematicalhabitsofmind/persevere-and-seek-more" target="_blank">
+          (MisterMarx.com, 2026)
+          </a>.</p>
+        </div>
+
+        <div class="mhom-score-item">
+          <div class="mhom-score-top">
+            <span class="mhom-score-name">MISTAKES & STUCK POINTS</span>
+            <span class="mhom-score-value">10/10</span>
+          </div>
+          <div class="mhom-bar"><div class="mhom-fill" style="width: 100%;"></div></div>
+          <p class="mhom-score-desc">Mistakes are highly informative because they expose unreachable totals, poor path choices, weak board stewardship, or missed recovery opportunities in a visibly changing system
+          <a href="https://www.mistermarx.com/mathematicalhabitsofmind/mistakes-stuck-points" target="_blank">
+          (MisterMarx.com, 2026)
+          </a>.</p>
+        </div>
+
+        <div class="mhom-score-item">
+          <div class="mhom-score-top">
+            <span class="mhom-score-name">EXPLORE MULTIPLE PATHWAYS</span>
+            <span class="mhom-score-value">10/10</span>
+          </div>
+          <div class="mhom-bar"><div class="mhom-fill" style="width: 100%;"></div></div>
+          <p class="mhom-score-desc">The same target can often be reached through multiple legal paths, and strong play requires comparing those alternatives for length, safety, recovery value, and future board consequences
+          <a href="https://www.mistermarx.com/mathematicalhabitsofmind/explore-multiple-pathways" target="_blank">
+          (MisterMarx.com, 2026)
+          </a>.</p>
+        </div>
+
+        <div class="mhom-score-item">
+          <div class="mhom-score-top">
+            <span class="mhom-score-name">EXPLAIN</span>
+            <span class="mhom-score-value">8/10</span>
+          </div>
+          <div class="mhom-bar"><div class="mhom-fill" style="width: 80%;"></div></div>
+          <p class="mhom-score-desc">Players can explain how a path was built, why it satisfied the target exactly, where an attempt failed, and how board-state considerations changed the decision
+          <a href="https://www.mistermarx.com/mathematicalhabitsofmind/explain" target="_blank">
+          (MisterMarx.com, 2026)
+          </a>.</p>
+        </div>
+
+        <div class="mhom-score-item">
+          <div class="mhom-score-top">
+            <span class="mhom-score-name">METACOGNITION & REFLECTION</span>
+            <span class="mhom-score-value">9/10</span>
+          </div>
+          <div class="mhom-bar"><div class="mhom-fill" style="width: 90%;"></div></div>
+          <p class="mhom-score-desc">Players can reflect on whether they chased totals too locally, ignored better future board states, rushed submission, or used recovery mechanics effectively
+          <a href="https://www.mistermarx.com/mathematicalhabitsofmind/metacognition-reflection" target="_blank">
+          (MisterMarx.com, 2026)
+          </a>.</p>
+        </div>
+
+        <div class="mhom-score-item">
+          <div class="mhom-score-top">
+            <span class="mhom-score-name">GENERALIZE</span>
+            <span class="mhom-score-value">8/10</span>
+          </div>
+          <div class="mhom-bar"><div class="mhom-fill" style="width: 80%;"></div></div>
+          <p class="mhom-score-desc">Players gradually form general rules about reachable exact sums, efficient path construction, prime-value combinations, and when certain local shapes tend to produce useful targets
+          <a href="https://www.mistermarx.com/mathematicalhabitsofmind/generalize" target="_blank">
+          (MisterMarx.com, 2026)
+          </a>.</p>
+        </div>
+
+        <div class="mhom-score-item">
+          <div class="mhom-score-top">
+            <span class="mhom-score-name">CONNECTIONS</span>
+            <span class="mhom-score-value">9/10</span>
+          </div>
+          <div class="mhom-bar"><div class="mhom-fill" style="width: 90%;"></div></div>
+          <p class="mhom-score-desc">Good play depends on connecting number structure, path geometry, cell life, revival possibilities, timer pressure, and future board control into a single coordinated decision
+          <a href="https://www.mistermarx.com/mathematicalhabitsofmind/connections" target="_blank">
+          (MisterMarx.com, 2026)
+          </a>.</p>
+        </div>
+
+        <div class="mhom-score-item">
+          <div class="mhom-score-top">
+            <span class="mhom-score-name">GENUINE QUESTIONS</span>
+            <span class="mhom-score-value">9/10</span>
+          </div>
+          <div class="mhom-bar"><div class="mhom-fill" style="width: 90%;"></div></div>
+          <p class="mhom-score-desc">The game naturally generates real questions about exact reachability, efficient path selection, board recovery, tradeoffs between short-term success and long-term survival, and the structure of prime sums
+          <a href="https://www.mistermarx.com/mathematicalhabitsofmind/genuine-questions" target="_blank">
+          (MisterMarx.com, 2026)
+          </a>.</p>
+        </div>
+
+        <div class="mhom-score-item">
+          <div class="mhom-score-top">
+            <span class="mhom-score-name">MATHEMATICAL REPRESENTATIONS</span>
+            <span class="mhom-score-value">9/10</span>
+          </div>
+          <div class="mhom-bar"><div class="mhom-fill" style="width: 90%;"></div></div>
+          <p class="mhom-score-desc">The game turns exact additive composition into a visual-spatial representation: numbers live on a board, legality depends on adjacency, and success depends on constructing a valid path rather than selecting an answer
+          <a href="https://www.mistermarx.com/mathematicalhabitsofmind/mathematical-representations" target="_blank">
+          (MisterMarx.com, 2026)
+          </a>.</p>
+        </div>
+      </div>
+
+      <div class="callout" style="margin-top:18px;">
+        <h3>Discussion-based Mathematical Habits</h3>
+
+        <p class="lead">
+          Some Mathematical Habits of Mind appear most strongly when SIGMA PRIME gameplay is paired with discussion rather than left as solo play alone.
+        </p>
+
+        <ul>
+          <li>Listen to Understand
+          <a href="https://www.mistermarx.com/mathematicalhabitsofmind/listen-to-understand" target="_blank">
+          (MisterMarx.com, 2026)
+          </a></li>
+          <li>Private Reasoning Time
+          <a href="https://www.mistermarx.com/mathematicalhabitsofmind/private-reasoning-time" target="_blank">
+          (MisterMarx.com, 2026)
+          </a></li>
+          <li>Compare Our Logic & Ideas
+          <a href="https://www.mistermarx.com/mathematicalhabitsofmind/compare-our-logic" target="_blank">
+          (MisterMarx.com, 2026)
+          </a></li>
+          <li>Critique & Debate
+          <a href="https://www.mistermarx.com/mathematicalhabitsofmind/critique-and-debate" target="_blank">
+          (MisterMarx.com, 2026)
+          </a></li>
+          <li>Math Reasoning is the Authority
+          <a href="https://www.mistermarx.com/mathematicalhabitsofmind/math-reasoning-authority" target="_blank">
+          (MisterMarx.com, 2026)
+          </a></li>
+        </ul>
+
+        <p class="small">
+          These habits emerge most clearly when gameplay is paired with conversation, reflection, replay analysis, and comparison of alternative path strategies.
+        </p>
+      </div>
+
+    </section>
+
+    <section id="ccss-alignment" class="panel section-card">
+      <div class="section-head">
+        <div>
+          <div class="kicker">Standards Alignment</div>
+          <h2 class="section-title">Common Core Mathematical Practice Alignment</h2>
+        </div>
+      </div>
+
+      <p class="lead">
+        SIGMA PRIME aligns strongly with the Common Core Standards for Mathematical Practice because its core mechanics require players to make sense of exact-sum targets, reason quantitatively about prime-valued paths, revise strategies through backtracking, attend to precision, and recognize additive structure under spatial constraints. Rather than selecting answer choices, players construct mathematically valid paths through orthogonally adjacent live cells while managing decay, recovery, and board-state consequences under time pressure.
+      </p>
+
+      <div class="callout" style="margin-top: 18px;">
+        <h3>Scoring Scale</h3>
+        <ul>
+          <li>0–2 — Minimal presence</li>
+          <li>3–4 — Emerging alignment</li>
+          <li>5–6 — Moderate alignment</li>
+          <li>7–8 — Strong alignment</li>
+          <li>9–10 — Core mechanic of the experience</li>
+        </ul>
+      </div>
+
+      <div class="ccss-score-grid">
+        <div class="ccss-score-item">
+          <div class="ccss-score-top">
+            <span class="ccss-score-name">MP1 — Make sense of problems and persevere in solving them</span>
+            <span class="ccss-score-value">10/10</span>
+          </div>
+          <div class="ccss-bar"><div class="ccss-fill" style="width: 100%;"></div></div>
+          <p class="ccss-score-desc">
+            Every target in SIGMA PRIME is a constrained problem: the player must determine whether an exact sum is reachable from the current live board through a legal orthogonal path, and must continue revising when an early route fails.
+          </p>
+          <div class="ccss-evidence">
+            <p><strong>Gameplay Evidence:</strong></p>
+            <ul>
+              <li>Players must determine whether the current Σ target is reachable exactly.</li>
+              <li>Orthogonal adjacency and live-cell constraints make problem solving structural, not merely computational.</li>
+              <li>Backtracking supports revision instead of forced restart.</li>
+              <li>Decay pressure and repeated goals require sustained perseverance.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="ccss-score-item">
+          <div class="ccss-score-top">
+            <span class="ccss-score-name">MP2 — Reason abstractly and quantitatively</span>
+            <span class="ccss-score-value">10/10</span>
+          </div>
+          <div class="ccss-bar"><div class="ccss-fill" style="width: 100%;"></div></div>
+          <p class="ccss-score-desc">
+            Players continually track quantities, partial sums, exact remaining difference to target, and the quantitative consequences of extending or revising a path through prime-valued cells.
+          </p>
+          <div class="ccss-evidence">
+            <p><strong>Gameplay Evidence:</strong></p>
+            <ul>
+              <li>Players monitor a running total against an exact Σ target.</li>
+              <li>They evaluate how much value remains to be built into the path.</li>
+              <li>Prime cell values constrain quantitative possibilities.</li>
+              <li>Successful play requires moving between board objects and abstract additive relationships.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="ccss-score-item">
+          <div class="ccss-score-top">
+            <span class="ccss-score-name">MP3 — Construct viable arguments and critique the reasoning of others</span>
+            <span class="ccss-score-value">7/10</span>
+          </div>
+          <div class="ccss-bar"><div class="ccss-fill" style="width: 70%;"></div></div>
+          <p class="ccss-score-desc">
+            While gameplay is single-player, the game supports mathematical argument when players explain why a path is valid, why it reaches the exact target, and why one route is strategically stronger than another.
+          </p>
+          <div class="ccss-evidence">
+            <p><strong>Gameplay Evidence:</strong></p>
+            <ul>
+              <li>Players can justify why a selected path is mathematically valid.</li>
+              <li>Different exact-sum paths can be compared for efficiency and board impact.</li>
+              <li>Replay or discussion allows critique of strategic and mathematical choices.</li>
+              <li>Failed attempts invite reasoning about where the logic broke down.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="ccss-score-item">
+          <div class="ccss-score-top">
+            <span class="ccss-score-name">MP4 — Model with mathematics</span>
+            <span class="ccss-score-value">9/10</span>
+          </div>
+          <div class="ccss-bar"><div class="ccss-fill" style="width: 90%;"></div></div>
+          <p class="ccss-score-desc">
+            SIGMA PRIME turns additive composition into a live visual model: numbers are embedded in a grid, legal movement matters, and mathematical success depends on constructing a valid path through the system.
+          </p>
+          <div class="ccss-evidence">
+            <p><strong>Gameplay Evidence:</strong></p>
+            <ul>
+              <li>The board models number relationships spatially.</li>
+              <li>A path models an additive construction rather than a chosen answer.</li>
+              <li>Cell life, revival, and decay model changing mathematical opportunity.</li>
+              <li>Shorter and stronger paths model efficiency within constraints.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="ccss-score-item">
+          <div class="ccss-score-top">
+            <span class="ccss-score-name">MP5 — Use appropriate tools strategically</span>
+            <span class="ccss-score-value">7/10</span>
+          </div>
+          <div class="ccss-bar"><div class="ccss-fill" style="width: 70%;"></div></div>
+          <p class="ccss-score-desc">
+            The player uses the game interface strategically: path preview, backtracking, board reading, and timing awareness function as tools for exact reasoning and decision-making.
+          </p>
+          <div class="ccss-evidence">
+            <p><strong>Gameplay Evidence:</strong></p>
+            <ul>
+              <li>Backtracking is used as a revision tool during mathematical construction.</li>
+              <li>The running total functions as an immediate quantitative feedback tool.</li>
+              <li>Visual board state helps players plan before committing.</li>
+              <li>The timer becomes a pacing tool for strategic submission and recovery decisions.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="ccss-score-item">
+          <div class="ccss-score-top">
+            <span class="ccss-score-name">MP6 — Attend to precision</span>
+            <span class="ccss-score-value">10/10</span>
+          </div>
+          <div class="ccss-bar"><div class="ccss-fill" style="width: 100%;"></div></div>
+          <p class="ccss-score-desc">
+            The target must be matched exactly. Precision is not optional: a path that misses the total, breaks adjacency, or relies on unavailable cells fails mathematically and strategically.
+          </p>
+          <div class="ccss-evidence">
+            <p><strong>Gameplay Evidence:</strong></p>
+            <ul>
+              <li>Only exact Σ matches count as success.</li>
+              <li>Orthogonal adjacency must be followed precisely.</li>
+              <li>Players must track live versus dead cell availability carefully.</li>
+              <li>Small quantitative or spatial errors change the outcome immediately.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="ccss-score-item">
+          <div class="ccss-score-top">
+            <span class="ccss-score-name">MP7 — Look for and make use of structure</span>
+            <span class="ccss-score-value">10/10</span>
+          </div>
+          <div class="ccss-bar"><div class="ccss-fill" style="width: 100%;"></div></div>
+          <p class="ccss-score-desc">
+            Strong play depends on seeing additive structure in prime combinations, local board geometry, reachable clusters, and recurring path shapes that make some targets more accessible than others.
+          </p>
+          <div class="ccss-evidence">
+            <p><strong>Gameplay Evidence:</strong></p>
+            <ul>
+              <li>Players identify useful prime combinations for exact targets.</li>
+              <li>Board layout reveals structural opportunities and constraints.</li>
+              <li>Certain local shapes support efficient path construction.</li>
+              <li>Success improves when players exploit additive and spatial structure together.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="ccss-score-item">
+          <div class="ccss-score-top">
+            <span class="ccss-score-name">MP8 — Look for and express regularity in repeated reasoning</span>
+            <span class="ccss-score-value">9/10</span>
+          </div>
+          <div class="ccss-bar"><div class="ccss-fill" style="width: 90%;"></div></div>
+          <p class="ccss-score-desc">
+            Over repeated play, players begin to recognize regularities in exact-sum construction, prime-value combinations, efficient path length, and board recovery patterns, then use those regularities to act faster and better.
+          </p>
+          <div class="ccss-evidence">
+            <p><strong>Gameplay Evidence:</strong></p>
+            <ul>
+              <li>Repeated play reveals common exact-sum patterns.</li>
+              <li>Players develop reusable heuristics for reachable targets.</li>
+              <li>Regular board-state consequences become part of planning.</li>
+              <li>Players refine repeated reasoning into faster strategic judgment.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout" style="margin-top: 18px;">
+        <h3>Common Core Content Connections</h3>
+        <p class="lead">
+          Although SIGMA PRIME is best aligned to the Standards for Mathematical Practice, it also connects to Common Core content work involving addition, decomposition and composition of numbers, number patterns, strategic use of structure, and precise quantitative reasoning. The exact content standard emphasis will depend on how the game is used instructionally and at what grade band.
+        </p>
+      </div>
+    </section>
+
+    <section id="teacher-guide" class="panel section-card">
+      <div class="section-head">
+        <div>
+          <div class="kicker">For Teachers</div>
+          <h2 class="section-title">How to use this game instructionally</h2>
+        </div>
+        <div class="section-note">
+          Keep classroom discussion centered on path reasoning, exact summation, and board-state decisions, not just scores.
+        </div>
+      </div>
+
+      <div class="three-col">
+        <div class="audience-card">
+          <h3>Before play</h3>
+          <ul>
+            <li>Tell students the goal is to study mathematical thinking, not just to win.</li>
+            <li>Ask students what makes an exact path mathematically valid.</li>
+            <li>Ask what constraints matter before a move: target value, adjacency, live cells, and future board state.</li>
+            <li>Set a focus Mathematical Habit of Mind for the round, such as make sense, justify why, explore multiple pathways, or attend to precision.</li>
+          </ul>
+        </div>
+
+        <div class="audience-card">
+          <h3>During play</h3>
+          <ul>
+            <li>Pause and ask students to explain why a path is valid before they submit it.</li>
+            <li>Ask students what other legal paths they considered and why they rejected them.</li>
+            <li>Discuss whether the player is chasing the target efficiently or damaging the board for later goals.</li>
+            <li>Ask how decay pressure and recovery opportunities are changing the mathematical decision.</li>
+          </ul>
+        </div>
+
+        <div class="audience-card">
+          <h3>After play</h3>
+          <ul>
+            <li>Compare different exact-sum paths for the same target.</li>
+            <li>Discuss what failed paths revealed about the board or the target.</li>
+            <li>Ask what students learned about preserving live cells and recovering dead areas.</li>
+            <li>Analyze when speed helped and when it caused weaker mathematical decisions.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="callout" style="margin-top: 18px;">
+        <h3>Good teacher questions</h3>
+        <ul class="question-list">
+          <li>How did you know that path could still reach the exact Σ target?</li>
+          <li>What other legal path did you consider, and why did you reject it?</li>
+          <li>Did you choose that route because it was shortest, safest, or best for the board later?</li>
+          <li>What made this move mathematically precise rather than just plausible?</li>
+          <li>How did failure or decay change your next decision?</li>
+        </ul>
+      </div>
+
+      <div class="callout" style="margin-top: 18px;">
+        <h3>Teacher note on scoring systems</h3>
+        <p class="lead">
+          SIGMA PRIME uses transparent scoring and board-state consequences that are visible to players. The instructional focus should remain on exact summation, valid path construction, strategic backtracking, and the tradeoff between immediate success and long-term board control. The game supports mathematical reasoning through constraint, precision, and structure rather than through answer-choice fluency practice.
+        </p>
+      </div>
+    </section>
+
+    <section id="parent-guide" class="panel section-card">
+      <div class="section-head">
+        <div>
+          <div class="kicker">For Parents</div>
+          <h2 class="section-title">How to guide play at home</h2>
+        </div>
+        <div class="section-note">
+          The best parent role here is not to direct every move, but to help the child talk through mathematical and strategic choices.
+        </div>
+      </div>
+
+      <div class="two-col">
+        <div class="audience-card">
+          <h3>What to look for</h3>
+          <ul>
+            <li>Does your child pause to scan the board before starting a path?</li>
+            <li>Can your child explain why a path is mathematically valid and reaches the exact target?</li>
+            <li>Does your child recover thoughtfully after failure, or simply rush into another attempt?</li>
+            <li>Does your child begin to notice useful prime combinations, board patterns, or recovery opportunities?</li>
+          </ul>
+        </div>
+
+        <div class="audience-card">
+          <h3>What to say</h3>
+          <ul>
+            <li>"Show me how you knew that path could reach the target exactly."</li>
+            <li>"What was the risk in using that route?"</li>
+            <li>"Was there another path you could have used?"</li>
+            <li>"What did that failed attempt teach you about the board or the numbers?"</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="callout" style="margin-top: 18px;">
+        <h3>Home use recommendation</h3>
+        <p class="lead">
+          Keep sessions short and reflective. A strong routine is
+          <strong>play → pause → explain → play again</strong>.
+          That turns the game into a mathematical strategy and reasoning tool instead of passive screen time.
+        </p>
+      </div>
+
+      <div class="callout" style="margin-top: 18px;">
+        <h3>Parent note on mathematical patterns</h3>
+        <p class="lead">
+          Your child does not need every scoring or board rule explained in advance. In many cases, it is better to ask what they notice about exact sums, legal paths, prime combinations, decay pressure, and recovery opportunities. That helps the game become a mathematical thinking experience rather than just an instruction-following experience.
+        </p>
+      </div>
+    </section>
+
+    <section id="student-guide" class="panel section-card">
+      <div class="section-head">
+        <div>
+          <div class="kicker">For Students</div>
+          <h2 class="section-title">How to play with intention</h2>
+        </div>
+        <div class="section-note">
+          The goal is not just speed. The goal is better mathematical and strategic judgment.
+        </div>
+      </div>
+
+      <div class="two-col">
+        <div class="callout">
+          <h3>When you are about to move</h3>
+          <ul class="practice-list">
+            <li>Look at the whole board first.</li>
+            <li>Ask whether your path can still reach the exact Σ target.</li>
+            <li>Think about adjacency, live cells, and what the move will do to the board later.</li>
+            <li>Do not confuse "close" with "exact."</li>
+          </ul>
+        </div>
+
+        <div class="callout">
+          <h3>After a move</h3>
+          <ul class="practice-list">
+            <li>Say whether your path did what you wanted mathematically.</li>
+            <li>Name one reason it worked or failed.</li>
+            <li>Notice whether you helped or hurt the board for the next target.</li>
+            <li>Use mistakes to improve the next path immediately.</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Key Practices -->
+       <p></p>
+       <h3>Key Practices</h3>
+      
+      <div class="chips" style="margin-top: 18px;">
+        <div class="chip">Scan before pathing</div>
+        <div class="chip">Check exact sums</div>
+        <div class="chip">Backtrack with purpose</div>
+        <div class="chip">Study failed paths</div>
+        <div class="chip">Look for prime patterns</div>
+        <div class="chip">Protect the board</div>
+      </div>
+
+      <!-- Student Guidance -->
+       <p></p>
+       <h3>Student Guidance</h3>
+      <div class="callout" style="margin-top: 18px;">
+        <h3>For student players</h3>
+        <p class="lead">
+          Part of the game is learning to see structure. Pay attention to which prime combinations help you hit exact targets, which path shapes work well, when backtracking saves a move, and how success or failure changes the board. Your task is not just to play fast. Your task is to notice, test, and improve your mathematical decisions.
+        </p>
+      </div>
+    </section>
+
+    <section id="five-practices" class="panel section-card">
+      <div class="section-head">
+        <div>
+          <div class="kicker">Teacher Discussion Framework</div>
+          <h2 class="section-title">The 5 Practices for Orchestrating Productive Discussion</h2>
+        </div>
+        <div class="section-note">
+          This is where teachers can turn gameplay into strong mathematical conversation about paths, targets, and board-state decisions.
+        </div>
+      </div>
+
+      <p class="lead" style="margin-bottom: 18px;">
+        Research on productive mathematics discussions identifies five
+        instructional practices: anticipating, monitoring, selecting,
+        sequencing, and connecting student thinking
+        <a href="https://eric.ed.gov/?id=EJ815183" target="_blank">
+        (Stein, Engle, Smith, & Hughes, 2008)
+        </a>.
+        In SIGMA PRIME, these practices apply to how students build exact-sum paths,
+        revise through backtracking, manage board decay, and compare mathematically valid
+        but strategically different solutions.
+      </p>
+
+      <div class="habit-grid">
+        <article class="habit">
+          <h4>ANTICIPATING</h4>
+          <p>
+            Predict the kinds of path strategies students will use: chasing the target too quickly,
+            overlooking exactness, ignoring future board damage, missing shorter paths, or failing
+            to use backtracking productively.
+          </p>
+        </article>
+
+        <article class="habit">
+          <h4>MONITORING</h4>
+          <p>
+            Watch and listen for how students justify a path, track the running total, react to decay pressure,
+            and decide whether a mathematically valid route is also strategically strong.
+          </p>
+        </article>
+
+        <article class="habit">
+          <h4>SELECTING</h4>
+          <p>
+            Choose students whose solutions reveal contrasting reasoning: shortest exact path,
+            high-recovery path, risky path under time pressure, or a failed path that reveals an important misconception.
+          </p>
+        </article>
+
+        <article class="habit">
+          <h4>SEQUENCING</h4>
+          <p>
+            Share examples in an order that helps the class move from simple exact-sum paths
+            toward deeper reasoning about efficiency, structure, recovery, and future board consequences.
+          </p>
+        </article>
+
+        <article class="habit">
+          <h4>CONNECTING</h4>
+          <p>
+            Connect one player's path strategy to another's so students can see how exact summation,
+            adjacency, board-state management, and mathematical habits of mind work together.
+          </p>
+        </article>
+      </div>
+    </section>
+
+    <section id="additional-benefits" class="panel section-card">
+      <div class="section-head">
+        <div>
+          <div class="kicker">Secondary Section</div>
+          <h2 class="section-title">Additional Benefits</h2>
+        </div>
+      </div>
+
+        <div class="separate-band">
+          The following ratings describe additional gains that may arise through intentional play in SIGMA PRIME.
+        </div>
+
+      <div class="score-grid">
+        <div class="score-item">
+          <div class="score-top">
+            <span class="score-name">Attention Control</span>
+            <span class="score-value">9/10</span>
+          </div>
+          <div class="bar"><div class="fill" style="width: 90%;"></div></div>
+          <p class="small">Players must stay focused on the Σ target, the running total, legal adjacency, and the changing condition of the board.</p>
+        </div>
+
+        <div class="score-item">
+          <div class="score-top">
+            <span class="score-name">Working Memory</span>
+            <span class="score-value">9/10</span>
+          </div>
+          <div class="bar"><div class="fill" style="width: 90%;"></div></div>
+          <p class="small">Players hold partial sums, candidate path options, dead-cell constraints, and future board consequences in mind at the same time.</p>
+        </div>
+
+        <div class="score-item">
+          <div class="score-top">
+            <span class="score-name">Planning & Prioritization</span>
+            <span class="score-value">10/10</span>
+          </div>
+          <div class="bar"><div class="fill" style="width: 100%;"></div></div>
+          <p class="small">The game constantly asks which path, target approach, or recovery opportunity deserves attention now versus what should be preserved for later goals.</p>
+        </div>
+
+        <div class="score-item">
+          <div class="score-top">
+            <span class="score-name">Emotional Regulation</span>
+            <span class="score-value">8/10</span>
+          </div>
+          <div class="bar"><div class="fill" style="width: 80%;"></div></div>
+          <p class="small">Players must recover from failed submissions, shrinking options, and faster timer pressure without collapsing into impulsive play.</p>
+        </div>
+
+        <div class="score-item">
+          <div class="score-top">
+            <span class="score-name">Pattern Detection</span>
+            <span class="score-value">10/10</span>
+          </div>
+          <div class="bar"><div class="fill" style="width: 100%;"></div></div>
+          <p class="small">Repeated play supports noticing prime-sum combinations, efficient path shapes, and board patterns that make exact targets more or less reachable.</p>
+        </div>
+
+        <div class="score-item">
+          <div class="score-top">
+            <span class="score-name">Decision Under Pressure</span>
+            <span class="score-value">10/10</span>
+          </div>
+          <div class="bar"><div class="fill" style="width: 100%;"></div></div>
+          <p class="small">SIGMA PRIME constantly asks players to make exact mathematical and strategic decisions under accelerating time pressure.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="positives-negatives" class="panel section-card">
+      <div class="section-head">
+        <div>
+          <div class="kicker">Balanced View</div>
+          <h2 class="section-title">Positives and negatives of the play experience</h2>
+        </div>
+        <div class="section-note">
+          Educational use is strongest when both gains and risks are named clearly.
+        </div>
+      </div>
+
+      <div class="two-col">
+        <div class="pro-con pro">
+          <h3>Positives</h3>
+          <ul>
+            <li>Builds disciplined exact-sum reasoning before submission.</li>
+            <li>Rewards legal path construction over random tapping or guessing.</li>
+            <li>Creates strong opportunities for explanation and justification of path choices.</li>
+            <li>Makes mistakes visible and usable for reflection because failed paths reveal structural limits.</li>
+            <li>Encourages persistence when targets become harder under decay and timer pressure.</li>
+            <li>Supports discussion about additive structure, prime combinations, and board stewardship.</li>
+            <li>Helps students feel the difference between impulsive moves and intentional mathematical strategy.</li>
+          </ul>
+        </div>
+
+        <div class="pro-con con">
+          <h3>Negatives / cautions</h3>
+          <ul>
+            <li>Time pressure can push some players into rushing paths instead of reasoning carefully.</li>
+            <li>Repeated failed submissions may trigger frustration if reflection is absent.</li>
+            <li>Players may become score-focused and ignore long-term board control.</li>
+            <li>The pace can encourage premature submission if players stop checking exactness.</li>
+            <li>Without discussion, some players may experience the game mainly as pressure instead of insight.</li>
+            <li>Some learners may need structured pauses to notice path structure and recovery strategy.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="callout" style="margin-top: 18px;">
+        <h3>Best use condition</h3>
+        <p class="lead">
+          SIGMA PRIME is strongest educationally when gameplay is paired with brief reflection,
+          comparison of alternative exact-sum paths, and explicit attention to Mathematical Habits of Mind.
+        </p>
+      </div>
+    </section>
+
+    <section id="reflection" class="panel section-card">
+      <div class="section-head">
+        <div>
+          <div class="kicker">Reflection</div>
+          <h2 class="section-title">Questions for discussion or writing</h2>
+        </div>
+        <div class="section-note">
+          Use these to reveal and harness the learning behind play.
+        </div>
+      </div>
+
+      <div class="reflection">
+        <div class="callout">
+          <h3>Math habits reflection</h3>
+          <ul class="question-list">
+            <li>What did you notice about the board before choosing your path?</li>
+            <li>What prime combinations or path shapes began to feel useful?</li>
+            <li>What failed path taught you the most, and why?</li>
+            <li>What made one exact path stronger than another?</li>
+            <li>How did your reasoning change from the start of play to the end?</li>
+          </ul>
+        </div>
+
+        <div class="callout">
+          <h3>Parent / teacher discussion prompts</h3>
+          <ul class="question-list">
+            <li>Did the player build paths intentionally or react impulsively?</li>
+            <li>Was the player using efficient exact-sum and board-management strategies?</li>
+            <li>Could the player justify path choices with mathematical evidence?</li>
+            <li>How did the player recover after failed submissions or decay pressure?</li>
+            <li>What would more reflective play look like next time?</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel section-card">
+      <div class="section-head">
+        <div>
+          <div class="kicker">Summary</div>
+        </div>
+      </div>
+
+      <p class="lead">
+        The game <strong>SIGMA PRIME</strong> is best understood as a constraint-based mathematical strategy game built around exact summation, orthogonal path construction, prime-number structure, and board-state management under time pressure. Its strongest educational value lies in how strongly it activates key <strong>Mathematical Habits of Mind</strong>, especially making sense, justifying why, recognizing regularity and structure, persevering through difficulty, learning from mistakes, and refining judgment through reflection -
+        <a href="https://www.sciencedirect.com/science/article/pii/S0732312396900231" target="_blank">
+        (Cuoco, Goldenberg, & Mark, 1996)
+        </a>
+        and implemented through MisterMarx.com's educational approach
+        <a href="https://www.mistermarx.com/mathematicalhabitsofmind" target="_blank">
+        (MisterMarx.com, 2026)
+        </a>.
+      </p>
+
+      <p class="lead">
+        Like many strong educational games, SIGMA PRIME teaches through mathematical experience rather than direct instruction. Play
+        develops exact additive reasoning, strategic planning, pattern recognition, and decision-making through repeated interaction with a changing system.
+      </p>
+
+      <p class="lead">
+        SIGMA PRIME makes mathematical thinking visible. The score and board state gradually become a record of how the player is summing, reasoning,
+        recognizing structure, revising paths, and managing future possibilities. The score reflects the
+        quality of the player's mathematical judgment over time.
+      </p>
+    </section>
+
+    <section class="panel section-card">
+      <div class="section-head">
+        <div class="kicker">References & Standards</div>
+        <h2 class="section-title">Resources, Research, and Standards</h2>
+      </div>
+
+      <p class="lead">
+        Companion pages may include MisterMarx.com resources, educational research, and standards references.
+        These help explain what a game develops, how the experience can be used intentionally,
+        and which mathematical practices, habits of mind, and Common Core connections are most strongly involved in SIGMA PRIME.
+      </p>
+
+      <div class="chips">
+        <div class="chip">MisterMarx.com Resources</div>
+        <div class="chip">Educational Research</div>
+        <div class="chip">Standards References</div>
+        <div class="chip">Mathematical Habits of Mind</div>
+        <div class="chip">Common Core Practices</div>
+      </div>
+    </section>
+
+    <section id="references" class="panel section-card">
+      <div class="section-head">
+        <div>
+          <div class="kicker">Research</div>
+          <h2 class="section-title">References & Further Reading</h2>
+        </div>
+      </div>
+
+      <h3>MisterMarx.com Educational Resources</h3>
+      <ul>
+
+        <li><a href="https://www.mistermarx.com/mathematicalhabitsofmind" target="_blank">
+        MisterMarx.com (2026). Mathematical Habits of Mind Framework.
+        </a></li>
+
+        <li><a href="https://www.mistermarx.com/mathematicalhabitsofmind/private-reasoning-time" target="_blank">
+        MisterMarx.com (2026). Private Reasoning Time.
+        </a></li>
+
+        <li><a href="https://www.mistermarx.com/mathematicalhabitsofmind/explain" target="_blank">
+        MisterMarx.com (2026). Explain: A Mathematical Habit of Mind.
+        </a></li>
+
+        <li><a href="https://www.mistermarx.com/mathematicalhabitsofmind/generalize" target="_blank">
+        MisterMarx.com (2026). Generalize: A Mathematical Habit of Mind.
+        </a></li>
+
+        <li><a href="https://www.mistermarx.com/mathematicalhabitsofmind/justify-why" target="_blank">
+        MisterMarx.com (2026). Justify Why.
+        </a></li>
+
+        <li><a href="https://www.mistermarx.com/mathematicalhabitsofmind/persevere-and-seek-more" target="_blank">
+        MisterMarx.com (2026). Persevere & Seek More.
+        </a></li>
+
+        <li><a href="https://www.mistermarx.com/mathematicalhabitsofmind/metacognition-reflection" target="_blank">
+        MisterMarx.com (2026). Metacognition Reflection.
+        </a></li>
+
+        <li><a href="https://www.mistermarx.com/mathematicalhabitsofmind/regularity-patterns" target="_blank">
+        MisterMarx.com (2026). Regularity, Patterns & Structure.
+        </a></li>
+
+        <li><a href="https://www.mistermarx.com/mathematicalhabitsofmind/genuine-questions" target="_blank">
+        MisterMarx.com (2026). Genuine Questions.
+        </a></li>
+
+        <li><a href="https://www.mistermarx.com/mathematicalhabitsofmind/critique-and-debate" target="_blank">
+        MisterMarx.com (2026). Critique & Debate.
+        </a></li>
+
+        <li>
+          <a href="https://www.mistermarx.com/sigma-prime-companion-page" target="_blank">
+          MisterMarx.com. (2026).
+          SIGMA PRIME Game Companion Page.
+          </a>
+        </li>
+        <li>
+          <a href="https://www.mistermarx.com/games/sigma-prime" target="_blank">
+          MisterMarx.com. (2026).
+          SIGMA PRIME Game.
+          </a>
+        </li>
+
+      </ul>
+
+      <h3>Academic Sources</h3>
+      <ul>
+
+        <li>
+          <a href="https://www.sciencedirect.com/science/article/pii/S0732312396900231" target="_blank">
+          Cuoco, A., Goldenberg, E. P., & Mark, J. (1996).
+          Habits of Mind: An Organizing Principle for Mathematics Curricula.
+          Journal of Mathematical Behavior.
+          </a>
+        </li>
+
+        <li>
+          <a href="https://eric.ed.gov/?id=EJ815183" target="_blank">
+          Stein, M. K., Engle, R. A., Smith, M. S., & Hughes, E. K. (2008).
+          Orchestrating Productive Mathematical Discussions:
+          Five Practices for Helping Teachers Move Beyond Show and Tell.
+          </a>
+        </li>
+
+        <li>
+          <a href="https://www.nctm.org/Store/Products/5-Practices-for-Orchestrating-Productive-Mathematics-Discussions%2C-2nd-edition-%28Download%29/"
+          target="_blank">
+          Smith, M. S., & Stein, M. K. (2011).
+          5 Practices for Orchestrating Productive Mathematics Discussions.
+          National Council of Teachers of Mathematics.
+          </a>
+        </li>
+
+        <li>
+          <a href="https://www.sciencedirect.com/science/article/pii/S0732312396900231" target="_blank">
+          Cuoco, A., Goldenberg, E. P., & Mark, J. (1996).
+          Habits of Mind: An Organizing Principle for Mathematics Curricula.
+          Journal of Mathematical Behavior.
+          </a>
+        </li>
+
+        <li>
+          <a href="https://www.sciencedirect.com/science/article/pii/S0732312396900231" target="_blank">
+          Goldenberg, E. (1996).
+          Organizing a Curriculum Around Mathematical Habits of Mind.
+          </a>
+        </li>
+
+      </ul>
+
+      <h3>Standards References</h3>
+      <ul>
+
+        <li>
+          <a href="https://corestandards.org/" target="_blank">
+          Common Core State Standards Initiative. (2010).
+          <strong>Common Core State Standards for Mathematics.</strong>
+          https://corestandards.org/
+          </a>
+        </li>
+
+        <li>
+          <a href="https://www.thecorestandards.org/read-the-standards/" target="_blank">
+          Common Core State Standards Initiative.
+          <strong>Standards for Mathematical Practice.</strong>
+          https://www.thecorestandards.org/read-the-standards/
+          </a>
+        </li>
+
+      </ul>
+    </section>
+
+    <footer class="footer wrap" style="padding-left:0; padding-right:0;">
+      <div class="panel pad">
+        <p style="margin: 0 0 0px;">
+          Head to <a href="https://www.mistermarx.com" target="_blank" rel="noopener noreferrer">MisterMarx.com</a> to play SIGMA PRIME and other games that help reveal how mathematical thinking develops through Mathematical Habits of Mind.
+        </p>
+      </div>
+    </footer>
+  </main>
+  
+  <script>
+    let currentSlide = 0;
+    const slides = document.querySelectorAll('.slide');
+    const totalSlides = slides.length;
+    let autoPlayInterval;
+    let isAutoPlaying = true;
+    
+    function calculateSlideshowHeight() {
+      const container = document.getElementById('gameSlideshow');
+      const images = container.querySelectorAll('img');
+      let maxHeight = 240; // minimum height
+      
+      images.forEach(img => {
+        if (img.naturalHeight > 0) {
+          const aspectRatio = img.naturalHeight / img.naturalWidth;
+          const containerWidth = container.offsetWidth;
+          const calculatedHeight = containerWidth * aspectRatio;
+          maxHeight = Math.max(maxHeight, calculatedHeight);
+        }
+      });
+      
+      container.style.height = maxHeight + 'px';
+      return maxHeight;
+    }
+    
+    function showSlide(index) {
+      slides.forEach(slide => slide.classList.remove('active'));
+      currentSlide = (index + totalSlides) % totalSlides;
+      slides[currentSlide].classList.add('active');
+      document.getElementById('slideCounter').textContent = `${currentSlide + 1}/${totalSlides}`;
+    }
+    
+    function changeSlide(direction) {
+      showSlide(currentSlide + direction);
+      if (isAutoPlaying) {
+        resetAutoPlay();
+      }
+    }
+    
+    function nextSlide() {
+      showSlide(currentSlide + 1);
+    }
+    
+    function toggleAutoPlay() {
+      const btn = document.getElementById('autoPlayBtn');
+      if (isAutoPlaying) {
+        clearInterval(autoPlayInterval);
+        btn.textContent = '▶';
+        isAutoPlaying = false;
+      } else {
+        startAutoPlay();
+        btn.textContent = '⏸';
+        isAutoPlaying = true;
+      }
+    }
+    
+    function startAutoPlay() {
+      autoPlayInterval = setInterval(nextSlide, 3000);
+    }
+    
+    function resetAutoPlay() {
+      if (isAutoPlaying) {
+        clearInterval(autoPlayInterval);
+        startAutoPlay();
+      }
+    }
+    
+    function resetSlideshow() {
+      showSlide(0);
+      resetAutoPlay();
+    }
+    
+    function initializeSlideshow() {
+      // Load all images and calculate height
+      const container = document.getElementById('gameSlideshow');
+      const images = container.querySelectorAll('img');
+      let loadedImages = 0;
+      
+      images.forEach(img => {
+        if (img.complete) {
+          loadedImages++;
+          if (loadedImages === images.length) {
+            calculateSlideshowHeight();
+            showSlide(0);
+            startAutoPlay();
+          }
+        } else {
+          img.onload = () => {
+            loadedImages++;
+            if (loadedImages === images.length) {
+              calculateSlideshowHeight();
+              showSlide(0);
+              startAutoPlay();
+            }
+          };
+        }
+      });
+      
+      // Handle window resize
+      window.addEventListener('resize', () => {
+        calculateSlideshowHeight();
+      });
+    }
+    
+    // Initialize slideshow when DOM is loaded
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initializeSlideshow);
+    } else {
+      initializeSlideshow();
+    }
+    
+    // Pause slideshow when user interacts with controls
+    document.getElementById('gameSlideshow').addEventListener('mouseenter', () => {
+      if (isAutoPlaying) {
+        clearInterval(autoPlayInterval);
+      }
+    });
+    
+    document.getElementById('gameSlideshow').addEventListener('mouseleave', () => {
+      if (isAutoPlaying) {
+        startAutoPlay();
+      }
+    });
+  </script>
+</body>
+</html>

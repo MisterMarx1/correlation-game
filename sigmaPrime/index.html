@@ -1435,15 +1435,15 @@
             const diff = i;
             const types = [
               () => {
-                const sum = randAchievableSum(maxPrime, Math.min(20, maxPrime * 2));
-                return { label: `Σ = ${sum}`, type: "sum", val: sum };
-              },
-              () => {
                 const sum = randAchievableSum(maxPrime, Math.min(40, maxPrime * 3));
                 return { label: `Σ = ${sum}`, type: "sum", val: sum };
               },
               () => {
-                const sum = randAchievableSum(maxPrime, Math.min(60, maxPrime * 4));
+                const sum = randAchievableSum(maxPrime, Math.min(80, maxPrime * 5));
+                return { label: `Σ = ${sum}`, type: "sum", val: sum };
+              },
+              () => {
+                const sum = randAchievableSum(maxPrime, Math.min(120, maxPrime * 8));
                 return { label: `Σ = ${sum}`, type: "sum", val: sum };
               },
             ];
@@ -1471,7 +1471,7 @@
             if (!validTarget) {
               let fallbackAttempts = 0;
               while (fallbackAttempts < 10) {
-                const sum = randAchievableSum(maxPrime, 20);
+                const sum = randAchievableSum(maxPrime, 40);
                 const fallbackTarget = { label: `Σ = ${sum}`, type: "sum", val: sum };
                 const isIdenticalToPrevious = t.length > 0 && t[t.length - 1].val === fallbackTarget.val;
                 
@@ -2150,8 +2150,8 @@
                   g.pauseStartTime = Date.now();
                 }
               } else {
-                // Page is visible - resume if sound was enabled
-                SoundManager.resume();
+                // Page is visible - resume game sounds but NOT background music
+                // Background music should only resume on user interaction
                 if (g.paused && g.started && !g.gameOver) {
                   g.totalPausedTime += Date.now() - g.pauseStartTime;
                   g.paused = false;
@@ -2206,7 +2206,7 @@
             
             const handlePageShow = () => {
               // Page is being shown (tab returning, navigation back)
-              SoundManager.resume();
+              // Resume game state but NOT background music - that should only happen on user interaction
               if (g.paused && g.started && !g.gameOver) {
                 g.totalPausedTime += Date.now() - g.pauseStartTime;
                 g.paused = false;
