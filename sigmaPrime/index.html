@@ -371,11 +371,21 @@
         .bg-blobs {
             position: fixed; inset: 0; z-index: 1;
             overflow: hidden; transition: opacity 0.5s ease;
+            contain: layout paint style;
+            isolation: isolate;
+            will-change: transform, opacity;
+            transform: translateZ(0);
+            backface-visibility: hidden;
         }
         
         .blob {
             position: absolute; border-radius: 50%;
             transition: background 0.8s ease;
+            contain: layout paint style;
+            isolation: isolate;
+            will-change: transform, opacity;
+            transform: translateZ(0);
+            backface-visibility: hidden;
         }
         
         .blob1 {
@@ -410,10 +420,20 @@
             position: fixed; inset: 0; z-index: 2; opacity: 0.03;
             background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3Cfilter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
             background-size: 128px 128px;
+            contain: layout paint style;
+            isolation: isolate;
+            will-change: transform, opacity;
+            transform: translateZ(0);
+            backface-visibility: hidden;
         }
         
         .bg-particles {
             position: fixed; inset: 0; z-index: 3; pointer-events: none; overflow: hidden;
+            contain: layout paint style;
+            isolation: isolate;
+            will-change: transform, opacity;
+            transform: translateZ(0);
+            backface-visibility: hidden;
         }
         
         .bg-particle {
@@ -576,6 +596,18 @@
     
     <!-- Viewport Sync Script -->
     <script>
+      let syncScheduled = false;
+      
+      function scheduleSync() {
+        if (!syncScheduled) {
+          syncScheduled = true;
+          requestAnimationFrame(() => {
+            syncAppHeight();
+            syncScheduled = false;
+          });
+        }
+      }
+      
       function syncAppHeight() {
         const vv = window.visualViewport;
         const h = vv ? vv.height : window.innerHeight;
@@ -587,12 +619,12 @@
 
       syncAppHeight();
 
-      window.addEventListener('resize', syncAppHeight);
-      window.addEventListener('orientationchange', syncAppHeight);
+      window.addEventListener('resize', scheduleSync);
+      window.addEventListener('orientationchange', scheduleSync);
 
       if (window.visualViewport) {
-        window.visualViewport.addEventListener('resize', syncAppHeight);
-        window.visualViewport.addEventListener('scroll', syncAppHeight);
+        window.visualViewport.addEventListener('resize', scheduleSync);
+        window.visualViewport.addEventListener('scroll', scheduleSync);
       }
       
       // Generate floating particles for dynamic background
