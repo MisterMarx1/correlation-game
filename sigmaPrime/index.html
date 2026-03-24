@@ -826,6 +826,10 @@
 
                     const loopOnceReady = () => {
                         if (!current.duration || !isFinite(current.duration)) {
+                            // Guard: Ensure only one crossfade timer exists
+                            if (this.weldingCrossfadeTimer) {
+                                clearTimeout(this.weldingCrossfadeTimer);
+                            }
                             this.weldingCrossfadeTimer = setTimeout(() => loopOnceReady(), 50);
                             return;
                         }
@@ -833,6 +837,10 @@
                         const overlapSeconds = this.weldingCrossfadeMs / 1000;
                         const delayMs = Math.max(0, (current.duration - overlapSeconds) * 1000);
 
+                        // Guard: Ensure only one crossfade timer exists
+                        if (this.weldingCrossfadeTimer) {
+                            clearTimeout(this.weldingCrossfadeTimer);
+                        }
                         this.weldingCrossfadeTimer = setTimeout(() => {
                             if (!this.weldingPlayers.length) return;
 
@@ -879,6 +887,11 @@
             startElectricHumLoop(volume = 0.45) {
                 if (!this.enabled || !this.sounds['mixkit-low-electricity-humming-2132.wav']) return;
 
+                // Guard: Do nothing if hum is already active
+                if (this.electricHumPlayers.length > 0) {
+                    return;
+                }
+
                 this.stopElectricHumLoop();
 
                 // Use pooled audio objects instead of cloning
@@ -912,6 +925,10 @@
 
                     const loopOnceReady = () => {
                         if (!current.duration || !isFinite(current.duration)) {
+                            // Guard: Ensure only one crossfade timer exists
+                            if (this.electricHumCrossfadeTimer) {
+                                clearTimeout(this.electricHumCrossfadeTimer);
+                            }
                             this.electricHumCrossfadeTimer = setTimeout(() => loopOnceReady(), 50);
                             return;
                         }
@@ -919,6 +936,10 @@
                         const overlapSeconds = this.electricHumCrossfadeMs / 1000;
                         const delayMs = Math.max(0, (current.duration - overlapSeconds) * 1000);
 
+                        // Guard: Ensure only one crossfade timer exists
+                        if (this.electricHumCrossfadeTimer) {
+                            clearTimeout(this.electricHumCrossfadeTimer);
+                        }
                         this.electricHumCrossfadeTimer = setTimeout(() => {
                             if (!this.electricHumPlayers.length) return;
 
@@ -998,10 +1019,13 @@
                     return;
                 }
                 
-                // Check if music is already playing to prevent double playback on mobile
-                if ((this.backgroundMusic.currentTime > 0 && !this.backgroundMusic.paused) ||
-                    (this.backgroundMusic2.currentTime > 0 && !this.backgroundMusic2.paused)) {
-                    console.log('Background music already playing, skipping...');
+                // Enhanced guard: Check if music is already playing or scheduled
+                const isPlaying = (this.backgroundMusic.currentTime > 0 && !this.backgroundMusic.paused) ||
+                                (this.backgroundMusic2.currentTime > 0 && !this.backgroundMusic2.paused);
+                const isScheduled = this.musicOverlapTimer !== null;
+                
+                if (isPlaying || isScheduled) {
+                    console.log('Background music already playing or scheduled, skipping...');
                     return;
                 }
                 
@@ -1021,6 +1045,10 @@
                             console.log('Background music track 1 started successfully');
                             
                             // Schedule second track to start after 3 seconds overlap
+                            // Guard: Ensure only one music overlap timer exists
+                            if (this.musicOverlapTimer) {
+                                clearTimeout(this.musicOverlapTimer);
+                            }
                             this.musicOverlapTimer = setTimeout(() => {
                                 if (this.enabled && this.backgroundMusic2) {
                                     this.backgroundMusic2.currentTime = 0;
@@ -1047,7 +1075,11 @@
                                 console.log('Background music started with fallback');
                                 
                                 // Schedule fallback second track
-                                setTimeout(() => {
+                                // Guard: Ensure only one music overlap timer exists
+                                if (this.musicOverlapTimer) {
+                                    clearTimeout(this.musicOverlapTimer);
+                                }
+                                this.musicOverlapTimer = setTimeout(() => {
                                     if (this.enabled && fallbackMusic2) {
                                         fallbackMusic2.currentTime = 0;
                                         fallbackMusic2.play().catch(e => console.log('Fallback music track 2 failed:', e));
