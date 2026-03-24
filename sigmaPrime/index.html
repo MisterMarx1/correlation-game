@@ -1567,6 +1567,8 @@
         function SigmaPrime() {
           const [, bump] = React.useState(0);
           const re = () => bump(c => c + 1);
+          const [, visualBump] = React.useState(0);
+          const visualRe = () => visualBump(c => c + 1);
           const [showRules, setShowRules] = React.useState(false);
           const [showControls, setShowControls] = React.useState(false);
           const [showFogOverlay, setShowFogOverlay] = React.useState(true);
@@ -1582,6 +1584,9 @@
             dragging: false, shakeUntil: 0, clearAnim: [], healAnim: [], renewAnim: [], damageAnim: [], turnTime: SPEED_SETTINGS[currentSpeed].baseTurn,
             deadCount: 0, maxPrime: 3, turnInProgress: false,
             paused: false, showQuitConfirmation: false, quitMode: false, pauseStartTime: 0, totalPausedTime: 0,
+            // Visual-only state separated from game state
+            orbitingBallsTime: 0,
+            shakeOffset: { x: 0, y: 0 },
           }).current;
 
           const timerRef = React.useRef(null);
@@ -1617,7 +1622,7 @@
               }
             }
             g.damageAnim = (g.damageAnim || []).concat(damageAnimations);
-            setTimeout(() => { g.damageAnim = []; re(); }, 800); // Clear damage animations after turn
+            setTimeout(() => { g.damageAnim = []; visualRe(); }, 800); // Clear damage animations after turn
             g.deadCount += died;
             g.turn += 1; g.sel = []; g.dragging = false;
             let alive = false;
@@ -1649,11 +1654,14 @@
                 g.sel = [];
                 g.dragging = false;
                 g.combo = 0;
-                setTimeout(() => { g.flash = null; re(); }, 400);
+                setTimeout(() => { g.flash = null; visualRe(); }, 400);
                 doTurn();
               }
               g.timeLeft = Math.max(0, g.turnTime - el);
-              re();
+              // Only re-render if time display actually changed significantly
+              if (Math.floor(g.timeLeft / 100) !== Math.floor((g.turnTime - el + 80) / 100)) {
+                re();
+              }
             }, 80);
           }
 
@@ -1689,7 +1697,7 @@
                     // Add damage animation for the lost life circle
                     const damageAnimations = [{ x: firstCell.x, y: firstCell.y, lostLifeIndex: oldLife - 1, t: Date.now() }];
                     g.damageAnim = (g.damageAnim || []).concat(damageAnimations);
-                    setTimeout(() => { g.damageAnim = []; re(); }, 800);
+                    setTimeout(() => { g.damageAnim = []; visualRe(); }, 800);
                   }
                 }
               }
@@ -1714,9 +1722,9 @@
             const pts = Math.min(999999, sel.length * 40 + Math.abs(pathSum) * 8 + g.combo * 25 + g.round * 15 + efficiencyBonus);
             g.score = Math.min(9999999, g.score + pts); g.totalPaths += 1;
             g.clearAnim = sel.map(s => ({ x: s.x, y: s.y, t: Date.now() }));
-            setTimeout(() => { g.clearAnim = []; re(); }, 400); // Shorter duration for glow effect
-            setTimeout(() => { g.healAnim = []; re(); }, 1000); // Heal animation duration
-            setTimeout(() => { g.renewAnim = []; re(); }, 1000); // Renew animation duration
+            setTimeout(() => { g.clearAnim = []; visualRe(); }, 400); // Shorter duration for glow effect
+            setTimeout(() => { g.healAnim = []; visualRe(); }, 1000); // Heal animation duration
+            setTimeout(() => { g.renewAnim = []; visualRe(); }, 1000); // Renew animation duration
             // Used cells get renewed, unused cells lose life, adjacent cells get healed
             const usedKeys = new Set(g.sel.map(s => k(s.x, s.y)));
             const adjacentCells = new Set();
@@ -1781,7 +1789,7 @@
             g.deadCount += died;
             g.flash = { text: `+${pts}${g.combo > 1 ? ` ×${g.combo}` : ""}${efficiencyBonus > 0 ? ` EFFICIENCY +${efficiencyBonus}` : ""} [Σ=${pathSum}]`, bad: false, success: true };
             g.shakeUntil = Date.now() + 400;
-            setTimeout(() => { g.flash = null; re(); }, 1800); // Longer duration for success animation
+            setTimeout(() => { g.flash = null; visualRe(); }, 1800); // Longer duration for success animation
             g.sel = []; g.dragging = false;
             // Play success sound when selection is successfully completed
             SoundManager.play('mixkit-melodic-bonus-collect-1938.wav', 0.6);
@@ -1850,7 +1858,7 @@
             if (idx >= 0) return;
             g.sel.push({ x, y });
             SoundManager.play('mixkit-record-player-needle-drop-on-vinyl-701.wav', 0.5); // Play selection sound (louder)
-            re();
+            visualRe(); // Only update visuals, not full game state
           }
 
           function onPointerDown(e) {
@@ -1895,7 +1903,7 @@
                     // Add damage animation for the lost life circle
                     const damageAnimations = [{ x: firstCell.x, y: firstCell.y, lostLifeIndex: oldLife - 1, t: Date.now() }];
                     g.damageAnim = (g.damageAnim || []).concat(damageAnimations);
-                    setTimeout(() => { g.damageAnim = []; re(); }, 800);
+                    setTimeout(() => { g.damageAnim = []; visualRe(); }, 800);
                   }
                   // Play game over sound when life is lost from dragging off board
                   SoundManager.play('mixkit-laser-game-over-1946.wav', 0.8);
@@ -1940,7 +1948,7 @@
                     // Add damage animation for the lost life circle
                     const damageAnimations = [{ x: firstCell.x, y: firstCell.y, lostLifeIndex: oldLife - 1, t: Date.now() }];
                     g.damageAnim = (g.damageAnim || []).concat(damageAnimations);
-                    setTimeout(() => { g.damageAnim = []; re(); }, 800);
+                    setTimeout(() => { g.damageAnim = []; visualRe(); }, 800);
                   }
                   // Play game over sound when life is lost from dragging over dead cell
                   SoundManager.play('mixkit-laser-game-over-1946.wav', 0.8);
@@ -1990,7 +1998,7 @@
                     // Add damage animation for the lost life circle
                     const damageAnimations = [{ x: firstCell.x, y: firstCell.y, lostLifeIndex: oldLife - 1, t: Date.now() }];
                     g.damageAnim = (g.damageAnim || []).concat(damageAnimations);
-                    setTimeout(() => { g.damageAnim = []; re(); }, 800);
+                    setTimeout(() => { g.damageAnim = []; visualRe(); }, 800);
                   }
                 }
               }
@@ -2019,7 +2027,7 @@
               const prev = g.sel[g.sel.length - 2];
               if (prev.x === c.x && prev.y === c.y) {
                 SoundManager.play('mixkit-mouse-squeak-1019.wav', 0.15); // Play backtrack sound
-                g.sel = g.sel.slice(0, -1); re(); return;
+                g.sel = g.sel.slice(0, -1); visualRe(); return;
               }
             }
             addToSel(c.x, c.y);
@@ -2053,13 +2061,13 @@
                     // Add damage animation for the lost life circle
                     const damageAnimations = [{ x: firstCell.x, y: firstCell.y, lostLifeIndex: oldLife - 1, t: Date.now() }];
                     g.damageAnim = (g.damageAnim || []).concat(damageAnimations);
-                    setTimeout(() => { g.damageAnim = []; re(); }, 800);
+                    setTimeout(() => { g.damageAnim = []; visualRe(); }, 800);
                   }
                   // Play game over sound when life is lost from invalid path release
                   SoundManager.play('mixkit-laser-game-over-1946.wav', 0.8);
                 }
               }
-              g.sel = []; re();
+              g.sel = []; visualRe();
             }
           }
 
@@ -2201,14 +2209,30 @@
             };
           }, []);
 
-          // Animation loop for rotating balls
+          // Animation loop for visual-only effects (orbiting balls, shake)
           React.useEffect(() => {
             function animate() {
-              re(); // Force re-render to update ball positions
+              const now = Date.now();
+              
+              // Update visual-only state
+              g.orbitingBallsTime = now / 1000;
+              
+              // Update shake offset if shaking
+              if (now < g.shakeUntil) {
+                g.shakeOffset = {
+                  x: Math.sin(now * 0.05) * 2,
+                  y: Math.cos(now * 0.05) * 2
+                };
+              } else {
+                g.shakeOffset = { x: 0, y: 0 };
+              }
+              
+              // Only trigger visual re-render
+              visualRe();
               animationRef.current = requestAnimationFrame(animate);
             }
             
-            if (g.sel.length > 0) {
+            if (g.sel.length > 0 || Date.now() < g.shakeUntil) {
               animationRef.current = requestAnimationFrame(animate);
             }
             
@@ -2217,7 +2241,7 @@
                 cancelAnimationFrame(animationRef.current);
               }
             };
-          }, [g.sel.length]);
+          }, [g.sel.length, g.shakeUntil]);
 
           const selKeys = new Set(g.sel.map(s => k(s.x, s.y)));
           const canClose = g.sel.length >= 1 && isPath(g.sel);
@@ -2643,7 +2667,7 @@
                     }}>
                       {/* Orbiting Balls */}
                       {g.sel.length > 0 && Array.from({ length: g.sel.length }, (_, i) => {
-                        const time = Date.now() / 1000;
+                        const time = g.orbitingBallsTime;
                         const delay = (i / g.sel.length) * 3; // Distribute balls evenly around the rectangle
                         const progress = (time + delay) % 3; // 3-second orbit cycle
                         const rectWidth = 56 * 1.05;
@@ -2822,7 +2846,7 @@
                       g.sel = [];
                       g.combo = 0;
                       SoundManager.stopElectricHumLoop();
-                      re();
+                      visualRe();
                     }
                   }}
                 >
@@ -2842,7 +2866,7 @@
                           position: "relative", width: "100%", height: "100%",
                           cursor: "pointer",
                           transition: shaking && (isSel || isClearing) ? "none" : "all 0.12s",
-                          transform: shaking && (isSel || isClearing) ? `translate(${Math.sin(Date.now() * 0.05) * 2}px, ${Math.cos(Date.now() * 0.05) * 2}px)` : "translate(0,0)",
+                          transform: shaking && (isSel || isClearing) ? `translate(${g.shakeOffset.x}px, ${g.shakeOffset.y}px)` : "translate(0,0)",
                         }} className={!cell.dead ? "interactive-cell" : ""}>
                           {/* Path direction arrows */}
                           {g.dragging && g.sel.length > 1 && (() => {
