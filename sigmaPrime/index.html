@@ -427,6 +427,19 @@
             backface-visibility: hidden;
         }
         
+        .bg-particles {
+            position: fixed; inset: 0; z-index: 3; pointer-events: none; overflow: hidden;
+            contain: layout paint style;
+            isolation: isolate;
+            will-change: transform, opacity;
+            transform: translateZ(0);
+            backface-visibility: hidden;
+        }
+        
+        .bg-particles.paused {
+            animation-play-state: paused;
+        }
+        
         @keyframes blob1 {
             0%, 100% { transform: translate(0, 0) scale(1); }
             25% { transform: translate(8%, -6%) scale(1.15); }
@@ -664,7 +677,7 @@
             
             // Audio object pooling for performance
             audioPool: {},
-            maxPoolSize: 5,
+            maxPoolSize: 3,
             
             async init() {
                 // Initialize Web Audio API
@@ -1613,7 +1626,8 @@
             cellH: 0,
             lastProcessedCell: null,
             pendingMove: null,
-            animationFrameId: null
+            animationFrameId: null,
+            lastDragTime: 0
           });
 
           function turnTime() { 
@@ -1652,6 +1666,14 @@
             for (const ky in g.board) if (!g.board[ky].dead) { alive = true; break; }
             if (!alive) { g.gameOver = true; stopTimer(); }
             
+            // Resume background particles when game ends
+            if (g.gameOver) {
+              const particlesEl = document.getElementById('bg-particles');
+              if (particlesEl) {
+                particlesEl.classList.remove('paused');
+              }
+            }
+            
             // Advance to next goal each turn, but stay in same round
             g.goalIndex += 1;
             if (g.goalIndex >= ROUNDS) { g.gameOver = true; stopTimer(); }
@@ -1682,10 +1704,10 @@
               }
               g.timeLeft = Math.max(0, g.turnTime - el);
               // Only re-render if time display actually changed significantly
-              if (Math.floor(g.timeLeft / 100) !== Math.floor((g.turnTime - el + 80) / 100)) {
+              if (Math.floor(g.timeLeft / 120) !== Math.floor((g.turnTime - el + 120) / 120)) {
                 re();
               }
-            }, 80);
+            }, 120);
           }
 
           function stopTimer() { if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; } }
@@ -1822,7 +1844,18 @@
             g.round += 1;
             g.turn = 0; // Reset turn counter for new round
             g.goalIndex = g.round; // Sync goalIndex with round
-            if (g.round >= ROUNDS) { g.won = true; g.gameOver = true; stopTimer(); re(); return true; }
+            if (g.goalIndex >= ROUNDS) { 
+              g.won = true; 
+              g.gameOver = true; 
+              stopTimer(); 
+              // Resume background particles when game ends
+              const particlesEl = document.getElementById('bg-particles');
+              if (particlesEl) {
+                particlesEl.classList.remove('paused');
+              }
+              re(); 
+              return true; 
+            }
             
             // Validate next goal target is still achievable, regenerate if needed
             if (g.goalIndex < ROUNDS && g.targets[g.goalIndex]) {
@@ -2081,7 +2114,8 @@
                 cellH: rect.height / H,
                 lastProcessedCell: k(c.x, c.y),
                 pendingMove: null,
-                animationFrameId: null
+                animationFrameId: null,
+                lastDragTime: performance.now()
               };
             }
             
@@ -2096,8 +2130,13 @@
           function onPointerMove(e) {
             if (!g.dragging || g.gameOver || g.paused || g.showQuitConfirmation) return;
             
-            // Use throttled processing during drag for performance
+            // Throttle drag processing to 60fps (16ms minimum interval)
+            const now = performance.now();
             const dragState = dragStateRef.current;
+            if (now - dragState.lastDragTime < 16) return;
+            dragState.lastDragTime = now;
+            
+            // Use throttled processing during drag for performance
             if (dragState.isDragging) {
               // Store the event and schedule processing for next animation frame
               dragState.pendingMove = e;
@@ -2166,6 +2205,12 @@
             g.board = initBoard(g.maxPrime); g.sel = []; g.score = 0; g.round = 0; g.turn = 0; g.goalIndex = 0;
             g.targets = genTargets(g.maxPrime, g.board); g.gameOver = false; g.won = false; g.started = true;
             g.flash = null; g.combo = 0; g.totalPaths = 0; g.dragging = false;
+            
+            // Pause background particles during gameplay
+            const particlesEl = document.getElementById('bg-particles');
+            if (particlesEl) {
+              particlesEl.classList.add('paused');
+            }
             g.shakeUntil = 0; g.clearAnim = []; g.deadCount = 0;
             startTimer(); re();
           }
