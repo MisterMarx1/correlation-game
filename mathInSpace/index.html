@@ -286,6 +286,12 @@
             outline-offset: 2px;
         }
 
+        /* Force clear hover state on iPhone */
+        .answer-ship-inner.no-hover:hover {
+            outline: none !important;
+            outline-offset: 0 !important;
+        }
+
         .answer-ship-inner.correct {
             outline: 4px solid #00ff00 !important;
             outline-offset: 2px;
@@ -1978,8 +1984,10 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
                                         : correctShipId === option.id && clickedShipFeedback === 'incorrect'
                                         ? 'show-correct'
                                         : ''
-                                } ${isWaitingForNextProblem ? 'disabled' : ''}`}
-                                onClick={() => { handleAnswerSelect(option); }}
+                                } ${isWaitingForNextProblem ? 'disabled' : ''} ${
+                                    option.noHover ? 'no-hover' : ''
+                                }`}
+                                onClick={() => { soundManager.play('LASER_SHOT'); handleAnswerSelect(option); }}
                             >
                                 {(() => {
                                     const len = String(option.value).length;
@@ -2228,12 +2236,18 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
                 const positionedOptions = options.map((opt, index) => ({
                     ...opt,
                     id: Date.now() + index,
-                    position: positions[index] || { x: 50, y: 50 }
+                    position: positions[index] || { x: 50, y: 50 },
+                    noHover: true // Add flag to prevent stuck hover on iPhone
                 }));
 
                 setCurrentProblem(problem);
                 setAnswerOptions(positionedOptions);
                 problemStartTimeRef.current = performance.now();
+
+                // Remove no-hover flag after a short delay to allow normal hover
+                setTimeout(() => {
+                    setAnswerOptions(prev => prev.map(opt => ({ ...opt, noHover: false })));
+                }, 100);
             }, [selectedMaxDigits, selectedNumOptions, selectedOperations, shipSize]);
 
             const triggerFeedback = useCallback((type) => {

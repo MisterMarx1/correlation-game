@@ -199,6 +199,12 @@
         outline-offset: 2px;
     }
 
+    /* Force clear hover state on iPhone */
+    &.no-hover:hover {
+        outline: none !important;
+        outline-offset: 0 !important;
+    }
+
     &.correct {
         outline: 4px solid #00ff00 !important;
         outline-offset: 2px;

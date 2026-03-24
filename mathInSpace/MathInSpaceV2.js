@@ -361,7 +361,8 @@ const toggleOperation = useCallback(op => {
         const positionedOptions = options.map((opt, index) => ({
           ...opt,
           id: Date.now() + index,
-          position: positions[index] || { x: 50, y: 50 } // fallback
+          position: positions[index] || { x: 50, y: 50 }, // fallback
+          noHover: true // Add flag to prevent stuck hover on iPhone
         }));
         
       
@@ -369,6 +370,11 @@ const toggleOperation = useCallback(op => {
         setCurrentProblem(problem);
         setAnswerOptions(positionedOptions);
         problemStartTimeRef.current = performance.now();
+
+        // Remove no-hover flag after a short delay to allow normal hover
+        setTimeout(() => {
+            setAnswerOptions(prev => prev.map(opt => ({ ...opt, noHover: false })));
+        }, 100);
       
       }, [selectedMaxDigits, selectedNumOptions, selectedOperations, shipSize]);
       
@@ -815,6 +821,8 @@ const toggleOperation = useCallback(op => {
                                         ''
                                     } ${
                                         isWaitingForNextProblem ? 'disabled' : ''
+                                    } ${
+                                        option.noHover ? 'no-hover' : ''
                                     }`}
                                     onClick={() => handleAnswerSelect(option)}
                                 >
