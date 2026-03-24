@@ -1601,7 +1601,9 @@ const lightningRef=useRef({active:false,start:null,end:null,frame:0});
                   changedRows.add(y);
                   over=true;
                   const newDecay=now+Math.max(DECAY_MIN,DECAY_BASE-level*500);
-                  changes.push({x,y,locked:c.e===MAX_E,newDecay,born:now,e:c.e});
+                  const nextE = Math.min(MAX_E, c.e + 1);
+                  const willLock = c.e === MAX_E;
+                  changes.push({x,y,newE: willLock ? MAX_E : nextE,locked: willLock,newDecay,born:now});
                   
                   // Track nearby changes
                   for(const[dx,dy]of[[-1,0],[1,0],[0,-1],[0,1]]){
@@ -1626,16 +1628,32 @@ if(!over)return prev.map(row => [...row]); // Force re-render for timer updates
               const ng=prev.map((row,y)=>changedRows.has(y)?[...row]:row);
               
               // Apply changes
-              changes.forEach(change=>{
-                if(change.locked){
-                  ng[change.y][change.x]={...ng[change.y][change.x],locked:true,born:change.born,decay:change.newDecay};
-                }else if(change.spawn){
-                  ng[change.y][change.x]=change.spawn;
-                  ng[change.y][change.x].e=change.spawnE;
-                }else{
-                  ng[change.y][change.x]={...ng[change.y][change.x],decay:change.newDecay,born:change.born};
-                  if(change.boostE)ng[change.y][change.x].e=change.boostE;
-                  if(change.boostDecay)ng[change.y][change.x].decay=change.boostDecay;
+              changes.forEach(change => {
+                if (change.newE !== undefined) {
+                  ng[change.y][change.x] = {
+                    ...ng[change.y][change.x],
+                    e: change.newE,
+                    locked: !!change.locked,
+                    born: change.born,
+                    decay: change.newDecay
+                  };
+                } else if (change.spawn) {
+                  ng[change.y][change.x] = {
+                    ...change.spawn,
+                    e: change.spawnE
+                  };
+                } else {
+                  const cell = { ...ng[change.y][change.x] };
+
+                  if (change.boostE !== undefined) {
+                    cell.e = change.boostE;
+                    if (cell.e < MAX_E) cell.locked = false;
+                  }
+
+                  if (change.boostDecay !== undefined) cell.decay = change.boostDecay;
+                  if (change.born !== undefined) cell.born = change.born;
+
+                  ng[change.y][change.x] = cell;
                 }
               });
               

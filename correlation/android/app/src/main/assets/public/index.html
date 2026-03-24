@@ -38,6 +38,30 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>CORRELATION</title>
     
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link rel="icon" type="image/png" href="favicon/favicon_preview0318.png">
+    
+    <!-- Mobile detection -->
+    <script>
+        function isMobile() {
+            return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
+                   (navigator.maxTouchPoints && navigator.maxTouchPoints > 2);
+        }
+        
+        function isIPhone() {
+            return /iPhone/i.test(navigator.userAgent);
+        }
+        
+        // Redirect iPhone users to iosTemp.html
+        if (isIPhone()) {
+            window.location.replace('iosTemp.html');
+        }
+        
+        console.log('Is mobile device:', isMobile());
+        console.log('Is iPhone:', isIPhone());
+    </script>
+    
     <!-- Preload fonts to prevent layout shift -->
     <link rel="preload" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&family=Orbitron:wght@700;900&display=swap" as="style">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -51,6 +75,11 @@
             height: 100%;
             overflow: hidden;
             background: #000;
+            /* iOS tap highlight fix */
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
         }
 
         body {
@@ -92,6 +121,23 @@
             user-select: auto;
         }
 
+        /* iOS-specific touch improvements */
+        @supports (-webkit-touch-callout: none) {
+            .interactive-cell {
+                -webkit-transform: translateZ(0);
+                transform: translateZ(0);
+                -webkit-backface-visibility: hidden;
+                backface-visibility: hidden;
+                -webkit-perspective: 1000;
+                perspective: 1000;
+            }
+            
+            .interactive-cell:active {
+                -webkit-transform: scale(0.95) translateZ(0);
+                transform: scale(0.95) translateZ(0);
+            }
+        }
+
         /* Keep pointer cursor for interactive elements */
         button, [role="button"], a {
             cursor: pointer;
@@ -100,6 +146,200 @@
         /* Ensure pointer cursor for interactive game cells */
         .interactive-cell {
             cursor: pointer !important;
+        }
+
+        /* Smokey Fog Overlay */
+        .fog-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(ellipse at center, 
+                rgba(20, 25, 40, 0.95) 0%, 
+                rgba(10, 15, 30, 0.98) 40%, 
+                rgba(5, 10, 20, 1) 100%);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: fogDrift 8s ease-in-out infinite;
+            backdrop-filter: blur(3px);
+            -webkit-backdrop-filter: blur(3px);
+            transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+        }
+
+        .fog-overlay.disappearing {
+            opacity: 0;
+            transform: scale(1.1) rotate(2deg);
+            pointer-events: none;
+        }
+
+        @keyframes fogDrift {
+            0%, 100% { 
+                background: radial-gradient(ellipse at center, 
+                    rgba(20, 25, 40, 0.95) 0%, 
+                    rgba(10, 15, 30, 0.98) 40%, 
+                    rgba(5, 10, 20, 1) 100%);
+            }
+            25% { 
+                background: radial-gradient(ellipse at 30% 40%, 
+                    rgba(25, 30, 45, 0.93) 0%, 
+                    rgba(12, 18, 35, 0.97) 40%, 
+                    rgba(6, 12, 25, 1) 100%);
+            }
+            50% { 
+                background: radial-gradient(ellipse at 70% 60%, 
+                    rgba(22, 28, 42, 0.94) 0%, 
+                    rgba(11, 17, 32, 0.98) 40%, 
+                    rgba(5, 11, 22, 1) 100%);
+            }
+            75% { 
+                background: radial-gradient(ellipse at 40% 30%, 
+                    rgba(23, 29, 43, 0.92) 0%, 
+                    rgba(13, 19, 33, 0.97) 40%, 
+                    rgba(7, 13, 24, 1) 100%);
+            }
+        }
+
+        .fog-text {
+            font-family: 'Orbitron', monospace;
+            font-size: clamp(1.5rem, 4vw, 2.5rem);
+            font-weight: 900;
+            color: rgba(255, 255, 255, 0.3);
+            text-align: center;
+            letter-spacing: 0.2em;
+            animation: textFlash 3s ease-in-out infinite;
+            text-shadow: 0 0 20px rgba(147, 197, 253, 0.1),
+                         0 0 40px rgba(147, 197, 253, 0.05),
+                         0 0 60px rgba(147, 197, 253, 0.02);
+            cursor: pointer;
+            user-select: none;
+            -webkit-user-select: none;
+            padding: 2rem;
+            border-radius: 8px;
+            transition: all 0.3s ease, opacity 0.8s ease-out, transform 0.8s ease-out;
+            filter: blur(8px);
+            opacity: 0.4;
+        }
+
+        .fog-text.loaded {
+            color: rgba(255, 255, 255, 0.8);
+            text-shadow: 0 0 20px rgba(147, 197, 253, 0.5),
+                         0 0 40px rgba(147, 197, 253, 0.3),
+                         0 0 60px rgba(147, 197, 253, 0.2);
+            filter: blur(0px);
+            opacity: 1;
+        }
+
+        .fog-text.disappearing {
+            opacity: 0;
+            transform: scale(1.5) translateY(-20px);
+            filter: blur(8px);
+        }
+
+        .fog-text:hover {
+            color: rgba(255, 255, 255, 1);
+            text-shadow: 0 0 30px rgba(147, 197, 253, 0.8),
+                         0 0 60px rgba(147, 197, 253, 0.6),
+                         0 0 80px rgba(147, 197, 253, 0.4);
+            transform: scale(1.05);
+        }
+
+        @keyframes textFlash {
+            0%, 100% { 
+                opacity: 0.4;
+                text-shadow: 0 0 10px rgba(147, 197, 253, 0.3),
+                             0 0 20px rgba(147, 197, 253, 0.2);
+            }
+            25% { 
+                opacity: 0.7;
+                text-shadow: 0 0 15px rgba(147, 197, 253, 0.4),
+                             0 0 30px rgba(147, 197, 253, 0.3);
+            }
+            50% { 
+                opacity: 1;
+                text-shadow: 0 0 25px rgba(147, 197, 253, 0.6),
+                             0 0 50px rgba(147, 197, 253, 0.4),
+                             0 0 75px rgba(147, 197, 253, 0.3);
+            }
+            75% { 
+                opacity: 0.6;
+                text-shadow: 0 0 20px rgba(147, 197, 253, 0.5),
+                             0 0 40px rgba(147, 197, 253, 0.3);
+            }
+        }
+
+        .fog-particles {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            pointer-events: none;
+        }
+
+        .fog-particle {
+            position: absolute;
+            width: 100px;
+            height: 100px;
+            background: radial-gradient(circle, 
+                rgba(147, 197, 253, 0.1) 0%, 
+                transparent 70%);
+            border-radius: 50%;
+            animation: floatParticle 15s linear infinite;
+            transition: all 0.8s ease-out;
+        }
+
+        .fog-particle.disappearing {
+            opacity: 0;
+            transform: translateX(200px) translateY(-200px) scale(2);
+            filter: blur(12px);
+        }
+
+        @keyframes floatParticle {
+            0% {
+                transform: translateX(-100px) translateY(100vh) scale(0.5);
+                opacity: 0;
+            }
+            10% {
+                opacity: 0.3;
+            }
+            90% {
+                opacity: 0.3;
+            }
+            100% {
+                transform: translateX(100vw) translateY(-100px) scale(1.5);
+                opacity: 0;
+            }
+        }
+
+        /* --- Circular Progress Spinner --- */
+        .fog-progress-container {
+            position: absolute;
+            top: 65%;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10000;
+        }
+
+        .fog-progress-spinner {
+            width: 60px;
+            height: 60px;
+            position: relative;
+        }
+
+        .fog-progress-circle {
+            width: 100%;
+            height: 100%;
+            border: 3px solid rgba(147, 197, 253, 0.2);
+            border-top: 3px solid rgba(147, 197, 253, 0.8);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
     </style>
 </head>
@@ -168,6 +408,10 @@
             weldingCrossfadeTimer: null,
             weldingCrossfadeMs: 1000,
             
+            // Audio object pooling for performance
+            audioPool: {},
+            maxPoolSize: 5,
+            
             async init() {
                 // Initialize Web Audio API
                 this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -193,41 +437,66 @@
                     countdown: 'sfx/mixkit-electronic-lock-success-beeps-2852.wav',
                     startSound: 'sfx/mixkit-arcade-mechanical-bling-210.wav',
                     welding: 'sfx/mixkit-electric-welding-and-sparkles-2603.wav',
-                    deselect: 'sfx/mixkit-cybernetic-technology-affirmation-3116.wav'
+                    deselect: 'sfx/mixkit-cybernetic-technology-affirmation-3116.wav',
+                    fogImpact: 'sfx/mixkit-cinematic-impact-waves-781 (1).wav'
                 };
                 
-                                
-                // Create audio objects for all sounds
+                // Initialize audio pools
                 Object.keys(this.soundFiles).forEach(key => {
-                    const audio = new Audio(this.soundFiles[key]);
-                    audio.preload = 'auto';
-                    audio.volume = this.volume;
-                    this.sounds[key] = audio;
+                    this.audioPool[key] = [];
+                    for (let i = 0; i < this.maxPoolSize; i++) {
+                        const audio = new Audio(this.soundFiles[key]);
+                        audio.preload = 'auto';
+                        audio.volume = this.volume;
+                        this.audioPool[key].push(audio);
+                    }
+                    // Keep one for compatibility
+                    this.sounds[key] = this.audioPool[key][0];
                 });
                 
                             },
             
             play(soundName, volume = 1.0, options = {}) {
-                if (!this.enabled || !this.sounds[soundName]) return null;
+                if (!this.enabled || !this.audioPool[soundName]) return null;
                 
                 const { loop = false } = options;
                 
                 try {
-                    const sound = this.sounds[soundName].cloneNode();
-                    sound.volume = this.volume * volume;
-                    sound.loop = loop;
-                    sound.currentTime = 0;
-                    sound.play().catch(e => console.log('Sound play failed:', e));
+                    // Get audio from pool
+                    let audio = this.audioPool[soundName].find(a => a.paused || a.ended);
+                    
+                    // If no available audio, use the first one (fallback)
+                    if (!audio) {
+                        audio = this.audioPool[soundName][0];
+                        // Stop any current playback
+                        audio.pause();
+                        audio.currentTime = 0;
+                    }
+                    
+                    audio.volume = this.volume * volume;
+                    audio.loop = loop;
+                    audio.currentTime = 0;
+                    
+                    // CRITICAL INP FIX: Defer sound play to next frame to avoid blocking interaction
+                    const playSound = () => {
+                        const playPromise = audio.play();
+                        if (playPromise) {
+                            playPromise.catch(e => console.log('Sound play failed:', e));
+                        }
+                    };
+                    
+                    // Use requestAnimationFrame for non-blocking playback
+                    requestAnimationFrame(playSound);
+                    
+                    // Alternative: Use setTimeout with 0ms for even faster response
+                    // setTimeout(playSound, 0);
                     
                     // Track the sound for stopping later
-                    this.activeSounds.add(sound);
-                    sound.addEventListener('ended', () => {
-                        if (!sound.loop) {
-                            this.activeSounds.delete(sound);
-                        }
-                    });
+                    if (loop) {
+                        this.activeSounds.add(audio);
+                    }
                     
-                    return sound;
+                    return audio;
                 } catch (error) {
                     console.log('Sound system error:', error);
                     return null;
@@ -255,8 +524,11 @@
 
                 this.stopWeldingLoop();
 
-                const a = this.sounds.welding.cloneNode();
-                const b = this.sounds.welding.cloneNode();
+                // Use pooled audio objects instead of cloning
+                const a = this.audioPool.welding?.[0];
+                const b = this.audioPool.welding?.[1];
+
+                if (!a || !b) return; // Fallback if pool not ready
 
                 a.volume = this.volume * volume;
                 b.volume = this.volume * volume;
@@ -266,9 +538,13 @@
 
                 this.weldingPlayers = [a, b];
 
+                // INP FIX: Defer welding loop start to avoid blocking interaction
                 const startPlayer = (player) => {
                     player.currentTime = 0;
-                    player.play().catch(e => console.log('Welding play failed:', e));
+                    // Use requestAnimationFrame to defer playback
+                    requestAnimationFrame(() => {
+                        player.play().catch(e => console.log('Welding play failed:', e));
+                    });
                     this.activeSounds.add(player);
                 };
 
@@ -291,7 +567,11 @@
 
                             next.volume = this.volume * volume;
                             next.currentTime = 0;
-                            next.play().catch(e => console.log('Welding overlap play failed:', e));
+                            
+                            // INP FIX: Defer overlap playback
+                            requestAnimationFrame(() => {
+                                next.play().catch(e => console.log('Welding overlap play failed:', e));
+                            });
                             this.activeSounds.add(next);
 
                             scheduleNext(nextIndex);
@@ -374,23 +654,35 @@
                     }
                     
                     console.log('Attempting to play background music...');
-                    await this.backgroundMusic.play();
-                    console.log('Background music started successfully');
-                } catch (error) {
-                    console.log('Background music play failed:', error);
                     
-                    // Try alternative approach for PC browsers
-                    try {
-                        // Create a new audio element with different format
-                        const fallbackMusic = new Audio('sfx/mixkit-pulsating-bass-transition-2295.wav');
-                        fallbackMusic.loop = true;
-                        fallbackMusic.volume = this.musicVolume;
-                        await fallbackMusic.play();
-                        this.backgroundMusic = fallbackMusic;
-                        console.log('Background music started with fallback');
-                    } catch (fallbackError) {
-                        console.log('Fallback also failed:', fallbackError);
-                    }
+                    // INP FIX: Defer background music play to avoid blocking interaction
+                    const playMusic = async () => {
+                        try {
+                            await this.backgroundMusic.play();
+                            console.log('Background music started successfully');
+                        } catch (error) {
+                            console.log('Background music play failed:', error);
+                            
+                            // Try alternative approach for PC browsers
+                            try {
+                                // Create a new audio element with different format
+                                const fallbackMusic = new Audio('sfx/mixkit-pulsating-bass-transition-2295.wav');
+                                fallbackMusic.loop = true;
+                                fallbackMusic.volume = this.musicVolume;
+                                await fallbackMusic.play();
+                                this.backgroundMusic = fallbackMusic;
+                                console.log('Background music started with fallback');
+                            } catch (fallbackError) {
+                                console.log('Fallback also failed:', fallbackError);
+                            }
+                        }
+                    };
+                    
+                    // Use setTimeout to defer music start and avoid blocking INP
+                    setTimeout(playMusic, 100);
+                    
+                } catch (error) {
+                    console.log('Background music setup failed:', error);
                 }
             },
             
@@ -521,7 +813,7 @@
           return out;
         }
 
-        const Cell=memo(function Cell({e,mass,isSel,isDet,detProb,echoB,dp,isNew,locked,onMouseDown,onMouseEnter,onMouseUp,onMouseLeave,onTouchStart,onTouchMove,onTouchEnd,x,y,dragStart,dragHover}) {
+        const Cell=memo(function Cell({e,mass,isSel,isDet,detProb,echoB,dp,isNew,locked,onMouseDown,onMouseEnter,onMouseUp,onMouseLeave,onTouchStart,onTouchMove,onTouchEnd,x,y,dragStart,dragHover,orbitScale}) {
           // Create conic gradient that sweeps clockwise
           const getGradient = (decayProgress, energy, isLocked) => {
             const baseColor = isLocked ? "rgba(128,128,128,0.6)" : (EC[energy] || "rgba(15,23,42,0.3)");
@@ -553,28 +845,30 @@
                 transform:isSel?"scale(1.08)":isDragSource?"scale(1.05)":isDragHover?"scale(1.03)":"scale(1)",cursor:locked?"not-allowed":e>0?"pointer":"default",
                 filter:locked?"grayscale(100%)":"none",
                 opacity:locked?0.7:isDragHover?0.9:1,
-                transition:"background 0.3s,border 0.15s,box-shadow 0.25s,transform 0.1s ease-out",
+                transition:"background 0.3s,border 0.15s,box-shadow 0.25s,transform 0.05s ease-out",
                 touchAction:"none"}}>
               {e>0&&<div style={{display:"flex",flexDirection:"column",alignItems:"center",zIndex:2,position:"relative"}}>
                 <div style={{position:"relative",width:40,height:40}}>
                   <span style={{position:"absolute",top:"50%",left:"50%",transform:"translate(-50%,-50%)",fontSize:13,fontWeight:800,color:"#fff",textShadow:"0 1px 3px rgba(0,0,0,0.5)",zIndex:2}}>{e}</span>
-                  {mass>=1&&<div style={{
-                    position:"absolute",width:3,height:3,backgroundColor:"#fff",borderRadius:"50%",
-                    animation:"orbit1 2s linear infinite",
-                    boxShadow:"0 0 3px rgba(255,255,255,0.8)"
-                  }}/>}
-                  {mass>=2&&<div style={{
-                    position:"absolute",width:3,height:3,backgroundColor:"#fff",borderRadius:"50%",
-                    animation:"orbit2 2s linear infinite",
-                    animationDelay:"0.5s",
-                    boxShadow:"0 0 3px rgba(255,255,255,0.8)"
-                  }}/>}
-                  {mass>=3&&<div style={{
-                    position:"absolute",width:3,height:3,backgroundColor:"#fff",borderRadius:"50%",
-                    animation:"orbit3 2s linear infinite",
-                    animationDelay:"1s",
-                    boxShadow:"0 0 3px rgba(255,255,255,0.8)"
-                  }}/>}
+                  <div style={{position:"absolute",top:0,left:0,width:40,height:40,transform:`scale(${orbitScale})`,transformOrigin:"center center"}}>
+                    {mass>=1&&<div style={{
+                      position:"absolute",width:3,height:3,backgroundColor:"#fff",borderRadius:"50%",
+                      animation:"orbit1 2s linear infinite",
+                      boxShadow:"0 0 3px rgba(255,255,255,0.8)"
+                    }}/>}
+                    {mass>=2&&<div style={{
+                      position:"absolute",width:3,height:3,backgroundColor:"#fff",borderRadius:"50%",
+                      animation:"orbit2 2s linear infinite",
+                      animationDelay:"0.5s",
+                      boxShadow:"0 0 3px rgba(255,255,255,0.8)"
+                    }}/>}
+                    {mass>=3&&<div style={{
+                      position:"absolute",width:3,height:3,backgroundColor:"#fff",borderRadius:"50%",
+                      animation:"orbit3 2s linear infinite",
+                      animationDelay:"1s",
+                      boxShadow:"0 0 3px rgba(255,255,255,0.8)"
+                    }}/>}
+                  </div>
                 </div>
               </div>}
               {isDet&&<div style={{position:"absolute",top:-3,right:-3,fontSize:7,fontWeight:700,color:"#fff",
@@ -913,10 +1207,22 @@
                 fontFamily,
                 transition,
                 width,
+                whiteSpace: "nowrap",
+                overflowWrap: "normal",
+                wordWrap: "normal",
+                hyphens: "none",
                 ...style
               }}
             >
-              {children}
+              <span style={{
+                display: "inline-block",
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                maxWidth: "100%"
+              }}>
+                {children}
+              </span>
             </button>
           );
         }
@@ -1042,7 +1348,7 @@
 
           const [pointerDown, setPointerDown] = useState(false);
           const [lastSelectionTime, setLastSelectionTime] = useState(0);
-          const DRAG_THRESHOLD = 8;
+          const DRAG_THRESHOLD = 12;
           const[isDragging,setIsDragging]=useState(false);
           const[dragStart,setDragStart]=useState(null);
           const[dragEnd,setDragEnd]=useState(null);
@@ -1053,7 +1359,8 @@
   const[overlayMsgColor,setOverlayMsgColor]=useState("#6ee7b7");
   const[showTutorial,setShowTutorial]=useState(false);
   const[showMenu,setShowMenu]=useState(false);
-          const[isLoading,setIsLoading]=useState(true);
+          const [isLoading,setIsLoading]=useState(true);
+          const [renderedRows,setRenderedRows]=useState(0);
           const[isTransitioning,setIsTransitioning]=useState(false);
   const[showPauseRules,setShowPauseRules]=useState(false);
   const[showMenuRules,setShowMenuRules]=useState(false);
@@ -1106,6 +1413,7 @@ const particlesRef=useRef([]);const boltsRef=useRef([]);
 const bgParticlesRef=useRef([]);
 const animRef=useRef(null);const dimsRef=useRef({cw:0,ch:0});
 const lastTouchTimeRef = useRef(0);
+const lastMouseUpdateRef = useRef(0);
 const lightningRef=useRef({active:false,start:null,end:null,frame:0});
 
           const updateDims=useCallback(()=>{
@@ -1236,62 +1544,105 @@ const lightningRef=useRef({active:false,start:null,end:null,frame:0});
           const firePart=useCallback((x,y,n,col)=>{particlesRef.current.push(...mkParticles(x,y,n,col))},[]);
 
           const spawnTick=useCallback(()=>{
-            if(phase!=="play"||paused||showQuitConfirmation||showCredits||creditsPaused)return;const now=Date.now();
-            setGrid(prev=>{const ng=prev.map(r=>r.map(c=>({...c})));
-              let f=0;let allFives=true;
+            if(phase!=="play"||paused||showQuitConfirmation||showCredits||creditsPaused)return;
+            const now=Date.now();
+            setGrid(prev=>{
+              let f=0, allFives=true, changedRows=new Set();
+              const cnt=Math.min(1+Math.floor(level/3),3);
+              let s=0;
+              const spawns=[];
+              
+              // Count cells and find spawn locations
               for(let y=0;y<ROWS;y++)for(let x=0;x<COLS;x++){
-                if(ng[y][x].e>0)f++;
-                if(ng[y][x].e!==MAX_E&&ng[y][x].e>0)allFives=false;
+                if(prev[y][x].e>0)f++;
+                if(prev[y][x].e!==MAX_E&&prev[y][x].e>0)allFives=false;
+                if(s<cnt){
+                  const x2=Math.floor(Math.random()*COLS), y2=Math.floor(Math.random()*ROWS);
+                  if(prev[y2][x2].e===0){
+                    spawns.push({x:x2,y:y2,cell:mkCell(level,now)});
+                    changedRows.add(y2);
+                    s++;
+                  }
+                }
               }
+              
+              // Game over check
               if(f>=ROWS*COLS&&allFives){
+                const ng=prev.map(row=>row.map(c=>({...c})));
                 for(let y=0;y<ROWS;y++)for(let x=0;x<COLS;x++)if(ng[y][x].e===MAX_E)ng[y][x].locked=true;
                 setPhase("over");
                 SoundManager.play('gameOver');
                 return ng;
               }
-              const cnt=Math.min(1+Math.floor(level/3),3);let s=0;
-              for(let a=0;a<40&&s<cnt;a++){const x=Math.floor(Math.random()*COLS),y=Math.floor(Math.random()*ROWS);
-                if(ng[y][x].e===0){ng[y][x]=mkCell(level,now);s++;SoundManager.play('spawn', 0.3)}}
-              return ng});
+              
+              // Only copy changed rows
+              if(changedRows.size===0)return prev;
+              const ng=prev.map((row,y)=>changedRows.has(y)?[...row]:row);
+              spawns.forEach(({x,y,cell})=>{
+                ng[y][x]=cell;
+                SoundManager.play('spawn', 0.3);
+              });
+              return ng;
+            });
           },[phase,paused,level,showQuitConfirmation,showCredits,creditsPaused]);
 
           const decayTick=useCallback(()=>{
-            if(phase!=="play"||paused||showQuitConfirmation||showCredits||creditsPaused)return;const now=Date.now();const ols=[];
-            setGrid(prev=>{const ng=prev.map(r=>r.map(c=>({...c})));let over=false;
-              for(let y=0;y<ROWS;y++)for(let x=0;x<COLS;x++){const c=ng[y][x];
+            if(phase!=="play"||paused||showQuitConfirmation||showCredits||creditsPaused)return;
+            const now=Date.now();
+            setGrid(prev=>{
+              const changedRows=new Set();
+              const changes=[];
+              let over=false;
+              
+              // Find all changes
+              for(let y=0;y<ROWS;y++)for(let x=0;x<COLS;x++){
+                const c=prev[y][x];
                 if(c.e>0&&c.decay>0&&now>c.decay){
-                  if(c.e===MAX_E){ng[y][x].locked=true;ng[y][x].born=now;ng[y][x].decay=now+Math.max(DECAY_MIN,DECAY_BASE-level*500);ols.push({x,y,e:c.e});
-                    // Trigger nearby effects for locked energy 5
-                    for(const[dx,dy]of[[-1,0],[1,0],[0,-1],[0,1]]){const nx=x+dx,ny=y+dy;
-                      if(nx>=0&&nx<COLS&&ny>=0&&ny<ROWS){
-                        if(ng[ny][nx].e===0){const nc=mkCell(level,now);nc.e=Math.min(c.e,2);ng[ny][nx]=nc}
-                        else if(ng[ny][nx].e<MAX_E){ng[ny][nx].e=Math.min(MAX_E,ng[ny][nx].e+1);ng[ny][nx].decay=Math.min(ng[ny][nx].decay,now+3500)}}}}
-                  else{over=true;ols.push({x,y,e:c.e});
-                    ng[y][x].decay=now+Math.max(DECAY_MIN,DECAY_BASE-level*500);ng[y][x].born=now;
-                    for(const[dx,dy]of[[-1,0],[1,0],[0,-1],[0,1]]){const nx=x+dx,ny=y+dy;
-                      if(nx>=0&&nx<COLS&&ny>=0&&ny<ROWS){
-                        if(ng[ny][nx].e===0){const nc=mkCell(level,now);nc.e=Math.min(c.e,2);ng[ny][nx]=nc}
-                        else if(ng[ny][nx].e<MAX_E){ng[ny][nx].e=Math.min(MAX_E,ng[ny][nx].e+1);ng[ny][nx].decay=Math.min(ng[ny][nx].decay,now+3500)}}}}}
-              }
-              if(over){setShake(true);setTimeout(()=>setShake(false),250);
-                let f=0;let allFives=true;
-                for(let y=0;y<ROWS;y++)for(let x=0;x<COLS;x++){
-                  if(ng[y][x].e>0)f++;
-                  if(ng[y][x].e!==MAX_E&&ng[y][x].e>0)allFives=false;
-                }
-                if(f>=ROWS*COLS&&allFives){
-                  for(let y=0;y<ROWS;y++)for(let x=0;x<COLS;x++)if(ng[y][x].e===MAX_E)ng[y][x].locked=true;
-                  setPhase("over");
-                  SoundManager.play('gameOver');
+                  changedRows.add(y);
+                  over=true;
+                  const newDecay=now+Math.max(DECAY_MIN,DECAY_BASE-level*500);
+                  changes.push({x,y,locked:c.e===MAX_E,newDecay,born:now,e:c.e});
+                  
+                  // Track nearby changes
+                  for(const[dx,dy]of[[-1,0],[1,0],[0,-1],[0,1]]){
+                    const nx=x+dx,ny=y+dy;
+                    if(nx>=0&&nx<COLS&&ny>=0&&ny<ROWS){
+                      changedRows.add(ny);
+                      const n=prev[ny][nx];
+                      if(n.e===0){
+                        changes.push({x:nx,y:ny,spawn:mkCell(level,now),spawnE:Math.min(c.e,2)});
+                      }else if(n.e<MAX_E){
+                        changes.push({x:nx,y:ny,boostE:Math.min(MAX_E,n.e+1),boostDecay:Math.min(n.decay,now+3500)});
+                      }
+                    }
+                  }
                 }
               }
-              return ng});
-            if(ols.length>0){for(const oc of ols){const cp=cellPos(oc.x,oc.y);
-              for(const[dx,dy]of[[-1,0],[1,0],[0,-1],[0,1]]){const nx=oc.x+dx,ny=oc.y+dy;
-                if(nx>=0&&nx<COLS&&ny>=0&&ny<ROWS){const np=cellPos(nx,ny);fireBolt(cp.px,cp.py,np.px,np.py,"#fca5a5",500,0.7)}}
-              firePart(cp.px,cp.py,12,"rgb(252,165,165)")}
-              setScreenFlash("rgba(220,38,38,0.3)");setTimeout(()=>setScreenFlash(null),100)}
-          },[phase,paused,level,cellPos,fireBolt,firePart,showQuitConfirmation,showCredits,creditsPaused]);
+              
+              // Always update to refresh conic timers, even if no decay events
+if(!over)return prev.map(row => [...row]); // Force re-render for timer updates
+              
+              // Only copy changed rows
+              const ng=prev.map((row,y)=>changedRows.has(y)?[...row]:row);
+              
+              // Apply changes
+              changes.forEach(change=>{
+                if(change.locked){
+                  ng[change.y][change.x]={...ng[change.y][change.x],locked:true,born:change.born,decay:change.newDecay};
+                }else if(change.spawn){
+                  ng[change.y][change.x]=change.spawn;
+                  ng[change.y][change.x].e=change.spawnE;
+                }else{
+                  ng[change.y][change.x]={...ng[change.y][change.x],decay:change.newDecay,born:change.born};
+                  if(change.boostE)ng[change.y][change.x].e=change.boostE;
+                  if(change.boostDecay)ng[change.y][change.x].decay=change.boostDecay;
+                }
+              });
+              
+              setShake(true);setTimeout(()=>setShake(false),250);
+              return ng;
+            });
+          },[phase,paused,level,showQuitConfirmation,showCredits,creditsPaused]);
 
           useEffect(()=>{
             if(phase!=="play"||paused||showQuitConfirmation||showCredits||creditsPaused)return;
@@ -1347,6 +1698,19 @@ const lightningRef=useRef({active:false,start:null,end:null,frame:0});
             return()=>clearInterval(iv);
           },[phase,paused,showQuitConfirmation]);
 
+          // Progressive grid rendering for LCP optimization
+          useEffect(() => {
+            if (phase === "play" && renderedRows < ROWS) {
+              const timer = setTimeout(() => {
+                setRenderedRows(prev => Math.min(prev + 2, ROWS));
+              }, 50); // Render 2 rows every 50ms
+              return () => clearTimeout(timer);
+            }
+            if (phase === "menu") {
+              setRenderedRows(ROWS); // Show all rows in menu
+            }
+          }, [phase]); // Remove renderedRows dependency to prevent re-renders
+
           useEffect(()=>{let f=0;for(let y=0;y<ROWS;y++)for(let x=0;x<COLS;x++)if(grid[y][x].e>0)f++;setFillPct(f/(ROWS*COLS))},[grid]);
           useEffect(()=>{
             const nl=1+Math.floor(totalT/6);
@@ -1374,7 +1738,7 @@ const lightningRef=useRef({active:false,start:null,end:null,frame:0});
             for(let y=0;y<ROWS;y++)for(let x=0;x<COLS;x++){if(x===sx&&y===sy)continue;const d=grid[y][x];if(d.e<=0||d.e<dE)continue;
               const r=Math.sqrt((x-sx)**2+(y-sy)**2);let p=corrProb(r);p=Math.min(0.98,p+echoMap[y*COLS+x]);ds.push({x,y,prob:p,r,dE})}
             return ds.sort((a,b)=>b.prob-a.prob)},[grid,echoMap]);
-          const detMap=useCallback(()=>{if(!sel)return{};const ds=getDets(sel.x,sel.y);const m={};for(const d of ds)m[`${d.x},${d.y}`]=d;return m},[sel,getDets]);
+          const detMap=useMemo(()=>{if(!sel)return{};const ds=getDets(sel.x,sel.y);const m={};for(const d of ds)m[`${d.x},${d.y}`]=d;return m},[sel,getDets]);
 
           const execTrans=useCallback((sx,sy,dx,dy)=>{
             const now=Date.now(),src=grid[sy][sx],det=grid[dy][dx],dE=src.e,r=Math.sqrt((dx-sx)**2+(dy-sy)**2),mom=recoilP(det.mass,dE);
@@ -1385,8 +1749,8 @@ const lightningRef=useRef({active:false,start:null,end:null,frame:0});
             firePart(sp.px,sp.py,8+dE*3,pc);firePart(dp.px,dp.py,12+dE*4,pc);
             setScreenFlash(bc);setTimeout(()=>setScreenFlash(null),120);
             
-            setGrid(prev=>{const ng=prev.map(row=>row.map(c=>({...c})));ng[sy][sx]=empty();
-              const nE=det.e-dE;if(nE<=0){ng[dy][dx]=empty();} else{ng[dy][dx].e=nE;ng[dy][dx].born=now;ng[dy][dx].decay=now+Math.max(DECAY_MIN,DECAY_BASE-level*500);ng[dy][dx].locked=false} // Unlock if energy changes
+            setGrid(prev=>{const ng=prev.map((row,y)=>[...row]);ng[sy][sx]=empty();
+              const nE=det.e-dE;if(nE<=0){ng[dy][dx]=empty();} else{ng[dy][dx].e=nE;ng[dy][dx].born=now;ng[dy][dx].decay=now+Math.max(DECAY_MIN,DECAY_BASE-level*500);ng[dy][dx].locked=false}
               // Auto-unlock nearby locked energy 5 cells
               for(const[ddx,ddy]of[[-1,0],[1,0],[0,-1],[0,1],[-1,-1],[1,-1],[-1,1],[1,1]]){
                 const nx=dx+ddx,ny=dy+ddy;if(nx>=0&&nx<COLS&&ny>=0&&ny<ROWS&&ng[ny][nx].locked){
@@ -1428,11 +1792,8 @@ const lightningRef=useRef({active:false,start:null,end:null,frame:0});
             setLastSelectionTime(now);
 
             setGrid(prev => {
-              const ng = prev.map(row => row.map(c => ({ ...c })));
-              if (ng[y][x].e > 0) {
-                ng[y][x].born = now;
-                ng[y][x].decay = now + Math.max(DECAY_MIN, DECAY_BASE - level * 500);
-              }
+              const ng = prev.map((row, rowIndex) => rowIndex === y ? [...row] : row);
+              // Don't reset decay timer on selection - let conic timer continue naturally
               return ng;
             });
 
@@ -1495,7 +1856,9 @@ const lightningRef=useRef({active:false,start:null,end:null,frame:0});
               const freshDecay = now + Math.max(DECAY_MIN, DECAY_BASE - level * 500);
 
               setGrid(prev => {
-                const ng = prev.map(row => row.map(c => ({ ...c })));
+                const ng = prev.map((row, rowIndex) => 
+                  rowIndex === sel.y || rowIndex === y ? [...row] : row
+                );
                 if (ng[sel.y][sel.x].e > 0) {
                   ng[sel.y][sel.x].born = now;
                   ng[sel.y][sel.x].decay = freshDecay;
@@ -1541,7 +1904,20 @@ const lightningRef=useRef({active:false,start:null,end:null,frame:0});
               const freshDecay = now + Math.max(DECAY_MIN, DECAY_BASE - level * 500);
 
               setGrid(prev => {
-                const ng = prev.map(row => row.map(c => ({ ...c })));
+                const changedRows = new Set([sel.y, y]);
+                const spawns = [];
+                const sc = 1 + Math.floor(Math.random() * 2);
+                for (let i = 0, a = 0; i < sc && a < 20; a++) {
+                  const sx2 = Math.floor(Math.random() * COLS), sy2 = Math.floor(Math.random() * ROWS);
+                  if (prev[sy2][sx2].e === 0) {
+                    spawns.push({x: sx2, y: sy2, cell: mkCell(level, now)});
+                    changedRows.add(sy2);
+                    i++;
+                  }
+                }
+                
+                const ng = prev.map((row, rowIndex) => changedRows.has(rowIndex) ? [...row] : row);
+                
                 if (ng[sel.y][sel.x].e > 0) {
                   ng[sel.y][sel.x].born = now;
                   ng[sel.y][sel.x].decay = freshDecay;
@@ -1554,14 +1930,11 @@ const lightningRef=useRef({active:false,start:null,end:null,frame:0});
                   if (ng[y][x].e < MAX_E) ng[y][x].e += 1;
                   if (ng[y][x].e === MAX_E) ng[y][x].locked = true;
                 }
-                const sc = 1 + Math.floor(Math.random() * 2);
-                for (let i = 0, a = 0; i < sc && a < 20; a++) {
-                  const sx2 = Math.floor(Math.random() * COLS), sy2 = Math.floor(Math.random() * ROWS);
-                  if (ng[sy2][sx2].e === 0) {
-                    ng[sy2][sx2] = mkCell(level, now);
-                    i++;
-                  }
-                }
+                
+                spawns.forEach(({x, y, cell}) => {
+                  ng[y][x] = cell;
+                });
+                
                 return ng;
               });
 
@@ -1615,9 +1988,9 @@ const lightningRef=useRef({active:false,start:null,end:null,frame:0});
     return;
   }
 }, [phase, paused, showQuitConfirmation, showCredits, creditsPaused, grid, sel, interactionMode, commitSourceSelection]);
-        
+
         const handleTouchStart = useCallback((event) => {
-  event.preventDefault();
+  // preventDefault() removed - CSS touchAction: "none" already handles this
   lastTouchTimeRef.current = Date.now();
 
   if (phase !== "play" || paused || showQuitConfirmation || showCredits || creditsPaused) return;
@@ -1628,12 +2001,15 @@ const lightningRef=useRef({active:false,start:null,end:null,frame:0});
   const touch = event.touches[0];
   if (!touch) return;
 
+  const {cw, ch} = dimsRef.current;
+  if (!cw || !ch) return; // Use cached dimensions
+
   const gridElement = gridRef.current;
   if (!gridElement) return;
 
   const rect = gridElement.getBoundingClientRect();
-  const cellWidth = rect.width / COLS;
-  const cellHeight = rect.height / ROWS;
+  const cellWidth = cw; // Use cached cellWidth
+  const cellHeight = ch; // Use cached cellHeight
 
   const x = Math.floor((touch.clientX - rect.left) / cellWidth);
   const y = Math.floor((touch.clientY - rect.top) / cellHeight);
@@ -1671,6 +2047,14 @@ const lightningRef=useRef({active:false,start:null,end:null,frame:0});
 }, [phase, paused, grid, sel, interactionMode, commitSourceSelection]);
         
         const handleMouseEnter = useCallback((x, y) => {
+            // Skip if we recently had touch interaction (prevents iOS phantom mouse events)
+            if (Date.now() - lastTouchTimeRef.current < 300) return;
+            
+            // Debounce mouse events to 60fps to reduce re-renders
+            const now = Date.now();
+            if (now - lastMouseUpdateRef.current < 16) return;
+            lastMouseUpdateRef.current = now;
+            
             // Update lightning ref for armed mode with selection
             if (interactionMode === "armed" && sel) {
               setDragHover({ x, y });
@@ -1716,7 +2100,7 @@ const lightningRef=useRef({active:false,start:null,end:null,frame:0});
           }, [pointerDown, dragStart, sel, isDragging, interactionMode]);
         
         const handleTouchMove = useCallback((event) => {
-  event.preventDefault();
+  // preventDefault() removed - CSS touchAction: "none" already handles this
   lastTouchTimeRef.current = Date.now();
 
   if (!pointerDown || !dragStart || !sel) return;
@@ -1724,12 +2108,15 @@ const lightningRef=useRef({active:false,start:null,end:null,frame:0});
   const touch = event.touches[0];
   if (!touch) return;
 
+  const {cw, ch} = dimsRef.current;
+  if (!cw || !ch) return; // Use cached dimensions
+
   const gridElement = gridRef.current;
   if (!gridElement) return;
 
   const rect = gridElement.getBoundingClientRect();
-  const cellWidth = rect.width / COLS;
-  const cellHeight = rect.height / ROWS;
+  const cellWidth = cw; // Use cached cellWidth
+  const cellHeight = ch; // Use cached cellHeight
 
   const x = Math.floor((touch.clientX - rect.left) / cellWidth);
   const y = Math.floor((touch.clientY - rect.top) / cellHeight);
@@ -1739,8 +2126,9 @@ const lightningRef=useRef({active:false,start:null,end:null,frame:0});
   if (dragStart.x !== sel.x || dragStart.y !== sel.y) return;
   if (dragStart.role !== "source") return;
 
-  const dx = touch.clientX - (dragStart.startClientX ?? touch.clientX);
-  const dy = touch.clientY - (dragStart.startClientY ?? touch.clientY);
+  // Fix: Use the actual start client coordinates
+  const dx = touch.clientX - (dragStart.startClientX || 0);
+  const dy = touch.clientY - (dragStart.startClientY || 0);
   const moved = Math.sqrt(dx * dx + dy * dy);
 
   if (!isDragging) {
@@ -1749,12 +2137,24 @@ const lightningRef=useRef({active:false,start:null,end:null,frame:0});
       setInteractionMode("dragging");
       setDragEnd({ x, y });
       setDragHover({ x, y });
+      // Update lightning for drag mode
+      lightningRef.current = {
+        active: true,
+        start: cellPos(sel.x, sel.y),
+        end: cellPos(x, y),
+        frame: Date.now()
+      };
     }
   } else {
     setDragEnd({ x, y });
     setDragHover({ x, y });
+    // Update lightning end position for visual feedback
+    if (lightningRef.current.active) {
+      lightningRef.current.end = cellPos(x, y);
+      lightningRef.current.frame = Date.now();
+    }
   }
-}, [pointerDown, dragStart, sel, isDragging]);
+}, [pointerDown, dragStart, sel, isDragging, cellPos]);
         
         const resolveDragRelease = useCallback((targetX, targetY) => {
             if (!sel || !dragStart) {
@@ -1795,7 +2195,9 @@ const lightningRef=useRef({active:false,start:null,end:null,frame:0});
               const freshDecay = now + Math.max(DECAY_MIN, DECAY_BASE - level * 500);
 
               setGrid(prev => {
-                const ng = prev.map(row => row.map(c => ({ ...c })));
+                const ng = prev.map((row, rowIndex) => 
+                  rowIndex === sy || rowIndex === targetY ? [...row] : row
+                );
                 if (ng[sy][sx].e > 0) {
                   ng[sy][sx].born = now;
                   ng[sy][sx].decay = freshDecay;
@@ -1841,7 +2243,20 @@ const lightningRef=useRef({active:false,start:null,end:null,frame:0});
               const freshDecay = now + Math.max(DECAY_MIN, DECAY_BASE - level * 500);
 
               setGrid(prev => {
-                const ng = prev.map(row => row.map(c => ({ ...c })));
+                const changedRows = new Set([sy, targetY]);
+                const spawns = [];
+                const sc = 1 + Math.floor(Math.random() * 2);
+                for (let i = 0, a = 0; i < sc && a < 20; a++) {
+                  const sx2 = Math.floor(Math.random() * COLS), sy2 = Math.floor(Math.random() * ROWS);
+                  if (prev[sy2][sx2].e === 0) {
+                    spawns.push({x: sx2, y: sy2, cell: mkCell(level, now)});
+                    changedRows.add(sy2);
+                    i++;
+                  }
+                }
+                
+                const ng = prev.map((row, rowIndex) => changedRows.has(rowIndex) ? [...row] : row);
+                
                 if (ng[sy][sx].e > 0) {
                   ng[sy][sx].born = now;
                   ng[sy][sx].decay = freshDecay;
@@ -1854,14 +2269,11 @@ const lightningRef=useRef({active:false,start:null,end:null,frame:0});
                   if (ng[targetY][targetX].e < MAX_E) ng[targetY][targetX].e += 1;
                   if (ng[targetY][targetX].e === MAX_E) ng[targetY][targetX].locked = true;
                 }
-                const sc = 1 + Math.floor(Math.random() * 2);
-                for (let i = 0, a = 0; i < sc && a < 20; a++) {
-                  const sx2 = Math.floor(Math.random() * COLS), sy2 = Math.floor(Math.random() * ROWS);
-                  if (ng[sy2][sx2].e === 0) {
-                    ng[sy2][sx2] = mkCell(level, now);
-                    i++;
-                  }
-                }
+                
+                spawns.forEach(({x, y, cell}) => {
+                  ng[y][x] = cell;
+                });
+                
                 return ng;
               });
 
@@ -1896,11 +2308,16 @@ const lightningRef=useRef({active:false,start:null,end:null,frame:0});
 
             if (interactionMode === "armed" && sel) {
               setDragHover(null);
+              // If we have a target selection (pointerDown with target role), 
+              // cancel it when leaving the grid to prevent stuck state
+              if (pointerDown && dragStart && dragStart.role === "target") {
+                clearDragState();
+              }
             }
-          }, [interactionMode, sel]);
+          }, [interactionMode, sel, pointerDown, dragStart, clearDragState]);
         
         const handleTouchEnd = useCallback((event) => {
-  event.preventDefault();
+  // preventDefault() removed - CSS touchAction: "none" already handles this
   lastTouchTimeRef.current = Date.now();
 
   if (!pointerDown) return;
@@ -1919,9 +2336,12 @@ const lightningRef=useRef({active:false,start:null,end:null,frame:0});
       return;
     }
 
+    const {cw, ch} = dimsRef.current;
+    if (!cw || !ch) return; // Use cached dimensions
+
     const rect = gridElement.getBoundingClientRect();
-    const cellWidth = rect.width / COLS;
-    const cellHeight = rect.height / ROWS;
+    const cellWidth = cw; // Use cached cellWidth
+    const cellHeight = ch; // Use cached cellHeight
 
     const x = Math.floor((touch.clientX - rect.left) / cellWidth);
     const y = Math.floor((touch.clientY - rect.top) / cellHeight);
@@ -2044,6 +2464,16 @@ const lightningRef=useRef({active:false,start:null,end:null,frame:0});
               SoundManager.resume();
             };
             
+            // Global mouse up handler to catch releases outside the grid
+            const handleGlobalMouseUp = () => {
+              if (pointerDown) {
+                // If we have a target selection that was never completed, cancel it
+                if (dragStart && dragStart.role === "target" && interactionMode === "armed") {
+                  clearDragState();
+                }
+              }
+            };
+            
             // Page Visibility API
             document.addEventListener('visibilitychange', handleVisibilityChange);
             
@@ -2055,14 +2485,18 @@ const lightningRef=useRef({active:false,start:null,end:null,frame:0});
             window.addEventListener('blur', handleBlur);
             window.addEventListener('focus', handleFocus);
             
+            // Global mouse events
+            window.addEventListener('mouseup', handleGlobalMouseUp);
+            
             return () => {
               document.removeEventListener('visibilitychange', handleVisibilityChange);
               window.removeEventListener('pagehide', handlePageHide);
               window.removeEventListener('pageshow', handlePageShow);
               window.removeEventListener('blur', handleBlur);
               window.removeEventListener('focus', handleFocus);
+              window.removeEventListener('mouseup', handleGlobalMouseUp);
             };
-          }, [soundEnabled]);
+          }, [soundEnabled, pointerDown, dragStart, interactionMode, clearDragState]);
 
           useEffect(()=>{
             if (!paused && pauseTime) {
@@ -2122,18 +2556,12 @@ const lightningRef=useRef({active:false,start:null,end:null,frame:0});
             setSel(null);setEchoes([]);setPhase("play");setInfo(null);setCascTxt(null);setPaused(false);setFillPct(0);setScreenFlash(null);setTick(0);setShowMenu(false);setShowTutorial(false);setShowQuitConfirmation(false);setShowPauseRules(false);setShowOverRules(false);
             particlesRef.current=[];boltsRef.current=[];
             
-            // Start background music on game start (user interaction)
-            SoundManager.playBackgroundMusic();
-            
             // Start countdown animation
             setCountdown(3);
-            SoundManager.play('countdown', 0.6); // Play beep for 3
             setTimeout(() => {
               setCountdown(2);
-              SoundManager.play('countdown', 0.6); // Play beep for 2
               setTimeout(() => {
                 setCountdown(1);
-                SoundManager.play('countdown', 0.6); // Play beep for 1
                 setTimeout(() => {
                   setCountdown("START!");
                   SoundManager.play('startSound', 0.8); // Play START sound
@@ -2146,10 +2574,9 @@ const lightningRef=useRef({active:false,start:null,end:null,frame:0});
           const restart=useCallback(()=>{setGrid(mkGrid());setScore(0);setLevel(1);setTotalT(0);setCombo(0);setComboT(0);setTransitionHistory([]);
             setSel(null);setEchoes([]);setPhase("menu");setInfo(null);setCascTxt(null);setPaused(false);setFillPct(0);setScreenFlash(null);setTick(0);setShowMenu(true);setShowTutorial(false);setShowQuitConfirmation(false);setShowPauseRules(false);setShowOverRules(false);
             particlesRef.current=[];boltsRef.current=[]},[]);
+
           useEffect(() => {
             let transitionTimer;
-
-            SoundManager.init();
 
             const loadingTimer = setTimeout(() => {
               setIsLoading(false);
@@ -2181,19 +2608,33 @@ const lightningRef=useRef({active:false,start:null,end:null,frame:0});
               @keyframes flash{0%{opacity:0.25}100%{opacity:0}}
               @keyframes orbit1{0%{transform:translate(0px,0px)}25%{transform:translate(37px,0px)}50%{transform:translate(37px,37px)}75%{transform:translate(0px,37px)}100%{transform:translate(0px,0px)}}
               @keyframes orbit2{0%{transform:translate(0px,0px)}25%{transform:translate(37px,0px)}50%{transform:translate(37px,37px)}75%{transform:translate(0px,37px)}100%{transform:translate(0px,0px)}}
+
               @keyframes orbit3{0%{transform:translate(0px,0px)}25%{transform:translate(37px,0px)}50%{transform:translate(37px,37px)}75%{transform:translate(0px,37px)}100%{transform:translate(0px,0px)}}
+
               @keyframes levelUp{0%{transform:scale(1);opacity:1}50%{transform:scale(1.5);opacity:0.8}100%{transform:scale(1);opacity:1}}
+
               @keyframes lvlOrbit1{0%{transform:rotate(0deg) translateX(12px) rotate(0deg)}100%{transform:rotate(360deg) translateX(12px) rotate(-360deg)}}
+
               @keyframes lvlOrbit2{0%{transform:rotate(0deg) translateX(12px) rotate(0deg)}100%{transform:rotate(360deg) translateX(12px) rotate(-360deg)}}
+
               @keyframes lvlOrbit3{0%{transform:rotate(0deg) translateX(12px) rotate(0deg)}100%{transform:rotate(360deg) translateX(12px) rotate(-360deg)}}
+
               @keyframes lvlOrbit4{0%{transform:rotate(0deg) translateX(12px) rotate(0deg)}100%{transform:rotate(360deg) translateX(12px) rotate(-360deg)}}
+
               @keyframes lvlOrbit5{0%{transform:rotate(0deg) translateX(12px) rotate(0deg)}100%{transform:rotate(360deg) translateX(12px) rotate(-360deg)}}
+
               @keyframes lvlSmashIn{0%{transform:rotate(0deg) translateX(12px) rotate(0deg) scale(1);opacity:1}50%{transform:rotate(180deg) translateX(6px) rotate(-180deg) scale(0.8);opacity:1}100%{transform:rotate(360deg) translateX(0px) rotate(-360deg) scale(0);opacity:0}}
+
               @keyframes lvlExplode{0%{transform:scale(0);opacity:0}50%{transform:scale(1.5);opacity:1}100%{transform:scale(2);opacity:0}}
+
               @keyframes cascTxt{0%{opacity:0;transform:translateX(-50%) translateY(-50%) scale(0.4)}15%{opacity:1;transform:translateX(-50%) translateY(-50%) scale(1.15)}75%{opacity:1;transform:translateX(-50%) translateY(-50%) scale(1)}100%{opacity:0;transform:translateX(-50%) translateY(-50%) scale(0.9) translateY(-15px)}}
+
               @keyframes textShimmer{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+
               @keyframes recoilText{0%{opacity:0;transform:translateX(-50%) translateY(-50%) scale(0.3) rotate(0deg)}10%{opacity:1;transform:translateX(-50%) translateY(-50%) scale(1.2) rotate(5deg)}20%{transform:translateX(-50%) translateY(-50%) scale(1) rotate(-5deg)}30%{transform:translateX(-50%) translateY(-50%) scale(1.1) rotate(3deg)}40%{transform:translateX(-50%) translateY(-50%) scale(1) rotate(-3deg)}50%{transform:translateX(-50%) translateY(-50%) scale(1.05) rotate(2deg)}60%{transform:translateX(-50%) translateY(-50%) scale(1) rotate(-2deg)}70%{transform:translateX(-50%) translateY(-50%) scale(1) rotate(1deg)}80%{opacity:1;transform:translateX(-50%) translateY(-50%) scale(1) rotate(-1deg)}90%{transform:translateX(-50%) translateY(-50%) scale(1) rotate(0deg)}100%{opacity:0;transform:translateX(-50%) translateY(-50%) scale(0.8) translateY(-20px) rotate(0deg)}}
+
               @keyframes smokePuff{0%{opacity:0;transform:translate(-50%, -50%) scale(0.5)}20%{opacity:1;transform:translate(-50%, -50%) scale(1.2)}60%{opacity:0.8;transform:translate(-50%, -50%) scale(1.5)}100%{opacity:0;transform:translate(-50%, -50%) scale(2)}}
+
               @keyframes rotateBorder{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
               @keyframes glowPulse{0%{text-shadow:0 0 6px rgba(255,255,255,0.7),0 0 12px rgba(255,255,255,0.4)}50%{text-shadow:0 0 4px rgba(255,255,255,0.5),0 0 8px rgba(255,255,255,0.25)}100%{text-shadow:0 0 6px rgba(255,255,255,0.7),0 0 12px rgba(255,255,255,0.4)}}
               .n3-countdown{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-family:'Orbitron',sans-serif;font-size:120px;font-weight:900;color:#0e7490;text-shadow:0 0 50px rgba(14,116,144,0.8),0 0 100px rgba(14,116,144,0.4),inset 0 0 20px rgba(255,255,255,0.2);z-index:1000;pointer-events:none;animation:countdown 0.3s ease-out}
@@ -2206,7 +2647,19 @@ const lightningRef=useRef({active:false,start:null,end:null,frame:0});
           const dreadBg=useMemo(()=>{if(fillPct<0.4)return"#030712";const r=Math.round(3+fillPct*60);
             return`rgb(${r},${Math.max(3,7-fillPct*5)},${Math.max(5,18-fillPct*15)})`},[fillPct]);
           const font="'IBM Plex Mono',monospace",tFont="'Orbitron',sans-serif";
-          const nowMs=Date.now();
+          const nowMsRef=useRef(Date.now());
+          
+          // Update nowMs only when needed (every frame for animations)
+          useEffect(() => {
+            const updateNow = () => {
+              nowMsRef.current = Date.now();
+              requestAnimationFrame(updateNow);
+            };
+            const raf = requestAnimationFrame(updateNow);
+            return () => cancelAnimationFrame(raf);
+          }, []);
+          
+          const nowMs = nowMsRef.current;
 
           // Calculate responsive font sizes based on viewport width
           const [viewportWidth, setViewportWidth] = useState(480);
@@ -2221,6 +2674,7 @@ const lightningRef=useRef({active:false,start:null,end:null,frame:0});
           }, []);
           
           const titleFontSize = Math.max(12, Math.min(22, viewportWidth / 34));
+          const orbitScale = Math.min(1, viewportWidth / 500);
           const diffFontSize = 8;
 
           // Loading Screen
@@ -2673,46 +3127,46 @@ const lightningRef=useRef({active:false,start:null,end:null,frame:0});
                               </svg>
                             );
                           })()}
-                          {l==="COMBO"&&!combo&&comboT===0&&Date.now()-lastComboExpire<1000&&(
-            <div style={{
-              position:"absolute",
-              top:"50%",
-              left:"50%",
-              transform:"translate(-50%, -50%)",
-              width:40,
-              height:40,
-              borderRadius:"50%",
-              background:"radial-gradient(circle, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0.2) 40%, transparent 70%)",
-              animation:"smokePuff 1s ease-out forwards",
-              pointerEvents:"none",
-              zIndex:1
-            }}/>
-          )}
-                          <span style={{fontSize:15,fontWeight:700,color:l==="COMBO"&&combo>0?"#fbbf24":"#f1f5f9",position:"relative",zIndex:2,whiteSpace:"nowrap"}}>{v}</span>
-                          {l==="LVL"&&transitionHistory.map((lvl, i) => (
-                            <div key={i} style={{
-                              position:"absolute",
-                              width:3,
-                              height:3,
-                              backgroundColor:EB[Math.min(lvl, 5)] || "#93c5fd",
-                              borderRadius:"50%",
-                              animation:isLevelingUp ? `lvlSmashIn 0.8s ease-in forwards` : `lvlOrbit${i+1} 3s linear infinite`,
-                              transformOrigin:"center"
-                            }}/>
-                          ))}
-                          {l==="LVL" && isLevelingUp && (
-                            <div style={{
-                              position:"absolute",
-                              width:20,
-                              height:20,
-                              borderRadius:"50%",
-                              background:"radial-gradient(circle, rgba(251,191,36,0.8) 0%, rgba(251,191,36,0) 70%)",
-                              animation:"lvlExplode 0.8s ease-out forwards",
-                              transformOrigin:"center"
-                            }}/>
-                          )}
-                        </div>
-                      </div>))}</div>
+                        {l==="COMBO"&&!combo&&comboT===0&&Date.now()-lastComboExpire<1000&&(
+                          <div style={{
+                            position:"absolute",
+                            top:"50%",
+                            left:"50%",
+                            transform:"translate(-50%, -50%)",
+                            width:40,
+                            height:40,
+                            borderRadius:"50%",
+                            background:"radial-gradient(circle, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0.2) 40%, transparent 70%)",
+                            animation:"smokePuff 1s ease-out forwards",
+                            pointerEvents:"none",
+                            zIndex:1
+                          }}/>
+                        )}
+                        <span style={{fontSize:15,fontWeight:700,color:l==="COMBO"&&combo>0?"#fbbf24":"#f1f5f9",position:"relative",zIndex:2,whiteSpace:"nowrap"}}>{v}</span>
+                        {l==="LVL"&&transitionHistory.map((lvl, i) => (
+                          <div key={i} style={{
+                            position:"absolute",
+                            width:3,
+                            height:3,
+                            backgroundColor:EB[Math.min(lvl, 5)] || "#93c5fd",
+                            borderRadius:"50%",
+                            animation:isLevelingUp ? `lvlSmashIn 0.8s ease-in forwards` : `lvlOrbit${i+1} 3s linear infinite`,
+                            transformOrigin:"center"
+                          }}/>
+                        ))}
+                        {l==="LVL" && isLevelingUp && (
+                          <div style={{
+                            position:"absolute",
+                            width:20,
+                            height:20,
+                            borderRadius:"50%",
+                            background:"radial-gradient(circle, rgba(251,191,36,0.8) 0%, rgba(251,191,36,0) 70%)",
+                            animation:"lvlExplode 0.8s ease-out forwards",
+                            transformOrigin:"center"
+                          }}/>
+                        )}
+                      </div>
+                    </div>))}</div>
                 </div>
               </div>
 
@@ -2740,7 +3194,7 @@ const lightningRef=useRef({active:false,start:null,end:null,frame:0});
                   gridTemplateColumns:`repeat(${COLS},1fr)`,gridTemplateRows:`repeat(${ROWS},1fr)`,
                   backgroundColor:"rgba(15,23,42,0.25)",borderRadius:6,
                   border:fillPct>0.7?`1px solid rgba(185,28,28,${(fillPct-0.7)*2.5})`:"1px solid rgba(255,255,255,0.04)",transition:"border-color 1s"}}>
-                  {grid.map((row,y)=>row.map((cell,x)=>{
+                  {grid.slice(0, renderedRows).map((row,y)=>row.map((cell,x)=>{
                     const isSel=sel&&sel.x===x&&sel.y===y;const det=detMap[`${x},${y}`];
                     const dp=cell.e>0?Math.min(1,Math.max(0,(nowMs-cell.born)/(cell.decay-cell.born))):0;
                     const isNew=cell.e>0&&(nowMs-cell.born)<350;
@@ -2750,7 +3204,7 @@ const lightningRef=useRef({active:false,start:null,end:null,frame:0});
                       onMouseDown={()=>handleMouseDown(x,y)} onMouseEnter={()=>handleMouseEnter(x,y)} onMouseUp={()=>handleMouseUp(x,y)} 
                       onMouseLeave={handleMouseLeave} onTouchStart={handleTouchStart} 
                       onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd} 
-                      x={x} y={y} dragStart={dragStart} dragHover={dragHover}/>;
+                      x={x} y={y} dragStart={dragStart} dragHover={dragHover} orbitScale={orbitScale}/>;
                   }))}</div></div>
 
               <div style={{width:"100%",maxWidth:480,marginTop:8,zIndex:10,position:"relative"}}>
@@ -2773,7 +3227,7 @@ const lightningRef=useRef({active:false,start:null,end:null,frame:0});
 
               {showQuitConfirmation&&<div style={{position:"fixed",top:"var(--app-top, 0px)",left:0,right:0,height:"var(--app-height, 100dvh)",backgroundColor:"rgba(3,7,18,0.92)",
                 display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:20,zIndex:100}}>
-                <span style={{fontSize:32,fontWeight:900,letterSpacing:"0.3em",color:"#f8fafc",fontFamily:tFont}}>ARE YOU SURE?</span>
+                <span style={{fontSize:32,fontWeight:900,letterSpacing:"0.3em",color:"#f8fafc",fontFamily:tFont,textAlign:"center",width:"100%",display:"block"}}>ARE YOU SURE?</span>
                 <span style={{fontSize:16,color:"#94a3b8",fontFamily:font,textAlign:"center",maxWidth:320,lineHeight:1.5}}>All progress will be lost</span>
                 
                 <div style={{display:"flex",flexDirection:"column",gap:12,alignItems:"center"}}>
@@ -3005,8 +3459,25 @@ const lightningRef=useRef({active:false,start:null,end:null,frame:0});
           const [showMenuRules, setShowMenuRules] = React.useState(false);
           const [showMenuControls, setShowMenuControls] = React.useState(false);
           const [showCompanionPage, setShowCompanionPage] = React.useState(false);
+          const [showFogOverlay, setShowFogOverlay] = React.useState(true);
+          const [isFogDisappearing, setIsFogDisappearing] = React.useState(false);
+          const [isPageLoaded, setIsPageLoaded] = React.useState(false);
           const tFont = "'Orbitron',sans-serif";
           const font = "'IBM Plex Mono',monospace";
+          
+          // Handle page load
+          React.useEffect(() => {
+            const handleLoad = () => {
+              setIsPageLoaded(true);
+            };
+            
+            if (document.readyState === 'complete') {
+              handleLoad();
+            } else {
+              window.addEventListener('load', handleLoad);
+              return () => window.removeEventListener('load', handleLoad);
+            }
+          }, []);
           
           // Listen for credits events from NullV3
           React.useEffect(() => {
@@ -3048,6 +3519,41 @@ const lightningRef=useRef({active:false,start:null,end:null,frame:0});
           
           return (
             <>
+              {/* Smokey Fog Overlay */}
+              {showFogOverlay && (
+                <div className={`fog-overlay ${isFogDisappearing ? 'disappearing' : ''}`} onClick={() => {
+                  if (!isFogDisappearing && isPageLoaded) {
+                    setIsFogDisappearing(true);
+                    // Initialize audio on user interaction
+                    SoundManager.init();
+                    SoundManager.playBackgroundMusic();
+                    setTimeout(() => {
+                      setShowFogOverlay(false);
+                      setIsFogDisappearing(false);
+                    }, 800);
+                  }
+                }}>
+                  <div className="fog-particles">
+                    <div className={`fog-particle ${isFogDisappearing ? 'disappearing' : ''}`} style={{left: '10%', animationDelay: '0s'}}></div>
+                    <div className={`fog-particle ${isFogDisappearing ? 'disappearing' : ''}`} style={{left: '30%', animationDelay: '3s'}}></div>
+                    <div className={`fog-particle ${isFogDisappearing ? 'disappearing' : ''}`} style={{left: '50%', animationDelay: '6s'}}></div>
+                    <div className={`fog-particle ${isFogDisappearing ? 'disappearing' : ''}`} style={{left: '70%', animationDelay: '9s'}}></div>
+                    <div className={`fog-particle ${isFogDisappearing ? 'disappearing' : ''}`} style={{left: '90%', animationDelay: '12s'}}></div>
+                  </div>
+                  <div className={`fog-text ${isFogDisappearing ? 'disappearing' : ''} ${isPageLoaded ? 'loaded' : ''}`}>
+                    PRESS ANYWHERE TO BEGIN<br/>CORRELATION
+                  </div>
+                  
+                  {/* Circular Progress Spinner */}
+                  {!isPageLoaded && (
+                    <div className="fog-progress-container">
+                      <div className="fog-progress-spinner">
+                        <div className="fog-progress-circle"></div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
               <NullV3 />
               {/* Credits popup at root level */}
               {showCredits && <div style={{position:"fixed",top:"var(--app-top, 0px)",left:0,right:0,height:"var(--app-height, 100dvh)",backgroundColor:"rgba(3,7,18,0.98)",
