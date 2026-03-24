@@ -1782,8 +1782,21 @@
             const rect = el.getBoundingClientRect();
             const cellW = rect.width / W, cellH = rect.height / H;
             
-            const clientX = e.clientX;
-            const clientY = e.clientY;
+            // Handle both touch and mouse events
+            let clientX, clientY;
+            if (e.touches && e.touches.length > 0) {
+              // Touch move event
+              clientX = e.touches[0].clientX;
+              clientY = e.touches[0].clientY;
+            } else if (e.changedTouches && e.changedTouches.length > 0) {
+              // Touch end event
+              clientX = e.changedTouches[0].clientX;
+              clientY = e.changedTouches[0].clientY;
+            } else {
+              // Mouse event or touch start
+              clientX = e.clientX;
+              clientY = e.clientY;
+            }
             
             if (clientX == null || clientY == null) return null;
             
@@ -2758,6 +2771,7 @@
                   gap: 0, touchAction: "none", userSelect: "none", WebkitUserSelect: "none",
                   borderRadius: 8,
                   boxShadow: "0 0 40px rgba(0,0,0,0.5)",
+                  background: "rgba(0, 244, 255, 0.15)",
                 }}
                   ref={boardRef}
                   onPointerDown={(e) => {
