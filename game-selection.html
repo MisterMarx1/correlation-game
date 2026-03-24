@@ -4,14 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Game Hub — mistermarx.com</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preload" href="https://fonts.googleapis.com/css2?family=SST:wght@400;700&display=swap" as="style">
 <style>
   *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
   html, body { width: 100%; height: 100%; }
   body {
     font-family: 'SST', 'Helvetica Neue', Arial, sans-serif;
-    font-display: swap;
     color: #fff; user-select: none; cursor: default;
   }
   #app {
@@ -258,7 +255,8 @@
     z-index: 5;
     width: calc(100% - 16px);
     max-width: 592px;
-    aspect-ratio: 16/9;
+    /* Reserve space to prevent CLS */
+    min-height: 300px;
     contain: layout style paint;
   }
 
@@ -281,8 +279,6 @@
     height: 100%;
     object-fit: cover;
     border-radius: 12px;
-    aspect-ratio: 16/9;
-    background: #020617;
   }
 
   .slideshow-controls {
@@ -365,6 +361,9 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    /* Reserve space to prevent layout shift */
+    min-height: 300px;
+    contain: layout style paint;
   }
 
   #game-slideshow.visible {
@@ -666,9 +665,12 @@ function updateSlideshow(){
       const slide=document.createElement('div');
       slide.className='slide';
       const img=document.createElement('img');
+      // Preload image to prevent layout shift
+      img.loading = 'eager';
+      img.decoding = 'async';
       img.src=screenPath;
       img.alt=`${game.title} Screenshot ${i+1}`;
-      img.onload=()=>calculateSlideshowHeight(); // Recalculate when images load
+      // Remove onload handler to prevent recalculation shifts
       slide.appendChild(img);
       slideshowContainer.insertBefore(slide,slideshowContainer.querySelector('.slideshow-nav'));
     });
@@ -744,23 +746,17 @@ function resetSlideshow(){
 
 function calculateSlideshowHeight(){
   const slideshowContainer=document.getElementById('game-slideshow');
-  const gameInfo=document.getElementById('game-info');
-  const carouselWrap=document.getElementById('carousel-wrap');
+  if (!slideshowContainer) return;
   
-  // Get available space between game info and carousel
-  const gameInfoBottom=gameInfo.offsetTop+gameInfo.offsetHeight;
-  const carouselTop=carouselWrap.offsetTop;
-  const availableSpace=carouselTop-gameInfoBottom-80; // 80px for margins
-  
-  // Calculate height based on viewport width with aspect ratio
+  // Use aspect ratio based containment to prevent shifts
   const viewportWidth=window.innerWidth;
-  const calculatedHeight=viewportWidth
+  const aspectRatioHeight = Math.min(viewportWidth * 0.75, 500); // 4:3 aspect ratio, max 500px
+  const finalHeight = Math.max(aspectRatioHeight, 250); // Min 250px
   
-  // Use the smaller of available space or calculated height
-  const finalHeight=Math.min(availableSpace,calculatedHeight,500); // Max 500px
-  const minHeight=Math.max(availableSpace,calculatedHeight,200); // Min 200px
-  
-  slideshowContainer.style.height=finalHeight+'px';
+  // Apply height smoothly without causing reflow
+  requestAnimationFrame(() => {
+    slideshowContainer.style.height = finalHeight + 'px';
+  });
 }
 
 // Companion Page Popup Functions
@@ -804,9 +800,13 @@ document.addEventListener('keydown',(e)=>{
   }
 });
 
-// Window resize listener for dynamic height calculation
+// Debounced resize listener to prevent layout thrashing
+let resizeTimeout;
 window.addEventListener('resize',()=>{
-  calculateSlideshowHeight();
+  clearTimeout(resizeTimeout);
+  resizeTimeout = setTimeout(() => {
+    calculateSlideshowHeight();
+  }, 150);
 });
 
 document.addEventListener('keydown',(e)=>{
