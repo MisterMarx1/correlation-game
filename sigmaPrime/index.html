@@ -1624,6 +1624,17 @@
           const timerRef = React.useRef(null);
           const boardRef = React.useRef(null);
           const animationRef = React.useRef(null);
+          
+          // Drag optimization: cache board metrics and throttle pointer processing
+          const dragStateRef = React.useRef({
+            isDragging: false,
+            boardRect: null,
+            cellW: 0,
+            cellH: 0,
+            lastProcessedCell: null,
+            pendingMove: null,
+            animationFrameId: null
+          });
 
           function turnTime() { 
             const settings = SPEED_SETTINGS[currentSpeed];
@@ -1852,6 +1863,37 @@
           function cellFromEvent(e) {
             const el = boardRef.current;
             if (!el) return null;
+            
+            // Use cached metrics during drag for performance
+            const dragState = dragStateRef.current;
+            if (dragState.isDragging && dragState.boardRect) {
+              const rect = dragState.boardRect;
+              const cellW = dragState.cellW;
+              const cellH = dragState.cellH;
+              
+              // Handle both touch and mouse events
+              let clientX, clientY;
+              if (e.touches && e.touches.length > 0) {
+                clientX = e.touches[0].clientX;
+                clientY = e.touches[0].clientY;
+              } else if (e.changedTouches && e.changedTouches.length > 0) {
+                clientX = e.changedTouches[0].clientX;
+                clientY = e.changedTouches[0].clientY;
+              } else {
+                clientX = e.clientX;
+                clientY = e.clientY;
+              }
+              
+              if (clientX == null || clientY == null) return null;
+              
+              const mx = clientX - rect.left;
+              const my = clientY - rect.top;
+              const cx = Math.floor(mx / cellW), cy = Math.floor(my / cellH);
+              if (cx < 0 || cx >= W || cy < 0 || cy >= H) return null;
+              return { x: cx, y: cy };
+            }
+            
+            // Non-drag path: compute metrics normally
             const rect = el.getBoundingClientRect();
             const cellW = rect.width / W, cellH = rect.height / H;
             
@@ -1894,34 +1936,18 @@
             visualRe(); // Only update visuals, not full game state
           }
 
-          function onPointerDown(e) {
-            if (g.gameOver || g.paused || g.showQuitConfirmation) return;
-            e.preventDefault();
-            e.stopPropagation();
-            const c = cellFromEvent(e);
-            if (!c) return;
+          // Throttled pointer processing for drag performance
+          function processPointerMove() {
+            const dragState = dragStateRef.current;
+            if (!dragState.pendingMove || !dragState.isDragging) return;
             
-            // Check if clicked cell is dead - if so, do nothing
-            const clickedCell = g.board[k(c.x, c.y)];
-            if (clickedCell && clickedCell.dead) return;
+            const pendingMove = dragState.pendingMove;
+            dragState.pendingMove = null;
             
-            g.sel = []; g.combo = Math.max(0, g.combo);
-            g.dragging = true;
-            addToSel(c.x, c.y);
-            
-            // Start electric humming sound when dragging begins
-            SoundManager.startElectricHumLoop();
-          }
-
-          function onPointerMove(e) {
-            if (!g.dragging || g.gameOver || g.paused || g.showQuitConfirmation) return;
-            e.preventDefault();
-            e.stopPropagation();
-            const c = cellFromEvent(e);
-            
-            // If dragging off the board, cancel selection and apply damage (consistent with other invalid drags)
-            if (!c) {
-              // Apply damage to first selected cell before reset
+            // Check if we're still in the same cell - skip if unchanged
+            const currentCell = cellFromEvent(pendingMove);
+            if (!currentCell) {
+              // Handle off-board movement - apply damage and cancel
               if (g.sel.length > 0) {
                 const firstCell = g.sel[0];
                 const cell = g.board[k(firstCell.x, firstCell.y)];
@@ -1933,24 +1959,18 @@
                     cell.life = 0;
                     g.deadCount += 1;
                   } else if (oldLife > cell.life) {
-                    // Add damage animation for the lost life circle
                     const damageAnimations = [{ x: firstCell.x, y: firstCell.y, lostLifeIndex: oldLife - 1, t: Date.now() }];
                     g.damageAnim = (g.damageAnim || []).concat(damageAnimations);
                     setTimeout(() => { g.damageAnim = []; visualRe(); }, 800);
                   }
-                  // Play game over sound when life is lost from dragging off board
                   SoundManager.play('mixkit-laser-game-over-1946.wav', 0.8);
                 }
               }
-              // Keep selection for visual feedback during vibration
               g.dragging = false;
               g.combo = 0;
-              // Stop electric humming sound when selection is cancelled
               SoundManager.stopElectricHumLoop();
-              // Add red background flash for invalid drag
               g.flash = { text: "INVALID DRAG", bad: true };
               g.shakeUntil = Date.now() + 400;
-              // Clear selection AFTER vibration finishes
               setTimeout(() => { 
                 g.sel = []; 
                 g.flash = null; 
@@ -1960,13 +1980,20 @@
               return;
             }
             
+            const cellKey = k(currentCell.x, currentCell.y);
+            if (dragState.lastProcessedCell && dragState.lastProcessedCell === cellKey) {
+              return; // Same cell, no processing needed
+            }
+            
+            dragState.lastProcessedCell = cellKey;
+            
+            // Process the cell move (inline drag logic)
             const last = g.sel[g.sel.length - 1];
-            if (last && last.x === c.x && last.y === c.y) return;
+            if (last && last.x === currentCell.x && last.y === currentCell.y) return;
             
-            // Check if dragging over a dead cell - if so, cancel selection and apply damage
-            const draggedCell = g.board[k(c.x, c.y)];
+            // Check if dragging over a dead cell
+            const draggedCell = g.board[k(currentCell.x, currentCell.y)];
             if (draggedCell && draggedCell.dead) {
-              // Apply damage to first selected cell before reset
               if (g.sel.length > 0) {
                 const firstCell = g.sel[0];
                 const cell = g.board[k(firstCell.x, firstCell.y)];
@@ -1978,24 +2005,18 @@
                     cell.life = 0;
                     g.deadCount += 1;
                   } else if (oldLife > cell.life) {
-                    // Add damage animation for the lost life circle
                     const damageAnimations = [{ x: firstCell.x, y: firstCell.y, lostLifeIndex: oldLife - 1, t: Date.now() }];
                     g.damageAnim = (g.damageAnim || []).concat(damageAnimations);
                     setTimeout(() => { g.damageAnim = []; visualRe(); }, 800);
                   }
-                  // Play game over sound when life is lost from dragging over dead cell
                   SoundManager.play('mixkit-laser-game-over-1946.wav', 0.8);
                 }
               }
-              // Keep selection for visual feedback during vibration
               g.dragging = false;
               g.combo = 0;
-              // Stop electric humming sound when selection is cancelled
               SoundManager.stopElectricHumLoop();
-              // Add red background flash for invalid drag
               g.flash = { text: "INVALID DRAG", bad: true };
               g.shakeUntil = Date.now() + 400;
-              // Clear selection AFTER vibration finishes
               setTimeout(() => { 
                 g.sel = []; 
                 g.flash = null; 
@@ -2005,18 +2026,16 @@
               return;
             }
             
-            // Check if new cell is adjacent to the LAST selected cell (match visual dimming logic)
+            // Check adjacency
             let isAdjacentToSelection = false;
             if (g.sel.length > 0) {
               const lastCell = g.sel[g.sel.length - 1];
-              const dx = c.x - lastCell.x;
-              const dy = c.y - lastCell.y;
+              const dx = currentCell.x - lastCell.x;
+              const dy = currentCell.y - lastCell.y;
               isAdjacentToSelection = (dx === 0 && Math.abs(dy) === 1) || (dy === 0 && Math.abs(dx) === 1);
             }
             
-            // If not adjacent to any selected cell, reset selection and apply damage
             if (!isAdjacentToSelection) {
-              // Apply damage to first selected cell before reset
               if (g.sel.length > 0) {
                 const firstCell = g.sel[0];
                 const cell = g.board[k(firstCell.x, firstCell.y)];
@@ -2028,24 +2047,18 @@
                     cell.life = 0;
                     g.deadCount += 1;
                   } else if (oldLife > cell.life) {
-                    // Add damage animation for the lost life circle
                     const damageAnimations = [{ x: firstCell.x, y: firstCell.y, lostLifeIndex: oldLife - 1, t: Date.now() }];
                     g.damageAnim = (g.damageAnim || []).concat(damageAnimations);
                     setTimeout(() => { g.damageAnim = []; visualRe(); }, 800);
                   }
                 }
               }
-              // Keep selection for visual feedback during vibration
               g.dragging = false;
               g.combo = 0;
-              // Play game over sound when life is lost from invalid drag
               SoundManager.play('mixkit-laser-game-over-1946.wav', 0.8);
-              // Stop electric humming sound when selection is cancelled
               SoundManager.stopElectricHumLoop();
-              // Add red background flash for invalid drag
               g.flash = { text: "INVALID DRAG", bad: true };
               g.shakeUntil = Date.now() + 400;
-              // Clear selection AFTER vibration finishes
               setTimeout(() => { 
                 g.sel = []; 
                 g.flash = null; 
@@ -2058,18 +2071,83 @@
             // Allow backtracking
             if (g.sel.length >= 2) {
               const prev = g.sel[g.sel.length - 2];
-              if (prev.x === c.x && prev.y === c.y) {
-                SoundManager.play('mixkit-mouse-squeak-1019.wav', 0.15); // Play backtrack sound
+              if (prev.x === currentCell.x && prev.y === currentCell.y) {
+                SoundManager.play('mixkit-mouse-squeak-1019.wav', 0.15);
                 g.sel = g.sel.slice(0, -1); visualRe(); return;
               }
             }
+            addToSel(currentCell.x, currentCell.y);
+          }
+
+          function onPointerDown(e) {
+            if (g.gameOver || g.paused || g.showQuitConfirmation) return;
+            e.preventDefault();
+            e.stopPropagation();
+            const c = cellFromEvent(e);
+            if (!c) return;
+            
+            // Check if clicked cell is dead - if so, do nothing
+            const clickedCell = g.board[k(c.x, c.y)];
+            if (clickedCell && clickedCell.dead) return;
+            
+            // Initialize drag state and cache board metrics for performance
+            const el = boardRef.current;
+            if (el) {
+              const rect = el.getBoundingClientRect();
+              dragStateRef.current = {
+                isDragging: true,
+                boardRect: rect,
+                cellW: rect.width / W,
+                cellH: rect.height / H,
+                lastProcessedCell: k(c.x, c.y),
+                pendingMove: null,
+                animationFrameId: null
+              };
+            }
+            
+            g.sel = []; g.combo = Math.max(0, g.combo);
+            g.dragging = true;
             addToSel(c.x, c.y);
+            
+            // Start electric humming sound when dragging begins
+            SoundManager.startElectricHumLoop();
+          }
+
+          function onPointerMove(e) {
+            if (!g.dragging || g.gameOver || g.paused || g.showQuitConfirmation) return;
+            
+            // Use throttled processing during drag for performance
+            const dragState = dragStateRef.current;
+            if (dragState.isDragging) {
+              // Store the event and schedule processing for next animation frame
+              dragState.pendingMove = e;
+              
+              if (!dragState.animationFrameId) {
+                dragState.animationFrameId = requestAnimationFrame(() => {
+                  processPointerMove();
+                  dragState.animationFrameId = null;
+                });
+              }
+              return;
+            }
           }
 
           function onPointerUp(e) {
             if (!g.dragging) return;
             e.preventDefault();
             e.stopPropagation();
+            
+            // Clean up drag state
+            const dragState = dragStateRef.current;
+            if (dragState.animationFrameId) {
+              cancelAnimationFrame(dragState.animationFrameId);
+              dragState.animationFrameId = null;
+            }
+            dragState.isDragging = false;
+            dragState.boardRect = null;
+            dragState.lastProcessedCell = null;
+            dragState.pendingMove = null;
+            
             g.dragging = false;
             // Stop electric humming sound when pointer is released
             SoundManager.stopElectricHumLoop();
@@ -2875,6 +2953,17 @@
                   onPointerCancel={(e) => {
                     e.currentTarget.releasePointerCapture?.(e.pointerId);
                     if (g.dragging) {
+                      // Clean up drag state
+                      const dragState = dragStateRef.current;
+                      if (dragState.animationFrameId) {
+                        cancelAnimationFrame(dragState.animationFrameId);
+                        dragState.animationFrameId = null;
+                      }
+                      dragState.isDragging = false;
+                      dragState.boardRect = null;
+                      dragState.lastProcessedCell = null;
+                      dragState.pendingMove = null;
+                      
                       g.dragging = false;
                       g.sel = [];
                       g.combo = 0;
