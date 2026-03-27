@@ -45,7 +45,6 @@
     <!-- Mobile detection -->
     <script>
         // Mobile detection
-        // TEMPORARILY DISABLED: iOS redirect to prevent push-away during testing
         function isMobile() {
             return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
                    (navigator.maxTouchPoints && navigator.maxTouchPoints > 2);
@@ -55,16 +54,13 @@
             return /iPhone/i.test(navigator.userAgent);
         }
         
-        // DISABLED: Redirect iPhone users to iosTemp.html
-        // This was causing iOS users to be pushed away from the main game
-        // TODO: Re-enable after iOS compatibility issues are resolved
-        // if (isIPhone()) {
-        //     window.location.replace('iosTemp.html');
-        // }
+        // Redirect iPhone users to iosTemp.html
+        if (isIPhone()) {
+            window.location.replace('iosTemp.html');
+        }
         
         console.log('Is mobile device:', isMobile());
         console.log('Is iPhone:', isIPhone());
-        // NOTE: iOS redirect temporarily disabled for testing
     </script>
     
     <!-- Preload fonts to prevent layout shift -->

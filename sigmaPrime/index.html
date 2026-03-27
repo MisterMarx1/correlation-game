@@ -42,6 +42,26 @@
     <title>SIGMA PRIME - Prime Number Math Game</title>
     <meta name="description" content="A strategic puzzle game where you draw paths to satisfy mathematical conditions involving prime numbers and sums.">
     
+    <!-- Mobile detection -->
+    <script>
+        function isMobile() {
+            return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
+                   (navigator.maxTouchPoints && navigator.maxTouchPoints > 2);
+        }
+        
+        function isIPhone() {
+            return /iPhone/i.test(navigator.userAgent);
+        }
+        
+        // Redirect iPhone users to iosTemp.html
+        if (isIPhone()) {
+            window.location.replace('iosTemp.html');
+        }
+        
+        console.log('Is mobile device:', isMobile());
+        console.log('Is iPhone:', isIPhone());
+    </script>
+    
     <!-- Preload fonts to prevent layout shift -->
     <link rel="preload" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&family=Orbitron:wght@700;900&display=swap" as="style">
     <link rel="preconnect" href="https://fonts.googleapis.com">
