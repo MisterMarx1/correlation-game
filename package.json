@@ -1,0 +1,23 @@
+{
+  "name": "mistermarx-games-launcher",
+  "version": "1.0.0",
+  "description": "Interactive game launcher with performance monitoring for MisterMarx.com games",
+  "main": "launcher.js",
+  "scripts": {
+    "start": "node launcher.js",
+    "dev": "node launcher.js"
+  },
+  "dependencies": {
+    "ws": "^8.14.2",
+    "open": "^8.4.2"
+  },
+  "keywords": [
+    "games",
+    "performance",
+    "monitoring",
+    "launcher",
+    "mistermarx"
+  ],
+  "author": "MisterMarx.com",
+  "license": "MIT"
+}
