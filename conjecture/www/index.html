@@ -1,0 +1,631 @@
+<!--
+  CONJECTURE: Spot the Error
+  
+  Copyright © 2026 Mister Marx LLC. All rights reserved.
+  
+  Description:
+  An educational fault-finding equation analysis game where players identify
+  errors in multi-step algebraic solutions. Features dynamic equation generation,
+  categorized fault injection with trickle-down propagation, step-by-step reveal
+  animations, and comprehensive scoring.
+  
+  Architecture:
+  - React 18 with functional components and hooks
+  - Single HTML file with embedded CSS and JavaScript
+  - Dynamic equation engine with 1-6 step generation
+  - Fault injection with 6 categorized error types
+  - Trickle-down propagation and dual verification
+  - Touch-friendly mobile-first design
+  
+  Dependencies:
+  - React 18 (CDN)
+  - Babel Standalone (JSX transformation)
+  
+  Author: Mister Marx
+  Version: v0.1
+  Last Modified: 2026-03-24
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>CONJECTURE: Spot the Error</title>
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&family=Orbitron:wght@700;900&display=swap" as="style">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&family=Orbitron:wght@700;900&display=swap">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <style>
+        *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none}
+        html,body{width:100%;height:100%;overflow:hidden;background:#04040c;font-family:'IBM Plex Mono',monospace;color:#e2e8f0}
+        input,button{-webkit-user-select:auto;user-select:auto}
+        button{cursor:pointer;font-family:inherit}
+        #root{width:100%;height:var(--app-height,100dvh);overflow:hidden;position:relative}
+
+        .fog-overlay{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse at center,rgba(20,25,40,.95),rgba(5,10,20,1) 100%);animation:fogDrift 8s ease-in-out infinite;transition:opacity .8s,transform .8s}
+        .fog-overlay.gone{opacity:0;transform:scale(1.1);pointer-events:none}
+        .fog-text{font-family:'Orbitron',sans-serif;font-size:clamp(1.4rem,4vw,2.4rem);font-weight:900;color:rgba(255,255,255,.3);text-align:center;letter-spacing:.2em;cursor:pointer;padding:2rem;filter:blur(8px);opacity:.4;transition:all .3s}
+        .fog-text.loaded{color:rgba(255,255,255,.8);filter:blur(0);opacity:1}
+        .fog-text.gone{opacity:0;transform:scale(1.5) translateY(-20px);filter:blur(8px)}
+        .fog-text:hover{color:#fff;transform:scale(1.05)}
+        @keyframes fogDrift{0%,100%{background:radial-gradient(ellipse at center,rgba(20,25,40,.95),rgba(5,10,20,1))}50%{background:radial-gradient(ellipse at 60% 40%,rgba(22,28,42,.94),rgba(5,11,22,1))}}
+        @keyframes textPulse{0%,100%{opacity:.4}50%{opacity:1}}
+        @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+        @keyframes slideIn{from{opacity:0;transform:translateX(-12px)}to{opacity:1;transform:translateX(0)}}
+        @keyframes popIn{0%{opacity:0;transform:scale(.85)}60%{transform:scale(1.04)}100%{opacity:1;transform:scale(1)}}
+        @keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
+        @keyframes glowPulse{0%,100%{text-shadow:0 0 6px rgba(255,255,255,.7),0 0 12px rgba(255,255,255,.4)}50%{text-shadow:0 0 10px rgba(255,255,255,1),0 0 20px rgba(255,255,255,.8)}}
+        @keyframes revealPop{0%{transform:scale(1);border-color:rgba(148,163,184,.12)}50%{transform:scale(1.02)}100%{transform:scale(1)}}
+        @keyframes scorePop{0%{opacity:1;transform:translateY(0) scale(1)}50%{transform:translateY(-20px) scale(1.3)}100%{opacity:0;transform:translateY(-40px) scale(.8)}}
+        @keyframes borderRotate{0%{transform:rotate(0)}100%{transform:rotate(360deg)}}
+        @keyframes spinnerSpin{0%{transform:rotate(0)}100%{transform:rotate(360deg)}}
+    </style>
+</head>
+<body>
+<div id="root"></div>
+<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script>
+function syncAppHeight(){const h=window.visualViewport?window.visualViewport.height:window.innerHeight;document.documentElement.style.setProperty('--app-height',h+'px')}
+syncAppHeight();window.addEventListener('resize',syncAppHeight);if(window.visualViewport)window.visualViewport.addEventListener('resize',syncAppHeight);
+</script>
+<script type="text/babel">
+const{useState,useEffect,useCallback,useRef,useMemo}=React;
+
+// ============================================================
+// EQUATION ENGINE (from POC v2 — production verified)
+// ============================================================
+const ENGINE={
+  randInt(min,max,exclude=[0]){const e=new Set(exclude);let a=0;while(a<200){const v=Math.floor(Math.random()*(max-min+1))+min;if(!e.has(v))return v;a++}return min===0?1:min},
+  nz(r=9){return this.randInt(-r,r,[0])},
+  pos(m=9){return this.randInt(1,m,[0])},
+  signedNum(n){return n>=0?`+ ${n}`:`- ${Math.abs(n)}`},
+  coeff(n){if(n===1)return'';if(n===-1)return'-';return n.toString()},
+  formatLinear(a,b){let s='';if(a===1)s='x';else if(a===-1)s='-x';else s=`${a}x`;if(b>0)s+=` + ${b}`;else if(b<0)s+=` - ${Math.abs(b)}`;return s},
+  formatDistrib(a,b){const inner=b>=0?`x + ${b}`:`x - ${Math.abs(b)}`;if(a===1)return`(${inner})`;if(a===-1)return`-(${inner})`;return`${a}(${inner})`},
+
+  gen1Step(){const f=Math.floor(Math.random()*3);if(f===0){const a=this.nz(9),x=this.nz(12),b=a*x;return{equation:`${this.coeff(a)}x = ${b}`,solution:x,original:{type:'ax=b',a,b},steps:[{desc:`Divide both sides by ${a}`,eq:`x = ${b} ÷ ${a}`,op:'divide',operand:a,resultCoeff:1,resultConst:0,resultRight:x},{desc:'Simplify',eq:`x = ${x}`,op:'simplify',resultCoeff:1,resultConst:0,resultRight:x}]}}else if(f===1){const a=this.nz(15),x=this.nz(15),b=x+a;return{equation:`x ${this.signedNum(a)} = ${b}`,solution:x,original:{type:'x+a=b',a,b},steps:[{desc:`Subtract ${a} from both sides`,eq:`x = ${b} ${this.signedNum(-a)}`,op:'subtract',operand:a,resultCoeff:1,resultConst:0,resultRight:b-a},{desc:'Simplify',eq:`x = ${x}`,op:'simplify',resultCoeff:1,resultConst:0,resultRight:x}]}}else{const a=this.pos(15),x=this.nz(20),b=x-a;return{equation:`x - ${a} = ${b}`,solution:x,original:{type:'x-a=b',a,b},steps:[{desc:`Add ${a} to both sides`,eq:`x = ${b} + ${a}`,op:'add',operand:a,resultCoeff:1,resultConst:0,resultRight:b+a},{desc:'Simplify',eq:`x = ${x}`,op:'simplify',resultCoeff:1,resultConst:0,resultRight:x}]}}},
+
+  gen2Step(){const a=this.nz(8),x=this.nz(10),b=this.nz(12),c=a*x+b,st=[];if(b>0)st.push({desc:`Subtract ${b} from both sides`,eq:`${this.coeff(a)}x = ${c} - ${b}`,op:'subtract_const',operand:b,resultCoeff:a,resultConst:0,resultRight:c-b});else st.push({desc:`Add ${Math.abs(b)} to both sides`,eq:`${this.coeff(a)}x = ${c} + ${Math.abs(b)}`,op:'add_const',operand:Math.abs(b),resultCoeff:a,resultConst:0,resultRight:c-b});st.push({desc:'Simplify',eq:`${this.coeff(a)}x = ${a*x}`,op:'simplify',resultCoeff:a,resultConst:0,resultRight:a*x});st.push({desc:`Divide both sides by ${a}`,eq:`x = ${a*x} ÷ ${a}`,op:'divide',operand:a,resultCoeff:1,resultConst:0,resultRight:x});st.push({desc:'Simplify',eq:`x = ${x}`,op:'simplify',resultCoeff:1,resultConst:0,resultRight:x});return{equation:`${this.formatLinear(a,b)} = ${c}`,steps:st,solution:x,original:{type:'2step',a,b,c}}},
+
+  gen3Step(){const f=Math.floor(Math.random()*2);if(f===0){let a=this.nz(7),c=this.nz(7);while(c===a)c=this.nz(7);const x=this.nz(10),b=this.nz(12),d=a*x+b-c*x,lc=a-c,rv=d-b,st=[];if(c>0)st.push({desc:`Subtract ${this.coeff(c)}x from both sides`,eq:`${this.formatLinear(a-c,b)} = ${d}`,op:'collect_x',operand:c,resultCoeff:a-c,resultConst:b,resultRight:d});else st.push({desc:`Add ${this.coeff(Math.abs(c))}x to both sides`,eq:`${this.formatLinear(a-c,b)} = ${d}`,op:'collect_x',operand:c,resultCoeff:a-c,resultConst:b,resultRight:d});if(b>0)st.push({desc:`Subtract ${b} from both sides`,eq:`${this.coeff(lc)}x = ${d-b}`,op:'subtract_const',operand:b,resultCoeff:lc,resultConst:0,resultRight:d-b});else if(b<0)st.push({desc:`Add ${Math.abs(b)} to both sides`,eq:`${this.coeff(lc)}x = ${d-b}`,op:'add_const',operand:Math.abs(b),resultCoeff:lc,resultConst:0,resultRight:d-b});else st.push({desc:'Simplify',eq:`${this.coeff(lc)}x = ${d}`,op:'simplify',resultCoeff:lc,resultConst:0,resultRight:d});st.push({desc:`Divide both sides by ${lc}`,eq:`x = ${rv} ÷ ${lc}`,op:'divide',operand:lc,resultCoeff:1,resultConst:0,resultRight:x});st.push({desc:'Simplify',eq:`x = ${x}`,op:'simplify',resultCoeff:1,resultConst:0,resultRight:x});return{equation:`${this.formatLinear(a,b)} = ${this.formatLinear(c,d)}`,steps:st,solution:x,original:{type:'3step-bothsides',a,b,c,d}}}else{const a=this.nz(6),b=this.nz(8),x=this.nz(10),c=a*(x+b),ab=a*b,st=[];st.push({desc:`Distribute ${a}`,eq:`${this.formatLinear(a,ab)} = ${c}`,op:'distribute',operand:a,resultCoeff:a,resultConst:ab,resultRight:c});if(ab>0)st.push({desc:`Subtract ${ab} from both sides`,eq:`${this.coeff(a)}x = ${c-ab}`,op:'subtract_const',operand:ab,resultCoeff:a,resultConst:0,resultRight:c-ab});else st.push({desc:`Add ${Math.abs(ab)} to both sides`,eq:`${this.coeff(a)}x = ${c-ab}`,op:'add_const',operand:Math.abs(ab),resultCoeff:a,resultConst:0,resultRight:c-ab});st.push({desc:`Divide both sides by ${a}`,eq:`x = ${c-ab} ÷ ${a}`,op:'divide',operand:a,resultCoeff:1,resultConst:0,resultRight:x});st.push({desc:'Simplify',eq:`x = ${x}`,op:'simplify',resultCoeff:1,resultConst:0,resultRight:x});return{equation:`${this.formatDistrib(a,b)} = ${c}`,steps:st,solution:x,original:{type:'3step-distrib',a,b,c}}}},
+
+  gen4Step(){let a=this.nz(5),c=this.nz(5);while(c===a)c=this.nz(5);const b=this.nz(7),x=this.nz(8),d=a*(x+b)-c*x,ab=a*b,st=[];st.push({desc:`Distribute ${a} on the left side`,eq:`${this.formatLinear(a,ab)} = ${this.formatLinear(c,d)}`,op:'distribute',operand:a,resultCoeff:a,resultConst:ab,resultRight:null});if(c>0)st.push({desc:`Subtract ${this.coeff(c)}x from both sides`,eq:`${this.formatLinear(a-c,ab)} = ${d}`,op:'collect_x',operand:c,resultCoeff:a-c,resultConst:ab,resultRight:d});else st.push({desc:`Add ${this.coeff(Math.abs(c))}x to both sides`,eq:`${this.formatLinear(a-c,ab)} = ${d}`,op:'collect_x',operand:c,resultCoeff:a-c,resultConst:ab,resultRight:d});const fc=a-c,fv=d-ab;if(ab>0)st.push({desc:`Subtract ${ab} from both sides`,eq:`${this.coeff(fc)}x = ${fv}`,op:'subtract_const',operand:ab,resultCoeff:fc,resultConst:0,resultRight:fv});else if(ab<0)st.push({desc:`Add ${Math.abs(ab)} to both sides`,eq:`${this.coeff(fc)}x = ${fv}`,op:'add_const',operand:Math.abs(ab),resultCoeff:fc,resultConst:0,resultRight:fv});else st.push({desc:'Simplify',eq:`${this.coeff(fc)}x = ${d}`,op:'simplify',resultCoeff:fc,resultConst:0,resultRight:d});st.push({desc:`Divide both sides by ${fc}`,eq:`x = ${fv} ÷ ${fc}`,op:'divide',operand:fc,resultCoeff:1,resultConst:0,resultRight:x});st.push({desc:'Simplify',eq:`x = ${x}`,op:'simplify',resultCoeff:1,resultConst:0,resultRight:x});return{equation:`${this.formatDistrib(a,b)} = ${this.formatLinear(c,d)}`,steps:st,solution:x,original:{type:'4step',a,b,c,d}}},
+
+  gen5Step(){let a=this.nz(5),d=this.nz(5);while(d===a)d=this.nz(5);const b=this.nz(6),c=this.nz(8),x=this.nz(8),e=a*(x+b)+c-d*x,ab=a*b,lc=ab+c,st=[];st.push({desc:`Distribute ${a}`,eq:`${this.formatLinear(a,ab)} ${this.signedNum(c)} = ${this.formatLinear(d,e)}`,op:'distribute',operand:a,resultCoeff:a,resultConst:ab,resultRight:null});st.push({desc:'Combine like terms on the left',eq:`${this.formatLinear(a,lc)} = ${this.formatLinear(d,e)}`,op:'combine',operand:null,resultCoeff:a,resultConst:lc,resultRight:null});if(d>0)st.push({desc:`Subtract ${this.coeff(d)}x from both sides`,eq:`${this.formatLinear(a-d,lc)} = ${e}`,op:'collect_x',operand:d,resultCoeff:a-d,resultConst:lc,resultRight:e});else st.push({desc:`Add ${this.coeff(Math.abs(d))}x to both sides`,eq:`${this.formatLinear(a-d,lc)} = ${e}`,op:'collect_x',operand:d,resultCoeff:a-d,resultConst:lc,resultRight:e});const fc=a-d,fv=e-lc;if(lc>0)st.push({desc:`Subtract ${lc} from both sides`,eq:`${this.coeff(fc)}x = ${fv}`,op:'subtract_const',operand:lc,resultCoeff:fc,resultConst:0,resultRight:fv});else if(lc<0)st.push({desc:`Add ${Math.abs(lc)} to both sides`,eq:`${this.coeff(fc)}x = ${fv}`,op:'add_const',operand:Math.abs(lc),resultCoeff:fc,resultConst:0,resultRight:fv});else st.push({desc:'Simplify',eq:`${this.coeff(fc)}x = ${e}`,op:'simplify',resultCoeff:fc,resultConst:0,resultRight:e});st.push({desc:`Divide both sides by ${fc}`,eq:`x = ${fv} ÷ ${fc}`,op:'divide',operand:fc,resultCoeff:1,resultConst:0,resultRight:x});st.push({desc:'Simplify',eq:`x = ${x}`,op:'simplify',resultCoeff:1,resultConst:0,resultRight:x});return{equation:`${this.formatDistrib(a,b)} ${this.signedNum(c)} = ${this.formatLinear(d,e)}`,steps:st,solution:x,original:{type:'5step',a,b,c,d,e}}},
+
+  gen6Step(){let a=this.nz(4),d=this.nz(4);while(d===a)d=this.nz(4);const b=this.nz(6),e=this.nz(6),c=this.nz(7),x=this.nz(8),f=a*(x+b)+c-d*(x+e),ab=a*b,de=d*e,lc=ab+c,rc=de+f,st=[];st.push({desc:'Distribute on both sides',eq:`${this.formatLinear(a,ab)} ${this.signedNum(c)} = ${this.formatLinear(d,de)} ${this.signedNum(f)}`,op:'distribute_both',operand:null,resultCoeff:a,resultConst:ab,resultRight:null});st.push({desc:'Combine like terms on each side',eq:`${this.formatLinear(a,lc)} = ${this.formatLinear(d,rc)}`,op:'combine_both',operand:null,resultCoeff:a,resultConst:lc,resultRight:null});if(d>0)st.push({desc:`Subtract ${this.coeff(d)}x from both sides`,eq:`${this.formatLinear(a-d,lc)} = ${rc}`,op:'collect_x',operand:d,resultCoeff:a-d,resultConst:lc,resultRight:rc});else st.push({desc:`Add ${this.coeff(Math.abs(d))}x to both sides`,eq:`${this.formatLinear(a-d,lc)} = ${rc}`,op:'collect_x',operand:d,resultCoeff:a-d,resultConst:lc,resultRight:rc});const fc=a-d,fv=rc-lc;if(lc>0)st.push({desc:`Subtract ${lc} from both sides`,eq:`${this.coeff(fc)}x = ${fv}`,op:'subtract_const',operand:lc,resultCoeff:fc,resultConst:0,resultRight:fv});else if(lc<0)st.push({desc:`Add ${Math.abs(lc)} to both sides`,eq:`${this.coeff(fc)}x = ${fv}`,op:'add_const',operand:Math.abs(lc),resultCoeff:fc,resultConst:0,resultRight:fv});else st.push({desc:'Simplify',eq:`${this.coeff(fc)}x = ${rc}`,op:'simplify',resultCoeff:fc,resultConst:0,resultRight:rc});st.push({desc:`Divide both sides by ${fc}`,eq:`x = ${fv} ÷ ${fc}`,op:'divide',operand:fc,resultCoeff:1,resultConst:0,resultRight:x});st.push({desc:'Simplify',eq:`x = ${x}`,op:'simplify',resultCoeff:1,resultConst:0,resultRight:x});return{equation:`${this.formatDistrib(a,b)} ${this.signedNum(c)} = ${this.formatDistrib(d,e)} ${this.signedNum(f)}`,steps:st,solution:x,original:{type:'6step',a,b,c,d,e,f}}},
+
+  verify(r){const x=r.solution,o=r.original;if(!Number.isInteger(x))return{pass:false,reason:'Non-integer'};let l,ri;switch(o.type){case'ax=b':l=o.a*x;ri=o.b;break;case'x+a=b':l=x+o.a;ri=o.b;break;case'x-a=b':l=x-o.a;ri=o.b;break;case'2step':l=o.a*x+o.b;ri=o.c;break;case'3step-bothsides':l=o.a*x+o.b;ri=o.c*x+o.d;break;case'3step-distrib':l=o.a*(x+o.b);ri=o.c;break;case'4step':l=o.a*(x+o.b);ri=o.c*x+o.d;break;case'5step':l=o.a*(x+o.b)+o.c;ri=o.d*x+o.e;break;case'6step':l=o.a*(x+o.b)+o.c;ri=o.d*(x+o.e)+o.f;break;default:return{pass:false,reason:'Unknown'}}return{pass:l===ri,left:l,right:ri,reason:l===ri?`${l} = ${ri} ✓`:`${l} ≠ ${ri} ✗`}},
+
+  generate(sc){if(!sc)sc=Math.floor(Math.random()*6)+1;const g={1:()=>this.gen1Step(),2:()=>this.gen2Step(),3:()=>this.gen3Step(),4:()=>this.gen4Step(),5:()=>this.gen5Step(),6:()=>this.gen6Step()};for(let i=0;i<10;i++){const r=g[sc]();const v=this.verify(r);if(v.pass){r.verification=v;r.stepCount=sc;return r}}const r=g[sc]();r.verification=this.verify(r);r.stepCount=sc;return r},
+
+  FAULT_TYPES:[{id:'sign_flip',name:'Sign Inversion',desc:'Flipped the sign of the operand'},{id:'off_by_one',name:'Off-By-One',desc:'Result is off by 1'},{id:'wrong_operation',name:'Wrong Operation',desc:'Applied the wrong inverse operation'},{id:'arithmetic_error',name:'Arithmetic Error',desc:'Computational mistake in the arithmetic'},{id:'distribute_error',name:'Distribution Error',desc:'Incorrectly distributed a coefficient'},{id:'combine_error',name:'Combine Error',desc:'Incorrectly combined like terms'}],
+
+  injectFault(cr,mx=20){for(let i=0;i<mx;i++){const a=this._injectFaultOnce(cr);if(!a)return null;if(a.fault.solutionsDiffer&&a.faultVerification.faultProperlyBreaksEquation)return a}return this._injectFaultOnce(cr)},
+
+  _injectFaultOnce(cr){const result=JSON.parse(JSON.stringify(cr));const steps=result.steps;const injectable=[];for(let i=0;i<steps.length;i++)if(steps[i].op!=='simplify')injectable.push(i);if(!injectable.length)return null;const faultIndex=injectable[Math.floor(Math.random()*injectable.length)];const fs=steps[faultIndex];let faultType,fR,fC,fCo;const cR=fs.resultRight,cC=fs.resultCoeff,cCo=fs.resultConst;const af=[];if(['subtract_const','add_const','collect_x'].includes(fs.op))af.push('sign_flip','off_by_one','arithmetic_error');if(fs.op==='divide')af.push('sign_flip','off_by_one','arithmetic_error','wrong_operation');if(['distribute','distribute_both'].includes(fs.op))af.push('distribute_error','sign_flip','arithmetic_error');if(['combine','combine_both'].includes(fs.op))af.push('combine_error','off_by_one','arithmetic_error');if(!af.length)af.push('off_by_one','arithmetic_error');const cfi=af[Math.floor(Math.random()*af.length)];faultType=this.FAULT_TYPES.find(f=>f.id===cfi);fC=cC;fCo=cCo;fR=cR;const off=(Math.random()<.5?1:-1)*this.randInt(1,4,[]);switch(cfi){case'sign_flip':if(fs.operand!=null){const dbl=2*fs.operand;if(fR!=null)fR=cR+dbl;if(fs.op==='collect_x')fC=cC+2*fs.operand;if(['subtract_const','add_const'].includes(fs.op)&&fR!=null)fR=cR+dbl}else fCo=-cCo;break;case'off_by_one':if(fR!=null)fR=cR+(Math.random()<.5?1:-1);else fCo=cCo+(Math.random()<.5?1:-1);break;case'wrong_operation':if(fs.op==='divide'&&fs.operand)fR=cR*fs.operand*fs.operand;else{if(fR!=null)fR=cR+off*2;fCo=cCo+off}break;case'arithmetic_error':if(fR!=null)fR=cR+off;else fCo=cCo+off;break;case'distribute_error':fCo=fs.operand!=null?fs.operand:cCo+off;break;case'combine_error':fCo=cCo+off;break}if(fR===cR&&fC===cC&&fCo===cCo){fR=cR!=null?cR+(Math.random()<.5?2:-2):cR;if(fR===cR)fCo=cCo+2}steps[faultIndex]._fault=true;steps[faultIndex]._faultType=faultType;steps[faultIndex]._correctEq=steps[faultIndex].eq;steps[faultIndex]._correctRight=cR;steps[faultIndex].resultCoeff=fC;steps[faultIndex].resultConst=fCo;steps[faultIndex].resultRight=fR;if(fC!==0&&fCo===0&&fR!=null){steps[faultIndex].eq=fC===1?`x = ${fR}`:`${this.coeff(fC)}x = ${fR}`}else if(fCo!==0&&fR!=null){steps[faultIndex].eq=`${this.formatLinear(fC,fCo)} = ${fR}`}else if(fR!=null){steps[faultIndex].eq=fC===1?`x = ${fR}`:`${this.coeff(fC)}x = ${fR}`}let curC=fC,curCo=fCo,curR=fR;for(let i=faultIndex+1;i<steps.length;i++){const s=steps[i];s._trickle=true;switch(s.op){case'simplify':if(curC===1&&curCo===0&&curR!=null)s.eq=`x = ${curR}`;else if(curCo===0&&curR!=null)s.eq=`${this.coeff(curC)}x = ${curR}`;else s.eq=`${this.formatLinear(curC,curCo)} = ${curR!=null?curR:'?'}`;s.resultCoeff=curC;s.resultConst=curCo;s.resultRight=curR;break;case'subtract_const':case'add_const':if(curCo!==0&&curR!=null){curR=curR-curCo;curCo=0;s.eq=`${this.coeff(curC)}x = ${curR}`}s.resultCoeff=curC;s.resultConst=curCo;s.resultRight=curR;break;case'collect_x':s.resultCoeff=curC;s.resultConst=curCo;s.resultRight=curR;s.eq=curCo!==0?`${this.formatLinear(curC,curCo)} = ${curR}`:`${this.coeff(curC)}x = ${curR}`;break;case'divide':if(curC!==0&&curR!=null){const dv=curR/curC;s.eq=`x = ${curR} ÷ ${curC}`;curR=dv;curC=1;curCo=0}s.resultCoeff=curC;s.resultConst=curCo;s.resultRight=curR;break;default:s.resultCoeff=curC;s.resultConst=curCo;s.resultRight=curR;s.eq=curCo!==0?`${this.formatLinear(curC,curCo)} = ${curR!=null?curR:'?'}`:`${this.coeff(curC)}x = ${curR!=null?curR:'?'}`;break}}const ls=steps[steps.length-1];const fSol=ls.resultRight;result.fault={faultIndex,faultType,correctSolution:cr.solution,faultedSolution:fSol,solutionsDiffer:fSol!==cr.solution,trickleCount:steps.filter(s=>s._trickle).length,trickleIndices:steps.map((s,i)=>s._trickle?i:-1).filter(i=>i>=0)};result.solution=fSol;result.faulted=true;const fv=this.verify(result);result.faultVerification={correctSolutionVerify:cr.verification,faultedSolutionVerify:fv,faultProperlyBreaksEquation:!fv.pass};return result}
+};
+
+// ============================================================
+// CONSTANTS
+// ============================================================
+const GAME_VERSION="v0.1";
+const COPYRIGHT_TEXT="© MisterMarx.com, 2026";
+const GAME_TITLE="CONJECTURE";
+const GAME_SUBTITLE="Spot the Error";
+const tFont="'Orbitron',sans-serif";
+const font="'IBM Plex Mono',monospace";
+
+const STEP_RANGES=[{label:'1–2 Steps',min:1,max:2},{label:'2–3 Steps',min:2,max:3},{label:'3–4 Steps',min:3,max:4},{label:'4–5 Steps',min:4,max:5},{label:'5–6 Steps',min:5,max:6},{label:'All (1–6)',min:1,max:6}];
+const ROUND_OPTIONS=[5,10,15];
+const TIMER_MODES=[{id:'untimed',label:'Untimed'},{id:'relaxed',label:'Relaxed (30s)'},{id:'pressure',label:'Pressure (20s↓)'}];
+
+const RULE_ITEMS=[
+  {title:'FIND THE FAULT',body:'You are shown a multi-step equation solution. Exactly one step contains an error. All steps after the error carry the mistake forward.'},
+  {title:'TAP TO IDENTIFY',body:'Tap the step you believe is the fault origin. You have up to 3 attempts to find the right step.'},
+  {title:'REPAIR THE ERROR',body:'After identifying the correct step, type what the right value should be. Getting both correct earns full points.'},
+  {title:'TRICKLE-DOWN',body:'An error at step 2 makes steps 3, 4, 5 all wrong too — but they are doing correct operations on wrong numbers. Find the FIRST wrong step, not the trickle-down.'}
+];
+
+const CONTROL_ITEMS=[
+  {title:'TAP A STEP',body:'Tap any step card to select it as the fault origin. Tap again to deselect.'},
+  {title:'ENTER CORRECTION',body:'After selecting, type the correct value and press SUBMIT.'},
+  {title:'PASS',body:'Tap PASS to skip. The fault is revealed but no points are awarded.'}
+];
+
+// ============================================================
+// GAME COMPONENT
+// ============================================================
+function Conjecture(){
+  // Phase: fog, menu, playing, gameover
+  const[phase,setPhase]=useState('fog');
+  const[pageLoaded,setPageLoaded]=useState(false);
+  const[fogGone,setFogGone]=useState(false);
+
+  // Settings
+  const[stepRange,setStepRange]=useState(STEP_RANGES[2]); // 3-4 default
+  const[roundCount,setRoundCount]=useState(10);
+  const[timerMode,setTimerMode]=useState('untimed');
+
+  // Game state
+  const[round,setRound]=useState(0);
+  const[score,setScore]=useState(0);
+  const[streak,setStreak]=useState(0);
+  const[bestStreak,setBestStreak]=useState(0);
+  const[results,setResults]=useState([]); // per-round results
+  const[currentCorrect,setCurrentCorrect]=useState(null);
+  const[currentFaulted,setCurrentFaulted]=useState(null);
+
+  // Round state
+  const[selectedStep,setSelectedStep]=useState(null);
+  const[attemptsLeft,setAttemptsLeft]=useState(3);
+  const[correctionValue,setCorrectionValue]=useState('');
+  const[correctionAttempts,setCorrectionAttempts]=useState(2);
+  const[roundPhase,setRoundPhase]=useState('picking'); // picking, correcting, revealed, transition
+  const[revealData,setRevealData]=useState(null);
+  const[shaking,setShaking]=useState(null); // index of step to shake
+  const[scorePopup,setScorePopup]=useState(null);
+  const[timeLeft,setTimeLeft]=useState(0);
+  const[roundStartTime,setRoundStartTime]=useState(0);
+
+  // Popups
+  const[showRules,setShowRules]=useState(false);
+  const[showControls,setShowControls]=useState(false);
+  const[showCredits,setShowCredits]=useState(false);
+  const[showQuit,setShowQuit]=useState(false);
+  const[paused,setPaused]=useState(false);
+
+  const timerRef=useRef(null);
+  const inputRef=useRef(null);
+
+  // Page load
+  useEffect(()=>{setTimeout(()=>setPageLoaded(true),800)},[]);
+
+  // Timer
+  useEffect(()=>{
+    if(phase!=='playing'||roundPhase==='revealed'||roundPhase==='transition'||paused||showQuit||showCredits||timerMode==='untimed')return;
+    const maxTime=timerMode==='relaxed'?30:Math.max(8,20-round);
+    if(timeLeft<=0&&timerMode!=='untimed'){handleTimeout();return}
+    timerRef.current=setInterval(()=>{setTimeLeft(t=>{if(t<=0.1){clearInterval(timerRef.current);return 0}return t-0.1})},100);
+    return()=>clearInterval(timerRef.current);
+  },[phase,roundPhase,paused,showQuit,showCredits,timeLeft,timerMode]);
+
+  // Focus input when correcting
+  useEffect(()=>{if(roundPhase==='correcting'&&inputRef.current)setTimeout(()=>inputRef.current?.focus(),100)},[roundPhase]);
+
+  const generateRound=useCallback(()=>{
+    const sc=ENGINE.randInt(stepRange.min,stepRange.max,[]);
+    const correct=ENGINE.generate(sc);
+    // Need at least 2 steps to inject a fault
+    const faultSc=sc<2?2:sc;
+    const correctForFault=sc<2?ENGINE.generate(faultSc):correct;
+    const faulted=ENGINE.injectFault(correctForFault);
+    setCurrentCorrect(correctForFault);
+    setCurrentFaulted(faulted);
+    setSelectedStep(null);
+    setAttemptsLeft(3);
+    setCorrectionValue('');
+    setCorrectionAttempts(2);
+    setRoundPhase('picking');
+    setRevealData(null);
+    setShaking(null);
+    const maxTime=timerMode==='relaxed'?30:timerMode==='pressure'?Math.max(8,20-round):0;
+    setTimeLeft(maxTime);
+    setRoundStartTime(Date.now());
+  },[stepRange,timerMode,round]);
+
+  const startGame=useCallback(()=>{
+    setRound(0);setScore(0);setStreak(0);setBestStreak(0);setResults([]);
+    setPhase('playing');
+    // Generate first round after state updates
+    setTimeout(()=>{
+      const sc=ENGINE.randInt(stepRange.min,stepRange.max,[]);
+      const correct=ENGINE.generate(sc<2?2:sc);
+      const faulted=ENGINE.injectFault(correct);
+      setCurrentCorrect(correct);setCurrentFaulted(faulted);
+      setSelectedStep(null);setAttemptsLeft(3);setCorrectionValue('');setCorrectionAttempts(2);
+      setRoundPhase('picking');setRevealData(null);setShaking(null);
+      const maxTime=timerMode==='relaxed'?30:timerMode==='pressure'?20:0;
+      setTimeLeft(maxTime);setRoundStartTime(Date.now());
+    },50);
+  },[stepRange,timerMode]);
+
+  const handleTimeout=useCallback(()=>{
+    clearInterval(timerRef.current);
+    doReveal(false,false,0,'timeout');
+  },[currentFaulted,currentCorrect]);
+
+  const doReveal=useCallback((stepCorrect,valueCorrect,pts,reason)=>{
+    if(!currentFaulted)return;
+    const f=currentFaulted.fault;
+    setRevealData({faultIndex:f.faultIndex,faultType:f.faultType,correctSolution:f.correctSolution,faultedSolution:f.faultedSolution,trickleIndices:f.trickleIndices,stepCorrect,valueCorrect,points:pts,reason});
+    setRoundPhase('revealed');
+    if(pts>0){setScore(s=>s+pts);setScorePopup({pts,t:Date.now()});setTimeout(()=>setScorePopup(null),1200)}
+    if(stepCorrect&&valueCorrect){setStreak(s=>{const n=s+1;setBestStreak(b=>Math.max(b,n));return n})}else{setStreak(0)}
+    setResults(r=>[...r,{round:round+1,stepCount:currentFaulted.stepCount,faultType:f.faultType.id,stepCorrect,valueCorrect,points:pts,reason,timeTaken:Date.now()-roundStartTime}]);
+  },[currentFaulted,round,roundStartTime]);
+
+  const handleStepTap=useCallback((idx)=>{
+    if(roundPhase!=='picking'||!currentFaulted)return;
+    if(selectedStep===idx){setSelectedStep(null);return}
+    setSelectedStep(idx);
+  },[roundPhase,selectedStep,currentFaulted]);
+
+  const handleSubmitStep=useCallback(()=>{
+    if(selectedStep===null||!currentFaulted)return;
+    const f=currentFaulted.fault;
+    if(selectedStep===f.faultIndex){
+      // Correct step found — move to correction phase
+      setRoundPhase('correcting');
+      setCorrectionValue('');
+      setCorrectionAttempts(2);
+    }else{
+      // Wrong step
+      setShaking(selectedStep);
+      setTimeout(()=>setShaking(null),500);
+      const left=attemptsLeft-1;
+      setAttemptsLeft(left);
+      setSelectedStep(null);
+      if(left<=0){
+        doReveal(false,false,0,'no_attempts');
+      }
+    }
+  },[selectedStep,currentFaulted,attemptsLeft,doReveal]);
+
+  const handleSubmitCorrection=useCallback(()=>{
+    if(!currentFaulted)return;
+    const f=currentFaulted.fault;
+    const faultStep=currentFaulted.steps[f.faultIndex];
+    const correctVal=faultStep._correctRight!=null?faultStep._correctRight:f.correctSolution;
+    const parsed=parseFloat(correctionValue);
+    if(isNaN(parsed))return;
+
+    if(parsed===correctVal){
+      // Full success
+      const base=currentFaulted.stepCount*50;
+      const stepMult=attemptsLeft===3?2:attemptsLeft===2?1:0.5;
+      const valMult=correctionAttempts===2?1.5:1;
+      const streakMult=Math.min(2,1+streak*0.1);
+      let timeMult=1;
+      if(timerMode!=='untimed'){const maxT=timerMode==='relaxed'?30:Math.max(8,20-round);if(timeLeft>maxT/2)timeMult=1.3}
+      const pts=Math.round(base*stepMult*valMult*streakMult*timeMult);
+      doReveal(true,true,pts,'solved');
+    }else{
+      // Wrong correction
+      const left=correctionAttempts-1;
+      setCorrectionAttempts(left);
+      setCorrectionValue('');
+      setShaking('input');
+      setTimeout(()=>setShaking(null),500);
+      if(left<=0){
+        const base=currentFaulted.stepCount*50;
+        const stepMult=attemptsLeft===3?2:attemptsLeft===2?1:0.5;
+        const pts=Math.round(base*stepMult*0.6);
+        doReveal(true,false,pts,'wrong_value');
+      }
+    }
+  },[currentFaulted,correctionValue,correctionAttempts,attemptsLeft,streak,timerMode,timeLeft,round,doReveal]);
+
+  const handlePass=useCallback(()=>{
+    doReveal(false,false,0,'passed');
+  },[doReveal]);
+
+  const handleNext=useCallback(()=>{
+    const nextRound=round+1;
+    if(nextRound>=roundCount){
+      setPhase('gameover');
+    }else{
+      setRound(nextRound);
+      setRoundPhase('transition');
+      setTimeout(()=>generateRound(),300);
+    }
+  },[round,roundCount,generateRound]);
+
+  // ============================================================
+  // RENDER HELPERS
+  // ============================================================
+  const S={
+    ctn:{width:'100%',height:'var(--app-height,100dvh)',display:'flex',flexDirection:'column',background:'#04040c',fontFamily:font,color:'#e2e8f0',overflow:'hidden'},
+    menuCtn:{flex:1,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:20,padding:'20px 16px',maxWidth:480,margin:'0 auto',width:'100%'},
+    title:{fontSize:'clamp(1.6rem,6vw,2.8rem)',fontWeight:900,letterSpacing:'.15em',fontFamily:tFont,textAlign:'center',background:'linear-gradient(90deg,#00f5d4,#9b5de5,#f15bb5,#00f5d4)',backgroundSize:'200% 100%',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent',animation:'glowPulse 3s ease-in-out infinite',lineHeight:1.1},
+    subtitle:{fontSize:11,letterSpacing:6,color:'#94a3b8',textTransform:'uppercase',textAlign:'center'},
+    settingGroup:{width:'100%',display:'flex',flexDirection:'column',gap:8,alignItems:'center'},
+    settingLabel:{fontSize:11,letterSpacing:'.15em',color:'#94a3b8',fontWeight:600,textTransform:'uppercase'},
+    optionGrid:{width:'100%',display:'grid',gap:6,padding:12,background:'rgba(15,23,42,.4)',borderRadius:12,border:'1px solid rgba(155,93,229,.2)'},
+    optionBtn:(sel)=>({padding:'10px 12px',fontSize:11,fontWeight:sel?700:400,letterSpacing:'.08em',border:sel?'2px solid #00f5d4':'1px solid rgba(155,93,229,.3)',borderRadius:6,background:sel?'rgba(0,245,212,.15)':'rgba(155,93,229,.08)',color:sel?'#00f5d4':'#9b5de5',cursor:'pointer',fontFamily:font,textAlign:'center',transition:'all .15s',height:'40px',display:'flex',alignItems:'center',justifyContent:'center',boxSizing:'border-box',minHeight:'40px'}),
+    primaryBtn:{padding:'14px 40px',fontSize:14,fontWeight:700,letterSpacing:'.12em',fontFamily:tFont,border:'1px solid #9b5de5',color:'#9b5de5',background:'rgba(155,93,229,.1)',borderRadius:4,cursor:'pointer',textTransform:'uppercase',transition:'all .2s'},
+    textBtn:{background:'none',border:'none',color:'#94a3b8',fontSize:11,letterSpacing:'.08em',cursor:'pointer',fontFamily:font,textTransform:'uppercase',animation:'glowPulse 2s ease-in-out infinite'},
+    footer:{display:'flex',justifyContent:'space-between',alignItems:'center',width:'100%',fontSize:10,color:'#94a3b8',fontFamily:font,letterSpacing:'.05em',padding:'8px 12px'},
+    footerBtn:{background:'none',border:'none',color:'#94a3b8',fontSize:10,cursor:'pointer',padding:0},
+    overlay:{position:'fixed',inset:0,background:'rgba(4,4,12,.96)',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:20,zIndex:1000,padding:20},
+    overlayTitle:{fontSize:'clamp(20px,4vw,32px)',fontWeight:900,letterSpacing:'.2em',fontFamily:tFont,color:'#f8fafc'},
+    overlayClose:{padding:'12px 24px',fontSize:12,letterSpacing:'.1em',border:'1px solid rgba(148,163,184,.3)',color:'#94a3b8',background:'transparent',borderRadius:4,cursor:'pointer',fontFamily:font,textTransform:'uppercase'},
+    ruleCard:{display:'flex',flexDirection:'column',gap:4,padding:'10px 14px',background:'rgba(15,23,42,.6)',borderRadius:6,borderLeft:'3px solid #00f5d4',maxWidth:480,width:'100%'},
+    ruleTitle:{fontSize:14,fontWeight:700,color:'#e2e8f0'},
+    ruleBody:{fontSize:12,color:'#94a3b8',lineHeight:1.5},
+  };
+
+  // ============================================================
+  // FOG
+  // ============================================================
+  if(phase==='fog'){
+    return(<div style={S.ctn}>
+      <div className={`fog-overlay${fogGone?' gone':''}`} onClick={()=>{if(!pageLoaded)return;setFogGone(true);setTimeout(()=>setPhase('menu'),800)}}>
+        <div className={`fog-text${fogGone?' gone':''}${pageLoaded?' loaded':''}`}>
+          PRESS ANYWHERE TO BEGIN<br/>CONJECTURE
+        </div>
+        {!pageLoaded&&<div style={{position:'absolute',top:'65%',left:'50%',transform:'translateX(-50%)'}}>
+          <div style={{width:50,height:50,border:'3px solid rgba(147,197,253,.2)',borderTop:'3px solid rgba(147,197,253,.8)',borderRadius:'50%',animation:'spinnerSpin 1s linear infinite'}}/>
+        </div>}
+      </div>
+    </div>);
+  }
+
+  // ============================================================
+  // MENU
+  // ============================================================
+  if(phase==='menu'){
+    return(<div style={S.ctn}>
+      <div style={S.menuCtn}>
+        <div style={S.title}>CONJECTURE</div>
+        <div style={S.subtitle}>Spot the Error</div>
+
+        <div style={S.settingGroup}>
+          <span style={S.settingLabel}>Equation Complexity</span>
+          <div style={{...S.optionGrid,gridTemplateColumns:'1fr 1fr'}}>
+            {STEP_RANGES.map(sr=><button key={sr.label} style={S.optionBtn(stepRange.label===sr.label)} onClick={()=>setStepRange(sr)}>{sr.label}</button>)}
+          </div>
+        </div>
+
+        <div style={S.settingGroup}>
+          <span style={S.settingLabel}>Rounds</span>
+          <div style={{...S.optionGrid,gridTemplateColumns:'repeat(3,1fr)'}}>
+            {ROUND_OPTIONS.map(n=><button key={n} style={S.optionBtn(roundCount===n)} onClick={()=>setRoundCount(n)}>{n}</button>)}
+          </div>
+        </div>
+
+        <div style={S.settingGroup}>
+          <span style={S.settingLabel}>Timer</span>
+          <div style={{...S.optionGrid,gridTemplateColumns:'1fr 1fr 1fr'}}>
+            {TIMER_MODES.map(tm=><button key={tm.id} style={S.optionBtn(timerMode===tm.id)} onClick={()=>setTimerMode(tm.id)}>{tm.label}</button>)}
+          </div>
+        </div>
+
+        <button style={S.primaryBtn} onClick={startGame}>BEGIN</button>
+
+        <div style={{display:'flex',gap:16,alignItems:'center'}}>
+          <button style={S.textBtn} onClick={()=>setShowRules(true)}>View Rules</button>
+          <span style={{color:'#9b5de5'}}>·</span>
+          <button style={S.textBtn} onClick={()=>setShowControls(true)}>View Controls</button>
+        </div>
+      </div>
+
+      <div style={S.footer}>
+        <span>{GAME_VERSION}</span>
+        <div style={{display:'flex',gap:12}}>
+          <button style={S.footerBtn} onClick={()=>setShowCredits(true)}>📋</button>
+        </div>
+        <a href="https://www.mistermarx.com" target="_blank" rel="noopener noreferrer" style={{color:'#94a3b8',textDecoration:'none',fontSize:8}}>{COPYRIGHT_TEXT}</a>
+      </div>
+
+      {showRules&&<div style={S.overlay}><div style={S.overlayTitle}>RULES</div><div style={{maxHeight:'60vh',overflowY:'auto',display:'flex',flexDirection:'column',gap:10,padding:'0 16px'}}>{RULE_ITEMS.map(r=><div key={r.title} style={S.ruleCard}><span style={S.ruleTitle}>{r.title}</span><span style={S.ruleBody}>{r.body}</span></div>)}</div><button style={S.overlayClose} onClick={()=>setShowRules(false)}>Close</button></div>}
+      {showControls&&<div style={S.overlay}><div style={S.overlayTitle}>CONTROLS</div><div style={{maxHeight:'60vh',overflowY:'auto',display:'flex',flexDirection:'column',gap:10,padding:'0 16px'}}>{CONTROL_ITEMS.map(r=><div key={r.title} style={S.ruleCard}><span style={S.ruleTitle}>{r.title}</span><span style={S.ruleBody}>{r.body}</span></div>)}</div><button style={S.overlayClose} onClick={()=>setShowControls(false)}>Close</button></div>}
+      {showCredits&&<div style={S.overlay}><div style={S.overlayTitle}>CREDITS</div><div style={{fontSize:14,color:'#94a3b8',textAlign:'center',lineHeight:1.6}}>Sound Effects by Mixkit<br/>https://mixkit.co</div><button style={S.overlayClose} onClick={()=>setShowCredits(false)}>Close</button></div>}
+    </div>);
+  }
+
+  // ============================================================
+  // PLAYING
+  // ============================================================
+  if(phase==='playing'&&currentFaulted){
+    const f=currentFaulted.fault;
+    const steps=currentFaulted.steps;
+    const isRevealed=roundPhase==='revealed';
+    const maxTime=timerMode==='relaxed'?30:timerMode==='pressure'?Math.max(8,20-round):0;
+    const timerPct=maxTime>0?timeLeft/maxTime:1;
+
+    return(<div style={{...S.ctn,justifyContent:'flex-start'}}>
+      {/* HUD */}
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'10px 14px',borderBottom:'1px solid rgba(148,163,184,.1)',flexShrink:0}}>
+        <div style={{display:'flex',flexDirection:'column',gap:2}}>
+          <span style={{fontSize:'clamp(.7rem,2vw,.9rem)',fontWeight:900,fontFamily:tFont,letterSpacing:'.1em',background:'linear-gradient(90deg,#00f5d4,#9b5de5)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent'}}>CONJECTURE</span>
+          <span style={{fontSize:8,color:'#94a3b8',letterSpacing:'.1em'}}>SPOT THE ERROR</span>
+        </div>
+        <div style={{display:'flex',gap:'clamp(10px,3vw,20px)',alignItems:'center'}}>
+          {[['RND',`${round+1}/${roundCount}`],['SCORE',score],['STREAK',streak>0?`×${streak}`:'—']].map(([l,v])=>
+            <div key={l} style={{display:'flex',flexDirection:'column',alignItems:'center',gap:2}}>
+              <span style={{fontSize:8,letterSpacing:'.12em',color:'#94a3b8',fontWeight:600}}>{l}</span>
+              <span style={{fontSize:14,fontWeight:700,color:l==='STREAK'&&streak>0?'#fbbf24':'#f1f5f9',position:'relative'}}>
+                {v}
+                {l==='SCORE'&&scorePopup&&<span style={{position:'absolute',top:-8,left:'50%',transform:'translateX(-50%)',fontSize:12,color:'#00f5d4',fontWeight:700,animation:'scorePop 1.2s ease-out forwards',pointerEvents:'none',whiteSpace:'nowrap'}}>+{scorePopup.pts}</span>}
+              </span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Timer bar */}
+      {timerMode!=='untimed'&&<div style={{width:'100%',height:4,background:'rgba(148,163,184,.1)',flexShrink:0}}>
+        <div style={{width:`${timerPct*100}%`,height:'100%',background:timerPct<.2?'#f87171':timerPct<.4?'#fbbf24':'#00f5d4',transition:'width .1s linear',borderRadius:2}}/>
+      </div>}
+
+      {/* Scrollable content */}
+      <div style={{flex:1,overflowY:'auto',overflowX:'hidden',padding:'12px 14px',WebkitOverflowScrolling:'touch'}}>
+        {/* Original equation */}
+        <div style={{padding:'12px 16px',background:'rgba(155,93,229,.08)',border:'1px solid rgba(155,93,229,.25)',borderRadius:8,textAlign:'center',marginBottom:12,animation:'fadeIn .4s ease-out'}}>
+          <div style={{fontSize:9,letterSpacing:'.15em',color:'#9b5de5',textTransform:'uppercase',marginBottom:4,fontWeight:700}}>Solve for x</div>
+          <div style={{fontSize:'clamp(16px,4vw,22px)',fontWeight:700,color:'#fff',letterSpacing:2}}>{currentFaulted.equation}</div>
+        </div>
+
+        {/* Attempts remaining */}
+        {roundPhase==='picking'&&<div style={{textAlign:'center',marginBottom:10,fontSize:11,color:attemptsLeft<=1?'#f87171':'#94a3b8'}}>
+          {attemptsLeft===3?'Tap the step with the error':'Attempts remaining: '+attemptsLeft}
+        </div>}
+
+        {/* Steps */}
+        <div style={{display:'flex',flexDirection:'column',gap:6}}>
+          {steps.map((step,i)=>{
+            const isSel=selectedStep===i;
+            const isShaking=shaking===i;
+            const isFaultOrigin=isRevealed&&revealData&&i===revealData.faultIndex;
+            const isTrickle=isRevealed&&revealData&&revealData.trickleIndices.includes(i);
+            const isCorrectStep=isRevealed&&!isFaultOrigin&&!isTrickle;
+
+            let borderColor='rgba(148,163,184,.12)';
+            let bg='rgba(0,0,0,.2)';
+            let leftBorder='3px solid rgba(148,163,184,.15)';
+
+            if(isSel&&!isRevealed){borderColor='rgba(155,93,229,.6)';bg='rgba(155,93,229,.08)';leftBorder='3px solid #9b5de5'}
+            if(isFaultOrigin){borderColor='rgba(255,107,107,.5)';bg='rgba(255,107,107,.08)';leftBorder='3px solid #ff6b6b'}
+            if(isTrickle){borderColor='rgba(255,159,67,.3)';bg='rgba(255,159,67,.04)';leftBorder='3px solid #ff9f43'}
+            if(isCorrectStep){leftBorder='3px solid #00f5d4'}
+
+            return(<div key={i}
+              onClick={()=>{if(!isRevealed&&roundPhase==='picking')handleStepTap(i)}}
+              style={{display:'flex',gap:10,padding:'10px 12px',borderRadius:6,background:bg,borderLeft:leftBorder,border:`1px solid ${borderColor}`,cursor:isRevealed?'default':'pointer',transition:'all .15s',animation:isRevealed?`revealPop .4s ease-out ${i*80}ms both`:isShaking?'shake .4s ease-in-out':`slideIn .3s ease-out ${i*60}ms both`,position:'relative'}}>
+              <span style={{fontSize:10,fontWeight:700,color:isFaultOrigin?'#ff6b6b':isTrickle?'#ff9f43':isCorrectStep?'#00f5d4':'#9b5de5',minWidth:22}}>S{i+1}</span>
+              <div style={{flex:1}}>
+                <div style={{fontSize:11,color:'#94a3b8',marginBottom:3}}>
+                  {step.desc}
+                  {isFaultOrigin&&<span style={{display:'inline-block',fontSize:9,letterSpacing:'.1em',padding:'1px 6px',borderRadius:3,background:'rgba(255,107,107,.2)',color:'#ff6b6b',border:'1px solid rgba(255,107,107,.4)',marginLeft:6,fontWeight:700}}>⚠ FAULT</span>}
+                  {isTrickle&&<span style={{display:'inline-block',fontSize:9,letterSpacing:'.1em',padding:'1px 6px',borderRadius:3,background:'rgba(255,159,67,.15)',color:'#ff9f43',border:'1px solid rgba(255,159,67,.3)',marginLeft:6,fontWeight:700}}>↓ TRICKLE</span>}
+                  {isCorrectStep&&isRevealed&&<span style={{display:'inline-block',fontSize:9,letterSpacing:'.1em',padding:'1px 6px',borderRadius:3,background:'rgba(0,245,212,.1)',color:'#00f5d4',border:'1px solid rgba(0,245,212,.2)',marginLeft:6,fontWeight:700}}>✓</span>}
+                </div>
+                <div style={{fontSize:'clamp(14px,3vw,17px)',color:isFaultOrigin?'#ff6b6b':isTrickle?'#ff9f43':'#e2e8f0',letterSpacing:1,fontWeight:600}}>{step.eq}</div>
+                {isFaultOrigin&&step._correctEq&&<div style={{fontSize:10,color:'#00f5d4',marginTop:4,padding:'3px 6px',background:'rgba(0,245,212,.06)',borderRadius:3}}>Correct: {step._correctEq}</div>}
+                {isFaultOrigin&&revealData&&<div style={{fontSize:10,color:'#ff6b6b',marginTop:2}}>{revealData.faultType.name} — {revealData.faultType.desc}</div>}
+              </div>
+            </div>);
+          })}
+        </div>
+
+        {/* Solution shown */}
+        <div style={{marginTop:10,padding:'10px 14px',borderRadius:6,background:isRevealed?'rgba(255,107,107,.06)':'rgba(148,163,184,.04)',border:isRevealed?'1px solid rgba(255,107,107,.2)':'1px solid rgba(148,163,184,.08)',textAlign:'center',animation:'fadeIn .5s ease-out'}}>
+          <div style={{fontSize:9,letterSpacing:'.12em',color:isRevealed?'#ff6b6b':'#94a3b8',textTransform:'uppercase',marginBottom:2}}>
+            {isRevealed?'Faulted Answer':'Their Answer'}
+          </div>
+          <div style={{fontSize:18,fontWeight:700,color:isRevealed?'#ff6b6b':'#e2e8f0'}}>
+            x = {currentFaulted.solution}{!Number.isInteger(currentFaulted.solution)&&' (non-integer)'}
+          </div>
+          {isRevealed&&revealData&&<div style={{fontSize:12,color:'#00f5d4',marginTop:4}}>Correct answer: x = {revealData.correctSolution}</div>}
+        </div>
+
+        {/* Correction input */}
+        {roundPhase==='correcting'&&<div style={{marginTop:12,padding:14,borderRadius:8,background:'rgba(0,245,212,.06)',border:'1px solid rgba(0,245,212,.2)',animation:'popIn .3s ease-out'}}>
+          <div style={{fontSize:11,color:'#00f5d4',marginBottom:8,letterSpacing:'.1em',fontWeight:600}}>
+            STEP {selectedStep+1} IDENTIFIED — What should the correct result be?
+          </div>
+          <div style={{display:'flex',gap:8,alignItems:'center'}}>
+            <input ref={inputRef} type="number" value={correctionValue} onChange={e=>setCorrectionValue(e.target.value)}
+              onKeyDown={e=>{if(e.key==='Enter')handleSubmitCorrection()}}
+              style={{flex:1,padding:'10px 12px',background:'rgba(0,0,0,.3)',border:'1px solid rgba(0,245,212,.3)',borderRadius:6,color:'#fff',fontSize:16,fontFamily:font,outline:'none',animation:shaking==='input'?'shake .4s ease-in-out':'none'}}
+              placeholder="Enter correct value..."
+              inputMode="numeric"
+            />
+            <button onClick={handleSubmitCorrection} style={{padding:'10px 16px',background:'rgba(0,245,212,.15)',border:'1px solid #00f5d4',color:'#00f5d4',borderRadius:6,fontSize:12,fontWeight:700,letterSpacing:'.08em',fontFamily:font,cursor:'pointer'}}>SUBMIT</button>
+          </div>
+          {correctionAttempts<2&&<div style={{fontSize:10,color:'#fbbf24',marginTop:6}}>{correctionAttempts} correction attempt remaining</div>}
+        </div>}
+
+        {/* Revealed summary */}
+        {isRevealed&&revealData&&<div style={{marginTop:12,padding:14,borderRadius:8,background:'rgba(155,93,229,.06)',border:'1px solid rgba(155,93,229,.2)',animation:'fadeIn .5s ease-out .3s both'}}>
+          <div style={{fontSize:11,letterSpacing:'.12em',color:revealData.points>0?'#00f5d4':'#f87171',fontWeight:700,marginBottom:8}}>
+            {revealData.reason==='solved'?'SOLVED':revealData.reason==='wrong_value'?'STEP FOUND — VALUE MISSED':revealData.reason==='no_attempts'?'NOT FOUND':revealData.reason==='passed'?'PASSED':revealData.reason==='timeout'?'TIME\'S UP':'—'}
+            {revealData.points>0&&` — +${revealData.points} pts`}
+          </div>
+          <div style={{fontSize:11,color:'#94a3b8',lineHeight:1.8}}>
+            <div>Fault: <span style={{color:'#ff6b6b'}}>{revealData.faultType.name}</span> at Step {revealData.faultIndex+1}</div>
+            <div>Trickle-down: {revealData.trickleIndices.length} step{revealData.trickleIndices.length!==1?'s':''}</div>
+          </div>
+        </div>}
+
+        {/* Spacer for bottom buttons */}
+        <div style={{height:80}}/>
+      </div>
+
+      {/* Bottom action bar */}
+      <div style={{flexShrink:0,padding:'10px 14px',borderTop:'1px solid rgba(148,163,184,.1)',display:'flex',gap:8,justifyContent:'center',background:'rgba(4,4,12,.95)'}}>
+        {roundPhase==='picking'&&<>
+          <button onClick={handleSubmitStep} disabled={selectedStep===null} style={{flex:1,padding:'12px',fontSize:12,fontWeight:700,letterSpacing:'.08em',border:selectedStep!==null?'1px solid #9b5de5':'1px solid rgba(148,163,184,.2)',color:selectedStep!==null?'#9b5de5':'#64748b',background:selectedStep!==null?'rgba(155,93,229,.1)':'transparent',borderRadius:6,cursor:selectedStep!==null?'pointer':'default',fontFamily:font,transition:'all .15s'}}>SUBMIT STEP</button>
+          <button onClick={handlePass} style={{padding:'12px 16px',fontSize:11,letterSpacing:'.06em',border:'1px solid rgba(248,113,113,.3)',color:'#f87171',background:'rgba(248,113,113,.06)',borderRadius:6,cursor:'pointer',fontFamily:font}}>PASS</button>
+          <button onClick={()=>{setPaused(true);setShowQuit(true)}} style={{padding:'12px 16px',fontSize:11,letterSpacing:'.06em',border:'1px solid rgba(148,163,184,.2)',color:'#94a3b8',background:'transparent',borderRadius:6,cursor:'pointer',fontFamily:font}}>⏸</button>
+        </>}
+        {isRevealed&&<button onClick={handleNext} style={{flex:1,padding:'14px',fontSize:13,fontWeight:700,letterSpacing:'.1em',border:'1px solid #9b5de5',color:'#9b5de5',background:'rgba(155,93,229,.1)',borderRadius:6,cursor:'pointer',fontFamily:font}}>
+          {round+1>=roundCount?'VIEW RESULTS':'NEXT EQUATION →'}
+        </button>}
+      </div>
+
+      {/* Quit / Pause overlay */}
+      {showQuit&&<div style={S.overlay}>
+        <div style={S.overlayTitle}>PAUSED</div>
+        <div style={{display:'flex',flexDirection:'column',gap:12,alignItems:'center'}}>
+          <button onClick={()=>{setShowQuit(false);setPaused(false)}} style={{...S.primaryBtn,borderColor:'#00f5d4',color:'#00f5d4'}}>▶ RESUME</button>
+          <button onClick={()=>{setShowQuit(false);setPaused(false);setPhase('menu')}} style={{...S.overlayClose,borderColor:'#f87171',color:'#f87171'}}>QUIT TO MENU</button>
+          <div style={{display:'flex',gap:12}}>
+            <button style={S.textBtn} onClick={()=>setShowRules(true)}>Rules</button>
+            <button style={S.textBtn} onClick={()=>setShowControls(true)}>Controls</button>
+          </div>
+        </div>
+      </div>}
+
+      {showRules&&<div style={S.overlay}><div style={S.overlayTitle}>RULES</div><div style={{maxHeight:'60vh',overflowY:'auto',display:'flex',flexDirection:'column',gap:10,padding:'0 16px'}}>{RULE_ITEMS.map(r=><div key={r.title} style={S.ruleCard}><span style={S.ruleTitle}>{r.title}</span><span style={S.ruleBody}>{r.body}</span></div>)}</div><button style={S.overlayClose} onClick={()=>setShowRules(false)}>Close</button></div>}
+      {showControls&&<div style={S.overlay}><div style={S.overlayTitle}>CONTROLS</div><div style={{maxHeight:'60vh',overflowY:'auto',display:'flex',flexDirection:'column',gap:10,padding:'0 16px'}}>{CONTROL_ITEMS.map(r=><div key={r.title} style={S.ruleCard}><span style={S.ruleTitle}>{r.title}</span><span style={S.ruleBody}>{r.body}</span></div>)}</div><button style={S.overlayClose} onClick={()=>setShowControls(false)}>Close</button></div>}
+    </div>);
+  }
+
+  // ============================================================
+  // GAME OVER
+  // ============================================================
+  if(phase==='gameover'){
+    const solved=results.filter(r=>r.reason==='solved').length;
+    const stepHits=results.filter(r=>r.stepCorrect).length;
+    const faultTypes={};results.forEach(r=>{faultTypes[r.faultType]=(faultTypes[r.faultType]||0)+1});
+    const mostMissed=Object.entries(faultTypes).filter(([ft])=>results.some(r=>r.faultType===ft&&!r.stepCorrect)).sort((a,b)=>b[1]-a[1])[0];
+
+    return(<div style={{...S.ctn,justifyContent:'center',alignItems:'center',padding:20}}>
+      <div style={{maxWidth:480,width:'100%',display:'flex',flexDirection:'column',alignItems:'center',gap:16,animation:'fadeIn .6s ease-out'}}>
+        <div style={{...S.title,fontSize:'clamp(1.2rem,5vw,2rem)'}}>MISSION COMPLETE</div>
+        <div style={S.subtitle}>{roundCount} Equations Analyzed</div>
+
+        <div style={{display:'flex',gap:20,flexWrap:'wrap',justifyContent:'center'}}>
+          {[['SCORE',score,'#00f5d4'],['SOLVED',`${solved}/${roundCount}`,'#9b5de5'],['BEST STREAK',bestStreak,'#fbbf24']].map(([l,v,c])=>
+            <div key={l} style={{display:'flex',flexDirection:'column',alignItems:'center',gap:4}}>
+              <span style={{fontSize:9,letterSpacing:'.12em',color:'#94a3b8'}}>{l}</span>
+              <span style={{fontSize:22,fontWeight:700,color:c}}>{v}</span>
+            </div>
+          )}
+        </div>
+
+        <div style={{width:'100%',padding:14,background:'rgba(15,23,42,.6)',borderRadius:8,border:'1px solid rgba(148,163,184,.12)'}}>
+          <div style={{fontSize:10,letterSpacing:'.1em',color:'#94a3b8',marginBottom:8}}>PERFORMANCE</div>
+          <div style={{fontSize:12,color:'#cbd5e1',lineHeight:2}}>
+            <div>Step identification rate: <span style={{color:'#00f5d4',fontWeight:700}}>{roundCount>0?Math.round(stepHits/roundCount*100):0}%</span></div>
+            <div>Full solve rate: <span style={{color:'#00f5d4',fontWeight:700}}>{roundCount>0?Math.round(solved/roundCount*100):0}%</span></div>
+            <div>Fault types seen: {Object.keys(faultTypes).join(', ')}</div>
+            {mostMissed&&<div>Most missed: <span style={{color:'#ff6b6b'}}>{mostMissed[0]}</span></div>}
+          </div>
+        </div>
+
+        <div style={{display:'flex',gap:12}}>
+          <button style={S.primaryBtn} onClick={startGame}>PLAY AGAIN</button>
+          <button style={S.overlayClose} onClick={()=>setPhase('menu')}>MENU</button>
+        </div>
+      </div>
+
+      <div style={{...S.footer,position:'absolute',bottom:0,left:0,right:0}}>
+        <span>{GAME_VERSION}</span>
+        <a href="https://www.mistermarx.com" target="_blank" rel="noopener noreferrer" style={{color:'#94a3b8',textDecoration:'none',fontSize:8}}>{COPYRIGHT_TEXT}</a>
+      </div>
+    </div>);
+  }
+
+  // Fallback
+  return <div style={S.ctn}/>;
+}
+
+ReactDOM.render(<Conjecture/>, document.getElementById('root'));
+</script>
+</body>
+</html>
