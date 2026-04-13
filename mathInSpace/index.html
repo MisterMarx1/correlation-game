@@ -2497,6 +2497,9 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
 
             // --- Tab Visibility Detection ---
             useEffect(() => {
+                // Detect if running in Android Capacitor app
+                const isAndroidApp = window.Capacitor && window.Capacitor.platform === 'android';
+                
                 const handleVisibilityChange = () => {
                     if (document.hidden) {
                         // Page is hidden - pause background music
@@ -2510,45 +2513,48 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
                     }
                 };
 
-                const handleBlur = () => {
-                    if (!isPaused) setPauseTime(Date.now());
-                    setIsPaused(true);
-                    soundManager.pause();
-                };
+                // ALWAYS add visibilitychange (needed for both web and Android)
+                window.addEventListener('visibilitychange', handleVisibilityChange);
 
-                const handleFocus = () => {
-                    setIsPaused(false);
-                    soundManager.resume();
-                };
+                // ONLY add these for web/desktop, NOT for Android
+                if (!isAndroidApp) {
+                    const handleBlur = () => {
+                        if (!isPaused) setPauseTime(Date.now());
+                        setIsPaused(true);
+                        soundManager.pause();
+                    };
 
-                const handlePageHide = () => {
-                    if (!isPaused) setPauseTime(Date.now());
-                    setIsPaused(true);
-                    soundManager.pause();
-                };
+                    const handleFocus = () => {
+                        setIsPaused(false);
+                        soundManager.resume();
+                    };
 
-                const handlePageShow = () => {
-                    setIsPaused(false);
-                    soundManager.resume();
-                };
+                    const handlePageHide = () => {
+                        if (!isPaused) setPauseTime(Date.now());
+                        setIsPaused(true);
+                        soundManager.pause();
+                    };
 
-                // Page Visibility API
-                document.addEventListener('visibilitychange', handleVisibilityChange);
-                
-                // Page lifecycle events
-                window.addEventListener('pagehide', handlePageHide);
-                window.addEventListener('pageshow', handlePageShow);
-                
-                // Window focus/blur events
-                window.addEventListener('blur', handleBlur);
-                window.addEventListener('focus', handleFocus);
+                    const handlePageShow = () => {
+                        setIsPaused(false);
+                        soundManager.resume();
+                    };
+
+                    window.addEventListener('blur', handleBlur);
+                    window.addEventListener('focus', handleFocus);
+                    window.addEventListener('pagehide', handlePageHide);
+                    window.addEventListener('pageshow', handlePageShow);
+
+                    return () => {
+                        window.removeEventListener('blur', handleBlur);
+                        window.removeEventListener('focus', handleFocus);
+                        window.removeEventListener('pagehide', handlePageHide);
+                        window.removeEventListener('pageshow', handlePageShow);
+                    };
+                }
 
                 return () => {
-                    document.removeEventListener('visibilitychange', handleVisibilityChange);
-                    window.removeEventListener('pagehide', handlePageHide);
-                    window.removeEventListener('pageshow', handlePageShow);
-                    window.removeEventListener('blur', handleBlur);
-                    window.removeEventListener('focus', handleFocus);
+                    window.removeEventListener('visibilitychange', handleVisibilityChange);
                 };
             }, [isPaused]);
 

@@ -1,0 +1,2716 @@
+<!--
+  MATH IN SPACE - Arithmetic Practice Game
+  
+  Copyright © 2026 Mister Marx LLC. All rights reserved.
+  
+  Description:
+  An educational arithmetic game where players solve math problems in a space-themed
+  environment. Features dynamic problem generation, adaptive difficulty, speed bonuses,
+  and comprehensive performance tracking with visual feedback.
+  
+  Architecture:
+  - React 18 with functional components and hooks
+  - Redux Toolkit for state management
+  - Canvas-based starfield background rendering
+  - Component-based UI with reusable elements
+  - Web Audio API for dynamic sound management
+  
+  Best Practices:
+  - Component unification for consistent styling
+  - Performance-optimized rendering with useCallback/useMemo
+  - Responsive design with mobile-first approach
+  - Touch-friendly interaction patterns
+  - Accessibility considerations for keyboard navigation
+  - Smart incorrect answer generation for educational value
+  - Tab visibility detection for resource management
+  
+  Dependencies:
+  - React 18 (CDN)
+  - Redux Toolkit (CDN)
+  - React Redux (CDN)
+  - Babel Standalone (JSX transformation)
+  - Web Audio API (native)
+  - Canvas API (native)
+  
+  Author: Mister Marx
+  Version: v0.1
+  Last Modified: 2026-03-23
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Math In Space</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link rel="icon" type="image/png" href="favicon/math_space_favicon.png">
+    
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@reduxjs/toolkit@1.9.7/dist/redux-toolkit.umd.js"></script>
+    <script src="https://unpkg.com/react-redux@8.1.3/dist/react-redux.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        /* Remove default browser margins and white border */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            /* iOS tap highlight fix */
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+        
+        html, body {
+            margin: 0;
+            padding: 0;
+            border: none;
+            overflow: hidden;
+            width: 100%;
+            height: 100%;
+            -webkit-text-size-adjust: 100%;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+
+        /* Allow text selection for inputs and buttons */
+        input, textarea, button, select {
+            -webkit-user-select: auto;
+            -moz-user-select: auto;
+            -ms-user-select: auto;
+            user-select: auto;
+        }
+
+        /* Keep pointer cursor for interactive elements */
+        button, [role="button"], a {
+            cursor: pointer;
+        }
+
+        /* --- Base Container --- */
+        .math-in-space-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            text-align: center;
+            width: 100%;
+            height: 100vh;
+            color: #e0e0e0;
+            box-sizing: border-box;
+            overflow: hidden;
+            position: relative;
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        /* Default background for setup/results */
+        .math-in-space-container:not(.playing-screen) {
+            background: linear-gradient(to bottom, #000428, #004e92);
+        }
+
+        /* Remove background for playing state since canvas handles it */
+        .math-in-space-container.playing-screen {
+            background: none;
+            padding: 10px;
+        }
+
+        /* --- Setup Screen --- */
+        .setup-content {
+            height: 100%;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        .setup-content h1 {
+            color: #00ccff;
+            font-weight: 700;
+            letter-spacing: 1px;
+            margin: 0 0 0em;
+            padding: 0em 0;
+        }
+        .setup-content h2 {
+            color: #ff9900;
+            font-size: 1.1em;
+            margin: 0 2em;
+            padding: 0 1em;
+        }
+        .settings-grid {
+            display: grid;
+            gap: 10px;
+            margin-bottom: 10px;
+            width: 70%;
+            max-width: 600px;
+            grid-template-columns: 1fr;
+        }
+
+        @media (min-width: 400px) {
+            .settings-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (min-width: 825px) {
+            .settings-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+        .setting-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 0.9em;
+            color: #ccc;
+        }
+        .setting-group select {
+            width: 100%;
+            padding: 8px 10px;
+            background-color: rgba(255, 255, 255, 0.1);
+            color: #e0e0e0;
+            border: 1px solid #00ccff;
+            border-radius: 5px;
+            font-family: 'Orbitron', sans-serif;
+            cursor: pointer;
+        }
+        .setting-group select option {
+            background-color: #001f3f;
+            color: #e0e0e0;
+        }
+        .start-button {
+            font-size: 1.2em;
+            padding: 8px 20px;
+            cursor: pointer;
+            background: linear-gradient(145deg, #ff9900, #cc7a00);
+            color: #fff;
+            border: none;
+            border-radius: 50px;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 0 15px rgba(255, 153, 0, 0.4);
+        }
+        .start-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 25px rgba(255, 153, 0, 0.6);
+        }
+
+        /* --- Playing Screen --- */
+        .game-hud {
+            display: flex;
+            justify-content: space-between;
+            width: 95%;
+            max-width: 500px;
+            font-size: clamp(1.1em, 1.5vw, 1.3em);
+            padding: 5px 10px;
+            margin-bottom: 10px;
+            color: #00ccff;
+            font-weight: 700;
+            background-color: rgba(0, 0, 0, 0.3);
+            border-radius: 5px;
+            z-index: 10;
+            position: relative;
+        }
+        .question-area {
+            width: 100%;
+            text-align: center;
+            margin-bottom: 20px;
+            z-index: 10;
+            position: relative;
+        }
+        .question {
+            font-size: clamp(2.2em, 2.5vw, 2.5em);
+            font-weight: 700;
+            color: #fff;
+            text-shadow: 0 0 8px #00ccff;
+        }
+
+        .answer-options-container {
+            position: absolute;
+            top: 15%;
+            left: 0;
+            width: 100%;
+            height: 65%;
+            overflow: visible;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+
+        .answer-ship-wrapper {
+            position: absolute;
+            width: 105px;
+            height: 105px;
+            padding: 8px 4px;
+            transform: translate(-50%, -50%);
+            border-radius: 50px;
+            z-index: 5;
+            user-select: none;
+            animation:
+              shipAnimation 5s infinite ease-in-out,
+              shipPopIn 0.3s ease-out;
+        }
+
+        .answer-ship-inner {
+            background-color: rgba(0, 204, 255, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 60px;
+            height:40px;
+            color: #001f3f;
+            border: 2px solid #00ccff;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 1.2em;
+            font-weight: 700;
+            text-align: center;
+            transition:
+                background-color 0.3s ease,
+                border-color 0.3s ease,
+                box-shadow 0.3s ease;
+            box-shadow: 0 0 10px rgba(0, 204, 255, 0.5);
+            padding: 0px 10px;
+            user-select: none;
+        }
+
+        .answer-ship-inner:hover {
+            outline: 3px solid #ff9900;
+            outline-offset: 2px;
+        }
+
+        /* Force clear hover state on iPhone */
+        .answer-ship-inner.no-hover:hover {
+            outline: none !important;
+            outline-offset: 0 !important;
+        }
+
+        .answer-ship-inner.correct {
+            outline: 4px solid #00ff00 !important;
+            outline-offset: 2px;
+        }
+
+        .answer-ship-inner.incorrect {
+            outline: 4px solid #ff0000 !important;
+            outline-offset: 2px;
+        }
+
+        .answer-ship.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        .answer-ship-inner.disabled {
+            pointer-events: none;
+            opacity: 0.8;
+        }
+
+        .player-ship-area {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 20%;
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            overflow: hidden;
+            z-index: 1;
+        }
+
+        /* --- Ship Animation --- */
+        @keyframes shipAnimation {
+            0% {
+                transform: translate(-50%, -50%) rotate(0deg) scale(1);
+            }
+            25% {
+                transform: translate(-50%, -50%) translateY(-5px) rotate(5deg) scale(1);
+            }
+            50% {
+                transform: translate(-50%, -50%) rotate(0deg) scale(1);
+            }
+            75% {
+                transform: translate(-50%, -50%) translateY(5px) rotate(-5deg) scale(1);
+            }
+            100% {
+                transform: translate(-50%, -50%) rotate(0deg) scale(1);
+            }
+        }
+
+        @keyframes shipPopIn {
+            0% {
+              transform: translate(-50%, -50%) scale(0.6);
+              opacity: 0;
+            }
+            100% {
+              transform: translate(-50%, -50%) scale(1);
+              opacity: 1;
+            }
+        }
+
+        /* --- Feedback Flash --- */
+        @keyframes flash-effect {
+            0% { opacity: 0.4; }
+            50% { opacity: 0; }
+            100% { opacity: 0.4; }
+        }
+        .flash-correct::before, .flash-incorrect::before, .flash-timeout::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 50;
+            pointer-events: none;
+            animation: flash-effect 0.4s linear;
+        }
+        .flash-correct::before { background-color: rgba(40, 167, 69, 0.4); }
+        .flash-incorrect::before { background-color: rgba(255, 69, 69, 0.4); }
+        .flash-timeout::before { background-color: rgba(255, 193, 7, 0.4); }
+
+        /* --- Progress Bars --- */
+        .progress-bar-container {
+            position: absolute;
+            bottom: 5px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80%;
+            max-width: 400px;
+            height: 10px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+            display: flex;
+            overflow: hidden;
+            z-index: 15;
+            margin-bottom: 10px;
+        }
+        .progress-bar {
+            height: 100%;
+            transition: width 0.3s ease-in-out;
+        }
+        .progress-bar.correct { background-color: #28a745; }
+        .progress-bar.incorrect { background-color: #dc3545; }
+        .progress-bar.timeout { background-color: #ffc107; }
+
+        /* --- Results Screen --- */
+        .math-in-space-container.results-screen {
+            justify-content: center;
+            gap: 20px;
+        }
+
+        .results-content {
+            background-color: rgba(0, 0, 0, 0.5);
+            padding: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            max-width: 600px;
+            width: 90%;
+            flex-direction: column;
+            height: 100%;
+            max-height: 100%;
+        }
+        .results-ops {
+            font-size: 1.2em;
+            margin: 0px 0 10px 0;
+        }
+        .results-content h1 {
+            color: #00ccff;
+            margin: -0.5em 0em 0em;
+            padding: 0em 0;
+            font-size: clamp(1.4em, 7vw, 2em);
+        }
+
+        .results-content h2 {
+            color: #ff9900;
+            font-size: 1.5em;
+            margin: 10px 0 10px 0;
+        }
+        .results-bars {
+            position: relative;
+            bottom: auto;
+            left: auto;
+            transform: none;
+            margin: 15px auto;
+            height: 15px;
+        }
+        .results-summary {
+            font-size: 1em;
+            color: #ccc;
+            margin-bottom: 25px;
+        }
+        .play-again-button {
+            font-size: 1.2em;
+            padding: 10px 25px;
+            cursor: pointer;
+            background: linear-gradient(145deg, #00ccff, #007bff);
+            color: #fff;
+            border: none;
+            border-radius: 50px;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 0 15px rgba(0, 204, 255, 0.4);
+        }
+        .play-again-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 25px rgba(0, 204, 255, 0.6);
+        }
+        .log-output {
+            margin-top: 10px;
+        }
+        .log-output h3 {
+            color: #ccc;
+            margin-top: -5px;
+            margin-bottom: 10px;
+        }
+        .log-output textarea {
+            width: 100%;
+            box-sizing: border-box;
+            border: 1px solid rgba(0, 204, 255, 0.3);
+            background-color: rgba(0, 0, 0, 0.3);
+            color: #0f0;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.8em;
+            padding: 10px;
+            border-radius: 4px;
+            height: 100px;
+            min-height: 100px;
+            resize: vertical;
+            overflow: auto;
+        }
+
+        /* --- Ship Feedback Colors --- */
+        .answer-ship-inner.clicked-correct {
+            background-color: rgba(40, 167, 69, 0.8);
+            border-color: #28a745;
+            box-shadow: 0 0 15px rgba(40, 167, 69, 0.7);
+            z-index: 6;
+        }
+
+        .answer-ship-inner.clicked-incorrect {
+            background-color: rgba(220, 53, 69, 0.8);
+            border-color: #dc3545;
+            box-shadow: 0 0 15px rgba(220, 53, 69, 0.7);
+            z-index: 6;
+        }
+
+        .answer-ship-inner.show-correct {
+            background-color: rgba(40, 167, 69, 0.8);
+            border-color: #28a745;
+            box-shadow: 0 0 15px rgba(40, 167, 69, 0.7);
+            z-index: 6;
+        }
+
+        .quit-button {
+            background: linear-gradient(145deg, #ff4444, #cc0000);
+            color: #fff;
+            padding: 4px 4px;
+            border: none;
+            border-radius: 50px;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 0 15px rgba(255, 68, 68, 0.4);
+        }
+        .quit-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 25px rgba(255, 68, 68, 0.6);
+        }
+
+        .setting-group .operation-toggles {
+            display: flex;
+            gap: 8px;
+            margin-top: 4px;
+        }
+
+        .setting-group .op-button {
+            flex: 1;
+            padding: 8px 10px;
+            background-color: rgba(255, 255, 255, 0.1);
+            color: #e0e0e0;
+            border: 1px solid #00ccff;
+            border-radius: 5px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1em;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: background-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .setting-group .op-button:hover {
+            background-color: rgba(0, 204, 255, 0.1);
+        }
+
+        .setting-group .op-button.active {
+            background-color: #00ccff;
+            color: #001f3f;
+            box-shadow: 0 0 8px rgba(0, 204, 255, 0.5);
+        }
+
+        .start-button:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            box-shadow: none;
+            transform: none;
+        }
+
+        .question-timer-container {
+            position: absolute;
+            bottom: 5px;
+            width: 100px;
+            height: 6px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 3px;
+            overflow: hidden;
+            z-index: 20;
+        }
+        .question-timer-bar {
+            height: 100%;
+            background: #ff9900;
+            transition: width 0.1s linear;
+        }
+
+        @keyframes floatUpFade {
+            0% {
+              opacity: 1;
+              transform: translate(-50%, -50%) scale(1);
+            }
+            50% {
+              transform: translate(-50%, -80%) scale(1.2);
+            }
+            100% {
+              opacity: 0;
+              transform: translate(-50%, -120%) scale(0.9);
+            }
+        }
+
+        .start-controls {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-top: .5rem;
+        }
+
+        .multiplier-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .difficulty-multiplier-display {
+            background: none;
+            border: none;
+            display: flex;
+            align-items: center;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.5rem;
+            color: #ff0000;
+            user-select: none;
+        }
+
+        .multiplier-label {
+            font-size: 0.5rem;
+            color: #ffffff;
+            margin-bottom: 0.25rem;
+        }
+
+        .results-divider {
+            border: none;
+            height: 3px;
+            background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.2), transparent);
+            margin: 20px;
+        }
+
+        /* --- Floating Sound Toggle --- */
+        .sound-toggle {
+            position: fixed;
+            bottom: -4px;
+            left: -4px;
+            background: none;
+            border: none;
+            color: rgba(0, 100, 150, 0.7);
+            cursor: pointer;
+            font-size: 20px;
+            padding: 8px;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            z-index: 1000;
+            opacity: 0.8;
+        }
+
+        .sound-toggle:hover {
+            color: #fff;
+            transform: scale(1.1);
+        }
+
+        .sound-toggle.muted {
+            color: rgba(100, 100, 100, 0.5);
+        }
+
+        .sound-toggle.muted:hover {
+            color: rgba(150, 150, 150, 0.8);
+        }
+
+        /* --- Credits Toggle --- */
+        .credits-toggle {
+            position: fixed;
+            bottom: 24px;
+            left: -4px;
+            background: transparent;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            font-size: 18px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            color: #00ccff;
+            opacity: 0.8;
+            z-index: 1000;
+        }
+
+        .credits-toggle:hover {
+            color: #fff;
+            transform: scale(1.1);
+        }
+
+        .version-text {
+            position: fixed;
+            bottom: 2px;
+            left: 34px;
+            font-size: 7px;
+            font-family: 'IBM Plex Mono', monospace;
+            color: #ffffff;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            opacity: 0.4;
+            z-index: 1000;
+        }
+
+        .copyright-text {
+            position: fixed;
+            bottom: 2px;
+            right: 6px;
+            font-size: 7px;
+            font-family: 'IBM Plex Mono', monospace;
+            color: #ffffff;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            opacity: 0.4;
+            z-index: 1000;
+        }
+
+        /* --- Credits Popup --- */
+        .credits-popup {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 100vh;
+            background-color: rgba(0, 31, 63, 0.98);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            z-index: 2000;
+        }
+
+        .credits-title {
+            font-size: 32px;
+            font-weight: 900;
+            letter-spacing: 0.3em;
+            color: #f8fafc;
+            font-family: 'Orbitron', sans-serif;
+            text-transform: uppercase;
+        }
+
+        .credits-content {
+            font-size: 16px;
+            color: #94a3b8;
+            font-family: 'IBM Plex Mono', monospace;
+            text-align: center;
+            max-width: 320px;
+            line-height: 1.5;
+        }
+
+        .credits-close-button {
+            padding: 12px 32px;
+            background: transparent;
+            color: #94a3b8;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            cursor: pointer;
+            font-family: 'IBM Plex Mono', monospace;
+            transition: all 0.2s;
+            text-transform: uppercase;
+        }
+
+        .credits-close-button:hover {
+            background-color: rgba(0, 204, 255, 0.1);
+            color: #fff;
+            border-color: rgba(0, 204, 255, 0.3);
+        }
+
+        /* --- Glow Pulse Animation --- */
+        @keyframes glowPulse {
+            0%, 100% {
+                text-shadow: 0 0 5px rgba(103, 232, 249, 0.8), 0 0 10px rgba(103, 232, 249, 0.6);
+            }
+            50% {
+                text-shadow: 0 0 10px rgba(103, 232, 249, 1), 0 0 20px rgba(103, 232, 249, 0.8);
+            }
+        }
+
+        .paused-game * {
+            animation-play-state: paused !important;
+        }
+
+        /* Smokey Fog Overlay */
+        .fog-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(ellipse at center, 
+                rgba(20, 25, 40, 0.95) 0%, 
+                rgba(10, 15, 30, 0.98) 40%, 
+                rgba(5, 10, 20, 1) 100%);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: fogDrift 8s ease-in-out infinite;
+            backdrop-filter: blur(3px);
+            -webkit-backdrop-filter: blur(3px);
+            transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+        }
+
+        .fog-overlay.disappearing {
+            opacity: 0;
+            transform: scale(1.1) rotate(2deg);
+            pointer-events: none;
+        }
+
+        @keyframes fogDrift {
+            0%, 100% { 
+                background: radial-gradient(ellipse at center, 
+                    rgba(20, 25, 40, 0.95) 0%, 
+                    rgba(10, 15, 30, 0.98) 40%, 
+                    rgba(5, 10, 20, 1) 100%);
+            }
+            25% { 
+                background: radial-gradient(ellipse at 30% 40%, 
+                    rgba(25, 30, 45, 0.93) 0%, 
+                    rgba(12, 18, 35, 0.97) 40%, 
+                    rgba(6, 12, 25, 1) 100%);
+            }
+            50% { 
+                background: radial-gradient(ellipse at 70% 60%, 
+                    rgba(22, 28, 42, 0.94) 0%, 
+                    rgba(11, 17, 32, 0.98) 40%, 
+                    rgba(5, 11, 22, 1) 100%);
+            }
+            75% { 
+                background: radial-gradient(ellipse at 40% 30%, 
+                    rgba(23, 29, 43, 0.92) 0%, 
+                    rgba(13, 19, 33, 0.97) 40%, 
+                    rgba(7, 13, 24, 1) 100%);
+            }
+        }
+
+        .fog-text {
+            font-family: 'Orbitron', monospace;
+            font-size: clamp(1.5rem, 4vw, 2.5rem);
+            font-weight: 900;
+            color: rgba(255, 255, 255, 0.3);
+            text-align: center;
+            letter-spacing: 0.2em;
+            animation: textFlash 3s ease-in-out infinite;
+            text-shadow: 0 0 20px rgba(147, 197, 253, 0.1),
+                         0 0 40px rgba(147, 197, 253, 0.05),
+                         0 0 60px rgba(147, 197, 253, 0.02);
+            cursor: pointer;
+            user-select: none;
+            -webkit-user-select: none;
+            padding: 2rem;
+            border-radius: 8px;
+            transition: all 0.3s ease, opacity 0.8s ease-out, transform 0.8s ease-out;
+            filter: blur(8px);
+            opacity: 0.4;
+        }
+
+        .fog-text.loaded {
+            color: rgba(255, 255, 255, 0.8);
+            text-shadow: 0 0 20px rgba(147, 197, 253, 0.5),
+                         0 0 40px rgba(147, 197, 253, 0.3),
+                         0 0 60px rgba(147, 197, 253, 0.2);
+            filter: blur(0px);
+            opacity: 1;
+        }
+
+        .fog-text.disappearing {
+            opacity: 0;
+            transform: scale(1.5) translateY(-20px);
+            filter: blur(8px);
+        }
+
+        .fog-text:hover {
+            color: rgba(255, 255, 255, 1);
+            text-shadow: 0 0 30px rgba(147, 197, 253, 0.8),
+                         0 0 60px rgba(147, 197, 253, 0.6),
+                         0 0 80px rgba(147, 197, 253, 0.4);
+            transform: scale(1.05);
+        }
+
+        @keyframes textFlash {
+            0%, 100% { 
+                opacity: 0.4;
+                text-shadow: 0 0 10px rgba(147, 197, 253, 0.3),
+                             0 0 20px rgba(147, 197, 253, 0.2);
+            }
+            25% { 
+                opacity: 0.7;
+                text-shadow: 0 0 15px rgba(147, 197, 253, 0.4),
+                             0 0 30px rgba(147, 197, 253, 0.3);
+            }
+            50% { 
+                opacity: 1;
+                text-shadow: 0 0 25px rgba(147, 197, 253, 0.6),
+                             0 0 50px rgba(147, 197, 253, 0.4),
+                             0 0 75px rgba(147, 197, 253, 0.3);
+            }
+            75% { 
+                opacity: 0.6;
+                text-shadow: 0 0 20px rgba(147, 197, 253, 0.5),
+                             0 0 40px rgba(147, 197, 253, 0.3);
+            }
+        }
+
+        .fog-particles {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            pointer-events: none;
+        }
+
+        .fog-particle {
+            position: absolute;
+            width: 100px;
+            height: 100px;
+            background: radial-gradient(circle, 
+                rgba(147, 197, 253, 0.1) 0%, 
+                transparent 70%);
+            border-radius: 50%;
+            animation: floatParticle 15s linear infinite;
+            transition: all 0.8s ease-out;
+        }
+
+        .fog-particle.disappearing {
+            opacity: 0;
+            transform: translateX(200px) translateY(-200px) scale(2);
+            filter: blur(12px);
+        }
+
+        @keyframes floatParticle {
+            0% {
+                transform: translateX(-100px) translateY(100vh) scale(0.5);
+                opacity: 0;
+            }
+            10% {
+                opacity: 0.3;
+            }
+            90% {
+                opacity: 0.3;
+            }
+            100% {
+                transform: translateX(100vw) translateY(-100px) scale(1.5);
+                opacity: 0;
+            }
+        }
+
+        /* --- Circular Progress Spinner --- */
+        .fog-progress-container {
+            position: absolute;
+            top: 65%;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10000;
+        }
+
+        .fog-progress-spinner {
+            width: 60px;
+            height: 60px;
+            position: relative;
+        }
+
+        .fog-progress-circle {
+            width: 100%;
+            height: 100%;
+            border: 3px solid rgba(147, 197, 253, 0.2);
+            border-top: 3px solid rgba(147, 197, 253, 0.8);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    
+    <script type="text/babel">
+        const { useState, useEffect, useRef, useCallback, useMemo } = React;
+        const { useSelector, useDispatch } = ReactRedux;
+        const { createStore } = RTK;
+
+        // --- Sound Management System ---
+        const SoundRoles = {
+            // Background music track (will loop and overlap with itself)
+            BACKGROUND_MUSIC: 'mixkit-dark-space-motion-3026.wav',
+            
+            // UI Sounds
+            BUTTON_CLICK: 'mixkit-cinematic-impact-waves-781.wav',
+            QUIT_BUTTON: 'mixkit-futuristic-robotic-fast-sweep-171.wav',
+            DROPDOWN_SELECT: 'mixkit-space-impact-774.wav',
+            CONFIRMATION: 'mixkit-sci-fi-confirmation-914.wav',
+            ERROR: 'mixkit-long-arcade-synth-fart-3043.wav',
+            OPERATION_TOGGLE: 'mixkit-space-impact-774.wav',
+            SPEED_BONUS: 'mixkit-correct-answer-fast-notification-953.wav',
+            
+            // Game Sounds
+            LASER_SHOT: 'mixkit-space-impact-774.wav',
+            CORRECT_ANSWER: 'mixkit-positive-interface-beep-221.wav',
+            INCORRECT_ANSWER: 'mixkit-arcade-game-over-1949.wav',
+            GAME_OVER: 'mixkit-melodic-game-over-956.wav',
+            STOMP_IMPACT: 'mixkit-apocalyptic-stomp-impact-3057.wav',
+            FAST_SWEEP: 'mixkit-futuristic-robotic-fast-sweep-171.wav'
+        };
+
+        class SoundManager {
+            constructor() {
+                this.sounds = {};
+                this.backgroundMusicTrack = null;
+                this.backgroundMusicTrack2 = null; // Second track for overlapping
+                this.musicStarted = false;
+                this.userInteracted = false;
+                this.isMuted = false;
+                this.isPaused = false; // Track pause state
+                this.basePath = './sfx/'; // Adjust if needed
+                this.currentTrack = 1; // Track which audio is currently playing
+                this.loopTimer = null; // Timer for next track start
+                
+                this.loadAllSounds();
+                // Don't start background music on page load - wait for user interaction
+            }
+
+            loadAllSounds() {
+                // Load all sounds
+                Object.entries(SoundRoles).forEach(([role, filename]) => {
+                    if (role === 'BACKGROUND_MUSIC') {
+                        // Create two background music tracks for overlapping
+                        const audio1 = new Audio(this.basePath + filename);
+                        const audio2 = new Audio(this.basePath + filename);
+                        
+                        audio1.loop = false; // We'll handle looping manually
+                        audio2.loop = false; // We'll handle looping manually
+                        audio1.volume = 0.3;
+                        audio2.volume = 0.3;
+                        
+                        this.backgroundMusicTrack = audio1;
+                        this.backgroundMusicTrack2 = audio2;
+                    } else {
+                        // Regular sound effects
+                        const audio = new Audio(this.basePath + filename);
+                        audio.volume = 0.5;
+                        this.sounds[role] = audio;
+                    }
+                });
+            }
+
+            setMuted(isMuted) {
+                this.isMuted = isMuted;
+                const volume = this.isMuted ? 0 : 0.3;
+                const effectsVolume = this.isMuted ? 0 : 0.5;
+                
+                // Update background music volume for both tracks
+                if (this.backgroundMusicTrack) {
+                    this.backgroundMusicTrack.volume = volume;
+                }
+                if (this.backgroundMusicTrack2) {
+                    this.backgroundMusicTrack2.volume = volume;
+                }
+                
+                // Update sound effect volumes
+                Object.values(this.sounds).forEach(audio => {
+                    audio.volume = effectsVolume;
+                });
+            }
+
+            toggleMute() {
+                this.setMuted(!this.isMuted);
+                return this.isMuted;
+            }
+
+            startBackgroundMusic() {
+                if (this.musicStarted || !this.backgroundMusicTrack) return;
+                
+                this.musicStarted = true;
+                this.playBackgroundTrack(0); // Start immediately
+            }
+
+            playBackgroundTrack(delay = 0) {
+                // Clear any existing timer
+                if (this.loopTimer) {
+                    clearTimeout(this.loopTimer);
+                    this.loopTimer = null;
+                }
+                
+                // Don't play if music is paused
+                if (this.isPaused) {
+                    return;
+                }
+                
+                // Alternate between tracks for seamless overlapping
+                const track = this.currentTrack === 1 ? this.backgroundMusicTrack : this.backgroundMusicTrack2;
+                
+                if (track) {
+                    track.currentTime = 0;
+                    
+                    if (delay > 0) {
+                        setTimeout(() => {
+                            // Check again if not paused before playing
+                            if (!this.isPaused) {
+                                track.play().catch(e => console.log('Background music play failed:', e));
+                                this.scheduleNextTrack();
+                            }
+                        }, delay);
+                    } else {
+                        track.play().catch(e => console.log('Background music play failed:', e));
+                        this.scheduleNextTrack();
+                    }
+                    
+                    // Switch to the other track for next play
+                    this.currentTrack = this.currentTrack === 1 ? 2 : 1;
+                }
+            }
+            
+            scheduleNextTrack() {
+                // Don't schedule if music is paused
+                if (this.isPaused) {
+                    return;
+                }
+                
+                // The dark-space-motion track is approximately 32 seconds long
+                // Start next track 10 seconds before current ends (32 - 10 = 22 seconds)
+                const overlapDelay = 22000; // 22 seconds
+                
+                this.loopTimer = setTimeout(() => {
+                    if (this.musicStarted && !this.isPaused) {
+                        this.playBackgroundTrack(0); // Start overlapping track
+                    }
+                }, overlapDelay);
+            }
+
+            play(role) {
+                if (this.isMuted) return; // Don't play if muted
+                
+                const sound = this.sounds[role];
+                if (sound) {
+                    sound.currentTime = 0;
+                    sound.play().catch(e => console.log(`Failed to play ${role}:`, e));
+                }
+            }
+
+            stopBackgroundMusic() {
+                // Clear the loop timer
+                if (this.loopTimer) {
+                    clearTimeout(this.loopTimer);
+                    this.loopTimer = null;
+                }
+                
+                if (this.backgroundMusicTrack) {
+                    this.backgroundMusicTrack.pause();
+                    this.backgroundMusicTrack.currentTime = 0;
+                }
+                if (this.backgroundMusicTrack2) {
+                    this.backgroundMusicTrack2.pause();
+                    this.backgroundMusicTrack2.currentTime = 0;
+                }
+                this.musicStarted = false;
+                this.currentTrack = 1; // Reset to track 1
+            }
+
+            pause() {
+                this.isPaused = true;
+                
+                // Clear the loop timer to prevent scheduled tracks from playing
+                if (this.loopTimer) {
+                    clearTimeout(this.loopTimer);
+                    this.loopTimer = null;
+                }
+                
+                // Pause both background tracks
+                if (this.backgroundMusicTrack && !this.backgroundMusicTrack.paused) {
+                    this.backgroundMusicTrack.pause();
+                }
+                if (this.backgroundMusicTrack2 && !this.backgroundMusicTrack2.paused) {
+                    this.backgroundMusicTrack2.pause();
+                }
+            }
+
+            resume() {
+                this.isPaused = false;
+                
+                // Resume the appropriate track based on which should be playing
+                if (this.musicStarted) {
+                    // Check which track was playing and resume it, then schedule next
+                    const currentPlayingTrack = this.currentTrack === 1 ? this.backgroundMusicTrack2 : this.backgroundMusicTrack;
+                    
+                    if (currentPlayingTrack && currentPlayingTrack.paused) {
+                        currentPlayingTrack.play().catch(e => console.log('Background music resume failed:', e));
+                        // Reschedule the next track
+                        this.scheduleNextTrack();
+                    }
+                }
+            }
+        }
+
+        // Initialize sound manager
+        const soundManager = new SoundManager();
+
+        // --- Configuration ---
+        const DEFAULT_DURATION = 60;
+        const DEFAULT_MAX_DIGITS = 1;
+        const DEFAULT_NUM_OPTIONS = 4;
+        const POINTS_CORRECT_PER_DIGIT = 25;
+        const POINTS_INCORRECT_PENALTY_PER_DIGIT = 25;
+        const POINTS_TIMEOUT_PER_DIGIT = 50;
+        const SPEED_BONUS_THRESHOLD_MS = 2000;
+        const SPEED_BONUS_POINTS_BASE = 10;
+        const QUESTION_TIMEOUT = 10;
+
+        // --- Helper Functions ---
+        function getRandomInt(min, max) {
+            min = Math.ceil(min);
+            max = Math.floor(max);
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function clamp(val, min, max) {
+            return Math.min(Math.max(val, min), max);
+        }
+
+        // --- Smart Incorrect Answer Generation ---
+        function generateIncorrectAnswers(correctAnswer, num1, num2, operation, numOptions, maxDigits) {
+            const incorrectAnswers = new Set();
+            const maxPossibleValue = Math.pow(10, maxDigits) * 2;
+
+            // 1. Off-by-one errors
+            if (correctAnswer > 0) incorrectAnswers.add(correctAnswer - 1);
+            incorrectAnswers.add(correctAnswer + 1);
+
+            // 2. Operation mistakes
+            if (operation === '+') incorrectAnswers.add(Math.abs(num1 - num2));
+            if (operation === '-') incorrectAnswers.add(num1 + num2);
+            if (operation === '*') {
+                incorrectAnswers.add(num1 + num2);
+                if (num2 !== 0) incorrectAnswers.add(Math.floor(num1 / num2));
+            }
+            if (operation === '/') {
+                incorrectAnswers.add(num1 * num2);
+                if (num2 !== 0) incorrectAnswers.add(num1 + num2);
+            }
+
+            // 3. Fill remaining slots with random numbers near the answer
+            const randomRange = Math.max(5, Math.pow(10, maxDigits - 1 || 1));
+            while (incorrectAnswers.size < numOptions - 1) {
+                let randomAnswer = getRandomInt(
+                    Math.max(0, correctAnswer - randomRange),
+                    Math.min(maxPossibleValue, correctAnswer + randomRange)
+                );
+                if (randomAnswer !== correctAnswer && !incorrectAnswers.has(randomAnswer)) {
+                    incorrectAnswers.add(randomAnswer);
+                }
+                if (incorrectAnswers.size >= numOptions * 3) break;
+            }
+
+            let finalIncorrect = Array.from(incorrectAnswers);
+            finalIncorrect = finalIncorrect.filter((ans) => ans !== correctAnswer);
+
+            if (finalIncorrect.length > numOptions - 1) {
+                finalIncorrect = finalIncorrect.slice(0, numOptions - 1);
+            }
+            while (finalIncorrect.length < numOptions - 1) {
+                let randomAnswer = getRandomInt(0, maxPossibleValue);
+                if (randomAnswer !== correctAnswer && !finalIncorrect.includes(randomAnswer)) {
+                    finalIncorrect.push(randomAnswer);
+                }
+                if (finalIncorrect.length >= numOptions * 3) break;
+            }
+
+            return finalIncorrect;
+        }
+
+        // --- Problem Generation ---
+        function generateProblem(maxDigits, selectedOperations) {
+            const maxVal = Math.pow(10, maxDigits) - 1;
+            const minVal = maxDigits > 1 ? Math.pow(10, maxDigits - 1) : 0;
+
+            let num1 = getRandomInt(minVal, maxVal);
+            let num2 = getRandomInt(minVal, maxVal);
+            const operation = selectedOperations[getRandomInt(0, selectedOperations.length - 1)];
+            let question = '';
+            let answer = 0;
+
+            switch (operation) {
+                case '+':
+                    answer = num1 + num2;
+                    question = `${num1} + ${num2} = ?`;
+                    break;
+                case '-':
+                    if (num1 < num2) {
+                        [num1, num2] = [num2, num1];
+                    }
+                    answer = num1 - num2;
+                    question = `${num1} - ${num2} = ?`;
+                    break;
+                case '*':
+                    num1 = getRandomInt(minVal, Math.max(minVal + 1, Math.floor(maxVal * 0.7)));
+                    num2 = getRandomInt(minVal, Math.max(minVal + 1, Math.floor(maxVal * 0.7)));
+                    answer = num1 * num2;
+                    question = `${num1} × ${num2} = ?`;
+                    break;
+                case '/':
+                    if (num2 === 0) num2 = getRandomInt(1, maxVal);
+                    answer = getRandomInt(minVal, maxVal);
+                    num1 = answer * num2;
+                    if (num1 > maxVal * maxVal || (num1 > 144 && maxDigits <= 1)) {
+                        return generateProblem(maxDigits, selectedOperations);
+                    }
+                    question = `${num1} ÷ ${num2} = ?`;
+                    break;
+                default:
+                    return generateProblem(maxDigits, selectedOperations);
+            }
+            return { num1, num2, operation, question, answer };
+        }
+
+        function generateShipPositions(numShips) {
+            const gridCols = 6;
+            const gridRows = 4;
+            const cellWidth = 100 / gridCols;
+            const cellHeight = 100 / gridRows;
+
+            const allCells = [];
+            for (let row = 0; row < gridRows; row++) {
+                for (let col = 0; col < gridCols; col++) {
+                    allCells.push({ row, col });
+                }
+            }
+
+            const shuffled = shuffleArray(allCells);
+            const used = new Set();
+            const chosen = [];
+
+            for (const cell of shuffled) {
+                const key = `${cell.row},${cell.col}`;
+                if (used.has(key)) continue;
+
+                chosen.push({
+                    x: (cell.col + 0.5) * cellWidth,
+                    y: (cell.row + 0.5) * cellHeight,
+                });
+
+                for (let dy = -1; dy <= 1; dy++) {
+                    for (let dx = -1; dx <= 1; dx++) {
+                        const nr = cell.row + dy;
+                        const nc = cell.col + dx;
+                        if (nr >= 0 && nr < gridRows && nc >= 0 && nc < gridCols) {
+                            used.add(`${nr},${nc}`);
+                        }
+                    }
+                }
+
+                if (chosen.length >= numShips) break;
+            }
+
+            return chosen;
+        }
+
+        // --- Starfield Background Component ---
+        const StarfieldBackground = () => {
+            const canvasRef = useRef(null);
+            const starsRef = useRef([]);
+            const animationFrameRef = useRef(null);
+
+            const config = useMemo(() => ({
+                numStarsPer100kPixels: 70,
+                minStarSize: 0.5,
+                maxStarSize: 2.0,
+                minOpacity: 0.2,
+                maxOpacity: 0.9,
+                flickerChance: 0.02,
+                flickerAmount: 0.3,
+                backgroundColor: '#000428',
+            }), []);
+
+            const generateStars = useCallback((canvas) => {
+                if (!canvas) return;
+                const ctx = canvas.getContext('2d');
+                const dpr = window.devicePixelRatio || 1;
+                const width = canvas.offsetWidth * dpr;
+                const height = canvas.offsetHeight * dpr;
+                canvas.width = width;
+                canvas.height = height;
+
+                const numPixels = width * height;
+                const numStars = Math.floor((numPixels / 100000) * config.numStarsPer100kPixels);
+                const newStars = [];
+
+                for (let i = 0; i < numStars; i++) {
+                    const size = Math.random() * (config.maxStarSize - config.minStarSize) + config.minStarSize;
+                    const baseOpacity = Math.random() * (config.maxOpacity - config.minOpacity) + config.minOpacity;
+                    newStars.push({
+                        x: Math.random() * width,
+                        y: Math.random() * height,
+                        size: size * dpr,
+                        baseOpacity: baseOpacity,
+                        currentOpacity: baseOpacity,
+                        flicker: false,
+                    });
+                }
+                starsRef.current = newStars;
+            }, [config]);
+
+            const draw = useCallback(() => {
+                const canvas = canvasRef.current;
+                if (!canvas) return;
+                const ctx = canvas.getContext('2d');
+                const width = canvas.width;
+                const height = canvas.height;
+
+                ctx.fillStyle = config.backgroundColor;
+                ctx.fillRect(0, 0, width, height);
+
+                ctx.fillStyle = 'white';
+                starsRef.current.forEach(star => {
+                    if (star.flicker) {
+                        star.currentOpacity = star.baseOpacity * (1 - config.flickerAmount * Math.random());
+                        if (Math.random() > 0.8) {
+                            star.flicker = false;
+                            star.currentOpacity = star.baseOpacity;
+                        }
+                    } else if (Math.random() < config.flickerChance) {
+                        star.flicker = true;
+                    }
+
+                    ctx.beginPath();
+                    ctx.arc(star.x, star.y, star.size / 2, 0, Math.PI * 2);
+                    ctx.globalAlpha = star.currentOpacity;
+                    ctx.fill();
+                    ctx.globalAlpha = 1.0;
+                });
+
+                animationFrameRef.current = requestAnimationFrame(draw);
+            }, [config]);
+
+            const handleResize = useCallback(() => {
+                const canvas = canvasRef.current;
+                if (canvas) {
+                    generateStars(canvas);
+                }
+            }, [generateStars]);
+
+            useEffect(() => {
+                const canvas = canvasRef.current;
+                if (!canvas) return;
+
+                generateStars(canvas);
+                animationFrameRef.current = requestAnimationFrame(draw);
+
+                window.addEventListener('resize', handleResize);
+
+                return () => {
+                    cancelAnimationFrame(animationFrameRef.current);
+                    window.removeEventListener('resize', handleResize);
+                };
+            }, [generateStars, draw, handleResize]);
+
+            return (
+                <canvas
+                    ref={canvasRef}
+                    style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        height: '100%',
+                        zIndex: -1,
+                        pointerEvents: 'none',
+                        display: 'block',
+                    }}
+                />
+            );
+        };
+
+        // --- Sound Toggle Component ---
+        const SoundToggle = () => {
+            const [isMuted, setIsMuted] = useState(soundManager.isMuted);
+
+            const toggleSound = () => {
+                const newMutedState = soundManager.toggleMute();
+                setIsMuted(newMutedState);
+            };
+
+            return (
+                <button 
+                    className={`sound-toggle ${isMuted ? 'muted' : ''}`}
+                    onClick={toggleSound}
+                    title={isMuted ? 'Unmute sound' : 'Mute sound'}
+                >
+                    {isMuted ? '🔇' : '🔊'}
+                </button>
+            );
+        };
+
+        // --- Credits Toggle Component ---
+        const CreditsToggle = () => {
+            const [showCredits, setShowCredits] = useState(false);
+
+            const showCreditsPopup = () => {
+                setShowCredits(true);
+                soundManager.play('OPERATION_TOGGLE');
+                // Pause the game
+                document.body.classList.add('paused-game');
+            };
+
+            const hideCreditsPopup = () => {
+                setShowCredits(false);
+                soundManager.play('OPERATION_TOGGLE');
+                // Resume the game
+                document.body.classList.remove('paused-game');
+            };
+
+            return (
+                <>
+                    <button 
+                        className="credits-toggle"
+                        onClick={showCreditsPopup}
+                        title="View credits"
+                    >
+                        ℹ️
+                    </button>
+                    
+                    {showCredits && (
+                        <div className="credits-popup">
+                            <div className="credits-title">Credits</div>
+                            <div className="credits-content">
+                                Sound Effects by Mixkit<br/>
+                                https://mixkit.co
+                            </div>
+                            <button 
+                                className="credits-close-button"
+                                onClick={hideCreditsPopup}
+                            >
+                                Close
+                            </button>
+                        </div>
+                    )}
+                </>
+            );
+        };
+
+        // --- Companion Page Component ---
+        const CompanionPage = () => {
+            const [showCompanionPage, setShowCompanionPage] = useState(false);
+
+            // Listen for companion page events
+            useEffect(() => {
+                const handleShowCompanionPage = () => setShowCompanionPage(true);
+                const handleHideCompanionPage = () => setShowCompanionPage(false);
+                
+                window.addEventListener('showCompanionPage', handleShowCompanionPage);
+                window.addEventListener('hideCompanionPage', handleHideCompanionPage);
+                
+                return () => {
+                    window.removeEventListener('showCompanionPage', handleShowCompanionPage);
+                    window.removeEventListener('hideCompanionPage', handleHideCompanionPage);
+                };
+            }, []);
+
+            const hideCompanionPage = () => {
+                soundManager.play('OPERATION_TOGGLE');
+                setShowCompanionPage(false);
+                window.dispatchEvent(new Event('hideCompanionPage'));
+            };
+
+            return (
+                <>
+                    {showCompanionPage && (
+                        <div style={{
+                            position: "fixed",
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            height: "100vh",
+                            backgroundColor: "rgba(3,7,18,0.98)",
+                            display: "flex",
+                            flexDirection: "column",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            zIndex: 3000
+                        }}>
+                            <div style={{
+                                width: "95%",
+                                maxWidth: "900px",
+                                height: "85vh",
+                                maxHeight: "800px",
+                                backgroundColor: "#030712",
+                                border: "1px solid rgba(148,163,184,0.18)",
+                                borderRadius: "18px",
+                                overflow: "hidden",
+                                display: "flex",
+                                flexDirection: "column",
+                                boxShadow: "0 20px 60px rgba(0,0,0,0.35)"
+                            }}>
+                                <div style={{
+                                    display: "flex",
+                                    justifyContent: "space-between",
+                                    alignItems: "center",
+                                    padding: "20px 24px",
+                                    borderBottom: "1px solid rgba(148,163,184,0.18)",
+                                    backgroundColor: "rgba(15,23,42,0.82)"
+                                }}>
+                                    <span style={{
+                                        fontSize: "24px",
+                                        fontWeight: 900,
+                                        letterSpacing: "0.08em",
+                                        textTransform: "uppercase",
+                                        color: "#e2e8f0",
+                                        fontFamily: "'Orbitron', sans-serif"
+                                    }}>
+                                        COMPANION PAGE
+                                    </span>
+                                    <button
+                                        onClick={hideCompanionPage}
+                                        style={{
+                                            background: "none",
+                                            border: "1px solid rgba(148,163,184,0.18)",
+                                            color: "#94a3b8",
+                                            padding: "8px 16px",
+                                            borderRadius: "8px",
+                                            cursor: "pointer",
+                                            fontFamily: "'IBM Plex Mono', monospace",
+                                            fontSize: "12px",
+                                            textTransform: "uppercase",
+                                            letterSpacing: "0.08em",
+                                            transition: "all 0.2s"
+                                        }}
+                                        onMouseOver={(e) => {
+                                            e.target.style.backgroundColor = "rgba(239,68,68,0.1)";
+                                            e.target.style.color = "#fff";
+                                            e.target.style.borderColor = "rgba(239,68,68,0.3)";
+                                        }}
+                                        onMouseOut={(e) => {
+                                            e.target.style.backgroundColor = "transparent";
+                                            e.target.style.color = "#94a3b8";
+                                            e.target.style.borderColor = "rgba(148,163,184,0.18)";
+                                        }}
+                                    >
+                                        Close
+                                    </button>
+                                </div>
+                                <div style={{
+                                    flex: 1,
+                                    padding: 0,
+                                    overflow: "hidden"
+                                }}>
+                                    <iframe
+                                        src="companion-page.html"
+                                        style={{
+                                            width: "100%",
+                                            height: "100%",
+                                            border: "none",
+                                            backgroundColor: "#030712"
+                                        }}
+                                        title="Companion Page"
+                                        scrolling="yes"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </>
+            );
+        };
+
+        // --- View Components ---
+        const SetupScreen = ({
+            username,
+            selectedDuration,
+            setSelectedDuration,
+            selectedMaxDigits,
+            setSelectedMaxDigits,
+            selectedNumOptions,
+            setSelectedNumOptions,
+            selectedOperations,
+            toggleOperation,
+            difficultyMultiplier,
+            setDifficultyMultiplier,
+            onStart,
+        }) => {
+            // Initialize wave field effect
+            useEffect(() => {
+                const canvas = document.createElement('canvas');
+                canvas.id = 'waveFieldCanvas';
+                canvas.style.position = 'fixed';
+                canvas.style.top = '0';
+                canvas.style.left = '0';
+                canvas.style.width = '100%';
+                canvas.style.height = '100%';
+                canvas.style.zIndex = '1';
+                canvas.style.pointerEvents = 'none';
+                document.body.appendChild(canvas);
+
+                const ctx = canvas.getContext('2d');
+                let width, height;
+                let time = 0;
+                let animationId;
+                
+                // SPEED MULTIPLIER - Adjust this to control animation speed:
+                // > 1.0 = faster (1.1, 1.2, 1.5, etc.)
+                // < 1.0 = slower (0.8, 0.6, 0.4, etc.)
+                // 1.0 = normal speed
+                const SPEED_MULTIPLIER = 0.3;
+
+                function resizeCanvas() {
+                    width = canvas.width = window.innerWidth;
+                    height = canvas.height = window.innerHeight;
+                }
+
+                function drawWaveField() {
+                    const gridSize = 50;
+                    const waveAmplitude = 20;
+                    const waveFrequency = 0.01;
+                    
+ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
+                    ctx.lineWidth = 12;
+                    
+                    for (let x = 0; x < width; x += gridSize) {
+                        ctx.beginPath();
+                        for (let y = 0; y < height; y += 10) {
+                            const waveOffset = Math.sin(y * waveFrequency + time * 0.02 * SPEED_MULTIPLIER) * waveAmplitude;
+                            const xPos = x + waveOffset;
+                            
+                            if (y === 0) {
+                                ctx.moveTo(xPos, y);
+                            } else {
+                                ctx.lineTo(xPos, y);
+                            }
+                        }
+                        ctx.stroke();
+                    }
+                }
+
+                function animate() {
+                    ctx.clearRect(0, 0, width, height);
+                    drawWaveField();
+                    time += 1 * SPEED_MULTIPLIER;
+                    animationId = requestAnimationFrame(animate);
+                }
+
+                window.addEventListener('resize', resizeCanvas);
+                resizeCanvas();
+                animate();
+
+                return () => {
+                    window.removeEventListener('resize', resizeCanvas);
+                    cancelAnimationFrame(animationId);
+                    if (canvas.parentNode) {
+                        canvas.parentNode.removeChild(canvas);
+                    }
+                };
+            }, []);
+
+            return (
+                <div className="setup-content">
+                    <h1>Math In Space!</h1>
+                    <h2>Welcome, {username}! Prepare for your math mission.</h2>
+                    <div className="settings-grid">
+                        <div className="setting-group">
+                            <label htmlFor="duration">Mission Duration:</label>
+                            <select
+                                id="duration"
+                                value={selectedDuration}
+                                onChange={(e) => {
+                                    soundManager.play('DROPDOWN_SELECT');
+                                    const value = Number(e.target.value);
+                                    setSelectedDuration(value);
+                                    setDifficultyMultiplier((prev) => ({
+                                        ...prev,
+                                        oldDifficulty: prev.newDifficulty,
+                                        selectedDuration: 0.985 + value / 2000,
+                                        newDifficulty:
+                                            prev.initial * (0.985 + value / 2000) * prev.selectedMaxDigits * prev.selectedNumOptions * prev.selectedOperations,
+                                    }));
+                                }}
+                            >
+                                <option value={30}>30 Seconds</option>
+                                <option value={60}>60 Seconds</option>
+                                <option value={90}>90 Seconds</option>
+                            </select>
+                        </div>
+                        <div className="setting-group">
+                            <label htmlFor="maxDigits">Max Digits:</label>
+                            <select
+                                id="maxDigits"
+                                value={selectedMaxDigits}
+                                onChange={(e) => {
+                                    soundManager.play('DROPDOWN_SELECT');
+                                    const value = Number(e.target.value);
+                                    setSelectedMaxDigits(value);
+                                    setDifficultyMultiplier((prev) => ({
+                                        ...prev,
+                                        oldDifficulty: prev.newDifficulty,
+                                        selectedMaxDigits: Number(0.98 + value / 50),
+                                        newDifficulty:
+                                            prev.initial * (0.98 + value / 50) * prev.selectedDuration * prev.selectedNumOptions * prev.selectedOperations,
+                                    }));
+                                }}
+                            >
+                                <option value={1}>1 digit (0-9)</option>
+                                <option value={2}>2 digits (10-99)</option>
+                            </select>
+                        </div>
+                        <div className="setting-group">
+                            <label className="operations-label">Operations: {selectedOperations.length} Selected</label>
+                            <div className="operation-toggles">
+                                {[
+                                    { sym: '+', label: '+' },
+                                    { sym: '-', label: '-' },
+                                    { sym: '*', label: '×' },
+                                    { sym: '/', label: '÷' },
+                                ].map(({ sym, label }) => (
+                                    <button
+                                        key={sym}
+                                        type="button"
+                                        className={`op-button ${selectedOperations.includes(sym) ? 'active' : ''}`}
+                                        onClick={() => { soundManager.play('OPERATION_TOGGLE'); toggleOperation(sym); }}
+                                    >
+                                        {label}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                        <div className="setting-group">
+                            <label htmlFor="numOptions">Answer Choices:</label>
+                            <select
+                                id="numOptions"
+                                value={selectedNumOptions}
+                                onChange={(e) => {
+                                    soundManager.play('DROPDOWN_SELECT');
+                                    const value = Number(e.target.value);
+                                    setSelectedNumOptions(value);
+                                    setDifficultyMultiplier((prev) => ({
+                                        ...prev,
+                                        oldDifficulty: prev.newDifficulty,
+                                        selectedNumOptions: 0.97 + value / 100,
+                                        newDifficulty:
+                                            prev.initial * (0.97 + value / 100) * prev.selectedDuration * prev.selectedMaxDigits * prev.selectedOperations,
+                                    }));
+                                }}
+                            >
+                                <option value={3}>3</option>
+                                <option value={4}>4</option>
+                                <option value={5}>5</option>
+                                <option value={6}>6</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div className="start-controls">
+                        <div className="multiplier-container">
+                            <div className="multiplier-label">Score Multiplier:</div>
+                            <span className="difficulty-multiplier-display">~{difficultyMultiplier.newDifficulty.toFixed(3)}x</span>
+                        </div>
+                        <button onClick={() => { soundManager.play('BUTTON_CLICK'); onStart(); }} className="start-button" disabled={selectedOperations.length === 0}>
+                                Engage!
+                            </button>
+                    </div>
+                    <div style={{display: "flex", justifyContent: "center", width: "100%", marginTop: 12}}>
+                        <span 
+                            onClick={() => {
+                                soundManager.play('OPERATION_TOGGLE');
+                                window.dispatchEvent(new Event('showCompanionPage'));
+                            }}
+                            style={{
+                                color: "#ffffff",
+                                opacity: 0.8,
+                                fontFamily: "'IBM Plex Mono', monospace",
+                                fontSize: "11px",
+                                fontWeight: 700,
+                                letterSpacing: "0.08em",
+                                textTransform: "uppercase",
+                                cursor: "pointer",
+                                transition: "all 0.2s",
+                                animation: "glowPulse 2s ease-in-out infinite",
+                                textDecoration: "none"
+                            }}
+                            onMouseOver={(e) => {
+                                e.target.style.opacity = "1";
+                                e.target.style.color = "#e2e8f0";
+                                e.target.style.transform = "translateY(-1px)";
+                            }}
+                            onMouseOut={(e) => {
+                                e.target.style.opacity = "0.8";
+                                e.target.style.color = "#ffffff";
+                                e.target.style.transform = "translateY(0px)";
+                            }}
+                        >
+                            View Companion Page
+                        </span>
+                    </div>
+                </div>
+            );
+        };
+
+        const PlayingScreen = ({
+            score,
+            timeLeft,
+            handleQuit,
+            currentProblem,
+            answerOptions,
+            clickedShipId,
+            clickedShipFeedback,
+            correctShipId,
+            isWaitingForNextProblem,
+            handleAnswerSelect,
+            answerOptionRefs,
+            correctWidth,
+            timeoutWidth,
+            incorrectWidth,
+            correctCount,
+            timeoutCount,
+            incorrectCount,
+            questionTimeLeft,
+            speedBonusDisplay,
+        }) => (
+            <>
+                <div className="game-hud">
+                    <span>Score: {score}</span>
+                    <span>Time: {timeLeft}s</span>
+                    <button onClick={() => { soundManager.play('QUIT_BUTTON'); handleQuit(); }} className="quit-button">
+                        Quit
+                    </button>
+                </div>
+
+                {speedBonusDisplay && (
+                    <div
+                        className="speed-bonus-floating"
+                        style={{
+                            position: 'absolute',
+                            top: speedBonusDisplay.y,
+                            left: speedBonusDisplay.x,
+                            transform: 'translate(-50%, -50%)',
+                            color: '#00ffcc',
+                            fontWeight: 'bold',
+                            fontSize: '1.2em',
+                            animation: 'floatUpFade 1s ease-out',
+                            pointerEvents: 'none',
+                            zIndex: 100,
+                            whiteSpace: 'pre-line',
+                            textAlign: 'center',
+                        }}
+                    >
+                        {speedBonusDisplay.value}
+                    </div>
+                )}
+
+                <div className="question-area">
+                    <p className="question">{currentProblem.question}</p>
+                </div>
+
+                <div className="answer-options-container">
+                    {answerOptions.map((option) => (
+                        <div
+                            key={option.id}
+                            className="answer-ship-wrapper"
+                            style={{ left: `${clamp(option.position.x, 20, 80)}%`, top: `${clamp(option.position.y, 20, 80)}%` }}
+                        >
+                            <div
+                                ref={(el) => (answerOptionRefs.current[option.id] = el)}
+                                className={`answer-ship-inner ${
+                                    clickedShipId === option.id && clickedShipFeedback === 'correct'
+                                        ? 'clicked-correct'
+                                        : clickedShipId === option.id && clickedShipFeedback === 'incorrect'
+                                        ? 'clicked-incorrect'
+                                        : correctShipId === option.id && clickedShipFeedback === 'incorrect'
+                                        ? 'show-correct'
+                                        : ''
+                                } ${isWaitingForNextProblem ? 'disabled' : ''} ${
+                                    option.noHover ? 'no-hover' : ''
+                                }`}
+                                onClick={() => { soundManager.play('LASER_SHOT'); handleAnswerSelect(option); }}
+                            >
+                                {(() => {
+                                    const len = String(option.value).length;
+                                    let fontSize;
+                                    if (len >= 5) fontSize = '0.5em';
+                                    else if (len === 4) fontSize = '0.7em';
+                                    else if (len === 3) fontSize = '0.9em';
+                                    else if (len === 2) fontSize = '1em';
+                                    else fontSize = '1.2em';
+                                    return (
+                                        <span className="answer-value" style={{ fontSize }}>
+                                            {option.value}
+                                        </span>
+                                    );
+                                })()}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+
+                <div className="player-ship-area"></div>
+
+                <div className="progress-bar-container">
+                    <div className="progress-bar correct" title={`Correct: ${correctCount}`} style={{ width: `${correctWidth}%` }}></div>
+                    <div className="progress-bar timeout" title={`Timeout: ${timeoutCount}`} style={{ width: `${timeoutWidth}%` }}></div>
+                    <div className="progress-bar incorrect" title={`Incorrect: ${incorrectCount}`} style={{ width: `${incorrectWidth}%` }}></div>
+                </div>
+                <div className="question-timer-container" title={`Time Remaining: ${Math.ceil(questionTimeLeft)}s`}>
+                    <div className="question-timer-bar" style={{ width: `${(questionTimeLeft / QUESTION_TIMEOUT) * 100}%` }} />
+                </div>
+            </>
+        );
+
+        const ResultsScreen = ({
+            username,
+            score,
+            selectedMaxDigits,
+            selectedNumOptions,
+            selectedDuration,
+            selectedOperations,
+            correctWidth,
+            timeoutWidth,
+            incorrectWidth,
+            totalQuestionsAnswered,
+            correctCount,
+            incorrectCount,
+            timeoutCount,
+            speedBonusCount,
+            playAgain,
+            gameLog,
+        }) => (
+            <div className="results-content">
+                <h1>Mission Debrief, {username}!</h1>
+                <h2>Final Score: {score}</h2>
+                <div
+                    style={{
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        gap: '30px',
+                        fontSize: '.9em',
+                    }}
+                >
+                    <p className="results-ops">Max Digits: {selectedMaxDigits}</p>
+                    <p className="results-ops">Max Options: {selectedNumOptions}</p>
+                </div>
+                <p className="results-ops" style={{ fontSize: '1.1em' }}>
+                    Duration: {selectedDuration} seconds
+                </p>
+
+                <p className="results-ops" style={{ fontSize: '1.1em' }}>
+                    Operations used:&nbsp;
+                    {`${selectedOperations
+                        .map((sym) => (sym === '+' ? '+' : sym === '-' ? '-' : sym === '*' ? '×' : '÷'))
+                        .join('  ')}`}
+                </p>
+
+                <div className="progress-bar-container results-bars">
+                    <div className="progress-bar correct" style={{ width: `${correctWidth}%` }} title={`Correct: ${correctCount}`}></div>
+                    <div className="progress-bar timeout" style={{ width: `${timeoutWidth}%` }} title={`Timeout: ${timeoutCount}`}></div>
+                    <div className="progress-bar incorrect" style={{ width: `${incorrectWidth}%` }} title={`Incorrect: ${incorrectCount}`}></div>
+                </div>
+                <p className="results-summary">
+                    Total Questions: {totalQuestionsAnswered} | Correct: {correctCount} | Incorrect: {incorrectCount} | Timeouts: {timeoutCount} |{' '}
+                    <strong>Speed Bonuses: {speedBonusCount}</strong>
+                </p>
+                <button onClick={() => { soundManager.play('QUIT_BUTTON'); playAgain(); }} className="play-again-button">
+                    New Mission
+                </button>
+                <hr className="results-divider" />
+                <div className="log-output">
+                    <h3>Mission Log</h3>
+                    <textarea readOnly value={JSON.stringify(gameLog, null, 2)} rows={8} />
+                </div>
+            </div>
+        );
+
+        // --- Main Game Component ---
+        function MathInSpace() {
+            // --- Setup State ---
+            const [selectedDuration, setSelectedDuration] = useState(DEFAULT_DURATION);
+            const [selectedMaxDigits, setSelectedMaxDigits] = useState(DEFAULT_MAX_DIGITS);
+            const [selectedNumOptions, setSelectedNumOptions] = useState(DEFAULT_NUM_OPTIONS);
+            const [selectedOperations, setSelectedOperations] = useState(['+', '-', '*', '/']);
+            const [difficultyMultiplier, setDifficultyMultiplier] = useState({
+                initial: 1,
+                selectedDuration: 1.015,
+                selectedMaxDigits: 1,
+                selectedNumOptions: 1.01,
+                selectedOperations: 1.06131204,
+                oldDifficulty: 1,
+                newDifficulty: 1.015 * 1 * 1.01 * 1.06131204,
+            });
+
+            // --- Game State ---
+            const [gameState, setGameState] = useState('setup');
+            const [isPaused, setIsPaused] = useState(false);
+            const [pauseTime, setPauseTime] = useState(null);
+            const [isWaitingForNextProblem, setIsWaitingForNextProblem] = useState(false);
+            const [score, setScore] = useState(0);
+            const [timeLeft, setTimeLeft] = useState(DEFAULT_DURATION);
+            const [currentProblem, setCurrentProblem] = useState(null);
+            const [answerOptions, setAnswerOptions] = useState([]);
+            const [gameLog, setGameLog] = useState([]);
+            const [questionTimeLeft, setQuestionTimeLeft] = useState(QUESTION_TIMEOUT);
+
+            // --- Feedback & Progress State ---
+            const [feedbackType, setFeedbackType] = useState(null);
+            const [showFeedbackFlash, setShowFeedbackFlash] = useState(false);
+            const [correctCount, setCorrectCount] = useState(0);
+            const [incorrectCount, setIncorrectCount] = useState(0);
+            const [timeoutCount, setTimeoutCount] = useState(0);
+            const [speedBonusDisplay, setSpeedBonusDisplay] = useState(null);
+            const [shipSize, setShipSize] = useState({ widthPercent: 10, heightPercent: 6 });
+
+            // --- Ship Interaction State ---
+            const [clickedShipId, setClickedShipId] = useState(null);
+            const [clickedShipFeedback, setClickedShipFeedback] = useState(null);
+            const [correctShipId, setCorrectShipId] = useState(null);
+
+            // --- Fog Overlay State ---
+            const [showFogOverlay, setShowFogOverlay] = useState(true);
+            const [isFogDisappearing, setIsFogDisappearing] = useState(false);
+            const [isPageLoaded, setIsPageLoaded] = useState(false);
+
+            // --- Refs ---
+            const gameAreaRef = useRef(null);
+            const playerShipRef = useRef(null);
+            const timerRef = useRef(null);
+            const problemStartTimeRef = useRef(null);
+            const feedbackTimerRef = useRef(null);
+            const laserTimeoutRef = useRef(null);
+            const answerOptionRefs = useRef({});
+
+            // --- Handle page load ---
+            useEffect(() => {
+                const handleLoad = () => {
+                    setIsPageLoaded(true);
+                };
+                
+                if (document.readyState === 'complete') {
+                    handleLoad();
+                } else {
+                    window.addEventListener('load', handleLoad);
+                    return () => window.removeEventListener('load', handleLoad);
+                }
+            }, []);
+
+            // --- Memos ---
+            const totalQuestionsAnswered = useMemo(() => correctCount + incorrectCount + timeoutCount, [correctCount, incorrectCount, timeoutCount]);
+            const speedBonusCount = useMemo(() => {
+                return gameLog.filter(entry => entry.isCorrect && entry.awardedSpeedBonus > 0).length;
+            }, [gameLog]);
+
+            const operationMultipliers = useMemo(() => ({
+                '+': 1.01,
+                '-': 1.01,
+                '*': 1.02,
+                '/': 1.02,
+            }), []);
+
+            const toggleOperation = useCallback((op) => {
+                setSelectedOperations((prev) => {
+                    const updated = prev.includes(op) ? prev.filter((o) => o !== op) : [...prev, op];
+
+                    const opMultiplier =
+                        updated.length === 1 && (updated[0] === '+' || updated[0] === '-')
+                            ? 1
+                            : updated.reduce((prod, o) => prod * operationMultipliers[o], 1);
+
+                    setDifficultyMultiplier((prevDM) => ({
+                        ...prevDM,
+                        selectedOperations: opMultiplier,
+                        oldDifficulty: prevDM.newDifficulty,
+                        newDifficulty: prevDM.newDifficulty * (opMultiplier / (prevDM.selectedOperations || 1)),
+                    }));
+
+                    return updated;
+                });
+            }, [operationMultipliers]);
+
+            // --- Ship Size Measurement ---
+            useEffect(() => {
+                const measure = () => {
+                    const sample = document.querySelector('.answer-ship-wrapper');
+                    if (sample) {
+                        const rect = sample.getBoundingClientRect();
+                        const w = (rect.width / window.innerWidth) * 100;
+                        const h = (rect.height / window.innerHeight) * 100;
+                        setShipSize({ widthPercent: w, heightPercent: h });
+                    }
+                };
+                setTimeout(measure, 100);
+                window.addEventListener('resize', measure);
+                return () => {
+                    window.removeEventListener('resize', measure);
+                };
+            }, []);
+
+            // --- Game Logic Functions ---
+            const generateAndSetProblem = useCallback(() => {
+                setQuestionTimeLeft(QUESTION_TIMEOUT);
+                
+                // Reset selection state immediately to prevent stuck borders
+                setClickedShipId(null);
+                setClickedShipFeedback(null);
+                setCorrectShipId(null);
+                setShowFeedbackFlash(false);
+
+                const problem = generateProblem(selectedMaxDigits, selectedOperations);
+                const incorrect = generateIncorrectAnswers(
+                    problem.answer,
+                    problem.num1,
+                    problem.num2,
+                    problem.operation,
+                    selectedNumOptions,
+                    selectedMaxDigits
+                );
+                const options = shuffleArray([
+                    { value: problem.answer, isCorrect: true },
+                    ...incorrect.map(v => ({ value: v, isCorrect: false }))
+                ]);
+
+                const positions = generateShipPositions(options.length);
+
+                const positionedOptions = options.map((opt, index) => ({
+                    ...opt,
+                    id: Date.now() + index,
+                    position: positions[index] || { x: 50, y: 50 },
+                    noHover: true // Add flag to prevent stuck hover on iPhone
+                }));
+
+                setCurrentProblem(problem);
+                setAnswerOptions(positionedOptions);
+                problemStartTimeRef.current = performance.now();
+
+                // Remove no-hover flag after a short delay to allow normal hover
+                setTimeout(() => {
+                    setAnswerOptions(prev => prev.map(opt => ({ ...opt, noHover: false })));
+                }, 100);
+            }, [selectedMaxDigits, selectedNumOptions, selectedOperations, shipSize]);
+
+            const triggerFeedback = useCallback((type) => {
+                setFeedbackType(type);
+                setShowFeedbackFlash(true);
+                clearTimeout(feedbackTimerRef.current);
+                feedbackTimerRef.current = setTimeout(() => {
+                    setShowFeedbackFlash(false);
+                    setFeedbackType(null);
+                    if (type !== 'timeout' && gameState === 'playing') {
+                        generateAndSetProblem();
+                    }
+                }, type === 'incorrect' ? 600 : 400);
+            }, [gameState, generateAndSetProblem]);
+
+            const startGame = useCallback(() => {
+                setScore(0);
+                setTimeLeft(selectedDuration);
+                setGameLog([]);
+                setCorrectCount(0);
+                setIncorrectCount(0);
+                setTimeoutCount(0);
+                setFeedbackType(null);
+                setShowFeedbackFlash(false);
+                setGameState('playing');
+                generateAndSetProblem();
+            }, [selectedDuration, generateAndSetProblem]);
+
+            // --- Main Game Timer Management ---
+            useEffect(() => {
+                if (gameState !== 'playing') return;
+
+                if (timerRef.current) clearInterval(timerRef.current);
+
+                timerRef.current = setInterval(() => {
+                    if (!isPaused) {
+                        setTimeLeft((prevTime) => {
+                            if (prevTime <= 1) {
+                                clearInterval(timerRef.current);
+                                if (currentProblem && gameState === 'playing') {
+                                    setTimeoutCount(c => c + 1);
+                                    setGameLog(prevLog => [
+                                        ...prevLog, {
+                                            timestamp: new Date().toISOString(),
+                                            problem: { ...currentProblem },
+                                            userAnswer: 'TIMEOUT',
+                                            submittedAnswerParsed: 'TIMEOUT',
+                                            isCorrect: false,
+                                            timeTakenMs: selectedDuration * 1000 - (performance.now() - problemStartTimeRef.current),
+                                            awardedSpeedBonus: false,
+                                            pointsChange: 0,
+                                            scoreAfter: score,
+                                            timedOut: true,
+                                        },
+                                    ]);
+                                    triggerFeedback('timeout');
+                                }
+                                soundManager.play('GAME_OVER');
+                                setGameState('results');
+                                return 0;
+                            }
+                            return prevTime - 1;
+                        });
+                    }
+                }, 1000);
+
+                return () => {
+                    if (timerRef.current) clearInterval(timerRef.current);
+                };
+            }, [gameState, isPaused, selectedDuration, currentProblem, score, triggerFeedback]);
+
+            const handleAnswerSelect = useCallback((selectedOption) => {
+                if (gameState !== 'playing' || !currentProblem || isWaitingForNextProblem || isPaused) return;
+
+                const selectedValue = selectedOption.value;
+                const timeTakenMs = performance.now() - problemStartTimeRef.current;
+                const isCorrect = selectedValue === currentProblem.answer;
+                let pointsChange = 0;
+                let awardedSpeedBonus = 0;
+
+                const correctOption = answerOptions.find(opt => opt.value === currentProblem.answer);
+                setCorrectShipId(correctOption?.id);
+
+                setClickedShipId(selectedOption.id);
+                setClickedShipFeedback(isCorrect ? 'correct' : 'incorrect');
+
+                if (isCorrect) {
+                    pointsChange = Math.round(POINTS_CORRECT_PER_DIGIT * difficultyMultiplier.newDifficulty);
+                    if (timeTakenMs <= SPEED_BONUS_THRESHOLD_MS) {
+                        awardedSpeedBonus = Math.round(SPEED_BONUS_POINTS_BASE * difficultyMultiplier.newDifficulty);
+                        pointsChange += awardedSpeedBonus;
+                        soundManager.play('SPEED_BONUS');
+
+                        const shipEl = answerOptionRefs.current[selectedOption.id];
+                        if (shipEl) {
+                            const rect = shipEl.getBoundingClientRect();
+                            const x = rect.left + rect.width / 2;
+                            const y = rect.top + rect.height / 2;
+                            setSpeedBonusDisplay({ x, y, value: `+${awardedSpeedBonus}\nSpeed\nBonus!` });
+                            setTimeout(() => setSpeedBonusDisplay(null), 1000);
+                        }
+                    }
+                    soundManager.play('CORRECT_ANSWER');
+                    triggerFeedback('correct');
+                } else if (selectedValue === 'TIMEOUT') {
+                    pointsChange = -POINTS_TIMEOUT_PER_DIGIT * selectedMaxDigits;
+                    soundManager.play('ERROR');
+                    triggerFeedback('timeout');
+                } else {
+                    pointsChange = -POINTS_INCORRECT_PENALTY_PER_DIGIT * selectedMaxDigits;
+                    soundManager.play('INCORRECT_ANSWER');
+                    triggerFeedback('incorrect');
+                }
+
+                setScore(prevScore => Math.max(0, prevScore + pointsChange));
+                if (selectedValue === 'TIMEOUT') {
+                    setTimeoutCount(prev => prev + 1);
+                } else {
+                    setCorrectCount(prev => isCorrect ? prev + 1 : prev);
+                    setIncorrectCount(prev => isCorrect ? prev : prev + 1);
+                }
+
+                setGameLog(prevLog => [
+                    ...prevLog,
+                    {
+                        timestamp: new Date().toISOString(),
+                        problem: { ...currentProblem },
+                        userAnswer: selectedValue,
+                        submittedAnswerParsed: selectedValue,
+                        isCorrect: isCorrect,
+                        timeTakenMs: Math.round(timeTakenMs),
+                        awardedSpeedBonus: awardedSpeedBonus,
+                        pointsChange: pointsChange,
+                        scoreAfter: score,
+                        optionsPresented: answerOptions.map(opt => opt.value)
+                    },
+                ]);
+
+                clearTimeout(laserTimeoutRef.current);
+                laserTimeoutRef.current = setTimeout(() => {
+                    setClickedShipId(null);
+                    setClickedShipFeedback(null);
+                    setCorrectShipId(null);
+                    setShowFeedbackFlash(false);
+                }, isCorrect ? 400 : 400);
+
+                setIsWaitingForNextProblem(true);
+                clearTimeout(feedbackTimerRef.current);
+                feedbackTimerRef.current = setTimeout(() => {
+                    setIsWaitingForNextProblem(false);
+                    if (gameState === 'playing') {
+                        generateAndSetProblem();
+                    }
+                }, isCorrect ? 400 : 600);
+            }, [gameState, currentProblem, selectedMaxDigits, answerOptions, score, triggerFeedback, generateAndSetProblem, setShowFeedbackFlash, isWaitingForNextProblem, difficultyMultiplier]);
+
+            const playAgain = () => {
+                setGameState('setup');
+                setCurrentProblem(null);
+                setAnswerOptions([]);
+                if (timerRef.current) clearInterval(timerRef.current);
+                clearTimeout(feedbackTimerRef.current);
+                clearTimeout(laserTimeoutRef.current);
+            };
+
+            const handleQuit = () => {
+                setGameState('setup');
+                setScore(0);
+                setTimeLeft(DEFAULT_DURATION);
+                setCorrectCount(0);
+                setIncorrectCount(0);
+                setTimeoutCount(0);
+                setFeedbackType(null);
+                setShowFeedbackFlash(false);
+                setCurrentProblem(null);
+                setAnswerOptions([]);
+                clearInterval(timerRef.current);
+                clearTimeout(feedbackTimerRef.current);
+                clearTimeout(laserTimeoutRef.current);
+            };
+
+            // --- Effects ---
+            useEffect(() => {
+                return () => {
+                    if (timerRef.current) clearInterval(timerRef.current);
+                    clearTimeout(feedbackTimerRef.current);
+                    clearTimeout(laserTimeoutRef.current);
+                };
+            }, []);
+
+            useEffect(() => {
+                if (gameState !== 'playing') return;
+
+                const qTimer = setInterval(() => {
+                    if (!isPaused) {
+                        setQuestionTimeLeft(t => {
+                            if (t <= 0) {
+                                clearInterval(qTimer);
+                                handleAnswerSelect({ value: 'TIMEOUT', id: null });
+                                return 0;
+                            }
+                            return t - 0.1;
+                        });
+                    }
+                }, 100);
+
+                return () => clearInterval(qTimer);
+            }, [gameState, currentProblem, handleAnswerSelect, isPaused]);
+
+            useEffect(() => {
+                if (gameState === 'results') {
+                    setGameLog(prev => [
+                        ...prev,
+                        {
+                            type: 'summary',
+                            timestamp: new Date().toISOString(),
+                            finalScore: score,
+                            operationsUsed: selectedOperations.map(op =>
+                                op === '+' ? '+'
+                                    : op === '-' ? '-'
+                                    : op === '*' ? '×'
+                                    : '÷'),
+                            duration: selectedDuration,
+                            maxDigits: selectedMaxDigits,
+                            numOptions: selectedNumOptions,
+                            difficultyMultiplier: difficultyMultiplier.newDifficulty,
+                            totalQuestions: totalQuestionsAnswered,
+                            correct: correctCount,
+                            incorrect: incorrectCount,
+                            timeouts: timeoutCount,
+                        },
+                    ]);
+                }
+            }, [
+                gameState,
+                score,
+                selectedOperations,
+                totalQuestionsAnswered,
+                correctCount,
+                incorrectCount,
+                timeoutCount,
+                difficultyMultiplier,
+                selectedDuration,
+                selectedMaxDigits,
+                selectedNumOptions,
+            ]);
+
+            // --- Tab Visibility Detection ---
+            useEffect(() => {
+                // Detect if running in Android Capacitor app
+                const isAndroidApp = window.Capacitor && window.Capacitor.platform === 'android';
+                
+                const handleVisibilityChange = () => {
+                    if (document.hidden) {
+                        // Page is hidden - pause background music
+                        if (!isPaused) setPauseTime(Date.now());
+                        setIsPaused(true);
+                        soundManager.pause();
+                    } else {
+                        // Page is visible again - resume background music
+                        setIsPaused(false);
+                        soundManager.resume();
+                    }
+                };
+
+                // ALWAYS add visibilitychange (needed for both web and Android)
+                document.addEventListener('visibilitychange', handleVisibilityChange);
+
+                // ONLY add these for web/desktop, NOT for Android
+                if (!isAndroidApp) {
+                    const handleBlur = () => {
+                        if (!isPaused) setPauseTime(Date.now());
+                        setIsPaused(true);
+                        soundManager.pause();
+                    };
+
+                    const handleFocus = () => {
+                        setIsPaused(false);
+                        soundManager.resume();
+                    };
+
+                    const handlePageHide = () => {
+                        if (!isPaused) setPauseTime(Date.now());
+                        setIsPaused(true);
+                        soundManager.pause();
+                    };
+
+                    const handlePageShow = () => {
+                        setIsPaused(false);
+                        soundManager.resume();
+                    };
+
+                    // Page lifecycle events
+                    window.addEventListener('pagehide', handlePageHide);
+                    window.addEventListener('pageshow', handlePageShow);
+                    
+                    // Window focus/blur events
+                    window.addEventListener('blur', handleBlur);
+                    window.addEventListener('focus', handleFocus);
+
+                    return () => {
+                        window.removeEventListener('pagehide', handlePageHide);
+                        window.removeEventListener('pageshow', handlePageShow);
+                        window.removeEventListener('blur', handleBlur);
+                        window.removeEventListener('focus', handleFocus);
+                    };
+                }
+
+                return () => {
+                    document.removeEventListener('visibilitychange', handleVisibilityChange);
+                };
+            }, [isPaused]);
+
+            // --- Calculate Progress Bar Widths ---
+            const totalAttempts = correctCount + incorrectCount + timeoutCount;
+            const correctWidth = totalAttempts > 0 ? (correctCount / totalAttempts) * 100 : 0;
+            const incorrectWidth = totalAttempts > 0 ? (incorrectCount / totalAttempts) * 100 : 0;
+            const timeoutWidth = totalAttempts > 0 ? (timeoutCount / totalAttempts) * 100 : 0;
+
+            const username = 'Cadet'; // Default username for standalone version
+
+            return (
+                <div
+                    className={`math-in-space-container ${gameState}-screen ${showFeedbackFlash ? `flash-${feedbackType}` : ''}`}
+                    ref={gameAreaRef}
+                >
+                    {/* Smokey Fog Overlay */}
+                    {showFogOverlay && (
+                        <div className={`fog-overlay ${isFogDisappearing ? 'disappearing' : ''}`} onClick={() => {
+                            if (!isFogDisappearing && isPageLoaded) {
+                                setIsFogDisappearing(true);
+                                // Initialize audio on user interaction
+                                soundManager.startBackgroundMusic();
+                                setTimeout(() => {
+                                    setShowFogOverlay(false);
+                                    setIsFogDisappearing(false);
+                                }, 800);
+                            }
+                        }}>
+                            <div className="fog-particles">
+                                <div className={`fog-particle ${isFogDisappearing ? 'disappearing' : ''}`} style={{left: '10%', animationDelay: '0s'}}></div>
+                                <div className={`fog-particle ${isFogDisappearing ? 'disappearing' : ''}`} style={{left: '30%', animationDelay: '3s'}}></div>
+                                <div className={`fog-particle ${isFogDisappearing ? 'disappearing' : ''}`} style={{left: '50%', animationDelay: '6s'}}></div>
+                                <div className={`fog-particle ${isFogDisappearing ? 'disappearing' : ''}`} style={{left: '70%', animationDelay: '9s'}}></div>
+                                <div className={`fog-particle ${isFogDisappearing ? 'disappearing' : ''}`} style={{left: '90%', animationDelay: '12s'}}></div>
+                            </div>
+                            <div className={`fog-text ${isFogDisappearing ? 'disappearing' : ''} ${isPageLoaded ? 'loaded' : ''}`}>
+                                PRESS ANYWHERE TO BEGIN<br/>MATH IN SPACE
+                            </div>
+                            
+                            {/* Circular Progress Spinner */}
+                            {!isPageLoaded && (
+                                <div className="fog-progress-container">
+                                    <div className="fog-progress-spinner">
+                                        <div className="fog-progress-circle"></div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                    {gameState === 'playing' && <StarfieldBackground />}
+
+                    {gameState === 'setup' && (
+                        <SetupScreen
+                            username={username}
+                            selectedDuration={selectedDuration}
+                            setSelectedDuration={setSelectedDuration}
+                            selectedMaxDigits={selectedMaxDigits}
+                            setSelectedMaxDigits={setSelectedMaxDigits}
+                            selectedNumOptions={selectedNumOptions}
+                            setSelectedNumOptions={setSelectedNumOptions}
+                            selectedOperations={selectedOperations}
+                            toggleOperation={toggleOperation}
+                            difficultyMultiplier={difficultyMultiplier}
+                            setDifficultyMultiplier={setDifficultyMultiplier}
+                            onStart={startGame}
+                        />
+                    )}
+
+                    {gameState === 'playing' && currentProblem && (
+                        <PlayingScreen
+                            score={score}
+                            timeLeft={timeLeft}
+                            handleQuit={handleQuit}
+                            currentProblem={currentProblem}
+                            answerOptions={answerOptions}
+                            clamp={clamp}
+                            clickedShipId={clickedShipId}
+                            clickedShipFeedback={clickedShipFeedback}
+                            correctShipId={correctShipId}
+                            isWaitingForNextProblem={isWaitingForNextProblem}
+                            handleAnswerSelect={handleAnswerSelect}
+                            answerOptionRefs={answerOptionRefs}
+                            playerShipRef={playerShipRef}
+                            correctWidth={correctWidth}
+                            timeoutWidth={timeoutWidth}
+                            incorrectWidth={incorrectWidth}
+                            correctCount={correctCount}
+                            timeoutCount={timeoutCount}
+                            incorrectCount={incorrectCount}
+                            questionTimeLeft={questionTimeLeft}
+                            speedBonusDisplay={speedBonusDisplay}
+                        />
+                    )}
+
+                    {gameState === 'results' && (
+                        <ResultsScreen
+                            username={username}
+                            score={score}
+                            selectedMaxDigits={selectedMaxDigits}
+                            selectedNumOptions={selectedNumOptions}
+                            selectedDuration={selectedDuration}
+                            selectedOperations={selectedOperations}
+                            correctWidth={correctWidth}
+                            timeoutWidth={timeoutWidth}
+                            incorrectWidth={incorrectWidth}
+                            totalQuestionsAnswered={totalQuestionsAnswered}
+                            correctCount={correctCount}
+                            incorrectCount={incorrectCount}
+                            timeoutCount={timeoutCount}
+                            speedBonusCount={speedBonusCount}
+                            playAgain={playAgain}
+                            gameLog={gameLog}
+                        />
+                    )}
+
+                    {/* Floating credits toggle */}
+                    <CreditsToggle />
+                    
+                    {/* Floating sound toggle */}
+                    <SoundToggle />
+                    
+                    {/* Companion Page popup */}
+                    <CompanionPage />
+                </div>
+            );
+        }
+
+        // --- Redux Store Setup (simplified for standalone) ---
+        const initialState = {
+            auth: {
+                user: {
+                    username: 'Cadet'
+                },
+                userProfile: null
+            }
+        };
+
+        const store = createStore((state = initialState, action) => {
+            switch (action.type) {
+                default:
+                    return state;
+            }
+        });
+
+        // --- App Rendering ---
+        const { Provider } = ReactRedux;
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(
+            <Provider store={store}>
+                <MathInSpace />
+            </Provider>
+        );
+    </script>
+</body>
+</html>
