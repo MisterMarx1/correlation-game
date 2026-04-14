@@ -2306,12 +2306,10 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
                     adIns.style.height = '90px';
                     adIns.setAttribute('data-ad-client', 'ca-pub-2662863757001007');
                     adIns.setAttribute('data-ad-slot', '2870000676');
+                    // FORCE: Don't let AdSense decide - use horizontal format
                     adIns.setAttribute('data-ad-format', 'horizontal');
+                    // DISABLE: Don't let AdSense override our dimensions
                     adIns.setAttribute('data-full-width-responsive', 'false');
-                    // Force specific banner size that matches 90px height
-                    adIns.setAttribute('data-ad-format', 'rectangle');
-                    adIns.style.width = width + 'px';
-                    adIns.style.height = '90px';
                     
                     adContainer.appendChild(adIns);
                     bannerSpace.appendChild(adContainer);
