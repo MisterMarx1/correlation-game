@@ -146,7 +146,6 @@
             height: calc(100vh - 50px); /* Account for banner ad */
             color: #e0e0e0;
             box-sizing: border-box;
-            overflow: hidden;
             position: relative;
             font-family: 'Orbitron', sans-serif;
         }
@@ -679,7 +678,7 @@
         /* --- Floating Sound Toggle --- */
         .sound-toggle {
             position: fixed;
-            bottom: -4px;
+            bottom: 54px;
             left: -4px;
             background: none;
             border: none;
@@ -713,7 +712,7 @@
         /* --- Credits Toggle --- */
         .credits-toggle {
             position: fixed;
-            bottom: 24px;
+            bottom: 74px;
             left: -4px;
             background: transparent;
             border: none;
@@ -738,7 +737,7 @@
 
         .version-text {
             position: fixed;
-            bottom: 2px;
+            bottom: 54px;
             left: 34px;
             font-size: 7px;
             font-family: 'IBM Plex Mono', monospace;
@@ -751,7 +750,7 @@
 
         .copyright-text {
             position: fixed;
-            bottom: 2px;
+            bottom: 54px;
             right: 6px;
             font-size: 7px;
             font-family: 'IBM Plex Mono', monospace;
@@ -2623,28 +2622,45 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
 
                 const initializeAd = () => {
                     const ad = document.querySelector('.adsbygoogle');
-                    
-                    if (ad && ad.offsetWidth > 0) {
-                        try {
-                            // Prevent double initialization
-                            if (!window.adsInitialized) {
-                                window.adsInitialized = true;
-                                (adsbygoogle = window.adsbygoogle || []).push({});
-                                console.log("Ad initialized with width:", ad.offsetWidth);
-                            }
-                        } catch (e) {
-                            console.error("AdSense initialization error:", e);
-                        }
-                    } else {
+                    if (!ad) return;
+
+                    // Multiple bulletproof checks to prevent duplicate initialization
+                    if (ad.getAttribute('data-adsbygoogle-status') === 'done') {
+                        console.log("Ad already initialized via Google status - skipping");
+                        return;
+                    }
+
+                    if (window.adHasRun) {
+                        console.log("Ad already initialized via global flag - skipping");
+                        return;
+                    }
+
+                    if (window.adsInitialized) {
+                        console.log("Ad already initialized via adsInitialized flag - skipping");
+                        return;
+                    }
+
+                    if (ad.offsetWidth === 0) {
                         console.warn("Ad container still 0 width - retrying...");
-                        // Retry once after additional delay
                         setTimeout(() => {
-                            if (!window.adsInitialized) {
+                            if (!window.adHasRun && ad.offsetWidth > 0) {
+                                window.adHasRun = true;
                                 window.adsInitialized = true;
                                 (adsbygoogle = window.adsbygoogle || []).push({});
-                                console.log("Ad initialized on retry");
+                                console.log("Ad initialized on retry with width:", ad.offsetWidth);
                             }
                         }, 500);
+                        return;
+                    }
+
+                    try {
+                        // Set all flags BEFORE pushing to prevent race conditions
+                        window.adHasRun = true;
+                        window.adsInitialized = true;
+                        (adsbygoogle = window.adsbygoogle || []).push({});
+                        console.log("Ad initialized once with width:", ad.offsetWidth);
+                    } catch (e) {
+                        console.error("AdSense initialization error:", e);
                     }
                 };
 
