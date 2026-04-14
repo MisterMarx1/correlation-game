@@ -2148,10 +2148,7 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
 
         // --- Main Game Component ---
         function MathInSpace() {
-            // --- Ad Measurement State ---
-            const adRef = useRef(null);
-            const [adWidth, setAdWidth] = useState(0);
-
+            
             // --- Setup State ---
             const [selectedDuration, setSelectedDuration] = useState(DEFAULT_DURATION);
             const [selectedMaxDigits, setSelectedMaxDigits] = useState(DEFAULT_MAX_DIGITS);
@@ -2221,39 +2218,7 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
                 }
             }, []);
 
-            // --- Dynamic Ad Width Measurement ---
-            useEffect(() => {
-                if (!adRef.current) return;
-
-                const measure = () => {
-                    const width = adRef.current.offsetWidth;
-                    setAdWidth(width);
-                    console.log("Ad width measured:", width);
-                };
-
-                // Run once after mount
-                measure();
-
-                // Track future changes (orientation, resize, etc.)
-                const observer = new ResizeObserver(measure);
-                observer.observe(adRef.current);
-
-                return () => observer.disconnect();
-            }, []);
-
-            // --- Bulletproof Ad Initialization (with delay) ---
-            useEffect(() => {
-                if (adWidth === 0) return;
-
-                const id = setTimeout(() => {
-                    console.log("Initializing ad with width:", adWidth);
-                    // TODO: Initialize actual ad here with adWidth
-                    // initializeAds(adWidth);
-                }, 50); // let layout fully settle
-
-                return () => clearTimeout(id);
-            }, [adWidth]);
-
+            
             // --- Memos ---
             const totalQuestionsAnswered = useMemo(() => correctCount + incorrectCount + timeoutCount, [correctCount, incorrectCount, timeoutCount]);
             const speedBonusCount = useMemo(() => {
@@ -2784,7 +2749,7 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
                     </div>
                     
                     {/* Banner Ad Space */}
-                    <div className="banner-ad-space" ref={adRef}>
+                    <div className="banner-ad-space">
                         <div id="ad-container"></div>
                     </div>
                 </>
