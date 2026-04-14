@@ -1037,6 +1037,19 @@
              data-ad-slot="4499823296"></ins>
     </div>
     
+    <!-- AdSense Initialization (after layout stabilizes) -->
+    <script>
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                try {
+                    (adsbygoogle = window.adsbygoogle || []).push({});
+                } catch (e) {
+                    console.error("AdSense push error:", e);
+                }
+            }, 500);
+        });
+    </script>
+    
     <script type="text/babel">
         const { useState, useEffect, useRef, useCallback, useMemo } = React;
         const { useSelector, useDispatch } = ReactRedux;
