@@ -1033,10 +1033,9 @@
     <div class="ad-banner-container" id="ad-container">
         <!-- AdSense Banner (web) -->
         <ins class="adsbygoogle"
-             style="display:block;width:100%;height:50px;max-height:50px"
+             style="display:block;width:300px;height:50px;margin:0 auto;"
              data-ad-client="ca-pub-2662863757001007"
-             data-ad-slot="4499823296"
-             data-full-width-responsive="true"></ins>
+             data-ad-slot="4499823296"></ins>
     </div>
     
     <script type="text/babel">
@@ -2617,6 +2616,42 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
                 };
             }, [isPaused]);
 
+            // --- AdSense Initialization (web only) ---
+            useEffect(() => {
+                // Only initialize on web, not in native app
+                if (window.isNativeApp) return;
+
+                const initializeAd = () => {
+                    const ad = document.querySelector('.adsbygoogle');
+                    
+                    if (ad && ad.offsetWidth > 0) {
+                        try {
+                            // Prevent double initialization
+                            if (!window.adsInitialized) {
+                                window.adsInitialized = true;
+                                (adsbygoogle = window.adsbygoogle || []).push({});
+                                console.log("Ad initialized with width:", ad.offsetWidth);
+                            }
+                        } catch (e) {
+                            console.error("AdSense initialization error:", e);
+                        }
+                    } else {
+                        console.warn("Ad container still 0 width - retrying...");
+                        // Retry once after additional delay
+                        setTimeout(() => {
+                            if (!window.adsInitialized) {
+                                window.adsInitialized = true;
+                                (adsbygoogle = window.adsbygoogle || []).push({});
+                                console.log("Ad initialized on retry");
+                            }
+                        }, 500);
+                    }
+                };
+
+                // Initialize after React layout is stable
+                setTimeout(initializeAd, 800);
+            }, []);
+
             // --- Calculate Progress Bar Widths ---
             const totalAttempts = correctCount + incorrectCount + timeoutCount;
             const correctWidth = totalAttempts > 0 ? (correctCount / totalAttempts) * 100 : 0;
@@ -2808,18 +2843,7 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
                 }, 1000);
             } else {
                 console.log('Initializing AdSense ads for web...');
-                setTimeout(function() {
-                    try {
-                        // Prevent double initialization
-                        if (!window.adsInitialized) {
-                            window.adsInitialized = true;
-                            (adsbygoogle = window.adsbygoogle || []).push({});
-                            console.log('AdSense ads initialized successfully');
-                        }
-                    } catch (error) {
-                        console.error('AdSense initialization failed:', error);
-                    }
-                }, 500);
+                // AdSense initialization now handled in React useEffect
             }
         });
     </script>
