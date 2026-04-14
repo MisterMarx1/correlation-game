@@ -103,7 +103,7 @@
             justify-content: space-between;
             text-align: center;
             width: 100%;
-            height: calc(100vh - 50px);
+            height: calc(100vh - 90px);
             color: #e0e0e0;
             box-sizing: border-box;
             overflow: hidden;
@@ -191,7 +191,7 @@
             background: linear-gradient(145deg, #ff9900, #cc7a00);
             color: #fff;
             border: none;
-            border-radius: 50px;
+            border-radius: 90px;
             font-family: 'Orbitron', sans-serif;
             font-weight: 700;
             transition: transform 0.2s ease, box-shadow 0.2s ease;
@@ -251,7 +251,7 @@
             height: 105px;
             padding: 8px 4px;
             transform: translate(-50%, -50%);
-            border-radius: 50px;
+            border-radius: 90px;
             z-index: 5;
             user-select: none;
             animation:
@@ -268,7 +268,7 @@
             height:40px;
             color: #001f3f;
             border: 2px solid #00ccff;
-            border-radius: 50px;
+            border-radius: 90px;
             cursor: pointer;
             font-size: 1.2em;
             font-weight: 700;
@@ -454,7 +454,7 @@
             background: linear-gradient(145deg, #00ccff, #007bff);
             color: #fff;
             border: none;
-            border-radius: 50px;
+            border-radius: 90px;
             font-family: 'Orbitron', sans-serif;
             font-weight: 700;
             transition: transform 0.2s ease, box-shadow 0.2s ease;
@@ -517,7 +517,7 @@
             color: #fff;
             padding: 4px 4px;
             border: none;
-            border-radius: 50px;
+            border-radius: 90px;
             font-family: 'Orbitron', sans-serif;
             font-weight: 700;
             cursor: pointer;
@@ -764,7 +764,7 @@
             top: 0;
             left: 0;
             width: 100%;
-            height: calc(100vh - 50px);
+            height: calc(100vh - 90px);
             background: radial-gradient(ellipse at center, 
                 rgba(20, 25, 40, 0.95) 0%, 
                 rgba(10, 15, 30, 0.98) 40%, 
@@ -870,7 +870,7 @@
             50% { 
                 opacity: 1;
                 text-shadow: 0 0 25px rgba(147, 197, 253, 0.6),
-                             0 0 50px rgba(147, 197, 253, 0.4),
+                             0 0 90px rgba(147, 197, 253, 0.4),
                              0 0 75px rgba(147, 197, 253, 0.3);
             }
             75% { 
@@ -1005,7 +1005,7 @@
             bottom: 0;
             left: 0;
             width: 100%;
-            height: 50px;
+            height: 90px;
             background: linear-gradient(135deg, #1a1a2e, #0f0f1e);
             border-top: 2px solid #00ccff;
             display: flex;
@@ -1017,6 +1017,26 @@
             font-size: 12px;
             text-transform: uppercase;
             letter-spacing: 2px;
+            clip-path: inset(0 0 0 0);
+            overflow: hidden;
+        }
+
+        .banner-ad-space > div {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 90px;
+            clip-path: inset(0 0 0 0);
+            overflow: hidden;
+        }
+
+        .banner-ad-space ins,
+        .banner-ad-space iframe {
+            position: absolute !important;
+            top: 0 !important;
+            left: 0 !important;
+            clip-path: inset(0 0 0 0) !important;
         }
 
             </style>
@@ -2231,13 +2251,13 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
 
                 const id = setTimeout(() => {
                     console.log("Initializing ad with width:", adWidth);
-                    console.log("Width is SET IN STONE - final dimensions:", adWidth + "x50");
+                    console.log("Width is SET IN STONE - final dimensions:", adWidth + "x90");
                     
                     // Global flag - track first time width is set in stone
                     if (!window.AD_WIDTH_SET_IN_STONE_ONCE) {
                         window.AD_WIDTH_SET_IN_STONE_ONCE = true;
                         console.log("TERMINAL SPIT: WIDTH SET IN STONE FOR FIRST TIME! Global flag activated.");
-                        console.log("TERMINAL SPIT: Final ad dimensions locked at:", adWidth + "x50");
+                        console.log("TERMINAL SPIT: Final ad dimensions locked at:", adWidth + "x90");
                     }
                     
                     // Initialize AdSense with real publisher credentials
@@ -2251,48 +2271,48 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
             const initializeAdSense = (width) => {
                 console.log("ADSENSE INIT: Starting with width:", width);
                 
-                // Create ad container if it doesn't exist
-                let adContainer = document.getElementById('adsense-ad-container');
-                if (!adContainer) {
-                    adContainer = document.createElement('div');
-                    adContainer.id = 'adsense-ad-container';
-                    adContainer.style.width = width + 'px';
-                    adContainer.style.height = '50px';
-                    adContainer.style.display = 'flex';
-                    adContainer.style.alignItems = 'center';
-                    adContainer.style.justifyContent = 'center';
+                // Clear placeholder and create manual ad container
+                const bannerSpace = document.querySelector('.banner-ad-space');
+                if (bannerSpace) {
+                    bannerSpace.innerHTML = '';
+                    bannerSpace.style.width = width + 'px';
+                    bannerSpace.style.height = '90px';
                     
-                    // Replace placeholder content with ad container
-                    const bannerSpace = document.querySelector('.banner-ad-space');
-                    if (bannerSpace) {
-                        bannerSpace.innerHTML = '';
-                        bannerSpace.appendChild(adContainer);
-                    }
-                }
-                
-                try {
-                    // Create the ad ins element
+                    // Create manual ad container with strict height control
+                    const adContainer = document.createElement('div');
+                    adContainer.style.width = width + 'px';
+                    adContainer.style.height = '90px';
+                    adContainer.style.overflow = 'hidden';
+                    adContainer.style.position = 'relative';
+                    
+                    // Create the AdSense ad element with fixed 90px banner size
                     const adIns = document.createElement('ins');
                     adIns.className = 'adsbygoogle';
                     adIns.style.display = 'block';
                     adIns.style.width = width + 'px';
-                    adIns.style.height = '50px';
+                    adIns.style.height = '90px';
                     adIns.setAttribute('data-ad-client', 'ca-pub-2662863757001007');
-                    adIns.setAttribute('data-ad-slot', 'math-in-space-banner'); // You'll need to create this slot
+                    adIns.setAttribute('data-ad-slot', '2870000676');
                     adIns.setAttribute('data-ad-format', 'horizontal');
                     adIns.setAttribute('data-full-width-responsive', 'false');
+                    // Force specific banner size that matches 90px height
+                    adIns.setAttribute('data-ad-format', 'rectangle');
+                    adIns.style.width = width + 'px';
+                    adIns.style.height = '90px';
                     
                     adContainer.appendChild(adIns);
+                    bannerSpace.appendChild(adContainer);
                     
-                    // Trigger ad load
-                    (adsbygoogle = window.adsbygoogle || []).push({});
+                    console.log("ADSENSE INIT: Manual display ad container ready for", width + "x90");
                     
-                    console.log("ADSENSE INIT: Ad request sent for", width + "x50");
-                    
-                } catch (error) {
-                    console.error("ADSENSE ERROR:", error);
-                    // Fallback display
-                    adContainer.innerHTML = `<div style="font-size: 10px; color: rgba(255,255,255,0.3); font-family: monospace;">AD ERROR (${width}×50)</div>`;
+                    // Execute the AdSense push after container is ready
+                    try {
+                        (adsbygoogle = window.adsbygoogle || []).push({});
+                        console.log("ADSENSE SUCCESS: Manual display ad pushed for slot 2870000676");
+                    } catch (error) {
+                        console.error("ADSENSE ERROR:", error);
+                        adContainer.innerHTML = `<div style="font-size: 10px; color: rgba(255,255,255,0.3); font-family: monospace;">AD ERROR (${width}×90)</div>`;
+                    }
                 }
             };
 
