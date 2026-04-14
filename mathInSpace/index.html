@@ -2254,6 +2254,12 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
                     console.log("Ad already initialized, skipping...");
                     return;
                 }
+                
+                // BLOCK: Wait for page to be fully loaded before measuring
+                if (document.readyState !== 'complete') {
+                    console.log("PAGE NOT FULLY LOADED - blocking ad initialization for width:", adWidth);
+                    return;
+                }
 
                 const id = setTimeout(() => {
                     console.log("Initializing ad with width:", adWidth);
