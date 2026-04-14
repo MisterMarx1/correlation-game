@@ -1019,61 +1019,81 @@
         class SoundManager {
             constructor() {
                 this.sounds = {};
-                this.backgroundMusicTrack = null;
-                this.backgroundMusicTrack2 = null; // Second track for overlapping
                 this.musicStarted = false;
                 this.userInteracted = false;
                 this.isMuted = false;
-                this.isPaused = false; // Track pause state
-                this.basePath = './sfx/'; // Adjust if needed
-                this.currentTrack = 1; // Track which audio is currently playing
-                this.loopTimer = null; // Timer for next track start
+                this.isPaused = false;
+                this.basePath = './sfx/';
+                this.loopTimer = null;
                 
+                // Web Audio API setup
+                this.audioContext = null;
+                this.musicBuffer = null;
+                this.soundBuffers = {};
+                this.nextStartTime = 0;
+                this.gainNode = null;
+                this.musicGainNode = null;
+                this.effectsVolume = 0.5;
+                
+                this.initAudioContext();
                 this.loadAllSounds();
-                // Don't start background music on page load - wait for user interaction
             }
 
-            loadAllSounds() {
-                // Load all sounds
-                Object.entries(SoundRoles).forEach(([role, filename]) => {
-                    if (role === 'BACKGROUND_MUSIC') {
-                        // Create two background music tracks for overlapping
-                        const audio1 = new Audio(this.basePath + filename);
-                        const audio2 = new Audio(this.basePath + filename);
-                        
-                        audio1.loop = false; // We'll handle looping manually
-                        audio2.loop = false; // We'll handle looping manually
-                        audio1.volume = 0.3;
-                        audio2.volume = 0.3;
-                        
-                        this.backgroundMusicTrack = audio1;
-                        this.backgroundMusicTrack2 = audio2;
-                    } else {
-                        // Regular sound effects
-                        const audio = new Audio(this.basePath + filename);
-                        audio.volume = 0.5;
-                        this.sounds[role] = audio;
+            initAudioContext() {
+                try {
+                    this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    
+                    // Main gain node for all audio (music + effects)
+                    this.gainNode = this.audioContext.createGain();
+                    this.gainNode.connect(this.audioContext.destination);
+                    
+                    // Separate gain node for music volume control
+                    this.musicGainNode = this.audioContext.createGain();
+                    this.musicGainNode.connect(this.gainNode);
+                } catch (e) {
+                    console.log('Web Audio API not supported');
+                }
+            }
+
+            async loadAllSounds() {
+                // Load music buffer for Web Audio API
+                try {
+                    const response = await fetch(this.basePath + SoundRoles.BACKGROUND_MUSIC);
+                    const arrayBuffer = await response.arrayBuffer();
+                    this.musicBuffer = await this.audioContext.decodeAudioData(arrayBuffer);
+                } catch (e) {
+                    console.log('Failed to load music buffer:', e);
+                }
+
+                // Load all sound effects as Web Audio buffers
+                const soundPromises = Object.entries(SoundRoles).map(async ([role, filename]) => {
+                    if (role !== 'BACKGROUND_MUSIC') {
+                        try {
+                            const response = await fetch(this.basePath + filename);
+                            const arrayBuffer = await response.arrayBuffer();
+                            const buffer = await this.audioContext.decodeAudioData(arrayBuffer);
+                            this.soundBuffers[role] = buffer;
+                        } catch (e) {
+                            console.log(`Failed to load sound ${role}:`, e);
+                        }
                     }
                 });
+
+                await Promise.all(soundPromises);
             }
 
             setMuted(isMuted) {
                 this.isMuted = isMuted;
-                const volume = this.isMuted ? 0 : 0.3;
-                const effectsVolume = this.isMuted ? 0 : 0.5;
                 
-                // Update background music volume for both tracks
-                if (this.backgroundMusicTrack) {
-                    this.backgroundMusicTrack.volume = volume;
-                }
-                if (this.backgroundMusicTrack2) {
-                    this.backgroundMusicTrack2.volume = volume;
+                // Main gain node controls all audio (music + effects)
+                if (this.gainNode) {
+                    this.gainNode.gain.value = isMuted ? 0 : 1;
                 }
                 
-                // Update sound effect volumes
-                Object.values(this.sounds).forEach(audio => {
-                    audio.volume = effectsVolume;
-                });
+                // Music gain node controls relative music volume
+                if (this.musicGainNode) {
+                    this.musicGainNode.gain.value = 0.3; // Music at 30% volume
+                }
             }
 
             toggleMute() {
@@ -1082,73 +1102,74 @@
             }
 
             startBackgroundMusic() {
-                if (this.musicStarted || !this.backgroundMusicTrack) return;
+                if (this.musicStarted || !this.musicBuffer) return;
                 
                 this.musicStarted = true;
-                this.playBackgroundTrack(0); // Start immediately
+                
+                if (this.audioContext.state === 'suspended') {
+                    this.audioContext.resume();
+                }
+                
+                this.nextStartTime = this.audioContext.currentTime;
+                this.scheduleLoop();
             }
 
-            playBackgroundTrack(delay = 0) {
-                // Clear any existing timer
-                if (this.loopTimer) {
-                    clearTimeout(this.loopTimer);
-                    this.loopTimer = null;
-                }
+            playBufferedTrack(startTime) {
+                if (!this.musicBuffer || !this.audioContext) return;
                 
-                // Don't play if music is paused
-                if (this.isPaused) {
-                    return;
-                }
-                
-                // Alternate between tracks for seamless overlapping
-                const track = this.currentTrack === 1 ? this.backgroundMusicTrack : this.backgroundMusicTrack2;
-                
-                if (track) {
-                    track.currentTime = 0;
-                    
-                    if (delay > 0) {
-                        setTimeout(() => {
-                            // Check again if not paused before playing
-                            if (!this.isPaused) {
-                                track.play().catch(e => console.log('Background music play failed:', e));
-                                this.scheduleNextTrack();
-                            }
-                        }, delay);
-                    } else {
-                        track.play().catch(e => console.log('Background music play failed:', e));
-                        this.scheduleNextTrack();
-                    }
-                    
-                    // Switch to the other track for next play
-                    this.currentTrack = this.currentTrack === 1 ? 2 : 1;
-                }
+                const source = this.audioContext.createBufferSource();
+                source.buffer = this.musicBuffer;
+
+                const gain = this.audioContext.createGain();
+
+                source.connect(gain);
+                gain.connect(this.musicGainNode);
+
+                const fadeTime = 2.0; // seconds
+
+                // Smooth crossfade
+                gain.gain.setValueAtTime(0, startTime);
+                gain.gain.linearRampToValueAtTime(1, startTime + 0.5);
+                gain.gain.setValueAtTime(1, startTime + this.musicBuffer.duration - fadeTime);
+                gain.gain.linearRampToValueAtTime(0, startTime + this.musicBuffer.duration);
+
+                source.start(startTime);
             }
             
-            scheduleNextTrack() {
-                // Don't schedule if music is paused
-                if (this.isPaused) {
-                    return;
+            scheduleLoop() {
+                if (!this.musicStarted || this.isPaused) return;
+                
+                const now = this.audioContext.currentTime;
+
+                if (this.nextStartTime < now) {
+                    this.nextStartTime = now;
                 }
-                
-                // The dark-space-motion track is approximately 32 seconds long
-                // Start next track 10 seconds before current ends (32 - 10 = 22 seconds)
-                const overlapDelay = 22000; // 22 seconds
-                
-                this.loopTimer = setTimeout(() => {
-                    if (this.musicStarted && !this.isPaused) {
-                        this.playBackgroundTrack(0); // Start overlapping track
-                    }
-                }, overlapDelay);
+
+                const overlapOffset = this.musicBuffer.duration - 10; // Your 22s overlap idea
+
+                this.playBufferedTrack(this.nextStartTime);
+
+                this.nextStartTime += overlapOffset;
+
+                this.loopTimer = setTimeout(() => this.scheduleLoop(), 1000);
             }
 
             play(role) {
-                if (this.isMuted) return; // Don't play if muted
+                if (!this.audioContext) return;
                 
-                const sound = this.sounds[role];
-                if (sound) {
-                    sound.currentTime = 0;
-                    sound.play().catch(e => console.log(`Failed to play ${role}:`, e));
-                }
+                const buffer = this.soundBuffers[role];
+                if (!buffer) return;
+                
+                const source = this.audioContext.createBufferSource();
+                source.buffer = buffer;
+                
+                const gain = this.audioContext.createGain();
+                gain.gain.value = this.effectsVolume || 0.5;
+                
+                source.connect(gain);
+                gain.connect(this.gainNode); // Connect to main gain for mute control
+                
+                source.start(0);
             }
 
             stopBackgroundMusic() {
@@ -1158,16 +1179,7 @@
                     this.loopTimer = null;
                 }
                 
-                if (this.backgroundMusicTrack) {
-                    this.backgroundMusicTrack.pause();
-                    this.backgroundMusicTrack.currentTime = 0;
-                }
-                if (this.backgroundMusicTrack2) {
-                    this.backgroundMusicTrack2.pause();
-                    this.backgroundMusicTrack2.currentTime = 0;
-                }
                 this.musicStarted = false;
-                this.currentTrack = 1; // Reset to track 1
             }
 
             pause() {
@@ -1179,27 +1191,23 @@
                     this.loopTimer = null;
                 }
                 
-                // Pause both background tracks
-                if (this.backgroundMusicTrack && !this.backgroundMusicTrack.paused) {
-                    this.backgroundMusicTrack.pause();
-                }
-                if (this.backgroundMusicTrack2 && !this.backgroundMusicTrack2.paused) {
-                    this.backgroundMusicTrack2.pause();
+                // Suspend audio context to stop all Web Audio playback
+                if (this.audioContext && this.audioContext.state === 'running') {
+                    this.audioContext.suspend();
                 }
             }
 
             resume() {
                 this.isPaused = false;
                 
-                // Resume the appropriate track based on which should be playing
                 if (this.musicStarted) {
-                    // Check which track was playing and resume it, then schedule next
-                    const currentPlayingTrack = this.currentTrack === 1 ? this.backgroundMusicTrack2 : this.backgroundMusicTrack;
-                    
-                    if (currentPlayingTrack && currentPlayingTrack.paused) {
-                        currentPlayingTrack.play().catch(e => console.log('Background music resume failed:', e));
-                        // Reschedule the next track
-                        this.scheduleNextTrack();
+                    // Resume audio context first
+                    if (this.audioContext && this.audioContext.state === 'suspended') {
+                        this.audioContext.resume().then(() => {
+                            this.scheduleLoop();
+                        });
+                    } else {
+                        this.scheduleLoop();
                     }
                 }
             }
