@@ -1131,60 +1131,30 @@
             }
 
             async initializeAdSense() {
-                console.log('=== ADSENSE INIT START ===');
                 console.log('AdManager: Initializing AdSense auto ads');
-                console.log('AdManager: Global flag before check:', window.adSenseInitialized);
-                console.log('AdManager: adsbygoogle exists:', !!window.adsbygoogle);
-                console.log('AdManager: adsbygoogle length:', window.adsbygoogle ? window.adsbygoogle.length : 'N/A');
-                console.log('AdManager: Scripts on page:', document.querySelectorAll('script').length);
-                console.log('AdManager: AdSense scripts:', document.querySelectorAll('script[src*="adsbygoogle.js"]').length);
                 
-                // AdSense auto ads - works immediately for new accounts
-                // Publisher ID: ca-pub-2662863757001007
+                if (window.adSenseInitialized) {
+                    console.log('AdManager: AdSense already initialized globally, skipping');
+                    return Promise.resolve(true);
+                }
+                
+                window.adSenseInitialized = true;
+                this.adUnitId = 'auto-ads';
+                
+                console.log('AdManager: Loading AdSense auto ads');
+                console.log('AdManager: Publisher ID: ca-pub-2662863757001007');
                 
                 return new Promise((resolve) => {
-                    setTimeout(() => {
-                        console.log('--- ADSENSE TIMEOUT FIRED ---');
-                        this.adUnitId = 'auto-ads';
-                        console.log('AdManager: Loading AdSense auto ads');
-                        console.log('AdManager: Publisher ID: ca-pub-2662863757001007');
-                        
-                        // GLOBAL CHECK - Only initialize once EVER
-                        console.log('AdManager: Checking global flag...');
-                        if (window.adSenseInitialized) {
-                            console.log('AdManager: GLOBAL FLAG TRUE - skipping initialization');
-                            console.log('=== ADSENSE INIT SKIPPED ===');
-                            resolve(true);
-                            return;
-                        }
-                        
-                        console.log('AdManager: GLOBAL FLAG FALSE - proceeding with initialization');
-                        
-                        // Mark as initialized globally
-                        console.log('AdManager: Setting global flag to TRUE');
-                        window.adSenseInitialized = true;
-                        
-                        // Load AdSense auto ads script ONCE with proper auto ads configuration
-                        console.log('AdManager: Creating AdSense script element');
-                        const script = document.createElement('script');
-                        script.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js';
-                        script.async = true;
-                        script.crossOrigin = 'anonymous';
-                        script.setAttribute('data-ad-client', this.adUnitIds.web.banner);
-                        script.setAttribute('data-ad-format', 'auto');
-                        script.setAttribute('data-full-width-responsive', 'true');
-                        
-                        console.log('AdManager: Appending script to head');
-                        document.head.appendChild(script);
-                        
-                        console.log('AdManager: Script appended, total scripts now:', document.querySelectorAll('script').length);
-                        
-                        // NO MANUAL PUSH - let AdSense auto ads handle it automatically
-                        console.log('AdManager: AdSense auto ads script loaded - NO MANUAL PUSH');
-                        console.log('AdManager: AdSense auto ads configured and loaded');
-                        console.log('=== ADSENSE INIT COMPLETE ===');
-                        resolve(true);
-                    }, 100);
+                    const script = document.createElement('script');
+                    script.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js';
+                    script.async = true;
+                    script.crossOrigin = 'anonymous';
+                    script.setAttribute('data-ad-client', this.adUnitIds.web.banner);
+                    // NO onload handler, NO manual push - auto ads handle it
+                    document.head.appendChild(script);
+                    
+                    console.log('AdManager: AdSense auto ads script loaded');
+                    resolve(true);
                 });
             }
 
@@ -2349,6 +2319,7 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
         function MathInSpace() {
             // --- Ad Measurement State ---
             const adRef = useRef(null);
+            const adInitializedRef = useRef(false);
             const [adWidth, setAdWidth] = useState(0);
 
             // --- Setup State ---
@@ -2440,9 +2411,10 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
                 return () => observer.disconnect();
             }, []);
 
-            // --- Bulletproof Ad Initialization (with delay) ---
+            // --- Bulletproof Ad Initialization (with ref gating) ---
             useEffect(() => {
-                if (adWidth === 0) return;
+                if (adWidth === 0 || adInitializedRef.current) return;
+                adInitializedRef.current = true;
 
                 const id = setTimeout(async () => {
                     console.log("Initializing AdManager with measured width:", adWidth);
