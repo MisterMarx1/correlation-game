@@ -519,9 +519,9 @@
 </div>
 <script>
 const GAMES=[
-  {id:2,title:"MATH IN SPACE",genre:"Educational",colors:["#0a0a1e","#448aff","#1a2d6b","#060618"],accent:"#448aff",icon:"\ud83d\ude80",lastPlayed:"Yesterday",progress:34,activities:["Continue Journey","Practice Mode","Leaderboard","Companion Page"],description:"A mathematical journey where players solve equations in space to practice basic arithmetic operations.",screens:["mathInSpace/images/Screenshot_20260321-160806.png","mathInSpace/images/Screenshot_20260321-160835.png","mathInSpace/images/Screenshot_20260321-160841.png","mathInSpace/images/Screenshot_20260321-160948.png"]},
-  {id:1,title:"CORRELATION",genre:"Strategic Puzzle",colors:["#020617","#14b8a6","#0f4c5c","#06111f"],accent:"#14b8a6",icon:"\u269B",lastPlayed:"2 hours ago",progress:67,activities:["Continue Game","New Game","Tutorial","Companion Page"],description:"A fast-paced system management game built around active decisions, timing, pattern recognition, and consequence.",screens:["correlation/images/Screenshot_20260317-213643.png","correlation/images/Screenshot_20260317-214702.png","correlation/images/Screenshot_20260317-214717.png","correlation/images/Screenshot_20260317-214727.png"]},
-  {id:3,title:"SIGMA PRIME",genre:"Mathematical Puzzle",colors:["#04040c","#9b5de5","00f5d4","020617"],accent:"#9b5de5",icon:"Σ",lastPlayed:"Never",progress:0,activities:["New Game","Rules","Controls","Companion Page"],description:"A strategic puzzle game where players draw paths through adjacent cells on an 8x8 grid to satisfy mathematical conditions involving prime numbers and sums.",screens:["sigmaPrime/images/Screenshot_20260323-201948.png","sigmaPrime/images/Screenshot_20260323-202029.png","sigmaPrime/images/Screenshot_20260323-202048.png","sigmaPrime/images/Screenshot_20260323-202304.png"]},
+  {id:2,title:"MATH IN SPACE",genre:"Educational",colors:["#0a0a1e","#448aff","#1a2d6b","#060618"],accent:"#448aff",icon:"mathInSpace/images/mathinspace_512_512.png",lastPlayed:"Yesterday",progress:34,activities:["Continue Journey","Practice Mode","Leaderboard","Companion Page"],description:"A mathematical journey where players solve equations in space to practice basic arithmetic operations.",screens:["mathInSpace/images/Screenshot_20260321-160806.png","mathInSpace/images/Screenshot_20260321-160835.png","mathInSpace/images/Screenshot_20260321-160841.png","mathInSpace/images/Screenshot_20260321-160948.png"]},
+  {id:1,title:"CORRELATION",genre:"Strategic Puzzle",colors:["#020617","#14b8a6","#0f4c5c","#06111f"],accent:"#14b8a6",icon:"correlation/images/correlation_512_512.png",lastPlayed:"2 hours ago",progress:67,activities:["Continue Game","New Game","Tutorial","Companion Page"],description:"A fast-paced system management game built around active decisions, timing, pattern recognition, and consequence.",screens:["correlation/images/Screenshot_20260317-213643.png","correlation/images/Screenshot_20260317-214702.png","correlation/images/Screenshot_20260317-214717.png","correlation/images/Screenshot_20260317-214727.png"]},
+  {id:3,title:"SIGMA PRIME",genre:"Mathematical Puzzle",colors:["#04040c","#9b5de5","00f5d4","020617"],accent:"#9b5de5",icon:"sigmaPrime/images/sigmaPrime_512_512.png",lastPlayed:"Never",progress:0,activities:["New Game","Rules","Controls","Companion Page"],description:"A strategic puzzle game where players draw paths through adjacent cells on an 8x8 grid to satisfy mathematical conditions involving prime numbers and sums.",screens:["sigmaPrime/images/Screenshot_20260323-201948.png","sigmaPrime/images/Screenshot_20260323-202029.png","sigmaPrime/images/Screenshot_20260323-202048.png","sigmaPrime/images/Screenshot_20260323-202304.png"]},
   {id:4,title:"Neon Saints",genre:"Shooter",colors:["#1a1a00","#ffea00","#6b5a1a","#1a1500"],accent:"#ffea00",icon:"🎮",lastPlayed:"Last week",progress:12,activities:["Campaign","Warzone","Co-op Missions","Armory"],description:"",screens:[]},
   {id:5,title:"Verdant",genre:"Simulation",colors:["#001a0a","#69f0ae","#1a6b2d","#0a2a10"],accent:"#69f0ae",icon:"🎮",lastPlayed:"2 weeks ago",progress:45,activities:["Continue Farm","Visit Friends","Seasonal Event","Market"],description:"",screens:[]},
   {id:6,title:"Obsidian Keep",genre:"Souls-like",colors:["#0d0d0d","#b0bec5","#3a3a3a","#111111"],accent:"#b0bec5",icon:"🎮",lastPlayed:"1 month ago",progress:21,activities:["Continue","PvP Arena","Boss Rush","Lore Codex"],description:"",screens:[]},
@@ -552,7 +552,20 @@ GAMES.forEach((g,i)=>{
   const t=document.createElement('div');
   t.className='game-tile';
   if(i >= 3) t.classList.add('disabled'); // Disable games 4-8
-  t.textContent=g.icon;
+  
+  // Check if icon is an image path (contains '/') or text/emoji
+  if(g.icon.includes('/')) {
+    // It's an image path - use background image
+    t.style.backgroundImage = `url(${g.icon})`;
+    t.style.backgroundSize = 'cover';
+    t.style.backgroundPosition = 'center';
+    t.style.backgroundRepeat = 'no-repeat';
+    t.textContent = ''; // Remove any text content
+  } else {
+    // It's text/emoji - use text content
+    t.textContent = g.icon;
+  }
+  
   if(i < 3) t.addEventListener('click',()=>selectGame(i)); // Only make first 3 games clickable
   carouselEl.appendChild(t);
 });
@@ -605,7 +618,18 @@ function render(){
     const g=GAMES[i],sel=i===selectedIndex;
     t.className='game-tile'+(sel?' selected':'');
     if(i >= 3) t.classList.add('disabled'); // Keep disabled state for games 4-8
-    t.style.background='linear-gradient(135deg,'+g.accent+'40,'+g.accent+'15)';
+    
+    // Only apply gradient background if it's not an image icon
+    if(!g.icon.includes('/')) {
+      t.style.background='linear-gradient(135deg,'+g.accent+'40,'+g.accent+'15)';
+    } else {
+      // For image icons, keep the background image and add overlay
+      t.style.background=`linear-gradient(135deg,${g.accent}40,${g.accent}15), url(${g.icon})`;
+      t.style.backgroundSize='cover, cover';
+      t.style.backgroundPosition='center, center';
+      t.style.backgroundRepeat='no-repeat, no-repeat';
+    }
+    
     t.style.borderColor=sel?g.accent:'transparent';
     t.style.boxShadow='none';
   });
