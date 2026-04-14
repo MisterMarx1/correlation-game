@@ -2785,47 +2785,31 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
     
     <!-- AdSense Control Script -->
     <script>
+    let adLoaded = false;
+
     function loadAd() {
+        if (adLoaded) return;
+        
         const container = document.getElementById("ad-container");
-
         if (!container) return;
-
-        // Clear anything old
-        container.innerHTML = "";
-
-        const width = container.offsetWidth;
-
-        if (width === 0) {
-            console.log("Ad blocked: width 0");
-            return;
-        }
-
-        console.log("FINAL AD WIDTH:", width);
+        if (container.offsetWidth === 0) return;
 
         const ad = document.createElement("ins");
-
         ad.className = "adsbygoogle";
         ad.style.display = "block";
-        ad.style.width = width + "px";
+        ad.style.width = "100%";
         ad.style.height = "90px";
-
         ad.setAttribute("data-ad-client", "ca-pub-2662863757001007");
         ad.setAttribute("data-ad-slot", "4499823296");
         ad.setAttribute("data-ad-format", "horizontal");
-
+        ad.setAttribute("data-full-width-responsive", "true");
+        
         container.appendChild(ad);
-
         (adsbygoogle = window.adsbygoogle || []).push({});
+        adLoaded = true;
     }
 
-    /* WAIT UNTIL EVERYTHING IS DONE */
-
-    /* HANDLE RESIZE (CRITICAL FOR YOUR GAME WIDTH) */
-    let resizeTimeout;
-    window.addEventListener("resize", () => {
-        clearTimeout(resizeTimeout);
-        resizeTimeout = setTimeout(loadAd, 300);
-    });
+    window.addEventListener("load", () => setTimeout(loadAd, 300));
     </script>
 </body>
 </html>
