@@ -2404,11 +2404,10 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
                 // Run once after mount
                 measure();
 
-                // Track future changes (orientation, resize, etc.)
-                const observer = new ResizeObserver(measure);
-                observer.observe(adRef.current);
-
-                return () => observer.disconnect();
+                // DON'T observe ongoing changes - we only need the initial width
+                // const observer = new ResizeObserver(measure);
+                // observer.observe(adRef.current);
+                // return () => observer.disconnect();
             }, []);
 
             // --- Bulletproof Ad Initialization (with ref gating) ---
