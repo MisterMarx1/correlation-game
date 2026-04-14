@@ -6,7 +6,54 @@ Sync main index.html with www folder and run Capacitor sync
 import os
 import shutil
 import subprocess
+import re
 from pathlib import Path
+
+def increment_version():
+    """Increment version code and name in build.gradle"""
+    root_dir = Path(__file__).parent
+    build_gradle = root_dir / "android" / "app" / "build.gradle"
+    
+    if not build_gradle.exists():
+        print(f"WARNING: build.gradle not found at {build_gradle}")
+        return None, None
+    
+    # Read current build.gradle
+    with open(build_gradle, 'r') as f:
+        content = f.read()
+    
+    # Find current version code and name
+    version_code_match = re.search(r'versionCode\s+(\d+)', content)
+    version_name_match = re.search(r'versionName\s+"([^"]+)"', content)
+    
+    if not version_code_match or not version_name_match:
+        print("WARNING: Could not find version info in build.gradle")
+        return None, None
+    
+    current_code = int(version_code_match.group(1))
+    current_name = version_name_match.group(1)
+    
+    # Increment version code
+    new_code = current_code + 1
+    
+    # Update version name (increment patch version)
+    if '.' in current_name:
+        parts = current_name.split('.')
+        patch = int(parts[-1]) + 1
+        new_name = '.'.join(parts[:-1]) + f'.{patch}'
+    else:
+        new_name = f"{current_name}.1"
+    
+    # Update build.gradle content
+    content = re.sub(r'versionCode\s+\d+', f'versionCode {new_code}', content)
+    content = re.sub(r'versionName\s+"[^"]+"', f'versionName "{new_name}"', content)
+    
+    # Write back to build.gradle
+    with open(build_gradle, 'w') as f:
+        f.write(content)
+    
+    print(f"Version updated: {current_code} ({current_name}) -> {new_code} ({new_name})")
+    return new_code, new_name
 
 def main():
     # Paths
@@ -15,6 +62,11 @@ def main():
     www_dir = root_dir / "www"
     
     print("=== Math In Space - Index Sync to WWW ===")
+    
+    # Auto-increment version
+    new_code, new_name = increment_version()
+    if new_code:
+        print(f"Building version {new_code} ({new_name})")
     
     # Check if main index exists
     if not main_index.exists():
