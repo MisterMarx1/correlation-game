@@ -2827,6 +2827,15 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
                 showFallbackAd(container);
             }
         }, 3000);
+
+        // Also check for 400 errors immediately
+        setTimeout(() => {
+            const ins = container.querySelector("ins.adsbygoogle");
+            if (ins && !ins.querySelector("iframe")) {
+                console.log("No iframe detected after 1s - likely 400 error, showing fallback");
+                showFallbackAd(container);
+            }
+        }, 1000);
     }
 
     function showFallbackAd(container) {
