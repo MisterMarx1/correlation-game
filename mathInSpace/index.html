@@ -2813,6 +2813,15 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
             const ins = container.querySelector("ins.adsbygoogle");
             const iframe = container.querySelector("iframe");
             
+            console.log("Ad check - iframe exists:", !!iframe);
+            if (iframe) {
+                console.log("Ad iframe dimensions:", iframe.offsetWidth + "x" + iframe.offsetHeight);
+                console.log("Ad iframe style:", iframe.getAttribute("style"));
+            }
+            if (ins) {
+                console.log("Ad ins status:", ins.dataset.adStatus);
+            }
+            
             // If no iframe or AdSense marked it unfilled
             if (!iframe || (ins && ins.dataset.adStatus === "unfilled")) {
                 showFallbackAd(container);
