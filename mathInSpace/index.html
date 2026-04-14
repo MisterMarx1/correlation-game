@@ -1142,26 +1142,37 @@
                         console.log('AdManager: Loading AdSense auto ads');
                         console.log('AdManager: Publisher ID: ca-pub-2662863757001007');
                         
-                        // Load AdSense auto ads script
+                        // Check if AdSense already initialized
+                        if (window.adsenseInitialized || window.adsbygoogle?.length > 0) {
+                            console.log('AdManager: AdSense already initialized');
+                            resolve(true);
+                            return;
+                        }
+                        
+                        // Set global flag immediately
+                        window.adsenseInitialized = true;
+                        
+                        // Initialize adsbygoogle array before any pushes
+                        window.adsbygoogle = window.adsbygoogle || [];
+                        
+                        // Load AdSense script with client attribute
                         const script = document.createElement('script');
-                        script.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js';
+                        script.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=' + this.adUnitIds.web.banner;
                         script.async = true;
                         script.crossOrigin = 'anonymous';
-                        script.setAttribute('data-ad-client', this.adUnitIds.web.banner);
+                        
+                        script.onload = () => {
+                            // Only push after script is fully loaded
+                            if (!window.adsenseInitialized) {
+                                window.adsbygoogle.push({
+                                    google_ad_client: this.adUnitIds.web.banner,
+                                    enable_page_level_ads: true
+                                });
+                                console.log('AdManager: AdSense auto ads loaded');
+                            }
+                        };
+                        
                         document.head.appendChild(script);
-                        
-                        // Auto ads configuration
-                        const autoAdsScript = document.createElement('script');
-                        autoAdsScript.innerHTML = `
-                            window.adsbygoogle = window.adsbygoogle || [];
-                            adsbygoogle.push({
-                                google_ad_client: '${this.adUnitIds.web.banner}',
-                                enable_page_level_ads: true
-                            });
-                        `;
-                        document.head.appendChild(autoAdsScript);
-                        
-                        console.log('AdManager: AdSense auto ads loaded');
                         resolve(true);
                     }, 100);
                 });
@@ -1217,6 +1228,9 @@
                 console.log('AdManager: Destroyed ad instance');
             }
         }
+
+        // Global flag to prevent duplicate AdSense initialization
+        window.adsenseInitialized = false;
 
         // Initialize ad manager
         const adManager = new AdManager();
