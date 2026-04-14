@@ -2824,9 +2824,21 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
                 console.log("Ad ins status:", ins.dataset.adStatus);
             }
             
-            // If no iframe or AdSense marked it unfilled/undefined
-            if (!iframe || (ins && (ins.dataset.adStatus === "unfilled" || ins.dataset.adStatus === undefined))) {
-                console.log("Showing fallback - no iframe or adStatus:", ins?.dataset?.adStatus);
+            // Debug the condition
+            const hasIframe = !!iframe;
+            const hasIns = !!ins;
+            const adStatus = ins?.dataset?.adStatus;
+            const shouldShowFallback = !hasIframe || (hasIns && (adStatus === "unfilled" || adStatus === undefined));
+            
+            console.log("Fallback condition debug:", {
+                hasIframe,
+                hasIns, 
+                adStatus,
+                shouldShowFallback
+            });
+            
+            if (shouldShowFallback) {
+                console.log("Showing fallback - no iframe or adStatus:", adStatus);
                 showFallbackAd(container);
             }
         }, 3000);
