@@ -10,10 +10,6 @@
     "SplashScreen": {
       "launchShowDuration": 2000,
       "backgroundColor": "#000428"
-    },
-    "AdMob": {
-      "appId": "ca-app-pub-2662863757001007~6977812828",
-      "initialize": true
     }
   }
 }
