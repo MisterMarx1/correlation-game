@@ -1142,14 +1142,14 @@
                         console.log('AdManager: Loading AdSense auto ads');
                         console.log('AdManager: Publisher ID: ca-pub-2662863757001007');
                         
-                        // Check if AdSense already initialized
-                        if (window.adsenseInitialized || window.adsbygoogle?.length > 0) {
+                        // Check if AdSense script already exists or already initialized
+                        if (window.adsenseInitialized || document.querySelector('script[src*="adsbygoogle"]')) {
                             console.log('AdManager: AdSense already initialized');
                             resolve(true);
                             return;
                         }
                         
-                        // Set global flag immediately
+                        // Set global flag immediately to prevent any other calls
                         window.adsenseInitialized = true;
                         
                         // Initialize adsbygoogle array before any pushes
@@ -1162,14 +1162,12 @@
                         script.crossOrigin = 'anonymous';
                         
                         script.onload = () => {
-                            // Only push after script is fully loaded
-                            if (!window.adsenseInitialized) {
-                                window.adsbygoogle.push({
-                                    google_ad_client: this.adUnitIds.web.banner,
-                                    enable_page_level_ads: true
-                                });
-                                console.log('AdManager: AdSense auto ads loaded');
-                            }
+                            // Only push once after script loads
+                            window.adsbygoogle.push({
+                                google_ad_client: this.adUnitIds.web.banner,
+                                enable_page_level_ads: true
+                            });
+                            console.log('AdManager: AdSense auto ads loaded');
                         };
                         
                         document.head.appendChild(script);
