@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Privacy Policy - Mister Marx LLC</title>
+    <style>
+        :root {
+            --bg: #030712;
+            --panel: rgba(15,23,42,0.84);
+            --panel-2: rgba(2,6,23,0.36);
+            --text: #f8fafc;
+            --soft: #cbd5e1;
+            --muted: #64748b;
+            --line: rgba(148,163,184,0.18);
+            --cyan: #67e8f9;
+            --teal: #14b8a6;
+            --amber: #fbbf24;
+            --radius: 16px;
+            --radius-sm: 12px;
+            --shadow: 0 4px 12px rgba(0,0,0,0.4);
+            --max: 1200px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding-bottom: 30px;
+            border-bottom: 1px solid var(--line);
+        }
+
+        h1 {
+            font-size: clamp(2rem, 4vw, 3rem);
+            font-weight: 900;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            margin-bottom: 16px;
+            background: linear-gradient(90deg, #f8fafc 0%, #bae6fd 40%, #67e8f9 70%, #f8fafc 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .subtitle {
+            color: var(--soft);
+            font-size: 1.1rem;
+            margin-bottom: 8px;
+        }
+
+        .date {
+            color: var(--muted);
+            font-size: 0.95rem;
+        }
+
+        .section {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            padding: 32px;
+            margin-bottom: 24px;
+            backdrop-filter: blur(10px);
+            box-shadow: var(--shadow);
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 800;
+            margin-bottom: 16px;
+            color: #f8fafc;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        h2::before {
+            content: '';
+            width: 4px;
+            height: 24px;
+            background: linear-gradient(135deg, var(--cyan), var(--teal));
+            border-radius: 2px;
+        }
+
+        h3 {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin: 20px 0 12px;
+            color: var(--soft);
+        }
+
+        p {
+            margin-bottom: 16px;
+            color: var(--soft);
+        }
+
+        ul {
+            margin: 16px 0;
+            padding-left: 24px;
+        }
+
+        li {
+            margin-bottom: 8px;
+            color: var(--soft);
+        }
+
+        .highlight {
+            background: linear-gradient(135deg, rgba(20,184,166,0.12), rgba(96,165,250,0.10));
+            border: 1px solid rgba(103,232,249,0.24);
+            border-radius: var(--radius-sm);
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .highlight p {
+            margin: 0;
+            color: var(--text);
+        }
+
+        .contact-info {
+            background: rgba(251,191,36,0.1);
+            border: 1px solid rgba(251,191,36,0.3);
+            border-radius: var(--radius-sm);
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .contact-info strong {
+            color: var(--amber);
+        }
+
+        a {
+            color: var(--cyan);
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        a:hover {
+            color: var(--teal);
+            text-decoration: underline;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 32px 20px;
+            border-top: 1px solid var(--line);
+            margin-top: 40px;
+            color: var(--muted);
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px 16px;
+            }
+
+            .section {
+                padding: 24px 20px;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>Privacy Policy</h1>
+            <p class="subtitle">Mister Marx LLC</p>
+            <p class="date">Effective Date: April 14, 2026</p>
+        </header>
+
+        <main>
+            <section class="section">
+                <h2>1. Information We Collect</h2>
+                <p>Mister Marx LLC develops and operates educational games and applications ("the Apps"). We are committed to protecting your privacy and being transparent about our data practices.</p>
+                
+                <div class="highlight">
+                    <p><strong>We do not collect, store, or share any personal information</strong> from users of our applications. Our apps are designed to work without requiring users to create accounts, provide personal data, or register any information.</p>
+                </div>
+
+                <p>We do not collect:</p>
+                <ul>
+                    <li>Names, email addresses, or phone numbers</li>
+                    <li>Location data or GPS information</li>
+                    <li>Photos, videos, or personal files</li>
+                    <li>Social media profiles or contacts</li>
+                    <li>Any personally identifiable information (PII)</li>
+                </ul>
+            </section>
+
+            <section class="section">
+                <h2>2. Automatically Collected Data</h2>
+                <p>Our applications may use standard platform services that automatically collect limited technical information for app functionality and improvement:</p>
+                
+                <ul>
+                    <li><strong>Device Information:</strong> Device type, operating system version, hardware model</li>
+                    <li><strong>Performance Data:</strong> App crashes, loading times, response rates</li>
+                    <li><strong>Usage Analytics:</strong> Anonymous statistics about how features are used</li>
+                    <li><strong>Error Reports:</strong> Technical information about app malfunctions</li>
+                </ul>
+
+                <p>This data is collected by platform providers (such as Google Play Services or Apple App Store) and used solely for improving app performance and stability. We do not access or control this data directly.</p>
+            </section>
+
+            <section class="section">
+                <h2>3. Children's Privacy (COPPA Compliance)</h2>
+                <p>Our applications are designed for educational use and may be accessed by children under the age of 13.</p>
+                
+                <div class="highlight">
+                    <p><strong>We do not knowingly collect any personal information from children under 13.</strong> Our apps are designed to be fully functional without collecting any personal data, making them inherently COPPA compliant.</p>
+                </div>
+
+                <p>If you believe a child has provided personal information through our apps, please contact us immediately and we will take appropriate action to remove such information.</p>
+            </section>
+
+            <section class="section">
+                <h2>4. Data Sharing and Third Parties</h2>
+                <p>We do not sell, trade, or share any user data with third parties. Our business model does not rely on data collection or sharing.</p>
+                
+                <p>Any data collected automatically by platform providers is governed by their respective privacy policies:</p>
+                <ul>
+                    <li><strong>Google Play Services:</strong> <a href="https://policies.google.com/privacy" target="_blank">Google Privacy Policy</a></li>
+                    <li><strong>Apple App Store:</strong> <a href="https://www.apple.com/legal/privacy/" target="_blank">Apple Privacy Policy</a></li>
+                </ul>
+            </section>
+
+            <section class="section">
+                <h2>5. Data Security</h2>
+                <p>While we do not collect personal information, we implement reasonable security measures to protect our applications and any temporary data that may be processed during app operation:</p>
+                
+                <ul>
+                    <li>Secure coding practices and regular security reviews</li>
+                    <li>Use of platform-provided security features</li>
+                    <li>Regular updates to address security vulnerabilities</li>
+                    <li>No storage of sensitive user data on our servers</li>
+                </ul>
+            </section>
+
+            <section class="section">
+                <h2>6. Your Rights and Choices</h2>
+                <p>Since we do not collect personal information, you have no data to manage with us. However, you have the following rights:</p>
+                
+                <ul>
+                    <li><strong>Access:</strong> You have the right to know what data we collect (which is none)</li>
+                    <li><strong>Deletion:</strong> You can request deletion of any data we may have (which is none)</li>
+                    <li><strong>Opt-out:</strong> You can opt out of analytics through device settings</li>
+                    <li><strong>Complaint:</strong> You can file complaints with privacy authorities</li>
+                </ul>
+            </section>
+
+            <section class="section">
+                <h2>7. International Data Transfers</h2>
+                <p>Our applications may be available internationally. Since we do not collect personal information, there are no international data transfers of user data. Any technical data collected by platform providers is handled according to their own international data transfer policies.</p>
+            </section>
+
+            <section class="section">
+                <h2>8. Changes to This Privacy Policy</h2>
+                <p>We may update this Privacy Policy from time to time to reflect changes in our practices, legal requirements, or app functionality. Any changes will be effective immediately upon posting the updated policy.</p>
+                
+                <p>We will notify users of significant changes by:</p>
+                <ul>
+                    <li>Updating the "Effective Date" at the top of this policy</li>
+                    <li>In-app notifications for major privacy changes</li>
+                    <li>Email notifications for users who have provided contact information (if applicable)</li>
+                </ul>
+            </section>
+
+            <section class="section">
+                <h2>9. Contact Information</h2>
+                <p>If you have any questions about this Privacy Policy or our data practices, please contact us:</p>
+                
+                <div class="contact-info">
+                    <p><strong>Mister Marx LLC</strong></p>
+                    <p>Email: <a href="mailto:mistermarx+privacy_policy+support@mistermarx.com">mistermarx+privacy_policy+support@mistermarx.com</a></p>
+                    <p>Website: <a href="https://www.mistermarx.com" target="_blank">www.mistermarx.com</a></p>
+                </div>
+
+                <p>We will respond to your inquiry within 30 days and address any concerns about privacy or data practices.</p>
+            </section>
+
+            <section class="section">
+                <h2>10. Consent</h2>
+                <p>By using our applications, you acknowledge that you have read and understood this Privacy Policy. Since we do not collect personal information, your use of our apps does not involve providing any personal data to us.</p>
+                
+                <p>If you are using our apps on behalf of a child or educational institution, you confirm that you have the authority to accept this Privacy Policy on their behalf.</p>
+            </section>
+        </main>
+
+        <footer class="footer">
+            <p>&copy; 2026 Mister Marx LLC. All rights reserved.</p>
+            <p>This Privacy Policy is part of our commitment to transparency and user privacy.</p>
+        </footer>
+    </div>
+</body>
+</html>
