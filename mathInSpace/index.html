@@ -2785,9 +2785,11 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
     
     <!-- AdSense Control Script -->
     <script>
+    console.log("Ad script loading...");
     let adLoaded = false;
 
     function loadAd() {
+        console.log("loadAd() called, adLoaded:", adLoaded);
         if (adLoaded) return;
         
         const container = document.getElementById("ad-container");
@@ -2869,6 +2871,15 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
     }
 
     window.addEventListener("load", () => setTimeout(loadAd, 300));
+    
+    // Emergency fallback - show after 5 seconds if nothing else worked
+    setTimeout(() => {
+        const container = document.getElementById("ad-container");
+        if (container && !container.querySelector("div")) {
+            console.log("Emergency fallback triggered");
+            showFallbackAd(container);
+        }
+    }, 5000);
     </script>
 </body>
 </html>
