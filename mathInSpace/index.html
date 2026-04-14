@@ -2248,6 +2248,12 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
             // --- Bulletproof Ad Initialization (with delay) ---
             useEffect(() => {
                 if (adWidth === 0) return;
+                
+                // Prevent multiple initializations
+                if (window.AD_INITIALIZED) {
+                    console.log("Ad already initialized, skipping...");
+                    return;
+                }
 
                 const id = setTimeout(() => {
                     console.log("Initializing ad with width:", adWidth);
@@ -2256,12 +2262,13 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
                     // Global flag - track first time width is set in stone
                     if (!window.AD_WIDTH_SET_IN_STONE_ONCE) {
                         window.AD_WIDTH_SET_IN_STONE_ONCE = true;
+                        window.AD_INITIALIZED = true;
                         console.log("TERMINAL SPIT: WIDTH SET IN STONE FOR FIRST TIME! Global flag activated.");
                         console.log("TERMINAL SPIT: Final ad dimensions locked at:", adWidth + "x90");
+                        
+                        // Initialize AdSense with real publisher credentials
+                        initializeAdSense(adWidth);
                     }
-                    
-                    // Initialize AdSense with real publisher credentials
-                    initializeAdSense(adWidth);
                 }, 50); // let layout fully settle
 
                 return () => clearTimeout(id);
