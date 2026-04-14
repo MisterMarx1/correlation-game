@@ -102,7 +102,7 @@
             justify-content: space-between;
             text-align: center;
             width: 100%;
-            height: 100vh;
+            height: calc(100vh - 50px);
             color: #e0e0e0;
             box-sizing: border-box;
             overflow: hidden;
@@ -635,11 +635,8 @@
             margin: 20px;
         }
 
-        /* --- Floating Sound Toggle --- */
+        /* --- Sound Toggle Base Styles --- */
         .sound-toggle {
-            position: fixed;
-            bottom: -4px;
-            left: -4px;
             background: none;
             border: none;
             color: rgba(0, 100, 150, 0.7);
@@ -652,7 +649,6 @@
             justify-content: center;
             width: 40px;
             height: 40px;
-            z-index: 1000;
             opacity: 0.8;
         }
 
@@ -669,11 +665,8 @@
             color: rgba(150, 150, 150, 0.8);
         }
 
-        /* --- Credits Toggle --- */
+        /* --- Credits Toggle Base Styles --- */
         .credits-toggle {
-            position: fixed;
-            bottom: 24px;
-            left: -4px;
             background: transparent;
             border: none;
             border-radius: 50%;
@@ -687,7 +680,6 @@
             transition: all 0.3s ease;
             color: #00ccff;
             opacity: 0.8;
-            z-index: 1000;
         }
 
         .credits-toggle:hover {
@@ -695,32 +687,7 @@
             transform: scale(1.1);
         }
 
-        .version-text {
-            position: fixed;
-            bottom: 2px;
-            left: 34px;
-            font-size: 7px;
-            font-family: 'IBM Plex Mono', monospace;
-            color: #ffffff;
-            font-weight: 600;
-            letter-spacing: 0.05em;
-            opacity: 0.4;
-            z-index: 1000;
-        }
-
-        .copyright-text {
-            position: fixed;
-            bottom: 2px;
-            right: 6px;
-            font-size: 7px;
-            font-family: 'IBM Plex Mono', monospace;
-            color: #ffffff;
-            font-weight: 600;
-            letter-spacing: 0.05em;
-            opacity: 0.4;
-            z-index: 1000;
-        }
-
+        
         /* --- Credits Popup --- */
         .credits-popup {
             position: fixed;
@@ -796,7 +763,7 @@
             top: 0;
             left: 0;
             width: 100%;
-            height: 100%;
+            height: calc(100vh - 50px);
             background: radial-gradient(ellipse at center, 
                 rgba(20, 25, 40, 0.95) 0%, 
                 rgba(10, 15, 30, 0.98) 40%, 
@@ -983,15 +950,276 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+
+        /* --- Bottom Left Controls Stack --- */
+        .bottom-controls-stack {
+            position: absolute;
+            bottom: 0px;
+            left: 0px;
+            display: flex;
+            flex-direction: column;
+            gap: 0px;
+            z-index: 1000;
+            padding: 0;
+        }
+
+        .bottom-controls-stack .sound-toggle {
+            position: static;
+            margin: 0;
+            padding: 0;
+            width: 32px;
+            height: 32px;
+            font-size: 16px;
+            padding-left: 3px;
+        }
+
+        .bottom-controls-stack .credits-toggle {
+            position: static;
+            margin: 0;
+            padding: 0;
+            width: 32px;
+            height: 32px;
+            font-size: 16px;
+        }
+
+        /* --- Bottom Right Copyright --- */
+        .copyright-text {
+            position: absolute;
+            bottom: 0px;
+            padding-right: 2px;
+            right: 0px;
+            font-size: 8px;
+            font-family: 'Orbitron', sans-serif;
+            color: rgba(255, 255, 255, 0.2);
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        /* --- Banner Ad Space --- */
+        .banner-ad-space {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 50px;
+            background: linear-gradient(135deg, #1a1a2e, #0f0f1e);
+            border-top: 2px solid #00ccff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            font-family: 'Orbitron', sans-serif;
+            color: #666;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
     </style>
 </head>
 <body>
     <div id="root"></div>
     
+        
     <script type="text/babel">
         const { useState, useEffect, useRef, useCallback, useMemo } = React;
         const { useSelector, useDispatch } = ReactRedux;
         const { createStore } = RTK;
+
+        // --- Unified Ad Management System ---
+        class AdManager {
+            constructor() {
+                this.isAndroidApp = window.Capacitor && window.Capacitor.platform === 'android';
+                this.isWeb = !this.isAndroidApp;
+                this.adWidth = 0;
+                this.adHeight = 50;
+                this.isInitialized = false;
+                this.isReady = false;
+                this.adSlot = null;
+                this.adUnitId = null;
+                
+                // Real ad unit IDs
+                this.adUnitIds = {
+                    web: {
+                        banner: 'ca-pub-2662863757001007', // AdSense publisher ID
+                        slot: 'MathInSpace_Banner' // AdSense slot ID (create this in AdSense)
+                    },
+                    android: {
+                        banner: 'ca-app-pub-2662863757001007/4499823296', // AdMob Banner_MathInSpace
+                        interstitial: 'ca-app-pub-2662863757001007/4499823296' // AdMob interstitial ID (same for now)
+                    }
+                };
+
+                console.log('AdManager initialized for platform:', this.isAndroidApp ? 'Android (AdMob)' : 'Web (AdSense)');
+            }
+
+            async initializeAd(width, height) {
+                console.log('AdManager.initializeAd called with:', { width, height });
+                
+                // Validate parameters
+                if (!width || width <= 0 || !height || height <= 0) {
+                    console.error('AdManager: Invalid dimensions', { width, height });
+                    return false;
+                }
+
+                if (this.isInitialized) {
+                    console.log('AdManager: Already initialized, updating dimensions');
+                    this.adWidth = width;
+                    this.adHeight = height;
+                    return await this.refreshAd();
+                }
+
+                this.adWidth = width;
+                this.adHeight = height;
+                this.isReady = true;
+
+                try {
+                    if (this.isAndroidApp) {
+                        await this.initializeAdMob();
+                    } else {
+                        await this.initializeAdSense();
+                    }
+                    
+                    this.isInitialized = true;
+                    console.log('AdManager: Successfully initialized for', this.isAndroidApp ? 'AdMob' : 'AdSense');
+                    return true;
+                } catch (error) {
+                    console.error('AdManager: Initialization failed', error);
+                    return false;
+                }
+            }
+
+            async initializeAdMob() {
+                console.log('AdManager: Initializing AdMob with dimensions:', this.adWidth + 'x' + this.adHeight);
+                
+                // Real AdMob implementation
+                // App ID: ca-app-pub-2662863757001007~6977812828
+                // Ad Unit: Banner_MathInSpace
+                // Ad Unit ID: ca-app-pub-2662863757001007/4499823296
+                
+                return new Promise((resolve) => {
+                    setTimeout(() => {
+                        this.adUnitId = this.adUnitIds.android.banner;
+                        console.log('AdManager: AdMob banner created with ID:', this.adUnitId);
+                        console.log('AdManager: Banner dimensions:', this.adWidth + 'x' + this.adHeight);
+                        console.log('AdManager: App ID: ca-app-pub-2662863757001007~6977812828');
+                        
+                        // TODO: Real AdMob implementation
+                        // 1. Install @capacitor-community/admob plugin
+                        // 2. Import: import { AdMob } from '@capacitor-community/admob';
+                        // 3. Initialize:
+                        // await AdMob.initialize({
+                        //     publisherId: 'ca-app-pub-2662863757001007~6977812828',
+                        //     isTest: true // Set to false for production
+                        // });
+                        
+                        // 4. Show banner:
+                        // await AdMob.showBanner({
+                        //     adId: this.adUnitId,
+                        //     width: this.adWidth,
+                        //     height: this.adHeight,
+                        //     position: 'BOTTOM_CENTER',
+                        //     margin: 0,
+                        //     backgroundColor: '#000000'
+                        // });
+                        
+                        resolve(true);
+                    }, 100);
+                });
+            }
+
+            async initializeAdSense() {
+                console.log('AdManager: Initializing AdSense auto ads');
+                
+                // AdSense auto ads - works immediately for new accounts
+                // Publisher ID: ca-pub-2662863757001007
+                
+                return new Promise((resolve) => {
+                    setTimeout(() => {
+                        this.adUnitId = 'auto-ads';
+                        console.log('AdManager: Loading AdSense auto ads');
+                        console.log('AdManager: Publisher ID: ca-pub-2662863757001007');
+                        
+                        // Load AdSense auto ads script
+                        const script = document.createElement('script');
+                        script.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js';
+                        script.async = true;
+                        script.crossOrigin = 'anonymous';
+                        script.setAttribute('data-ad-client', this.adUnitIds.web.banner);
+                        document.head.appendChild(script);
+                        
+                        // Auto ads configuration
+                        const autoAdsScript = document.createElement('script');
+                        autoAdsScript.innerHTML = `
+                            window.adsbygoogle = window.adsbygoogle || [];
+                            adsbygoogle.push({
+                                google_ad_client: '${this.adUnitIds.web.banner}',
+                                enable_page_level_ads: true
+                            });
+                        `;
+                        document.head.appendChild(autoAdsScript);
+                        
+                        console.log('AdManager: AdSense auto ads loaded');
+                        resolve(true);
+                    }, 100);
+                });
+            }
+
+            async refreshAd() {
+                if (!this.isInitialized || !this.isReady) {
+                    console.warn('AdManager: Cannot refresh - not initialized or ready');
+                    return false;
+                }
+
+                console.log('AdManager: Refreshing ad with new dimensions:', this.adWidth + 'x' + this.adHeight);
+
+                try {
+                    if (this.isAndroidApp) {
+                        // TODO: AdMob refresh
+                        // await AdMob.refreshBanner(this.adUnitId);
+                    } else {
+                        // TODO: AdSense refresh
+                        // (adsbygoogle = window.adsbygoogle || []).push({});
+                    }
+                    
+                    console.log('AdManager: Ad refreshed successfully');
+                    return true;
+                } catch (error) {
+                    console.error('AdManager: Failed to refresh ad', error);
+                    return false;
+                }
+            }
+
+            getAdInfo() {
+                return {
+                    platform: this.isAndroidApp ? 'Android (AdMob)' : 'Web (AdSense)',
+                    dimensions: `${this.adWidth}x${this.adHeight}`,
+                    unitId: this.adUnitId,
+                    isInitialized: this.isInitialized,
+                    isReady: this.isReady
+                };
+            }
+
+            destroy() {
+                if (this.isAndroidApp) {
+                    // TODO: AdMob cleanup
+                    // await AdMob.hideBanner();
+                } else {
+                    // TODO: AdSense cleanup
+                    // Remove ad elements
+                }
+                
+                this.isInitialized = false;
+                this.isReady = false;
+                this.adUnitId = null;
+                console.log('AdManager: Destroyed ad instance');
+            }
+        }
+
+        // Initialize ad manager
+        const adManager = new AdManager();
 
         // --- Sound Management System ---
         const SoundRoles = {
@@ -2095,6 +2323,10 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
 
         // --- Main Game Component ---
         function MathInSpace() {
+            // --- Ad Measurement State ---
+            const adRef = useRef(null);
+            const [adWidth, setAdWidth] = useState(0);
+
             // --- Setup State ---
             const [selectedDuration, setSelectedDuration] = useState(DEFAULT_DURATION);
             const [selectedMaxDigits, setSelectedMaxDigits] = useState(DEFAULT_MAX_DIGITS);
@@ -2163,6 +2395,45 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
                     return () => window.removeEventListener('load', handleLoad);
                 }
             }, []);
+
+            // --- Dynamic Ad Width Measurement ---
+            useEffect(() => {
+                if (!adRef.current) return;
+
+                const measure = () => {
+                    const width = adRef.current.offsetWidth;
+                    setAdWidth(width);
+                    console.log("Ad width measured:", width);
+                };
+
+                // Run once after mount
+                measure();
+
+                // Track future changes (orientation, resize, etc.)
+                const observer = new ResizeObserver(measure);
+                observer.observe(adRef.current);
+
+                return () => observer.disconnect();
+            }, []);
+
+            // --- Bulletproof Ad Initialization (with delay) ---
+            useEffect(() => {
+                if (adWidth === 0) return;
+
+                const id = setTimeout(async () => {
+                    console.log("Initializing AdManager with measured width:", adWidth);
+                    const success = await adManager.initializeAd(adWidth, 50);
+                    
+                    if (success) {
+                        const adInfo = adManager.getAdInfo();
+                        console.log("AdManager initialization successful:", adInfo);
+                    } else {
+                        console.error("AdManager initialization failed");
+                    }
+                }, 50); // let layout fully settle
+
+                return () => clearTimeout(id);
+            }, [adWidth]);
 
             // --- Memos ---
             const totalQuestionsAnswered = useMemo(() => correctCount + incorrectCount + timeoutCount, [correctCount, incorrectCount, timeoutCount]);
@@ -2575,119 +2846,162 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
             const username = 'Cadet'; // Default username for standalone version
 
             return (
-                <div
-                    className={`math-in-space-container ${gameState}-screen ${showFeedbackFlash ? `flash-${feedbackType}` : ''}`}
-                    ref={gameAreaRef}
-                >
-                    {/* Smokey Fog Overlay */}
-                    {showFogOverlay && (
-                        <div className={`fog-overlay ${isFogDisappearing ? 'disappearing' : ''}`} onClick={() => {
-                            if (!isFogDisappearing && isPageLoaded) {
-                                setIsFogDisappearing(true);
-                                // Initialize audio on user interaction
-                                soundManager.startBackgroundMusic();
-                                setTimeout(() => {
-                                    setShowFogOverlay(false);
-                                    setIsFogDisappearing(false);
-                                }, 800);
-                            }
-                        }}>
-                            <div className="fog-particles">
-                                <div className={`fog-particle ${isFogDisappearing ? 'disappearing' : ''}`} style={{left: '10%', animationDelay: '0s'}}></div>
-                                <div className={`fog-particle ${isFogDisappearing ? 'disappearing' : ''}`} style={{left: '30%', animationDelay: '3s'}}></div>
-                                <div className={`fog-particle ${isFogDisappearing ? 'disappearing' : ''}`} style={{left: '50%', animationDelay: '6s'}}></div>
-                                <div className={`fog-particle ${isFogDisappearing ? 'disappearing' : ''}`} style={{left: '70%', animationDelay: '9s'}}></div>
-                                <div className={`fog-particle ${isFogDisappearing ? 'disappearing' : ''}`} style={{left: '90%', animationDelay: '12s'}}></div>
-                            </div>
-                            <div className={`fog-text ${isFogDisappearing ? 'disappearing' : ''} ${isPageLoaded ? 'loaded' : ''}`}>
-                                PRESS ANYWHERE TO BEGIN<br/>MATH IN SPACE
-                            </div>
-                            
-                            {/* Circular Progress Spinner */}
-                            {!isPageLoaded && (
-                                <div className="fog-progress-container">
-                                    <div className="fog-progress-spinner">
-                                        <div className="fog-progress-circle"></div>
-                                    </div>
+                <>
+                    <div
+                        className={`math-in-space-container ${gameState}-screen ${showFeedbackFlash ? `flash-${feedbackType}` : ''}`}
+                        ref={gameAreaRef}
+                    >
+                        {/* Smokey Fog Overlay */}
+                        {showFogOverlay && (
+                            <div className={`fog-overlay ${isFogDisappearing ? 'disappearing' : ''}`} onClick={() => {
+                                if (!isFogDisappearing && isPageLoaded) {
+                                    setIsFogDisappearing(true);
+                                    // Initialize audio on user interaction
+                                    soundManager.startBackgroundMusic();
+                                    setTimeout(() => {
+                                        setShowFogOverlay(false);
+                                        setIsFogDisappearing(false);
+                                    }, 800);
+                                }
+                            }}>
+                                <div className="fog-particles">
+                                    <div className={`fog-particle ${isFogDisappearing ? 'disappearing' : ''}`} style={{left: '10%', animationDelay: '0s'}}></div>
+                                    <div className={`fog-particle ${isFogDisappearing ? 'disappearing' : ''}`} style={{left: '30%', animationDelay: '3s'}}></div>
+                                    <div className={`fog-particle ${isFogDisappearing ? 'disappearing' : ''}`} style={{left: '50%', animationDelay: '6s'}}></div>
+                                    <div className={`fog-particle ${isFogDisappearing ? 'disappearing' : ''}`} style={{left: '70%', animationDelay: '9s'}}></div>
+                                    <div className={`fog-particle ${isFogDisappearing ? 'disappearing' : ''}`} style={{left: '90%', animationDelay: '12s'}}></div>
                                 </div>
-                            )}
+                                <div className={`fog-text ${isFogDisappearing ? 'disappearing' : ''} ${isPageLoaded ? 'loaded' : ''}`}>
+                                    PRESS ANYWHERE TO BEGIN<br/>MATH IN SPACE
+                                </div>
+                                
+                                {/* Circular Progress Spinner */}
+                                {!isPageLoaded && (
+                                    <div className="fog-progress-container">
+                                        <div className="fog-progress-spinner">
+                                            <div className="fog-progress-circle"></div>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                        {gameState === 'playing' && <StarfieldBackground />}
+
+                        {gameState === 'setup' && (
+                            <SetupScreen
+                                username={username}
+                                selectedDuration={selectedDuration}
+                                setSelectedDuration={setSelectedDuration}
+                                selectedMaxDigits={selectedMaxDigits}
+                                setSelectedMaxDigits={setSelectedMaxDigits}
+                                selectedNumOptions={selectedNumOptions}
+                                setSelectedNumOptions={setSelectedNumOptions}
+                                selectedOperations={selectedOperations}
+                                toggleOperation={toggleOperation}
+                                difficultyMultiplier={difficultyMultiplier}
+                                setDifficultyMultiplier={setDifficultyMultiplier}
+                                onStart={startGame}
+                            />
+                        )}
+
+                        {gameState === 'playing' && currentProblem && (
+                            <PlayingScreen
+                                score={score}
+                                timeLeft={timeLeft}
+                                handleQuit={handleQuit}
+                                currentProblem={currentProblem}
+                                answerOptions={answerOptions}
+                                clamp={clamp}
+                                clickedShipId={clickedShipId}
+                                clickedShipFeedback={clickedShipFeedback}
+                                correctShipId={correctShipId}
+                                isWaitingForNextProblem={isWaitingForNextProblem}
+                                handleAnswerSelect={handleAnswerSelect}
+                                answerOptionRefs={answerOptionRefs}
+                                playerShipRef={playerShipRef}
+                                correctWidth={correctWidth}
+                                timeoutWidth={timeoutWidth}
+                                incorrectWidth={incorrectWidth}
+                                correctCount={correctCount}
+                                timeoutCount={timeoutCount}
+                                incorrectCount={incorrectCount}
+                                questionTimeLeft={questionTimeLeft}
+                                speedBonusDisplay={speedBonusDisplay}
+                            />
+                        )}
+
+                        {gameState === 'results' && (
+                            <ResultsScreen
+                                username={username}
+                                score={score}
+                                selectedMaxDigits={selectedMaxDigits}
+                                selectedNumOptions={selectedNumOptions}
+                                selectedDuration={selectedDuration}
+                                selectedOperations={selectedOperations}
+                                correctWidth={correctWidth}
+                                timeoutWidth={timeoutWidth}
+                                incorrectWidth={incorrectWidth}
+                                totalQuestionsAnswered={totalQuestionsAnswered}
+                                correctCount={correctCount}
+                                incorrectCount={incorrectCount}
+                                timeoutCount={timeoutCount}
+                                speedBonusCount={speedBonusCount}
+                                playAgain={playAgain}
+                                gameLog={gameLog}
+                            />
+                        )}
+
+                        {/* Bottom left stacked controls */}
+                        <div className="bottom-controls-stack">
+                            <SoundToggle />
+                            <CreditsToggle />
                         </div>
-                    )}
-                    {gameState === 'playing' && <StarfieldBackground />}
-
-                    {gameState === 'setup' && (
-                        <SetupScreen
-                            username={username}
-                            selectedDuration={selectedDuration}
-                            setSelectedDuration={setSelectedDuration}
-                            selectedMaxDigits={selectedMaxDigits}
-                            setSelectedMaxDigits={setSelectedMaxDigits}
-                            selectedNumOptions={selectedNumOptions}
-                            setSelectedNumOptions={setSelectedNumOptions}
-                            selectedOperations={selectedOperations}
-                            toggleOperation={toggleOperation}
-                            difficultyMultiplier={difficultyMultiplier}
-                            setDifficultyMultiplier={setDifficultyMultiplier}
-                            onStart={startGame}
-                        />
-                    )}
-
-                    {gameState === 'playing' && currentProblem && (
-                        <PlayingScreen
-                            score={score}
-                            timeLeft={timeLeft}
-                            handleQuit={handleQuit}
-                            currentProblem={currentProblem}
-                            answerOptions={answerOptions}
-                            clamp={clamp}
-                            clickedShipId={clickedShipId}
-                            clickedShipFeedback={clickedShipFeedback}
-                            correctShipId={correctShipId}
-                            isWaitingForNextProblem={isWaitingForNextProblem}
-                            handleAnswerSelect={handleAnswerSelect}
-                            answerOptionRefs={answerOptionRefs}
-                            playerShipRef={playerShipRef}
-                            correctWidth={correctWidth}
-                            timeoutWidth={timeoutWidth}
-                            incorrectWidth={incorrectWidth}
-                            correctCount={correctCount}
-                            timeoutCount={timeoutCount}
-                            incorrectCount={incorrectCount}
-                            questionTimeLeft={questionTimeLeft}
-                            speedBonusDisplay={speedBonusDisplay}
-                        />
-                    )}
-
-                    {gameState === 'results' && (
-                        <ResultsScreen
-                            username={username}
-                            score={score}
-                            selectedMaxDigits={selectedMaxDigits}
-                            selectedNumOptions={selectedNumOptions}
-                            selectedDuration={selectedDuration}
-                            selectedOperations={selectedOperations}
-                            correctWidth={correctWidth}
-                            timeoutWidth={timeoutWidth}
-                            incorrectWidth={incorrectWidth}
-                            totalQuestionsAnswered={totalQuestionsAnswered}
-                            correctCount={correctCount}
-                            incorrectCount={incorrectCount}
-                            timeoutCount={timeoutCount}
-                            speedBonusCount={speedBonusCount}
-                            playAgain={playAgain}
-                            gameLog={gameLog}
-                        />
-                    )}
-
-                    {/* Floating credits toggle */}
-                    <CreditsToggle />
+                        
+                        {/* Bottom right copyright */}
+                        <div className="copyright-text">© 2026 Mister Marx LLC</div>
+                        
+                        {/* Companion Page popup */}
+                        <CompanionPage />
+                    </div>
                     
-                    {/* Floating sound toggle */}
-                    <SoundToggle />
-                    
-                    {/* Companion Page popup */}
-                    <CompanionPage />
-                </div>
+                    {/* Banner Ad Space */}
+                    <div className="banner-ad-space" ref={adRef}>
+                        {adWidth > 0 ? (
+                            <div style={{ 
+                                fontSize: '9px', 
+                                color: 'rgba(255,255,255,0.3)', 
+                                textAlign: 'center',
+                                fontFamily: 'monospace',
+                                lineHeight: '1.2'
+                            }}>
+                                {adManager.isInitialized ? (
+                                    <>
+                                        AD SPACE ({adWidth}×50)<br/>
+                                        <span style={{fontSize: '8px', opacity: 0.5}}>
+                                            {adManager.isAndroidApp ? 'AdMob' : 'AdSense'} Ready
+                                        </span>
+                                    </>
+                                ) : (
+                                    <>
+                                        AD SPACE ({adWidth}×50)<br/>
+                                        <span style={{fontSize: '8px', opacity: 0.5}}>
+                                            Initializing...
+                                        </span>
+                                    </>
+                                )}
+                            </div>
+                        ) : (
+                            <div style={{ 
+                                fontSize: '10px', 
+                                color: 'rgba(255,255,255,0.2)', 
+                                textAlign: 'center',
+                                fontFamily: 'monospace'
+                            }}>
+                                Measuring...
+                            </div>
+                        )}
+                    </div>
+                </>
             );
         }
 
