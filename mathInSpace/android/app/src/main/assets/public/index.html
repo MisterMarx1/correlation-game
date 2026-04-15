@@ -53,6 +53,12 @@
     <script src="https://unpkg.com/react-redux@8.1.3/dist/react-redux.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+    
+    <!-- AdSense Script -->
+    <script async
+      src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2662863757001007"
+      crossorigin="anonymous">
+    </script>
     <style>
         /* Remove default browser margins and white border */
         * {
@@ -102,7 +108,7 @@
             justify-content: space-between;
             text-align: center;
             width: 100%;
-            height: 100vh;
+            height: calc(100vh - 100px);
             color: #e0e0e0;
             box-sizing: border-box;
             overflow: hidden;
@@ -635,11 +641,8 @@
             margin: 20px;
         }
 
-        /* --- Floating Sound Toggle --- */
+        /* --- Sound Toggle Base Styles --- */
         .sound-toggle {
-            position: fixed;
-            bottom: -4px;
-            left: -4px;
             background: none;
             border: none;
             color: rgba(0, 100, 150, 0.7);
@@ -652,7 +655,6 @@
             justify-content: center;
             width: 40px;
             height: 40px;
-            z-index: 1000;
             opacity: 0.8;
         }
 
@@ -669,11 +671,8 @@
             color: rgba(150, 150, 150, 0.8);
         }
 
-        /* --- Credits Toggle --- */
+        /* --- Credits Toggle Base Styles --- */
         .credits-toggle {
-            position: fixed;
-            bottom: 24px;
-            left: -4px;
             background: transparent;
             border: none;
             border-radius: 50%;
@@ -687,7 +686,6 @@
             transition: all 0.3s ease;
             color: #00ccff;
             opacity: 0.8;
-            z-index: 1000;
         }
 
         .credits-toggle:hover {
@@ -695,32 +693,7 @@
             transform: scale(1.1);
         }
 
-        .version-text {
-            position: fixed;
-            bottom: 2px;
-            left: 34px;
-            font-size: 7px;
-            font-family: 'IBM Plex Mono', monospace;
-            color: #ffffff;
-            font-weight: 600;
-            letter-spacing: 0.05em;
-            opacity: 0.4;
-            z-index: 1000;
-        }
-
-        .copyright-text {
-            position: fixed;
-            bottom: 2px;
-            right: 6px;
-            font-size: 7px;
-            font-family: 'IBM Plex Mono', monospace;
-            color: #ffffff;
-            font-weight: 600;
-            letter-spacing: 0.05em;
-            opacity: 0.4;
-            z-index: 1000;
-        }
-
+        
         /* --- Credits Popup --- */
         .credits-popup {
             position: fixed;
@@ -796,7 +769,7 @@
             top: 0;
             left: 0;
             width: 100%;
-            height: 100%;
+            height: calc(100vh - 100px);
             background: radial-gradient(ellipse at center, 
                 rgba(20, 25, 40, 0.95) 0%, 
                 rgba(10, 15, 30, 0.98) 40%, 
@@ -983,11 +956,101 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-    </style>
+
+        /* --- Bottom Left Controls Stack --- */
+        .bottom-controls-stack {
+            position: absolute;
+            bottom: 0px;
+            left: 0px;
+            display: flex;
+            flex-direction: column;
+            gap: 0px;
+            z-index: 1000;
+            padding: 0;
+        }
+
+        .bottom-controls-stack .sound-toggle {
+            position: static;
+            margin: 0;
+            padding: 0;
+            width: 32px;
+            height: 32px;
+            font-size: 16px;
+            padding-left: 3px;
+        }
+
+        .bottom-controls-stack .credits-toggle {
+            position: static;
+            margin: 0;
+            padding: 0;
+            width: 32px;
+            height: 32px;
+            font-size: 16px;
+        }
+
+        /* --- Bottom Right Copyright --- */
+        .copyright-text {
+            position: absolute;
+            bottom: 0px;
+            padding-right: 2px;
+            right: 0px;
+            font-size: 8px;
+            font-family: 'Orbitron', sans-serif;
+            color: rgba(255, 255, 255, 0.2);
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        /* --- Banner Ad Space --- */
+        .banner-ad-space {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 100px;
+            background: linear-gradient(135deg, #1a1a2e, #0f0f1e);
+            border-top: 2px solid #00ccff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            font-family: 'Orbitron', sans-serif;
+            color: #666;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        #ad-container {
+            width: 100%;
+            height: 100px;
+            max-height: 100px;
+            min-height: 100px;
+            overflow: hidden;
+        }
+
+        #ad-container ins {
+            display: block !important;
+            width: 100% !important;
+            height: 100px !important;
+            max-height: 100px !important;
+            min-height: 100px !important;
+        }
+
+        #ad-container iframe {
+            max-height: 100px !important;
+            min-height: 100px !important;
+        }
+
+            </style>
 </head>
 <body>
     <div id="root"></div>
     
+        
     <script type="text/babel">
         const { useState, useEffect, useRef, useCallback, useMemo } = React;
         const { useSelector, useDispatch } = ReactRedux;
@@ -2095,6 +2158,7 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
 
         // --- Main Game Component ---
         function MathInSpace() {
+            
             // --- Setup State ---
             const [selectedDuration, setSelectedDuration] = useState(DEFAULT_DURATION);
             const [selectedMaxDigits, setSelectedMaxDigits] = useState(DEFAULT_MAX_DIGITS);
@@ -2164,6 +2228,7 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
                 }
             }, []);
 
+            
             // --- Memos ---
             const totalQuestionsAnswered = useMemo(() => correctCount + incorrectCount + timeoutCount, [correctCount, incorrectCount, timeoutCount]);
             const speedBonusCount = useMemo(() => {
@@ -2377,7 +2442,7 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
                     setCorrectCount(prev => isCorrect ? prev + 1 : prev);
                     setIncorrectCount(prev => isCorrect ? prev : prev + 1);
                 }
-
+ 
                 setGameLog(prevLog => [
                     ...prevLog,
                     {
@@ -2575,119 +2640,129 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
             const username = 'Cadet'; // Default username for standalone version
 
             return (
-                <div
-                    className={`math-in-space-container ${gameState}-screen ${showFeedbackFlash ? `flash-${feedbackType}` : ''}`}
-                    ref={gameAreaRef}
-                >
-                    {/* Smokey Fog Overlay */}
-                    {showFogOverlay && (
-                        <div className={`fog-overlay ${isFogDisappearing ? 'disappearing' : ''}`} onClick={() => {
-                            if (!isFogDisappearing && isPageLoaded) {
-                                setIsFogDisappearing(true);
-                                // Initialize audio on user interaction
-                                soundManager.startBackgroundMusic();
-                                setTimeout(() => {
-                                    setShowFogOverlay(false);
-                                    setIsFogDisappearing(false);
-                                }, 800);
-                            }
-                        }}>
-                            <div className="fog-particles">
-                                <div className={`fog-particle ${isFogDisappearing ? 'disappearing' : ''}`} style={{left: '10%', animationDelay: '0s'}}></div>
-                                <div className={`fog-particle ${isFogDisappearing ? 'disappearing' : ''}`} style={{left: '30%', animationDelay: '3s'}}></div>
-                                <div className={`fog-particle ${isFogDisappearing ? 'disappearing' : ''}`} style={{left: '50%', animationDelay: '6s'}}></div>
-                                <div className={`fog-particle ${isFogDisappearing ? 'disappearing' : ''}`} style={{left: '70%', animationDelay: '9s'}}></div>
-                                <div className={`fog-particle ${isFogDisappearing ? 'disappearing' : ''}`} style={{left: '90%', animationDelay: '12s'}}></div>
-                            </div>
-                            <div className={`fog-text ${isFogDisappearing ? 'disappearing' : ''} ${isPageLoaded ? 'loaded' : ''}`}>
-                                PRESS ANYWHERE TO BEGIN<br/>MATH IN SPACE
-                            </div>
-                            
-                            {/* Circular Progress Spinner */}
-                            {!isPageLoaded && (
-                                <div className="fog-progress-container">
-                                    <div className="fog-progress-spinner">
-                                        <div className="fog-progress-circle"></div>
-                                    </div>
+                <>
+                    <div
+                        className={`math-in-space-container ${gameState}-screen ${showFeedbackFlash ? `flash-${feedbackType}` : ''}`}
+                        ref={gameAreaRef}
+                    >
+                        {/* Smokey Fog Overlay */}
+                        {showFogOverlay && (
+                            <div className={`fog-overlay ${isFogDisappearing ? 'disappearing' : ''}`} onClick={() => {
+                                if (!isFogDisappearing && isPageLoaded) {
+                                    setIsFogDisappearing(true);
+                                    // Initialize audio on user interaction
+                                    soundManager.startBackgroundMusic();
+                                    setTimeout(() => {
+                                        setShowFogOverlay(false);
+                                        setIsFogDisappearing(false);
+                                    }, 800);
+                                }
+                            }}>
+                                <div className="fog-particles">
+                                    <div className={`fog-particle ${isFogDisappearing ? 'disappearing' : ''}`} style={{left: '10%', animationDelay: '0s'}}></div>
+                                    <div className={`fog-particle ${isFogDisappearing ? 'disappearing' : ''}`} style={{left: '30%', animationDelay: '3s'}}></div>
+                                    <div className={`fog-particle ${isFogDisappearing ? 'disappearing' : ''}`} style={{left: '50%', animationDelay: '6s'}}></div>
+                                    <div className={`fog-particle ${isFogDisappearing ? 'disappearing' : ''}`} style={{left: '70%', animationDelay: '9s'}}></div>
+                                    <div className={`fog-particle ${isFogDisappearing ? 'disappearing' : ''}`} style={{left: '90%', animationDelay: '12s'}}></div>
                                 </div>
-                            )}
+                                <div className={`fog-text ${isFogDisappearing ? 'disappearing' : ''} ${isPageLoaded ? 'loaded' : ''}`}>
+                                    PRESS ANYWHERE TO BEGIN<br/>MATH IN SPACE
+                                </div>
+                                
+                                {/* Circular Progress Spinner */}
+                                {!isPageLoaded && (
+                                    <div className="fog-progress-container">
+                                        <div className="fog-progress-spinner">
+                                            <div className="fog-progress-circle"></div>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                        {gameState === 'playing' && <StarfieldBackground />}
+
+                        {gameState === 'setup' && (
+                            <SetupScreen
+                                username={username}
+                                selectedDuration={selectedDuration}
+                                setSelectedDuration={setSelectedDuration}
+                                selectedMaxDigits={selectedMaxDigits}
+                                setSelectedMaxDigits={setSelectedMaxDigits}
+                                selectedNumOptions={selectedNumOptions}
+                                setSelectedNumOptions={setSelectedNumOptions}
+                                selectedOperations={selectedOperations}
+                                toggleOperation={toggleOperation}
+                                difficultyMultiplier={difficultyMultiplier}
+                                setDifficultyMultiplier={setDifficultyMultiplier}
+                                onStart={startGame}
+                            />
+                        )}
+
+                        {gameState === 'playing' && currentProblem && (
+                            <PlayingScreen
+                                score={score}
+                                timeLeft={timeLeft}
+                                handleQuit={handleQuit}
+                                currentProblem={currentProblem}
+                                answerOptions={answerOptions}
+                                clamp={clamp}
+                                clickedShipId={clickedShipId}
+                                clickedShipFeedback={clickedShipFeedback}
+                                correctShipId={correctShipId}
+                                isWaitingForNextProblem={isWaitingForNextProblem}
+                                handleAnswerSelect={handleAnswerSelect}
+                                answerOptionRefs={answerOptionRefs}
+                                playerShipRef={playerShipRef}
+                                correctWidth={correctWidth}
+                                timeoutWidth={timeoutWidth}
+                                incorrectWidth={incorrectWidth}
+                                correctCount={correctCount}
+                                timeoutCount={timeoutCount}
+                                incorrectCount={incorrectCount}
+                                questionTimeLeft={questionTimeLeft}
+                                speedBonusDisplay={speedBonusDisplay}
+                            />
+                        )}
+
+                        {gameState === 'results' && (
+                            <ResultsScreen
+                                username={username}
+                                score={score}
+                                selectedMaxDigits={selectedMaxDigits}
+                                selectedNumOptions={selectedNumOptions}
+                                selectedDuration={selectedDuration}
+                                selectedOperations={selectedOperations}
+                                correctWidth={correctWidth}
+                                timeoutWidth={timeoutWidth}
+                                incorrectWidth={incorrectWidth}
+                                totalQuestionsAnswered={totalQuestionsAnswered}
+                                correctCount={correctCount}
+                                incorrectCount={incorrectCount}
+                                timeoutCount={timeoutCount}
+                                speedBonusCount={speedBonusCount}
+                                playAgain={playAgain}
+                                gameLog={gameLog}
+                            />
+                        )}
+
+                        {/* Bottom left stacked controls */}
+                        <div className="bottom-controls-stack">
+                            <SoundToggle />
+                            <CreditsToggle />
                         </div>
-                    )}
-                    {gameState === 'playing' && <StarfieldBackground />}
-
-                    {gameState === 'setup' && (
-                        <SetupScreen
-                            username={username}
-                            selectedDuration={selectedDuration}
-                            setSelectedDuration={setSelectedDuration}
-                            selectedMaxDigits={selectedMaxDigits}
-                            setSelectedMaxDigits={setSelectedMaxDigits}
-                            selectedNumOptions={selectedNumOptions}
-                            setSelectedNumOptions={setSelectedNumOptions}
-                            selectedOperations={selectedOperations}
-                            toggleOperation={toggleOperation}
-                            difficultyMultiplier={difficultyMultiplier}
-                            setDifficultyMultiplier={setDifficultyMultiplier}
-                            onStart={startGame}
-                        />
-                    )}
-
-                    {gameState === 'playing' && currentProblem && (
-                        <PlayingScreen
-                            score={score}
-                            timeLeft={timeLeft}
-                            handleQuit={handleQuit}
-                            currentProblem={currentProblem}
-                            answerOptions={answerOptions}
-                            clamp={clamp}
-                            clickedShipId={clickedShipId}
-                            clickedShipFeedback={clickedShipFeedback}
-                            correctShipId={correctShipId}
-                            isWaitingForNextProblem={isWaitingForNextProblem}
-                            handleAnswerSelect={handleAnswerSelect}
-                            answerOptionRefs={answerOptionRefs}
-                            playerShipRef={playerShipRef}
-                            correctWidth={correctWidth}
-                            timeoutWidth={timeoutWidth}
-                            incorrectWidth={incorrectWidth}
-                            correctCount={correctCount}
-                            timeoutCount={timeoutCount}
-                            incorrectCount={incorrectCount}
-                            questionTimeLeft={questionTimeLeft}
-                            speedBonusDisplay={speedBonusDisplay}
-                        />
-                    )}
-
-                    {gameState === 'results' && (
-                        <ResultsScreen
-                            username={username}
-                            score={score}
-                            selectedMaxDigits={selectedMaxDigits}
-                            selectedNumOptions={selectedNumOptions}
-                            selectedDuration={selectedDuration}
-                            selectedOperations={selectedOperations}
-                            correctWidth={correctWidth}
-                            timeoutWidth={timeoutWidth}
-                            incorrectWidth={incorrectWidth}
-                            totalQuestionsAnswered={totalQuestionsAnswered}
-                            correctCount={correctCount}
-                            incorrectCount={incorrectCount}
-                            timeoutCount={timeoutCount}
-                            speedBonusCount={speedBonusCount}
-                            playAgain={playAgain}
-                            gameLog={gameLog}
-                        />
-                    )}
-
-                    {/* Floating credits toggle */}
-                    <CreditsToggle />
+                        
+                        {/* Bottom right copyright */}
+                        <div className="copyright-text">© 2026 Mister Marx LLC</div>
+                        
+                        {/* Companion Page popup */}
+                        <CompanionPage />
+                    </div>
                     
-                    {/* Floating sound toggle */}
-                    <SoundToggle />
-                    
-                    {/* Companion Page popup */}
-                    <CompanionPage />
-                </div>
+                    {/* Banner Ad Space */}
+                    <div className="banner-ad-space">
+                        <div id="ad-container"></div>
+                    </div>
+                </>
             );
         }
 
@@ -2716,6 +2791,175 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
                 <MathInSpace />
             </Provider>
         );
+    </script>
+    
+    <!-- AdSense Control Script -->
+    <script>
+    console.log("Ad script loading...");
+    let adLoaded = false;
+
+    // Platform detection using existing Capacitor pattern
+    const isAndroidApp = window.Capacitor && window.Capacitor.platform === 'android';
+
+    function loadAd() {
+        console.log("loadAd() called, adLoaded:", adLoaded, "platform:", isAndroidApp ? "Android" : "Web");
+        if (adLoaded) return;
+        
+        // Choose ad implementation based on platform
+        if (isAndroidApp) {
+            loadAndroidAd();
+        } else {
+            loadWebAd();
+        }
+    }
+
+    function loadWebAd() {
+        console.log("Loading web AdSense ad...");
+        if (adLoaded) return;
+        
+        const container = document.getElementById("ad-container");
+        if (!container) return;
+        if (container.offsetWidth === 0) return;
+        
+        // Force container height immediately
+        container.style.cssText = `
+            width: 100% !important;
+            height: 100px !important;
+            max-height: 100px !important;
+            min-height: 100px !important;
+            overflow: hidden !important;
+        `;
+
+        const ad = document.createElement("ins");
+        ad.className = "adsbygoogle";
+        ad.style.cssText = `
+            display: block !important;
+            width: 100% !important;
+            height: 100px !important;
+            max-height: 100px !important;
+            min-height: 100px !important;
+            overflow: hidden !important;
+        `;
+        ad.setAttribute("data-ad-client", "ca-pub-2662863757001007");
+        ad.setAttribute("data-ad-slot", "4499823296");
+        ad.setAttribute("data-ad-format", "horizontal");
+        ad.setAttribute("data-full-width-responsive", "false");
+        
+        container.appendChild(ad);
+        (adsbygoogle = window.adsbygoogle || []).push({});
+        adLoaded = true;
+
+        // Check if ad filled after 3 seconds
+        setTimeout(() => {
+            const ins = container.querySelector("ins.adsbygoogle");
+            const iframe = container.querySelector("iframe");
+            
+            console.log("Ad check - iframe exists:", !!iframe);
+            if (iframe) {
+                console.log("Ad iframe dimensions:", iframe.offsetWidth + "x" + iframe.offsetHeight);
+                console.log("Ad iframe style:", iframe.getAttribute("style"));
+            }
+            if (ins) {
+                console.log("Ad ins status:", ins.dataset.adStatus);
+            }
+            
+            // Debug the condition
+            const hasIframe = !!iframe;
+            const hasIns = !!ins;
+            const adStatus = ins?.dataset?.adStatus;
+            const shouldShowFallback = !hasIframe || (hasIns && (adStatus === "unfilled" || adStatus === undefined));
+            
+            console.log("Fallback condition debug:", {
+                hasIframe,
+                hasIns, 
+                adStatus,
+                shouldShowFallback
+            });
+            
+            if (shouldShowFallback) {
+                console.log("Showing fallback - no iframe or adStatus:", adStatus);
+                showFallbackAd(container);
+            }
+        }, 3000);
+
+        // Also check for 400 errors immediately
+        setTimeout(() => {
+            const ins = container.querySelector("ins.adsbygoogle");
+            if (ins && !ins.querySelector("iframe")) {
+                console.log("No iframe detected after 1s - likely 400 error, showing fallback");
+                showFallbackAd(container);
+            }
+        }, 1000);
+    }
+
+    function loadAndroidAd() {
+        console.log("Loading Android AdMob ad...");
+        
+        // Simple bridge call - AdMob logic handled by native plugin
+        if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.AdMob) {
+            const { AdMob } = window.Capacitor.Plugins;
+            
+            AdMob.initialize()
+                .then(() => AdMob.showBanner({
+                    adId: 'ca-pub-2662863757001007/4499823296',
+                    position: 'bottom',
+                    size: 'BANNER'
+                }))
+                .then(() => {
+                    console.log("Android AdMob banner shown");
+                    adLoaded = true;
+                })
+                .catch((error) => {
+                    console.error("AdMob failed, showing fallback:", error);
+                    showFallbackAd(document.getElementById("ad-container"));
+                });
+        } else {
+            console.log("AdMob plugin not available, showing fallback");
+            showFallbackAd(document.getElementById("ad-container"));
+        }
+    }
+
+    function showFallbackAd(container) {
+        container.innerHTML = "";
+        
+        const fallback = document.createElement("div");
+        fallback.style.cssText = `
+            width: 100%;
+            height: 100px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            font-family: 'Orbitron', sans-serif;
+            color: #00ccff;
+            font-size: 14px;
+            letter-spacing: 1px;
+            cursor: pointer;
+        `;
+        fallback.innerHTML = `
+            <span style="font-size: 18px; color: #ff9900;">YOUR AD HERE</span>
+            <span style="color: #888; font-size: 11px;">&#9658; mistermmarx+ads@mistermarx.com</span>
+        `;
+        fallback.addEventListener("click", () => {
+            if (confirm("You are about to leave the page to open your email client. Continue?")) {
+                window.location.href = "mailto:mistermmarx+ads@mistermarx.com?subject=Ad Inquiry - Math In Space";
+            }
+        });
+        
+        container.appendChild(fallback);
+    }
+
+    window.addEventListener("load", () => setTimeout(loadAd, 300));
+    
+    // Emergency fallback - show after 5 seconds if nothing else worked
+    setTimeout(() => {
+        const container = document.getElementById("ad-container");
+        if (container && !container.querySelector("div")) {
+            console.log("Emergency fallback triggered");
+            showFallbackAd(container);
+        }
+    }, 5000);
     </script>
 </body>
 </html>

@@ -98,6 +98,25 @@ def main():
             print("Sync warnings/errors:")
             print(result.stderr)
         
+        # Apply AdMob configuration after sync
+        print("\nApplying AdMob configuration...")
+        try:
+            admob_result = subprocess.run(
+                ["node", "scripts/apply-admob-config.js"],
+                cwd=root_dir,
+                capture_output=True,
+                text=True,
+                check=True
+            )
+            print("AdMob config output:")
+            print(admob_result.stdout)
+            if admob_result.stderr:
+                print("AdMob config warnings:")
+                print(admob_result.stderr)
+        except subprocess.CalledProcessError as e:
+            print(f"AdMob config failed: {e}")
+            print("Continuing anyway...")
+        
         # Open Android Studio
         print("\nOpening Android Studio...")
         open_commands = [
