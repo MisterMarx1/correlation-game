@@ -262,6 +262,8 @@
 
   .slide {
     position: absolute;
+    left: 0;
+    width: 100%;
     height: 100%;
     opacity: 0;
     transition: opacity 0.8s ease-in-out;
@@ -275,9 +277,9 @@
   }
 
   .slide img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
     border-radius: 12px;
   }
 
@@ -657,6 +659,39 @@ function selectGame(index){
   },100);
 }
 
+function createDescriptionSlide(game, isActive = false){
+  const descSlide=document.createElement('div');
+  descSlide.className='slide' + (isActive ? ' active' : '');
+  descSlide.style.cssText='background-size: cover; background-position: center; background-image: url('+game.screens[0]+');';
+  const bgOverlay=document.createElement('div');
+  bgOverlay.style.cssText='position: absolute; inset: 0; background: rgba(2,6,23,0.7); backdrop-filter: blur(5px);';
+  descSlide.appendChild(bgOverlay);
+  const textContainer=document.createElement('div');
+  textContainer.style.cssText='position: relative; z-index: 1; padding: 40px; text-align: center; display: flex; align-items: center; justify-content: center; min-height: 100%';
+  const descDiv=document.createElement('div');
+  descDiv.style.cssText='background: rgba(0,0,0,0.6); backdrop-filter: blur(10px); padding: 30px; border-radius: 12px; max-width: 80%; color: #fff; font-size: 18px; line-height: 1.6;';
+  descDiv.textContent=game.description;
+  textContainer.appendChild(descDiv);
+  descSlide.appendChild(textContainer);
+  return descSlide;
+}
+
+function createScreenshotSlide(game, screenPath, index, isActive = false){
+  const slide=document.createElement('div');
+  slide.className='slide' + (isActive ? ' active' : '');
+  const img=document.createElement('img');
+  img.loading = 'eager';
+  img.decoding = 'async';
+  img.src=screenPath;
+  img.alt=`${game.title} Screenshot ${index+1}`;
+  slide.appendChild(img);
+  return slide;
+}
+
+function addSlideToContainer(slide, container){
+  container.insertBefore(slide, container.querySelector('.slideshow-nav'));
+}
+
 function updateSlideshow(){
   const game=GAMES[selectedIndex];
   const slideshowContainer=document.getElementById('game-slideshow');
@@ -668,35 +703,18 @@ function updateSlideshow(){
     const existingSlides=slideshowContainer.querySelectorAll('.slide');
     existingSlides.forEach(slide=>slide.remove());
     
-    // Add description slide first
-    const descSlide=document.createElement('div');
-    descSlide.className='slide active';
-    descSlide.style.cssText='position: relative; background-size: cover; background-position: center; background-image: url('+game.screens[0]+');';
-    const bgOverlay=document.createElement('div');
-    bgOverlay.style.cssText='position: absolute; inset: 0; background: rgba(2,6,23,0.7); backdrop-filter: blur(5px);';
-    descSlide.appendChild(bgOverlay);
-    const textContainer=document.createElement('div');
-    textContainer.style.cssText='position: relative; z-index: 1; padding: 40px; text-align: center; display: flex; align-items: center; justify-content: center; min-height: 100%';
-    const descDiv=document.createElement('div');
-    descDiv.style.cssText='background: rgba(0,0,0,0.6); backdrop-filter: blur(10px); padding: 30px; border-radius: 12px; max-width: 80%; color: #fff; font-size: 18px; line-height: 1.6;';
-    descDiv.textContent=game.description;
-    textContainer.appendChild(descDiv);
-    descSlide.appendChild(textContainer);
-    slideshowContainer.insertBefore(descSlide,slideshowContainer.querySelector('.slideshow-nav'));
+    // Add icon slide first
+    const iconSlide=createScreenshotSlide(game, game.icon, -1, true);
+    addSlideToContainer(iconSlide, slideshowContainer);
+    
+    // Add description slide
+    const descSlide=createDescriptionSlide(game);
+    addSlideToContainer(descSlide, slideshowContainer);
     
     // Add screenshot slides
     game.screens.forEach((screenPath,i)=>{
-      const slide=document.createElement('div');
-      slide.className='slide';
-      const img=document.createElement('img');
-      // Preload image to prevent layout shift
-      img.loading = 'eager';
-      img.decoding = 'async';
-      img.src=screenPath;
-      img.alt=`${game.title} Screenshot ${i+1}`;
-      // Remove onload handler to prevent recalculation shifts
-      slide.appendChild(img);
-      slideshowContainer.insertBefore(slide,slideshowContainer.querySelector('.slideshow-nav'));
+      const slide=createScreenshotSlide(game, screenPath, i);
+      addSlideToContainer(slide, slideshowContainer);
     });
     
     currentSlide=0;
