@@ -1,0 +1,3774 @@
+<!--
+  CORRELATION - Node Transition Game
+  
+  Copyright © 2026 Mister Marx LLC. All rights reserved.
+  
+  Description:
+  A strategic puzzle game where players correlate nodes by matching
+  energy levels across distances, managing recoil cascades and grid saturation.
+  
+  Architecture:
+  - React 18 with functional components and hooks
+  - Web Audio API for dynamic sound management
+  - Canvas-based particle and bolt rendering
+  - Component-based UI with reusable elements
+  
+  Best Practices:
+  - Single source of truth for all repeated content
+  - Component unification for consistent styling
+  - Performance-optimized rendering with useCallback/useMemo
+  - Responsive design with viewport height synchronization
+  - Touch-friendly interaction patterns
+  - Accessibility considerations for keyboard navigation
+  
+  Dependencies:
+  - React 18 (CDN)
+  - Babel Standalone (JSX transformation)
+  - Web Audio API (native)
+  - Canvas API (native)
+  
+  Author: Mister Marx
+  Version: v0.2
+  Last Modified: 2026-03-18
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>CORRELATION</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link rel="icon" type="image/png" href="favicon/favicon_preview0318.png">
+    
+    <!-- Mobile detection -->
+    <script>
+        // Mobile detection
+        function isMobile() {
+            return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
+                   (navigator.maxTouchPoints && navigator.maxTouchPoints > 2);
+        }
+        
+        function isIPhone() {
+            return /iPhone/i.test(navigator.userAgent);
+        }
+        
+        // Redirect iPhone users to iosTemp.html
+        if (isIPhone()) {
+            window.location.replace('/correlation-game/correlation/iosTemp.html');
+        }
+        
+        console.log('Is mobile device:', isMobile());
+        console.log('Is iPhone:', isIPhone());
+    </script>
+    
+    <!-- Preload fonts to prevent layout shift -->
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&family=Orbitron:wght@700;900&display=swap" as="style">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: #000;
+            /* iOS tap highlight fix */
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            -webkit-text-size-adjust: 100%;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+
+        /* Reserve space for game grid to prevent layout shift */
+        #root {
+            width: 100%;
+            height: var(--app-height, 100dvh);
+            min-height: var(--app-height, 100dvh);
+            max-height: var(--app-height, 100dvh);
+            overflow: hidden;
+            position: relative;
+            /* Prevent CLS during loading */
+            background: #030712;
+        }
+
+        /* Prevent font loading layout shift */
+        .font-loading-guard {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            visibility: hidden;
+            position: absolute;
+            height: 0;
+            overflow: hidden;
+        }
+
+        /* Allow text selection for inputs and buttons */
+        input, textarea, button, select {
+            -webkit-user-select: auto;
+            -moz-user-select: auto;
+            -ms-user-select: auto;
+            user-select: auto;
+        }
+
+        /* iOS-specific touch improvements */
+        @supports (-webkit-touch-callout: none) {
+            .interactive-cell {
+                -webkit-transform: translateZ(0);
+                transform: translateZ(0);
+                -webkit-backface-visibility: hidden;
+                backface-visibility: hidden;
+                -webkit-perspective: 1000;
+                perspective: 1000;
+            }
+            
+            .interactive-cell:active {
+                -webkit-transform: scale(0.95) translateZ(0);
+                transform: scale(0.95) translateZ(0);
+            }
+        }
+
+        /* Keep pointer cursor for interactive elements */
+        button, [role="button"], a {
+            cursor: pointer;
+        }
+
+        /* Ensure pointer cursor for interactive game cells */
+        .interactive-cell {
+            cursor: pointer !important;
+        }
+
+        /* Smokey Fog Overlay */
+        .fog-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(ellipse at center, 
+                rgba(20, 25, 40, 0.95) 0%, 
+                rgba(10, 15, 30, 0.98) 40%, 
+                rgba(5, 10, 20, 1) 100%);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: fogDrift 8s ease-in-out infinite;
+            backdrop-filter: blur(3px);
+            -webkit-backdrop-filter: blur(3px);
+            transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+        }
+
+        .fog-overlay.disappearing {
+            opacity: 0;
+            transform: scale(1.1) rotate(2deg);
+            pointer-events: none;
+        }
+
+        @keyframes fogDrift {
+            0%, 100% { 
+                background: radial-gradient(ellipse at center, 
+                    rgba(20, 25, 40, 0.95) 0%, 
+                    rgba(10, 15, 30, 0.98) 40%, 
+                    rgba(5, 10, 20, 1) 100%);
+            }
+            25% { 
+                background: radial-gradient(ellipse at 30% 40%, 
+                    rgba(25, 30, 45, 0.93) 0%, 
+                    rgba(12, 18, 35, 0.97) 40%, 
+                    rgba(6, 12, 25, 1) 100%);
+            }
+            50% { 
+                background: radial-gradient(ellipse at 70% 60%, 
+                    rgba(22, 28, 42, 0.94) 0%, 
+                    rgba(11, 17, 32, 0.98) 40%, 
+                    rgba(5, 11, 22, 1) 100%);
+            }
+            75% { 
+                background: radial-gradient(ellipse at 40% 30%, 
+                    rgba(23, 29, 43, 0.92) 0%, 
+                    rgba(13, 19, 33, 0.97) 40%, 
+                    rgba(7, 13, 24, 1) 100%);
+            }
+        }
+
+        .fog-text {
+            font-family: 'Orbitron', monospace;
+            font-size: clamp(1.5rem, 4vw, 2.5rem);
+            font-weight: 900;
+            color: rgba(255, 255, 255, 0.3);
+            text-align: center;
+            letter-spacing: 0.2em;
+            animation: textFlash 3s ease-in-out infinite;
+            text-shadow: 0 0 20px rgba(147, 197, 253, 0.1),
+                         0 0 40px rgba(147, 197, 253, 0.05),
+                         0 0 60px rgba(147, 197, 253, 0.02);
+            cursor: pointer;
+            user-select: none;
+            -webkit-user-select: none;
+            padding: 2rem;
+            border-radius: 8px;
+            transition: all 0.3s ease, opacity 0.8s ease-out, transform 0.8s ease-out;
+            filter: blur(8px);
+            opacity: 0.4;
+        }
+
+        .fog-text.loaded {
+            color: rgba(255, 255, 255, 0.8);
+            text-shadow: 0 0 20px rgba(147, 197, 253, 0.5),
+                         0 0 40px rgba(147, 197, 253, 0.3),
+                         0 0 60px rgba(147, 197, 253, 0.2);
+            filter: blur(0px);
+            opacity: 1;
+        }
+
+        .fog-text.disappearing {
+            opacity: 0;
+            transform: scale(1.5) translateY(-20px);
+            filter: blur(8px);
+        }
+
+        .fog-text:hover {
+            color: rgba(255, 255, 255, 1);
+            text-shadow: 0 0 30px rgba(147, 197, 253, 0.8),
+                         0 0 60px rgba(147, 197, 253, 0.6),
+                         0 0 80px rgba(147, 197, 253, 0.4);
+            transform: scale(1.05);
+        }
+
+        @keyframes textFlash {
+            0%, 100% { 
+                opacity: 0.4;
+                text-shadow: 0 0 10px rgba(147, 197, 253, 0.3),
+                             0 0 20px rgba(147, 197, 253, 0.2);
+            }
+            25% { 
+                opacity: 0.7;
+                text-shadow: 0 0 15px rgba(147, 197, 253, 0.4),
+                             0 0 30px rgba(147, 197, 253, 0.3);
+            }
+            50% { 
+                opacity: 1;
+                text-shadow: 0 0 25px rgba(147, 197, 253, 0.6),
+                             0 0 50px rgba(147, 197, 253, 0.4),
+                             0 0 75px rgba(147, 197, 253, 0.3);
+            }
+            75% { 
+                opacity: 0.6;
+                text-shadow: 0 0 20px rgba(147, 197, 253, 0.5),
+                             0 0 40px rgba(147, 197, 253, 0.3);
+            }
+        }
+
+        .fog-particles {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            pointer-events: none;
+        }
+
+        .fog-particle {
+            position: absolute;
+            width: 100px;
+            height: 100px;
+            background: radial-gradient(circle, 
+                rgba(147, 197, 253, 0.1) 0%, 
+                transparent 70%);
+            border-radius: 50%;
+            animation: floatParticle 15s linear infinite;
+            transition: all 0.8s ease-out;
+        }
+
+        .fog-particle.disappearing {
+            opacity: 0;
+            transform: translateX(200px) translateY(-200px) scale(2);
+            filter: blur(12px);
+        }
+
+        @keyframes floatParticle {
+            0% {
+                transform: translateX(-100px) translateY(100vh) scale(0.5);
+                opacity: 0;
+            }
+            10% {
+                opacity: 0.3;
+            }
+            90% {
+                opacity: 0.3;
+            }
+            100% {
+                transform: translateX(100vw) translateY(-100px) scale(1.5);
+                opacity: 0;
+            }
+        }
+
+        /* --- Circular Progress Spinner --- */
+        .fog-progress-container {
+            position: absolute;
+            top: 65%;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10000;
+        }
+
+        .fog-progress-spinner {
+            width: 60px;
+            height: 60px;
+            position: relative;
+        }
+
+        .fog-progress-circle {
+            width: 100%;
+            height: 100%;
+            border: 3px solid rgba(147, 197, 253, 0.2);
+            border-top: 3px solid rgba(147, 197, 253, 0.8);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Font loading guard to prevent CLS -->
+    <div class="font-loading-guard" style="position:absolute;visibility:hidden;z-index:-1;">ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789</div>
+    
+    <div id="root"></div>
+    
+    <!-- React and ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
+    <!-- Babel Standalone for JSX transformation -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Viewport Sync Script -->
+    <script>
+      function syncAppHeight() {
+        const vv = window.visualViewport;
+        const h = vv ? vv.height : window.innerHeight;
+        const top = vv ? vv.offsetTop : 0;
+
+        document.documentElement.style.setProperty('--app-height', `${h}px`);
+        document.documentElement.style.setProperty('--app-top', `${top}px`);
+      }
+
+      syncAppHeight();
+
+      window.addEventListener('resize', syncAppHeight);
+      window.addEventListener('orientationchange', syncAppHeight);
+
+      if (window.visualViewport) {
+        window.visualViewport.addEventListener('resize', syncAppHeight);
+        window.visualViewport.addEventListener('scroll', syncAppHeight);
+      }
+    </script>
+    
+    <!-- Game Component -->
+    <script type="text/babel">
+        const { useState, useEffect, useCallback, useRef, useMemo, memo } = React;
+
+        const COLS = 8, ROWS = 10, MAX_E = 5, K = 1;
+        const DECAY_BASE = 14000, DECAY_MIN = 4500, SPAWN_BASE = 2400, SPAWN_MIN = 800;
+        const ECHO_DUR = 2500, ECHO_BOOST = 0.25, CIRC = 100.53;
+
+        const DIFFICULTY_OPTIONS = ["EASY", "MEDIUM", "HARD", "EXPERT"];
+        const DIFFICULTY_SPAWN_MULTIPLIER = {
+          EASY: 1.5,
+          MEDIUM: 1.25,
+          HARD: 1.00,
+          EXPERT: 0.5
+        };
+
+        // Sound Management System
+        const SoundManager = {
+            sounds: {},
+            audioContext: null,
+            volume: 0.5,
+            musicVolume: 0.3,
+            enabled: true,
+            backgroundMusic: null,
+            activeSounds: new Set(),
+            weldingSound: null,
+            weldingPlayers: [],
+            weldingCrossfadeTimer: null,
+            weldingCrossfadeMs: 1000,
+            
+            // Audio object pooling for performance
+            audioPool: {},
+            maxPoolSize: 5,
+            
+            async init() {
+                // Initialize Web Audio API
+                this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                
+                // Initialize background music
+                this.backgroundMusic = new Audio('sfx/mixkit-pulsating-bass-transition-2295.wav');
+                this.backgroundMusic.loop = true;
+                this.backgroundMusic.volume = this.musicVolume;
+                this.backgroundMusic.preload = 'auto';
+                
+                // Predefined sound file paths
+                this.soundFiles = {
+                    select: 'sfx/select_click.mp3',
+                    correlate: 'sfx/mixkit-laser-weapon-shot-1681.wav',
+                    decorrelate: 'sfx/decorrelation_fail.mp3',
+                    recoil: 'sfx/recoil_cascade.mp3',
+                    spawn: 'sfx/spawn_cell.mp3',
+                    gameOver: 'sfx/game_over.mp3',
+                    levelUp: 'sfx/level_up.mp3',
+                    combo: 'sfx/combo_multiplier.mp3',
+                    menu: 'sfx/menu_navigate.mp3',
+                    pause: 'sfx/pause_sound.mp3',
+                    countdown: 'sfx/mixkit-electronic-lock-success-beeps-2852.wav',
+                    startSound: 'sfx/mixkit-arcade-mechanical-bling-210.wav',
+                    welding: 'sfx/mixkit-electric-welding-and-sparkles-2603.wav',
+                    deselect: 'sfx/mixkit-cybernetic-technology-affirmation-3116.wav'
+                };
+                
+                // Initialize audio pools
+                Object.keys(this.soundFiles).forEach(key => {
+                    this.audioPool[key] = [];
+                    for (let i = 0; i < this.maxPoolSize; i++) {
+                        const audio = new Audio(this.soundFiles[key]);
+                        audio.preload = 'auto';
+                        audio.volume = this.volume;
+                        this.audioPool[key].push(audio);
+                    }
+                    // Keep one for compatibility
+                    this.sounds[key] = this.audioPool[key][0];
+                });
+                
+                            },
+            
+            play(soundName, volume = 1.0, options = {}) {
+                if (!this.enabled || !this.audioPool[soundName]) return null;
+                
+                const { loop = false } = options;
+                
+                try {
+                    // Get audio from pool
+                    let audio = this.audioPool[soundName].find(a => a.paused || a.ended);
+                    
+                    // If no available audio, use the first one (fallback)
+                    if (!audio) {
+                        audio = this.audioPool[soundName][0];
+                        // Stop any current playback
+                        audio.pause();
+                        audio.currentTime = 0;
+                    }
+                    
+                    audio.volume = this.volume * volume;
+                    audio.loop = loop;
+                    audio.currentTime = 0;
+                    
+                    // CRITICAL INP FIX: Defer sound play to next frame to avoid blocking interaction
+                    const playSound = () => {
+                        const playPromise = audio.play();
+                        if (playPromise) {
+                            playPromise.catch(e => console.log('Sound play failed:', e));
+                        }
+                    };
+                    
+                    // Use requestAnimationFrame for non-blocking playback
+                    requestAnimationFrame(playSound);
+                    
+                    // Alternative: Use setTimeout with 0ms for even faster response
+                    // setTimeout(playSound, 0);
+                    
+                    // Track the sound for stopping later
+                    if (loop) {
+                        this.activeSounds.add(audio);
+                    }
+                    
+                    return audio;
+                } catch (error) {
+                    console.log('Sound system error:', error);
+                    return null;
+                }
+            },
+            
+            stopSound(sound) {
+                if (sound) {
+                    sound.pause();
+                    sound.currentTime = 0;
+                    this.activeSounds.delete(sound);
+                }
+            },
+            
+            stopAllSounds() {
+                this.activeSounds.forEach(sound => {
+                    sound.pause();
+                    sound.currentTime = 0;
+                });
+                this.activeSounds.clear();
+            },
+            
+            startWeldingLoop(volume = 0.25) {
+                if (!this.enabled || !this.sounds.welding) return;
+
+                this.stopWeldingLoop();
+
+                // Use pooled audio objects instead of cloning
+                const a = this.audioPool.welding?.[0];
+                const b = this.audioPool.welding?.[1];
+
+                if (!a || !b) return; // Fallback if pool not ready
+
+                a.volume = this.volume * volume;
+                b.volume = this.volume * volume;
+
+                a.currentTime = 0;
+                b.currentTime = 0;
+
+                this.weldingPlayers = [a, b];
+
+                // INP FIX: Defer welding loop start to avoid blocking interaction
+                const startPlayer = (player) => {
+                    player.currentTime = 0;
+                    // Use requestAnimationFrame to defer playback
+                    requestAnimationFrame(() => {
+                        player.play().catch(e => console.log('Welding play failed:', e));
+                    });
+                    this.activeSounds.add(player);
+                };
+
+                const scheduleNext = (currentIndex) => {
+                    const current = this.weldingPlayers[currentIndex];
+                    const nextIndex = currentIndex === 0 ? 1 : 0;
+                    const next = this.weldingPlayers[nextIndex];
+
+                    const loopOnceReady = () => {
+                        if (!current.duration || !isFinite(current.duration)) {
+                            this.weldingCrossfadeTimer = setTimeout(() => loopOnceReady(), 50);
+                            return;
+                        }
+
+                        const overlapSeconds = this.weldingCrossfadeMs / 1000;
+                        const delayMs = Math.max(0, (current.duration - overlapSeconds) * 1000);
+
+                        this.weldingCrossfadeTimer = setTimeout(() => {
+                            if (!this.weldingPlayers.length) return;
+
+                            next.volume = this.volume * volume;
+                            next.currentTime = 0;
+                            
+                            // INP FIX: Defer overlap playback
+                            requestAnimationFrame(() => {
+                                next.play().catch(e => console.log('Welding overlap play failed:', e));
+                            });
+                            this.activeSounds.add(next);
+
+                            scheduleNext(nextIndex);
+                        }, delayMs);
+                    };
+
+                    loopOnceReady();
+                };
+
+                startPlayer(a);
+                scheduleNext(0);
+            },
+
+            stopWeldingLoop() {
+                if (this.weldingCrossfadeTimer) {
+                    clearTimeout(this.weldingCrossfadeTimer);
+                    this.weldingCrossfadeTimer = null;
+                }
+
+                this.weldingPlayers.forEach(player => {
+                    try {
+                        player.pause();
+                        player.currentTime = 0;
+                        this.activeSounds.delete(player);
+                    } catch (error) {
+                        console.log('Welding stop failed:', error);
+                    }
+                });
+
+                this.weldingPlayers = [];
+                this.weldingSound = null;
+            },
+            
+            setVolume(vol) {
+                this.volume = Math.max(0, Math.min(1, vol));
+                Object.values(this.sounds).forEach(audio => {
+                    audio.volume = this.volume;
+                });
+            },
+            
+                        
+            toggle() {
+                this.enabled = !this.enabled;
+                if (!this.enabled) {
+                    this.pauseBackgroundMusic();
+                } else {
+                    this.playBackgroundMusic();
+                }
+                return this.enabled;
+            },
+            
+            setEnabled(enabled) {
+                this.enabled = enabled;
+                if (!enabled) {
+                    this.pauseBackgroundMusic();
+                } else {
+                    this.playBackgroundMusic();
+                }
+            },
+            
+            async playBackgroundMusic() {
+                if (!this.enabled || !this.backgroundMusic) {
+                    // Ensure background music is paused if sound is disabled
+                    if (this.backgroundMusic && !this.enabled) {
+                        this.backgroundMusic.pause();
+                    }
+                    return;
+                }
+                
+                // Check if music is already playing to prevent double playback on mobile
+                if (this.backgroundMusic.currentTime > 0 && !this.backgroundMusic.paused) {
+                    console.log('Background music already playing, skipping...');
+                    return;
+                }
+                
+                try {
+                    // Handle autoplay policies
+                    if (this.audioContext && this.audioContext.state === 'suspended') {
+                        await this.audioContext.resume();
+                    }
+                    
+                    console.log('Attempting to play background music...');
+                    
+                    // INP FIX: Defer background music play to avoid blocking interaction
+                    const playMusic = async () => {
+                        try {
+                            await this.backgroundMusic.play();
+                            console.log('Background music started successfully');
+                        } catch (error) {
+                            console.log('Background music play failed:', error);
+                            
+                            // Try alternative approach for PC browsers
+                            try {
+                                // Create a new audio element with different format
+                                const fallbackMusic = new Audio('sfx/mixkit-pulsating-bass-transition-2295.wav');
+                                fallbackMusic.loop = true;
+                                fallbackMusic.volume = this.musicVolume;
+                                await fallbackMusic.play();
+                                this.backgroundMusic = fallbackMusic;
+                                console.log('Background music started with fallback');
+                            } catch (fallbackError) {
+                                console.log('Fallback also failed:', fallbackError);
+                            }
+                        }
+                    };
+                    
+                    // Use setTimeout to defer music start and avoid blocking INP
+                    setTimeout(playMusic, 100);
+                    
+                } catch (error) {
+                    console.log('Background music setup failed:', error);
+                }
+            },
+            
+            pauseBackgroundMusic() {
+                if (this.backgroundMusic) {
+                    this.backgroundMusic.pause();
+                }
+            },
+            
+            setMusicVolume(vol) {
+                this.musicVolume = Math.max(0, Math.min(1, vol));
+                if (this.backgroundMusic) {
+                    this.backgroundMusic.volume = this.musicVolume;
+                }
+            },
+            
+            pause() {
+                this.pauseBackgroundMusic();
+            },
+            
+            resume() {
+                this.playBackgroundMusic();
+            }
+        };
+
+        const GAME_VERSION = "v0.2";
+        const COPYRIGHT_TEXT = "© MisterMarx.com, 2026";
+        const GAME_TITLE = "CORRELATION";
+
+        const RULE_ITEMS = [
+          {
+            title: "QUANTUM LEAP",
+            body: "Click a node, then a second node with matching or greater energy. The first node transitions — its energy correlates with the second node's energy."
+          },
+          {
+            title: "DISTANCE DECAY",
+            body: "Closer nodes have higher correlation probability. Distant transitions may decorrelate."
+          },
+          {
+            title: "RECOIL CASCADE",
+            body: "High-energy transitions generate recoil momentum, clearing neighboring nodes. Chain transitions for combo multipliers."
+          },
+          {
+            title: "VOID EQUILIBRIUM",
+            body: "The board fills with nodes. Clear them through correlated transitions before the grid saturates."
+          }
+        ];
+
+        const CONTROL_ITEMS = [
+          {
+            title: "CLICK & DRAG",
+            body: "Click and hold on a node, then drag to a target node. Release to attempt correlation."
+          },
+          {
+            title: "CLICK ONLY", 
+            body: "Click and release a source node, then click and release a target node. The two clicked nodes attempt to correlate."
+          }
+        ];
+
+        function RuleCard({ item, font }) {
+          return (
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 4,
+                padding: "10px 14px",
+                backgroundColor: "rgba(15,23,42,0.6)",
+                borderRadius: 6,
+                borderLeft: "3px solid #0e7490"
+              }}
+            >
+              <span style={{ fontSize: 15, fontWeight: 700, color: "#e2e8f0", fontFamily: font }}>
+                {item.title}
+              </span>
+              <span style={{ fontSize: 12, color: "#94a3b8", lineHeight: 1.5, fontFamily: font }}>
+                {item.body}
+              </span>
+            </div>
+          );
+        }
+
+        const EC = ["transparent","#1e40af","#0e7490","#047857","#b45309","#b91c1c"];
+        const EG = ["transparent","rgba(30,64,175,0.5)","rgba(14,116,144,0.5)","rgba(4,120,87,0.5)","rgba(180,83,9,0.6)","rgba(185,28,28,0.7)"];
+        const EB = ["transparent","#93c5fd","#67e8f9","#6ee7b7","#fcd34d","#e879f9"];
+
+        const RGBA_MAP={"#93c5fd":[147,197,253],"#67e8f9":[103,232,249],"#6ee7b7":[110,231,183],
+          "#fcd34d":[252,211,77],"#e879f9":[232,121,249],"#b91c1c":[185,28,28],"#fca5a5":[252,165,165],"#f87171":[248,113,113],"#60a5fa":[96,165,250],
+          "rgb(147,197,253)":[147,197,253],"rgb(103,232,249)":[103,232,249],
+          "rgb(110,231,183)":[110,231,183],"rgb(252,211,77)":[252,211,77],
+          "rgb(252,165,165)":[252,165,165],"rgb(248,113,113)":[248,113,113]};
+        function toRGB(c){return RGBA_MAP[c]||[255,255,255]}
+
+        function recoilP(M,dE){return Math.sqrt(2*M*dE+dE*dE)/K}
+        function corrProb(r){
+          if(r<0.5)return 0.98;  // Adjacent: 98%
+          if(r<1.0)return 0.90;  // 1 cell: 90%
+          if(r<1.5)return 0.80;  // diagonal: 80%
+          if(r<2.0)return 0.70;  // 2 cells: 70%
+          if(r<3.0)return 0.55;  // 3 cells: 55%
+          return Math.max(0.25, 0.70 - r*0.05);  // Long range: minimum 25%
+        }
+        function empty(){return{e:0,mass:0,born:0,decay:0,locked:false}}
+        function mkGrid(){return Array.from({length:ROWS},()=>Array.from({length:COLS},empty))}
+        function mkCell(lvl,now){
+          const maxE=Math.min(2+Math.floor(lvl/2),MAX_E);
+          return{e:1+Math.floor(Math.random()*maxE),mass:1+Math.floor(Math.random()*3),born:now,decay:now+Math.max(DECAY_MIN,DECAY_BASE-lvl*500),locked:false}
+        }
+
+        function genBolt(x1,y1,x2,y2,d=0){
+          const segs=[];const dx=x2-x1,dy=y2-y1,dist=Math.sqrt(dx*dx+dy*dy);
+          if(dist<8||d>3){segs.push(x1,y1,x2,y2,Math.max(0.5,3-d*0.8),Math.max(0.3,1-d*0.25));return segs}
+          const jit=(Math.random()-0.5)*dist*0.35,nx=-dy/dist,ny=dx/dist;
+          const jx=x1+dx*0.5+nx*jit,jy=y1+dy*0.5+ny*jit;
+          segs.push(...genBolt(x1,y1,jx,jy,d),...genBolt(jx,jy,x2,y2,d));
+          if(d<2&&Math.random()<0.4){
+            const a=Math.atan2(dy,dx)+(Math.random()-0.5)*1.2,l=dist*(0.2+Math.random()*0.3);
+            segs.push(...genBolt(jx,jy,jx+Math.cos(a)*l,jy+Math.sin(a)*l,d+1));
+          }
+          return segs;
+        }
+        function mkParticles(cx,cy,n,col){
+          const rgb=toRGB(col),out=[],now=Date.now();
+          // Reduce particle count for performance
+          const adjustedN = Math.max(1, Math.floor(n * 0.6));
+          for(let i=0;i<adjustedN;i++){const a=Math.random()*6.283,sp=20+Math.random()*40;
+            out.push({x:cx,y:cy,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,life:300+Math.random()*500,born:now,r:rgb[0],g:rgb[1],b:rgb[2],size:1.5+Math.random()*2.5})}
+          return out;
+        }
+
+        const Cell=memo(function Cell({e,mass,isSel,isDet,detProb,echoB,dp,isNew,locked,onMouseDown,onMouseEnter,onMouseUp,onMouseLeave,onTouchStart,onTouchMove,onTouchEnd,x,y,dragStart,dragHover,orbitScale}) {
+          // Create conic gradient that sweeps clockwise
+          const getGradient = (decayProgress, energy, isLocked) => {
+            const baseColor = isLocked ? "rgba(128,128,128,0.6)" : (EC[energy] || "rgba(15,23,42,0.3)");
+            const darkColor = isLocked ? "rgba(64,64,64,0.8)" : "rgba(15,23,42,0.8)";
+            // Show decay progress even for locked cells
+            // Sweep from top (12 o'clock) clockwise
+            return `conic-gradient(from 0deg at 50% 50%, ${baseColor} 0deg ${(1-decayProgress)*360}deg, ${darkColor} ${(1-decayProgress)*360}deg 360deg)`;
+          };
+          
+          // Check if this cell is the drag source or hover target
+          const isDragSource = dragStart && dragStart.x === x && dragStart.y === y;
+          const isDragHover = dragHover && dragHover.x === x && dragHover.y === y;
+          
+          return(
+            <div 
+                 onMouseDown={locked?null:onMouseDown}
+                 onMouseEnter={locked?null:onMouseEnter}
+                 onMouseUp={locked?null:onMouseUp}
+                 onMouseLeave={locked?null:onMouseLeave}
+                 onTouchStart={locked?null:onTouchStart}
+                 onTouchMove={locked?null:onTouchMove}
+                 onTouchEnd={locked?null:onTouchEnd}
+                 className={`${isNew&&e>0?"n3-spawn":""} ${echoB>0.05&&e>0?"n3-echo":""} ${e>0&&!locked?"interactive-cell":""}`}
+              style={{borderRadius:4,display:"flex",alignItems:"center",justifyContent:"center",
+                userSelect:"none",WebkitUserSelect:"none",position:"relative",overflow:"hidden",
+                background:e>0?getGradient(dp, e, locked):"rgba(15,23,42,0.3)",
+                border:isSel?"2px solid #fff":isDragSource?"2px solid #fff":isDragHover?"2px solid #fff":isDet?`2px solid ${EB[e]}77`:locked?"2px solid rgba(128,128,128,0.5)":e>0?"none":"1px solid rgba(255,255,255,0.03)",
+                boxShadow:isSel?`0 0 20px ${EG[e]},inset 0 0 12px rgba(255,255,255,0.15)`:isDragSource?`0 0 20px ${EG[e]},inset 0 0 12px rgba(255,255,255,0.15)`:isDragHover?`0 0 20px rgba(255,255,255,0.35),inset 0 0 12px rgba(255,255,255,0.12)`:e>0&&!locked?`0 0 6px ${EG[e]}`:locked?"0 0 6px rgba(128,128,128,0.3)":"none",
+                transform:isSel?"scale(1.08)":isDragSource?"scale(1.05)":isDragHover?"scale(1.03)":"scale(1)",cursor:locked?"not-allowed":e>0?"pointer":"default",
+                filter:locked?"grayscale(100%)":"none",
+                opacity:locked?0.7:isDragHover?0.9:1,
+                transition:"background 0.3s,border 0.15s,box-shadow 0.25s,transform 0.05s ease-out",
+                touchAction:"none"}}>
+              {e>0&&<div style={{display:"flex",flexDirection:"column",alignItems:"center",zIndex:2,position:"relative"}}>
+                <div style={{position:"relative",width:40,height:40}}>
+                  <span style={{position:"absolute",top:"50%",left:"50%",transform:"translate(-50%,-50%)",fontSize:13,fontWeight:800,color:"#fff",textShadow:"0 1px 3px rgba(0,0,0,0.5)",zIndex:2}}>{e}</span>
+                  <div style={{position:"absolute",top:0,left:0,width:40,height:40,transform:`scale(${orbitScale})`,transformOrigin:"center center"}}>
+                    {mass>=1&&<div style={{
+                      position:"absolute",width:3,height:3,backgroundColor:"#fff",borderRadius:"50%",
+                      animation:"orbit1 2s linear infinite",
+                      boxShadow:"0 0 3px rgba(255,255,255,0.8)"
+                    }}/>}
+                    {mass>=2&&<div style={{
+                      position:"absolute",width:3,height:3,backgroundColor:"#fff",borderRadius:"50%",
+                      animation:"orbit2 2s linear infinite",
+                      animationDelay:"0.5s",
+                      boxShadow:"0 0 3px rgba(255,255,255,0.8)"
+                    }}/>}
+                    {mass>=3&&<div style={{
+                      position:"absolute",width:3,height:3,backgroundColor:"#fff",borderRadius:"50%",
+                      animation:"orbit3 2s linear infinite",
+                      animationDelay:"1s",
+                      boxShadow:"0 0 3px rgba(255,255,255,0.8)"
+                    }}/>}
+                  </div>
+                </div>
+              </div>}
+              {isDet&&<div style={{position:"absolute",top:-3,right:-3,fontSize:7,fontWeight:700,color:"#fff",
+                padding:"1px 3px",borderRadius:3,zIndex:5,
+                backgroundColor:detProb>0.6?"#047857":detProb>0.3?"#b45309":"#b91c1c"}}>{Math.round(detProb*100)}%</div>}
+            </div>);
+        });
+
+        function FooterBar({
+          version,
+          copyright,
+          soundEnabled,
+          onToggleSound,
+          onShowCredits,
+          compact = false,
+          font
+        }) {
+          // Calculate responsive copyright font size
+          const [viewportWidth, setViewportWidth] = useState(480);
+          useEffect(() => {
+            const updateWidth = () => {
+              const width = Math.min(window.innerWidth, 480);
+              setViewportWidth(width);
+            };
+            updateWidth();
+            window.addEventListener('resize', updateWidth);
+            return () => window.removeEventListener('resize', updateWidth);
+          }, []);
+          
+          const copyrightFontSize = Math.max(7, Math.min(10, viewportWidth / 48));
+
+          if (compact) {
+            return (
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  width: "100%",
+                  fontSize: 10,
+                  color: "#94a3b8",
+                  fontFamily: font,
+                  letterSpacing: "0.05em",
+                  marginTop: 0
+                }}
+              >
+                <span>{version}</span>
+
+                <div style={{ position: "absolute", left: "50%", transform: "translateX(-50%)" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                    <button
+                      onClick={onToggleSound}
+                      style={{
+                        background: "none",
+                        border: "none",
+                        color: "#94a3b8",
+                        fontSize: 10,
+                        cursor: "pointer",
+                        padding: 0,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        width: "auto",
+                        height: "auto"
+                      }}
+                    >
+                      {soundEnabled ? "🔊" : "🔇"}
+                    </button>
+                    
+                    <button
+                      onClick={onShowCredits}
+                      style={{
+                        background: "none",
+                        border: "none",
+                        color: "#94a3b8",
+                        fontSize: 10,
+                        cursor: "pointer",
+                        padding: 0,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        width: "auto",
+                        height: "auto"
+                      }}
+                    >
+                      📋
+                    </button>
+                  </div>
+                </div>
+
+                <a
+                  href="https://www.mistermarx.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    color: "#94a3b8",
+                    textDecoration: "none",
+                    cursor: "pointer",
+                    fontSize: copyrightFontSize,
+                    whiteSpace: "nowrap"
+                  }}
+                >
+                  {copyright}
+                </a>
+              </div>
+            );
+          }
+
+          return (
+            <div
+              style={{
+                textAlign: "center",
+                fontSize: 11,
+                color: "#94a3b8",
+                fontFamily: font,
+                paddingBottom: 20
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  gap: 20,
+                  fontSize: 10,
+                  letterSpacing: "0.05em"
+                }}
+              >
+                <span>{version}</span>
+
+                <button
+                  onClick={onToggleSound}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    color: "#94a3b8",
+                    fontSize: 10,
+                    cursor: "pointer",
+                    padding: 0,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    width: "auto",
+                    height: "auto"
+                  }}
+                >
+                  {soundEnabled ? "🔊" : "🔇"}
+                </button>
+
+                <button
+                  onClick={onShowCredits}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    color: "#94a3b8",
+                    fontSize: 10,
+                    cursor: "pointer",
+                    padding: 0,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    width: "auto",
+                    height: "auto"
+                  }}
+                >
+                  📋
+                </button>
+
+                <a
+                  href="https://www.mistermarx.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    color: "#94a3b8",
+                    textDecoration: "none",
+                    cursor: "pointer",
+                    fontSize: copyrightFontSize,
+                    whiteSpace: "nowrap"
+                  }}
+                >
+                  {copyright}
+                </a>
+              </div>
+            </div>
+          );
+        }
+
+        function RulesPanel({
+          items,
+          font,
+          maxWidth = 480,
+          alignItems = "center",
+          width = "100%"
+        }) {
+          return (
+            <div
+              style={{
+                maxWidth,
+                display: "flex",
+                flexDirection: "column",
+                alignItems,
+                gap: 14,
+                width
+              }}
+            >
+              {items.map((item) => (
+                <RuleCard key={item.title} item={item} font={font} />
+              ))}
+            </div>
+          );
+        }
+
+        function GameTitle({
+          title,
+          fontFamily,
+          size,
+          letterSpacing = "0.2em",
+          centered = true,
+          glow = false
+        }) {
+          return (
+            <h1
+              style={{
+                margin: 0,
+                fontSize: size,
+                fontWeight: 900,
+                letterSpacing,
+                fontFamily,
+                textAlign: centered ? "center" : "left",
+                width: centered ? "100%" : "auto",
+                background: "linear-gradient(90deg, #f8fafc 0%, #e0f2fe 25%, #bae6fd 50%, #7dd3fc 75%, #f8fafc 100%)",
+                backgroundSize: "200% 100%",
+                WebkitBackgroundClip: "text",
+                backgroundClip: "text",
+                color: "transparent",
+                textShadow: glow ? "0 0 50px rgba(14,116,144,0.5)" : "none",
+                animation: "textShimmer 3s ease-in-out infinite",
+                lineHeight: 1
+              }}
+            >
+              {title}
+            </h1>
+          );
+        }
+
+        function PrimaryButton({
+          children,
+          onClick,
+          fontFamily,
+          padding = "12px 32px",
+          fontSize = 13,
+          borderRadius = 6,
+          letterSpacing = "0.12em",
+          width = "auto",
+          boxShadow = "0 0 25px rgba(14,116,144,0.3)",
+          disableBorderAnimation = false
+        }) {
+          return (
+            <button
+              onClick={onClick}
+              style={{
+                padding,
+                backgroundColor: "#0e7490",
+                color: "#fff",
+                border: "none",
+                borderRadius,
+                fontSize,
+                fontWeight: 700,
+                letterSpacing,
+                cursor: "pointer",
+                fontFamily,
+                boxShadow,
+                transition: "all 0.2s",
+                width,
+                position: "relative",
+                overflow: "hidden"
+              }}
+            >
+              {!disableBorderAnimation && (
+                <div style={{
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  borderRadius: "inherit",
+                  padding: "2px",
+                  background: "conic-gradient(from 0deg at 50% 50%, transparent 0deg, rgba(255,255,255,0.8) 45deg, transparent 90deg, transparent 360deg)",
+                  animation: "rotateBorder 2s linear infinite",
+                  zIndex: 1
+                }} />
+              )}
+              <div style={{
+                position: "absolute",
+                top: "2px",
+                left: "2px",
+                right: "2px",
+                bottom: "2px",
+                borderRadius: "calc(6px - 2px)",
+                backgroundColor: "#0e7490",
+                zIndex: 2
+              }} />
+              <span style={{ position: "relative", zIndex: 3 }}>
+                {children}
+              </span>
+            </button>
+          );
+        }
+
+        function TextActionButton({
+          children,
+          onClick,
+          fontFamily,
+          padding = "10px 24px",
+          fontSize = 11,
+          borderRadius = 6,
+          letterSpacing = "0.05em",
+          width = "auto",
+          color = "#94a3b8",
+          transition = "all 0.15s",
+          style = {}
+        }) {
+          return (
+            <button
+              onClick={onClick}
+              style={{
+                padding,
+                backgroundColor: "transparent",
+                color,
+                border: "none",
+                borderRadius,
+                fontSize,
+                fontWeight: 500,
+                letterSpacing,
+                cursor: "pointer",
+                fontFamily,
+                transition,
+                width,
+                whiteSpace: "nowrap",
+                overflowWrap: "normal",
+                wordWrap: "normal",
+                hyphens: "none",
+                ...style
+              }}
+            >
+              <span style={{
+                display: "inline-block",
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                maxWidth: "100%"
+              }}>
+                {children}
+              </span>
+            </button>
+          );
+        }
+
+        function DangerButton({
+          children,
+          onClick,
+          fontFamily = "inherit",
+          padding = "12px 32px",
+          fontSize = 13,
+          borderRadius = 6,
+          letterSpacing = "0.12em",
+          boxShadow = "0 0 25px rgba(185,28,28,0.25)",
+          width = "auto"
+        }) {
+          return (
+            <button
+              onClick={onClick}
+              style={{
+                padding,
+                backgroundColor: "#b91c1c",
+                color: "#fff",
+                border: "none",
+                borderRadius,
+                fontSize,
+                fontWeight: 700,
+                letterSpacing,
+                cursor: "pointer",
+                fontFamily,
+                boxShadow,
+                transition: "all 0.2s",
+                width
+              }}
+            >
+              {children}
+            </button>
+          );
+        }
+
+        function DifficultySelector({
+          value,
+          onChange,
+          fontFamily
+        }) {
+          return (
+            <div
+              style={{
+                width: "100%",
+                display: "flex",
+                flexDirection: "column",
+                gap: 10,
+                alignItems: "center"
+              }}
+            >
+              <span
+                style={{
+                  fontSize: 11,
+                  letterSpacing: "0.18em",
+                  color: "#94a3b8",
+                  fontFamily,
+                  fontWeight: 600
+                }}
+              >
+                SELECT DIFFICULTY
+              </span>
+
+              <div
+                style={{
+                  width: "100%",
+                  display: "grid",
+                  gridTemplateColumns: "1fr",
+                  gap: 8
+                }}
+              >
+                {DIFFICULTY_OPTIONS.map((option) => {
+                  const selected = value === option;
+                  return (
+                    <button
+                      key={option}
+                      onClick={() => onChange(option)}
+                      style={{
+                        padding: "12px 10px",
+                        borderRadius: 8,
+                        border: selected ? "1px solid rgba(103,232,249,0.9)" : "1px solid rgba(255,255,255,0.08)",
+                        background: selected ? "rgba(14,116,144,0.25)" : "rgba(15,23,42,0.55)",
+                        color: selected ? "#e0f2fe" : "#94a3b8",
+                        fontSize: 12,
+                        fontWeight: 700,
+                        letterSpacing: "0.10em",
+                        fontFamily,
+                        cursor: "pointer",
+                        boxShadow: selected ? "0 0 20px rgba(14,116,144,0.22), inset 0 0 12px rgba(255,255,255,0.06)" : "none",
+                        transition: "all 0.15s"
+                      }}
+                    >
+                      {option}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        }
+
+        function NullV3(){
+          const[grid,setGrid]=useState(mkGrid);
+          const[score,setScore]=useState(0);
+          const[level,setLevel]=useState(1);
+          const[difficulty,setDifficulty]=useState("EASY");
+          const[sel,setSel]=useState(null);
+          const[phase,setPhase]=useState("menu");
+          const[echoes,setEchoes]=useState([]);
+          const[cascTxt,setCascTxt]=useState(null);
+          const[cascTxtColor,setCascTxtColor]=useState("#10b981");
+          const[fillPct,setFillPct]=useState(0);
+          const[paused,setPaused]=useState(false);
+          const[totalT,setTotalT]=useState(0);
+          const[combo,setCombo]=useState(0);
+          const[transitionHistory,setTransitionHistory]=useState([]);
+          const[isLevelingUp,setIsLevelingUp]=useState(false);
+          const [interactionMode, setInteractionMode] = useState("idle"); 
+          // "idle" | "armed" | "dragging"
+
+          const [pointerDown, setPointerDown] = useState(false);
+          const [lastSelectionTime, setLastSelectionTime] = useState(0);
+          const DRAG_THRESHOLD = 12;
+          const[isDragging,setIsDragging]=useState(false);
+          const[dragStart,setDragStart]=useState(null);
+          const[dragEnd,setDragEnd]=useState(null);
+          const[dragHover,setDragHover]=useState(null);
+          const[comboT,setComboT]=useState(0);
+          const[info,setInfo]=useState(null);
+  const[overlayMsg,setOverlayMsg]=useState(null);
+  const[overlayMsgColor,setOverlayMsgColor]=useState("#6ee7b7");
+  const[showTutorial,setShowTutorial]=useState(false);
+  const[showMenu,setShowMenu]=useState(false);
+          const [isLoading,setIsLoading]=useState(true);
+          const [renderedRows,setRenderedRows]=useState(0);
+          const[isTransitioning,setIsTransitioning]=useState(false);
+  const[showPauseRules,setShowPauseRules]=useState(false);
+  const[showMenuRules,setShowMenuRules]=useState(false);
+  const[showMenuControls,setShowMenuControls]=useState(false);
+  const[showCompanionPage,setShowCompanionPage]=useState(false);
+          const[showQuitConfirmation,setShowQuitConfirmation]=useState(false);
+          const[showCredits,setShowCredits]=useState(false);
+          const[creditsPaused,setCreditsPaused]=useState(false);
+
+          // Listen for credits events from AppWrapper
+          useEffect(() => {
+            const handleHideCredits = () => setShowCredits(false);
+            const handleHideMenuRules = () => setShowMenuRules(false);
+            const handlePauseForCredits = () => setCreditsPaused(true);
+            const handleResumeFromCredits = () => setCreditsPaused(false);
+            window.addEventListener('hideCredits', handleHideCredits);
+            window.addEventListener('hideMenuRules', handleHideMenuRules);
+            window.addEventListener('pauseForCredits', handlePauseForCredits);
+            window.addEventListener('resumeFromCredits', handleResumeFromCredits);
+            return () => {
+              window.removeEventListener('hideCredits', handleHideCredits);
+              window.removeEventListener('hideMenuRules', handleHideMenuRules);
+              window.removeEventListener('pauseForCredits', handlePauseForCredits);
+              window.removeEventListener('resumeFromCredits', handleResumeFromCredits);
+            };
+          }, []);
+          const[showOverRules,setShowOverRules]=useState(false);
+          const[shake,setShake]=useState(false);
+          const[screenFlash,setScreenFlash]=useState(null);
+          const[tick,setTick]=useState(0);
+          const[soundEnabled,setSoundEnabled]=useState(true);
+          const[countdown,setCountdown]=useState(null);
+          const[hasTouchInteraction,setHasTouchInteraction]=useState(false);
+          const[lastComboExpire,setLastComboExpire]=useState(0);
+          const[lastTickTime,setLastTickTime]=useState(Date.now());
+          const[pauseTime,setPauseTime]=useState(null);
+          const[popupTime,setPopupTime]=useState(null);
+
+          const handleToggleSound = useCallback(() => {
+            const enabled = SoundManager.toggle();
+            setSoundEnabled(enabled);
+            // Only play menu sound if sound is enabled
+            if (enabled) {
+              SoundManager.play("menu", 0.5);
+            }
+          }, []);
+
+          const gridRef=useRef(null);const canvasRef=useRef(null);const bgCanvasRef=useRef(null);
+const particlesRef=useRef([]);const boltsRef=useRef([]);
+const bgParticlesRef=useRef([]);
+const animRef=useRef(null);const dimsRef=useRef({cw:0,ch:0});
+const lastTouchTimeRef = useRef(0);
+const lastMouseUpdateRef = useRef(0);
+const lightningRef=useRef({active:false,start:null,end:null,frame:0});
+
+          const updateDims=useCallback(()=>{
+            const g=gridRef.current;if(!g)return;
+            const r=g.getBoundingClientRect();dimsRef.current={cw:r.width/COLS,ch:r.height/ROWS};
+          },[]);
+          const cellPos=useCallback((x,y)=>{const{cw,ch}=dimsRef.current;return{px:x*cw+cw/2,py:y*ch+ch/2}},[]);
+
+          const spawnDifficultyMultiplier = DIFFICULTY_SPAWN_MULTIPLIER[difficulty] || 1;
+          const currentSpawnInterval = Math.max(SPAWN_MIN, SPAWN_BASE - level * 140) * spawnDifficultyMultiplier;
+
+          useEffect(()=>{
+            const cv=canvasRef.current;if(!cv)return;const ctx=cv.getContext("2d");let on=true;
+            const bgcv=bgCanvasRef.current;if(!bgcv)return;const bgctx=bgcv.getContext("2d");
+            const draw=()=>{if(!on)return;const now=Date.now(),W=cv.width,H=cv.height,bgW=bgcv.width,bgH=bgcv.height;
+              
+              // Clear and draw background particles on full screen canvas
+              bgctx.clearRect(0,0,bgW,bgH);
+              const bgFiltered = [];
+              for(const p of bgParticlesRef.current){
+                const age = now - p.born;
+                if(age > p.life) continue;
+                bgFiltered.push(p);
+                
+                const t = age / p.life;
+                const px = p.x + p.vx * t;
+                const py = p.y + p.vy * t;
+                const al = (1 - t * t) * p.baseOpacity * (0.4 + 0.2 * Math.sin(now * p.flickerSpeed)); // Reduced max from 1.0 to 0.6
+                const sz = p.size;
+                
+                bgctx.beginPath();
+                bgctx.arc(px, py, sz, 0, 6.283);
+                bgctx.fillStyle = `rgba(255,255,255,${al})`;
+                bgctx.fill();
+              }
+              bgParticlesRef.current = bgFiltered;
+              
+              // Clear and draw game elements on game board canvas
+              ctx.clearRect(0,0,W,H);
+              ctx.lineCap="round";
+              
+              // Draw animated white lightning using ref state (no React re-renders)
+              if (lightningRef.current.active && lightningRef.current.start && lightningRef.current.end){
+                const sp = lightningRef.current.start;
+                const dp = lightningRef.current.end;
+                
+                const lightningSegs = genBolt(sp.px,sp.py,dp.px,dp.py,0);
+                const now = Date.now();
+                const frame = Math.floor((now % 3000) / 1000); // 3 frames cycling every 3000ms
+                
+                for(let i=0;i<lightningSegs.length;i+=6){
+                    ctx.beginPath();ctx.moveTo(lightningSegs[i],lightningSegs[i+1]);ctx.lineTo(lightningSegs[i+2],lightningSegs[i+3]);
+                    
+                    // Calculate distance from both ends for fade effect
+                    const segDist = i / lightningSegs.length;
+                    const fadeFromStart = Math.pow(1 - segDist, 2);
+                    const fadeFromEnd = Math.pow(segDist, 2);
+                    const fadeOpacity = Math.max(0.05, fadeFromStart * fadeFromEnd);
+                    
+                    // Animate opacity based on frame
+                    let opacity = 0.6;
+                    if(frame === 0 && i % 12 === 0) opacity = 0.8;
+                    else if(frame === 1 && i % 12 === 6) opacity = 0.8;
+                    else if(frame === 2 && i % 12 === 0) opacity = 0.8;
+                    
+                    const finalOpacity = opacity * fadeOpacity;
+                    
+                    ctx.strokeStyle=`rgba(255,255,255,${finalOpacity*0.8})`;
+                    ctx.lineWidth=lightningSegs[i+4]*2;
+                    ctx.stroke();
+                    
+                    ctx.strokeStyle=`rgba(255,255,255,${finalOpacity})`;
+                    ctx.lineWidth=lightningSegs[i+4]*1;
+                    ctx.stroke();
+                }
+              }
+              
+              const ab=[];
+              for(const b of boltsRef.current){const age=now-b.born;if(age>b.dur)continue;ab.push(b);
+                const t=age/b.dur,a=b.op*(1-t)*(1-t),s=b.segs,[r,g,bl]=b.rgb;
+                for(let i=0;i<s.length;i+=6){ctx.beginPath();ctx.moveTo(s[i],s[i+1]);ctx.lineTo(s[i+2],s[i+3]);
+                  ctx.strokeStyle=`rgba(${r},${g},${bl},${a*s[i+5]*0.2})`;ctx.lineWidth=s[i+4]*5;ctx.stroke()}
+                for(let i=0;i<s.length;i+=6){ctx.beginPath();ctx.moveTo(s[i],s[i+1]);ctx.lineTo(s[i+2],s[i+3]);
+                  ctx.strokeStyle=`rgba(${r},${g},${bl},${a*s[i+5]})`;ctx.lineWidth=s[i+4];ctx.stroke()}
+              }
+              boltsRef.current=ab;
+              const ap=[];
+              for(const p of particlesRef.current){const age=now-p.born;if(age>p.life)continue;ap.push(p);
+                const t=age/p.life,px=p.x+p.vx*t,py=p.y+p.vy*t,al=1-t*t,sz=p.size*(1-t*0.5);
+                ctx.beginPath();ctx.arc(px,py,sz,0,6.283);ctx.fillStyle=`rgba(${p.r},${p.g},${p.b},${al})`;ctx.fill();
+                if(sz>1.5){ctx.beginPath();ctx.arc(px,py,sz*2.5,0,6.283);ctx.fillStyle=`rgba(${p.r},${p.g},${p.b},${al*0.12})`;ctx.fill()}}
+              particlesRef.current=ap;
+              animRef.current=requestAnimationFrame(draw)};
+            animRef.current=requestAnimationFrame(draw);
+            return()=>{on=false;cancelAnimationFrame(animRef.current)};
+          },[phase,showMenu,showTutorial]); // Remove drag dependencies for performance
+
+          useEffect(()=>{
+            let raf=null;
+            const resize=()=>{
+              // Resize game board canvas
+              const c=canvasRef.current,g=gridRef.current;if(!c||!g)return;
+              const r=g.getBoundingClientRect();
+              if(r.width===0||r.height===0){
+                if(raf)cancelAnimationFrame(raf);
+                raf=requestAnimationFrame(resize);
+                return;
+              }
+              c.width=r.width;c.height=r.height;c.style.width=r.width+"px";c.style.height=r.height+"px";updateDims();
+              
+              // Resize background canvas to full screen
+              const bgc=bgCanvasRef.current;if(!bgc)return;
+              bgc.width=window.innerWidth;bgc.height=window.innerHeight;
+              bgc.style.width=window.innerWidth+"px";bgc.style.height=window.innerHeight+"px";
+            };
+            resize();
+            raf=requestAnimationFrame(resize);
+            window.addEventListener("resize",resize);
+            return()=>{window.removeEventListener("resize",resize);if(raf)cancelAnimationFrame(raf)};
+          },[phase,updateDims,showMenu,showTutorial]);
+
+          const fireBolt=useCallback((x1,y1,x2,y2,col,dur=700,op=1)=>{
+            boltsRef.current.push({segs:genBolt(x1,y1,x2,y2),rgb:toRGB(col),op,born:Date.now(),dur})
+            // Play sound for each bolt - use correlation sound for energy bolts, recoil for secondary bolts
+            const soundType = (col.includes("#60a5fa") || col.includes("96,165,250")) ? 'recoil' : 'correlate';
+            SoundManager.play(soundType, 0.3);
+          },[]);
+          const firePart=useCallback((x,y,n,col)=>{particlesRef.current.push(...mkParticles(x,y,n,col))},[]);
+
+          const spawnTick=useCallback(()=>{
+            if(phase!=="play"||paused||showQuitConfirmation||showCredits||creditsPaused)return;
+            const now=Date.now();
+            setGrid(prev=>{
+              let f=0, allFives=true, changedRows=new Set();
+              const cnt=Math.min(1+Math.floor(level/3),3);
+              let s=0;
+              const spawns=[];
+              
+              // Count cells and find spawn locations
+              for(let y=0;y<ROWS;y++)for(let x=0;x<COLS;x++){
+                if(prev[y][x].e>0)f++;
+                if(prev[y][x].e!==MAX_E&&prev[y][x].e>0)allFives=false;
+                if(s<cnt){
+                  const x2=Math.floor(Math.random()*COLS), y2=Math.floor(Math.random()*ROWS);
+                  if(prev[y2][x2].e===0){
+                    spawns.push({x:x2,y:y2,cell:mkCell(level,now)});
+                    changedRows.add(y2);
+                    s++;
+                  }
+                }
+              }
+              
+              // Game over check
+              if(f>=ROWS*COLS&&allFives){
+                const ng=prev.map(row=>row.map(c=>({...c})));
+                for(let y=0;y<ROWS;y++)for(let x=0;x<COLS;x++)if(ng[y][x].e===MAX_E)ng[y][x].locked=true;
+                setPhase("over");
+                SoundManager.play('gameOver');
+                return ng;
+              }
+              
+              // Only copy changed rows
+              if(changedRows.size===0)return prev;
+              const ng=prev.map((row,y)=>changedRows.has(y)?[...row]:row);
+              spawns.forEach(({x,y,cell})=>{
+                ng[y][x]=cell;
+                SoundManager.play('spawn', 0.3);
+              });
+              return ng;
+            });
+          },[phase,paused,level,showQuitConfirmation,showCredits,creditsPaused]);
+
+          const decayTick=useCallback(()=>{
+            if(phase!=="play"||paused||showQuitConfirmation||showCredits||creditsPaused)return;
+            const now=Date.now();
+            setGrid(prev=>{
+              const changedRows=new Set();
+              const changes=[];
+              let over=false;
+              
+              // Find all changes
+              for(let y=0;y<ROWS;y++)for(let x=0;x<COLS;x++){
+                const c=prev[y][x];
+                if(c.e>0&&c.decay>0&&now>c.decay){
+                  changedRows.add(y);
+                  over=true;
+                  const newDecay=now+Math.max(DECAY_MIN,DECAY_BASE-level*500);
+                  const nextE = Math.min(MAX_E, c.e + 1);
+                  const willLock = c.e === MAX_E;
+                  changes.push({x,y,newE: willLock ? MAX_E : nextE,locked: willLock,newDecay,born:now});
+                  
+                  // Track nearby changes
+                  for(const[dx,dy]of[[-1,0],[1,0],[0,-1],[0,1]]){
+                    const nx=x+dx,ny=y+dy;
+                    if(nx>=0&&nx<COLS&&ny>=0&&ny<ROWS){
+                      changedRows.add(ny);
+                      const n=prev[ny][nx];
+                      if(n.e===0){
+                        changes.push({x:nx,y:ny,spawn:mkCell(level,now),spawnE:Math.min(c.e,2)});
+                      }else if(n.e<MAX_E){
+                        changes.push({x:nx,y:ny,boostE:Math.min(MAX_E,n.e+1),boostDecay:Math.min(n.decay,now+3500)});
+                      }
+                    }
+                  }
+                }
+              }
+              
+              // Always update to refresh conic timers, even if no decay events
+if(!over)return prev.map(row => [...row]); // Force re-render for timer updates
+              
+              // Only copy changed rows
+              const ng=prev.map((row,y)=>changedRows.has(y)?[...row]:row);
+              
+              // Apply changes
+              changes.forEach(change => {
+                if (change.newE !== undefined) {
+                  ng[change.y][change.x] = {
+                    ...ng[change.y][change.x],
+                    e: change.newE,
+                    locked: !!change.locked,
+                    born: change.born,
+                    decay: change.newDecay
+                  };
+                } else if (change.spawn) {
+                  ng[change.y][change.x] = {
+                    ...change.spawn,
+                    e: change.spawnE
+                  };
+                } else {
+                  const cell = { ...ng[change.y][change.x] };
+
+                  if (change.boostE !== undefined) {
+                    cell.e = change.boostE;
+                    if (cell.e < MAX_E) cell.locked = false;
+                  }
+
+                  if (change.boostDecay !== undefined) cell.decay = change.boostDecay;
+                  if (change.born !== undefined) cell.born = change.born;
+
+                  ng[change.y][change.x] = cell;
+                }
+              });
+              
+              setShake(true);setTimeout(()=>setShake(false),250);
+              return ng;
+            });
+          },[phase,paused,level,showQuitConfirmation,showCredits,creditsPaused]);
+
+          useEffect(()=>{
+            if(phase!=="play"||paused||showQuitConfirmation||showCredits||creditsPaused)return;
+            const iv=setInterval(spawnTick,currentSpawnInterval);
+            return()=>clearInterval(iv);
+          },[spawnTick,phase,level,paused,showQuitConfirmation,showCredits,creditsPaused,currentSpawnInterval]);
+
+          useEffect(()=>{
+            if(phase!=="play"||paused||showQuitConfirmation||showCredits||creditsPaused)return;
+            const iv=setInterval(decayTick,500);
+            return()=>clearInterval(iv);
+          },[decayTick,phase,level,paused,showQuitConfirmation,showCredits,creditsPaused]);
+          useEffect(()=>{
+            if(phase!=="play"||paused||showQuitConfirmation||showCredits||creditsPaused)return;
+            const iv=setInterval(()=>{
+              const now=Date.now();
+              
+              // Update background particles in ref (no React re-render)
+              const filtered = bgParticlesRef.current.filter(p => 
+                p.x > -50 && p.x < window.innerWidth + 50 && 
+                p.y > -50 && p.y < window.innerHeight + 50 &&
+                (now - p.born) < p.life
+              );
+              
+              // Add new particles - reduced for performance
+              const maxParticles = Math.min(10, Math.floor(window.innerWidth / 60));
+              if(filtered.length < maxParticles && Math.random() < 0.15){
+                const side = Math.floor(Math.random() * 4);
+                let x, y, vx, vy;
+                switch(side){
+                  case 0: x = Math.random() * window.innerWidth; y = -20; vx = (Math.random() - 0.5) * 2; vy = 1 + Math.random() * 2; break;
+                  case 1: x = window.innerWidth + 20; y = Math.random() * window.innerHeight; vx = -(1 + Math.random() * 2); vy = (Math.random() - 0.5) * 2; break;
+                  case 2: x = Math.random() * window.innerWidth; y = window.innerHeight + 20; vx = (Math.random() - 0.5) * 2; vy = -(1 + Math.random() * 2); break;
+                  case 3: x = -20; y = Math.random() * window.innerHeight; vx = 1 + Math.random() * 2; vy = (Math.random() - 0.5) * 2; break;
+                }
+                filtered.push({
+                  x, y, vx, vy,
+                  size: 2 + Math.random() * 4,
+                  life: 15000 + Math.random() * 5000,
+                  born: now,
+                  baseOpacity: 0.05 + Math.random() * 0.1, // Reduced from 0.15-0.4 to 0.05-0.15
+                  flickerSpeed: 0.02 + Math.random() * 0.03
+                });
+              }
+              
+              // Update positions
+              bgParticlesRef.current = filtered.map(p => ({
+                ...p,
+                x: p.x + p.vx,
+                y: p.y + p.vy
+              }));
+            }, 100); // Reduced frequency from 50ms to 100ms for better performance
+            return()=>clearInterval(iv);
+          },[phase,paused,showQuitConfirmation]);
+
+          // Progressive grid rendering for LCP optimization
+          useEffect(() => {
+            if (phase === "play" && renderedRows < ROWS) {
+              const timer = setTimeout(() => {
+                setRenderedRows(prev => Math.min(prev + 2, ROWS));
+              }, 50); // Render 2 rows every 50ms
+              return () => clearTimeout(timer);
+            }
+            if (phase === "menu") {
+              setRenderedRows(ROWS); // Show all rows in menu
+            }
+          }, [phase]); // Remove renderedRows dependency to prevent re-renders
+
+          useEffect(()=>{let f=0;for(let y=0;y<ROWS;y++)for(let x=0;x<COLS;x++)if(grid[y][x].e>0)f++;setFillPct(f/(ROWS*COLS))},[grid]);
+          useEffect(()=>{
+            const nl=1+Math.floor(totalT/6);
+            if(nl!==level){
+                // Level up - trigger animation then reset
+                setIsLevelingUp(true);
+                setTimeout(() => {
+                    setTransitionHistory([]);
+                    setLevel(nl);
+                    setIsLevelingUp(false);
+                }, 800); // Wait for animation to complete
+                SoundManager.play('levelUp', 0.6);
+            }
+        },[totalT,level]);
+          useEffect(()=>{if(comboT>0){const t=setTimeout(()=>setComboT(c=>c-1),600);return()=>clearTimeout(t)}else{setCombo(0);setLastComboExpire(Date.now())}},[comboT]);
+          useEffect(()=>{if(!echoes.length)return;const iv=setInterval(()=>{const now=Date.now();setEchoes(p=>p.filter(e=>now-e.time<ECHO_DUR))},500);return()=>clearInterval(iv)},[echoes]);
+
+          const echoMap=useMemo(()=>{const now=Date.now();const m=new Float32Array(ROWS*COLS);
+            for(const echo of echoes){if(now-echo.time>=ECHO_DUR)continue;const fade=1-(now-echo.time)/ECHO_DUR;
+              for(let y=0;y<ROWS;y++)for(let x=0;x<COLS;x++){const r=Math.sqrt((x-echo.x)**2+(y-echo.y)**2);if(r<4)m[y*COLS+x]+=ECHO_BOOST*(1-r/4)*fade}}
+            return m},[echoes,tick]);
+          const getEcho=useCallback((x,y)=>Math.min(echoMap[y*COLS+x],0.5),[echoMap]);
+
+          const getDets=useCallback((sx,sy)=>{const src=grid[sy][sx];if(src.e<=0)return[];const dE=src.e,ds=[];
+            for(let y=0;y<ROWS;y++)for(let x=0;x<COLS;x++){if(x===sx&&y===sy)continue;const d=grid[y][x];if(d.e<=0||d.e<dE)continue;
+              const r=Math.sqrt((x-sx)**2+(y-sy)**2);let p=corrProb(r);p=Math.min(0.98,p+echoMap[y*COLS+x]);ds.push({x,y,prob:p,r,dE})}
+            return ds.sort((a,b)=>b.prob-a.prob)},[grid,echoMap]);
+          const detMap=useMemo(()=>{if(!sel)return{};const ds=getDets(sel.x,sel.y);const m={};for(const d of ds)m[`${d.x},${d.y}`]=d;return m},[sel,getDets]);
+
+          const execTrans=useCallback((sx,sy,dx,dy)=>{
+            const now=Date.now(),src=grid[sy][sx],det=grid[dy][dx],dE=src.e,r=Math.sqrt((dx-sx)**2+(dy-sy)**2),mom=recoilP(det.mass,dE);
+            const bc=EB[Math.min(dE,MAX_E)],pc=dE<=1?"rgb(147,197,253)":dE<=2?"rgb(103,232,249)":dE<=3?"rgb(110,231,183)":dE<=4?"rgb(252,211,77)":"rgb(232,121,249)";
+            const recoilBoltCol="#60a5fa",recoilPartCol="rgb(96,165,250)";
+            const sp=cellPos(sx,sy),dp=cellPos(dx,dy);
+            fireBolt(sp.px,sp.py,dp.px,dp.py,bc,700,1);fireBolt(sp.px+1,sp.py+1,dp.px-1,dp.py-1,bc,500,0.5);
+            firePart(sp.px,sp.py,8+dE*3,pc);firePart(dp.px,dp.py,12+dE*4,pc);
+            setScreenFlash(bc);setTimeout(()=>setScreenFlash(null),120);
+            
+            setGrid(prev=>{const ng=prev.map((row,y)=>[...row]);ng[sy][sx]=empty();
+              const nE=det.e-dE;if(nE<=0){ng[dy][dx]=empty();} else{ng[dy][dx].e=nE;ng[dy][dx].born=now;ng[dy][dx].decay=now+Math.max(DECAY_MIN,DECAY_BASE-level*500);ng[dy][dx].locked=false}
+              // Auto-unlock nearby locked energy 5 cells
+              for(const[ddx,ddy]of[[-1,0],[1,0],[0,-1],[0,1],[-1,-1],[1,-1],[-1,1],[1,1]]){
+                const nx=dx+ddx,ny=dy+ddy;if(nx>=0&&nx<COLS&&ny>=0&&ny<ROWS&&ng[ny][nx].locked){
+                  ng[ny][nx].locked=false;ng[ny][nx].born=now;ng[ny][nx].decay=now+Math.max(DECAY_MIN,DECAY_BASE-level*500);
+                }
+              }
+              if(mom>1.5){for(const[ddx,ddy]of[[-1,0],[1,0],[0,-1],[0,1],[-1,-1],[1,-1],[-1,1],[1,1]]){
+                const nx=dx+ddx,ny=dy+ddy;if(nx>=0&&nx<COLS&&ny>=0&&ny<ROWS&&ng[ny][nx].e>0&&ng[ny][nx].e<=Math.floor(mom)){
+                  const rp=cellPos(nx,ny);
+                  fireBolt(dp.px,dp.py,rp.px,rp.py,recoilBoltCol,450,0.95);
+                  fireBolt(dp.px+1,dp.py+1,rp.px-1,rp.py-1,recoilBoltCol,350,0.55);
+                  ng[ny][nx]=empty();firePart(rp.px,rp.py,6,recoilPartCol)}}}
+              return ng});
+            const nc=combo+1;setScore(s=>s+Math.round(dE*(1+r*0.5)*nc*15));setCombo(nc);setComboT(5);setTotalT(t=>t+1);
+            // Add to transition history - track transition count within current level
+            setTransitionHistory(prev => {
+                const transitionInLevel = (totalT % 6) + 1; // 1-6 within current level
+                const newHistory = [...prev, transitionInLevel];
+                return newHistory.slice(-5); // Keep only last 5 transitions
+            });
+            setEchoes(p=>[...p,{x:dx,y:dy,time:now},{x:sx,y:sy,time:now}]);
+            if(nc>=3){setCascTxt({text:`CORRELATION CASCADE ×${nc}`,time:now});setCascTxtColor(EB[dE]);setTimeout(()=>setCascTxt(null),1500);setTimeout(()=>setCascTxtColor("#10b981"),1500);SoundManager.play('combo', 0.8)}
+            else if(r>5){setCascTxt({text:"LONG-RANGE CORRELATION",time:now});setCascTxtColor(EB[dE]);setTimeout(()=>setCascTxt(null),1200);setTimeout(()=>setCascTxtColor("#10b981"),1200)}
+            else if(mom>3){setCascTxt({text:"MASSIVE RECOIL",time:now});setCascTxtColor(EB[dE]);setTimeout(()=>setCascTxt(null),1200);setTimeout(()=>setCascTxtColor("#10b981"),1200);SoundManager.play('recoil', 0.7)}
+            else if(mom>1.5){setCascTxt({text:"RECOIL CASCADE",time:now});setCascTxtColor(EB[dE]);setTimeout(()=>setCascTxt(null),1000);setTimeout(()=>setCascTxtColor("#10b981"),1000);SoundManager.play('recoil', 0.5)}
+            setOverlayMsg({text:"CORRELATED",time:now});setOverlayMsgColor(EB[dE]);setTimeout(()=>setOverlayMsg(null),1500);setTimeout(()=>setOverlayMsgColor("#6ee7b7"),1500);
+            setInfo({type:"ok",dE,r,mom,prob:corrProb(r),combo:nc,time:now});cancelSelection();
+          },[grid,combo,cellPos,fireBolt,firePart,level]);
+
+          const commitSourceSelection = useCallback((x, y) => {
+            const cell = grid[y][x];
+            if (phase !== "play" || paused || showQuitConfirmation || showCredits || creditsPaused) return;
+            if (cell.e <= 0 || cell.locked) return;
+
+            const now = Date.now();
+
+            setSel({ x, y });
+            setInteractionMode("armed");
+            setLastSelectionTime(now);
+
+            setGrid(prev => {
+              const ng = prev.map((row, rowIndex) => rowIndex === y ? [...row] : row);
+              // Don't reset decay timer on selection - let conic timer continue naturally
+              return ng;
+            });
+
+            SoundManager.play("select");
+            SoundManager.startWeldingLoop(0.25);
+          }, [grid, phase, paused, showQuitConfirmation, showCredits, creditsPaused, level]);
+
+          const clearDragState = useCallback(() => {
+            setPointerDown(false);
+            setIsDragging(false);
+            setDragStart(null);
+            setDragEnd(null);
+            setDragHover(null);
+          }, []);
+
+          const cancelSelection = useCallback(() => {
+            SoundManager.stopWeldingLoop();
+            SoundManager.play('deselect', 0.3);
+            setSel(null);
+            setInteractionMode("idle");
+            clearDragState();
+            // Clear lightning when cancelling selection
+            lightningRef.current = {active:false,start:null,end:null,frame:0};
+          }, [clearDragState]);
+
+          const processCellSelection = useCallback((x, y) => {
+            if (phase !== "play" || paused || showQuitConfirmation || showCredits || creditsPaused) return;
+
+            const cell = grid[y][x];
+
+            // No source yet: first click commits source
+            if (!sel || interactionMode === "idle") {
+              if (cell.e > 0 && !cell.locked) {
+                commitSourceSelection(x, y);
+              }
+              return;
+            }
+
+            // If already armed, same cell toggles off
+            if (sel.x === x && sel.y === y) {
+              cancelSelection();
+              return;
+            }
+
+            // Armed mode: second click is target resolution only
+            if (interactionMode !== "armed") return;
+
+            if (cell.e === 0 || cell.locked) {
+              cancelSelection();
+              return;
+            }
+
+            const src = grid[sel.y][sel.x];
+            const det = grid[y][x];
+            const r = Math.sqrt((x - sel.x) ** 2 + (y - sel.y) ** 2);
+
+            if (det.e <= 0 || det.e < src.e) {
+              SoundManager.play("decorrelate", 0.8);
+              const now = Date.now();
+              const freshDecay = now + Math.max(DECAY_MIN, DECAY_BASE - level * 500);
+
+              setGrid(prev => {
+                const ng = prev.map((row, rowIndex) => 
+                  rowIndex === sel.y || rowIndex === y ? [...row] : row
+                );
+                if (ng[sel.y][sel.x].e > 0) {
+                  ng[sel.y][sel.x].born = now;
+                  ng[sel.y][sel.x].decay = freshDecay;
+                  if (ng[sel.y][sel.x].e < MAX_E) ng[sel.y][sel.x].e += 1;
+                  if (ng[sel.y][sel.x].e === MAX_E) ng[sel.y][sel.x].locked = true;
+                }
+                if (ng[y][x].e > 0) {
+                  ng[y][x].born = now;
+                  ng[y][x].decay = freshDecay;
+                  if (ng[y][x].e < MAX_E) ng[y][x].e += 1;
+                  if (ng[y][x].e === MAX_E) ng[y][x].locked = true;
+                }
+                return ng;
+              });
+
+              const sp2 = cellPos(sel.x, sel.y), dp2 = cellPos(x, y);
+              const mx = (sp2.px + dp2.px) / 2 + (Math.random() - 0.5) * 30;
+              const my = (sp2.py + dp2.py) / 2 + (Math.random() - 0.5) * 30;
+              fireBolt(sp2.px, sp2.py, mx, my, "#f87171", 400, 0.8);
+              firePart(mx, my, 10, "rgb(248,113,113)");
+              setScreenFlash("rgba(248,113,113,0.5)");
+              setTimeout(() => setScreenFlash(null), 80);
+              setShake(true);
+              setTimeout(() => setShake(false), 150);
+              setOverlayMsg({ text: "ENERGY MISMATCH", time: now });
+              setTimeout(() => setOverlayMsg(null), 1500);
+              setInfo({ type: "mis", sE: src.e, dE: det.e, time: now });
+
+              cancelSelection();
+              return;
+            }
+
+            let prob = corrProb(r);
+            prob = Math.min(0.98, prob + getEcho(x, y));
+
+            if (Math.random() < prob) {
+              execTrans(sel.x, sel.y, x, y);
+              setInteractionMode("idle");
+              clearDragState();
+            } else {
+              SoundManager.play("decorrelate", 0.6);
+              const now = Date.now();
+              const freshDecay = now + Math.max(DECAY_MIN, DECAY_BASE - level * 500);
+
+              setGrid(prev => {
+                const changedRows = new Set([sel.y, y]);
+                const spawns = [];
+                const sc = 1 + Math.floor(Math.random() * 2);
+                for (let i = 0, a = 0; i < sc && a < 20; a++) {
+                  const sx2 = Math.floor(Math.random() * COLS), sy2 = Math.floor(Math.random() * ROWS);
+                  if (prev[sy2][sx2].e === 0) {
+                    spawns.push({x: sx2, y: sy2, cell: mkCell(level, now)});
+                    changedRows.add(sy2);
+                    i++;
+                  }
+                }
+                
+                const ng = prev.map((row, rowIndex) => changedRows.has(rowIndex) ? [...row] : row);
+                
+                if (ng[sel.y][sel.x].e > 0) {
+                  ng[sel.y][sel.x].born = now;
+                  ng[sel.y][sel.x].decay = freshDecay;
+                  if (ng[sel.y][sel.x].e < MAX_E) ng[sel.y][sel.x].e += 1;
+                  if (ng[sel.y][sel.x].e === MAX_E) ng[sel.y][sel.x].locked = true;
+                }
+                if (ng[y][x].e > 0) {
+                  ng[y][x].born = now;
+                  ng[y][x].decay = freshDecay;
+                  if (ng[y][x].e < MAX_E) ng[y][x].e += 1;
+                  if (ng[y][x].e === MAX_E) ng[y][x].locked = true;
+                }
+                
+                spawns.forEach(({x, y, cell}) => {
+                  ng[y][x] = cell;
+                });
+                
+                return ng;
+              });
+
+              const sp2 = cellPos(sel.x, sel.y), dp2 = cellPos(x, y);
+              const mx = (sp2.px + dp2.px) / 2 + (Math.random() - 0.5) * 30;
+              const my = (sp2.py + dp2.py) / 2 + (Math.random() - 0.5) * 30;
+              fireBolt(sp2.px, sp2.py, mx, my, "#f87171", 400, 0.8);
+              firePart(mx, my, 10, "rgb(248,113,113)");
+              setScreenFlash("rgba(248,113,113,0.5)");
+              setTimeout(() => setScreenFlash(null), 80);
+              setShake(true);
+              setTimeout(() => setShake(false), 150);
+              setOverlayMsg({ text: "DECORRELATED", time: now });
+              setTimeout(() => setOverlayMsg(null), 1500);
+              setInfo({ type: "decorr", prob, r, time: now });
+
+              cancelSelection();
+            }
+          }, [
+            phase, paused, showQuitConfirmation, showCredits, creditsPaused, grid, sel, interactionMode, getEcho, execTrans,
+            cellPos, level, fireBolt, firePart, commitSourceSelection,
+            cancelSelection, clearDragState
+          ]);
+
+          const handleMouseDown = useCallback((x, y) => {
+  if (Date.now() - lastTouchTimeRef.current < 700) return;
+  if (phase !== "play" || paused || showQuitConfirmation || showCredits || creditsPaused) return;
+
+  const cell = grid[y][x];
+
+  if (!sel || interactionMode === "idle") {
+    if (cell.e <= 0 || cell.locked) return;
+    commitSourceSelection(x, y);
+    setPointerDown(true);
+    setDragStart({ x, y, startClientX: null, startClientY: null, role: "source" });
+    setDragEnd({ x, y });
+    return;
+  }
+
+  if (interactionMode === "armed" && sel.x === x && sel.y === y) {
+    setPointerDown(true);
+    setDragStart({ x, y, startClientX: null, startClientY: null, role: "source" });
+    setDragEnd({ x, y });
+    return;
+  }
+
+  if (interactionMode === "armed") {
+    setPointerDown(true);
+    setDragStart({ x, y, startClientX: null, startClientY: null, role: "target" });
+    setDragEnd({ x, y });
+    return;
+  }
+}, [phase, paused, showQuitConfirmation, showCredits, creditsPaused, grid, sel, interactionMode, commitSourceSelection]);
+
+        const handleTouchStart = useCallback((event) => {
+  // preventDefault() removed - CSS touchAction: "none" already handles this
+  lastTouchTimeRef.current = Date.now();
+
+  if (phase !== "play" || paused || showQuitConfirmation || showCredits || creditsPaused) return;
+
+  setHasTouchInteraction(true);
+  setTimeout(() => setHasTouchInteraction(false), 100);
+
+  const touch = event.touches[0];
+  if (!touch) return;
+
+  const {cw, ch} = dimsRef.current;
+  if (!cw || !ch) return; // Use cached dimensions
+
+  const gridElement = gridRef.current;
+  if (!gridElement) return;
+
+  const rect = gridElement.getBoundingClientRect();
+  const cellWidth = cw; // Use cached cellWidth
+  const cellHeight = ch; // Use cached cellHeight
+
+  const x = Math.floor((touch.clientX - rect.left) / cellWidth);
+  const y = Math.floor((touch.clientY - rect.top) / cellHeight);
+
+  if (x < 0 || x >= COLS || y < 0 || y >= ROWS) {
+    setDragHover(null);
+    setDragEnd(null);
+    return;
+  }
+
+  const cell = grid[y][x];
+
+  if (!sel || interactionMode === "idle") {
+    if (cell.e <= 0 || cell.locked) return;
+    commitSourceSelection(x, y);
+    setPointerDown(true);
+    setDragStart({ x, y, startClientX: touch.clientX, startClientY: touch.clientY, role: "source" });
+    setDragEnd({ x, y });
+    return;
+  }
+
+  if (interactionMode === "armed" && sel.x === x && sel.y === y) {
+    setPointerDown(true);
+    setDragStart({ x, y, startClientX: touch.clientX, startClientY: touch.clientY, role: "source" });
+    setDragEnd({ x, y });
+    return;
+  }
+
+  if (interactionMode === "armed") {
+    setPointerDown(true);
+    setDragStart({ x, y, startClientX: touch.clientX, startClientY: touch.clientY, role: "target" });
+    setDragEnd({ x, y });
+    return;
+  }
+}, [phase, paused, grid, sel, interactionMode, commitSourceSelection]);
+        
+        const handleMouseEnter = useCallback((x, y) => {
+            // Skip if we recently had touch interaction (prevents iOS phantom mouse events)
+            if (Date.now() - lastTouchTimeRef.current < 300) return;
+            
+            // Debounce mouse events to 60fps to reduce re-renders
+            const now = Date.now();
+            if (now - lastMouseUpdateRef.current < 16) return;
+            lastMouseUpdateRef.current = now;
+            
+            // Update lightning ref for armed mode with selection
+            if (interactionMode === "armed" && sel) {
+              setDragHover({ x, y });
+              lightningRef.current = {
+                active: true,
+                start: cellPos(sel.x, sel.y),
+                end: cellPos(x, y),
+                frame: Date.now()
+              };
+              return;
+            }
+
+            // Only allow dragging from committed source
+            if (!pointerDown || !dragStart || !sel || dragStart.x !== sel.x || dragStart.y !== sel.y) {
+              return;
+            }
+
+            // Start dragging if we move from the source cell
+            if (!isDragging) {
+              if (x !== dragStart.x || y !== dragStart.y) {
+                setIsDragging(true);
+                setInteractionMode("dragging");
+                setDragEnd({ x, y });
+                setDragHover({ x, y });
+                // Update lightning for drag mode
+                lightningRef.current = {
+                  active: true,
+                  start: cellPos(sel.x, sel.y),
+                  end: cellPos(x, y),
+                  frame: Date.now()
+                };
+              }
+            } else {
+              // Already dragging - update hover position
+              setDragEnd({ x, y });
+              setDragHover({ x, y });
+              // Update lightning end position
+              if (lightningRef.current.active) {
+                lightningRef.current.end = cellPos(x, y);
+                lightningRef.current.frame = Date.now();
+              }
+            }
+          }, [pointerDown, dragStart, sel, isDragging, interactionMode]);
+        
+        const handleTouchMove = useCallback((event) => {
+  // preventDefault() removed - CSS touchAction: "none" already handles this
+  lastTouchTimeRef.current = Date.now();
+
+  if (!pointerDown || !dragStart || !sel) return;
+
+  const touch = event.touches[0];
+  if (!touch) return;
+
+  const {cw, ch} = dimsRef.current;
+  if (!cw || !ch) return; // Use cached dimensions
+
+  const gridElement = gridRef.current;
+  if (!gridElement) return;
+
+  const rect = gridElement.getBoundingClientRect();
+  const cellWidth = cw; // Use cached cellWidth
+  const cellHeight = ch; // Use cached cellHeight
+
+  const x = Math.floor((touch.clientX - rect.left) / cellWidth);
+  const y = Math.floor((touch.clientY - rect.top) / cellHeight);
+
+  if (x < 0 || x >= COLS || y < 0 || y >= ROWS) return;
+
+  if (dragStart.x !== sel.x || dragStart.y !== sel.y) return;
+  if (dragStart.role !== "source") return;
+
+  // Fix: Use the actual start client coordinates
+  const dx = touch.clientX - (dragStart.startClientX || 0);
+  const dy = touch.clientY - (dragStart.startClientY || 0);
+  const moved = Math.sqrt(dx * dx + dy * dy);
+
+  if (!isDragging) {
+    if (moved >= DRAG_THRESHOLD) {
+      setIsDragging(true);
+      setInteractionMode("dragging");
+      setDragEnd({ x, y });
+      setDragHover({ x, y });
+      // Update lightning for drag mode
+      lightningRef.current = {
+        active: true,
+        start: cellPos(sel.x, sel.y),
+        end: cellPos(x, y),
+        frame: Date.now()
+      };
+    }
+  } else {
+    setDragEnd({ x, y });
+    setDragHover({ x, y });
+    // Update lightning end position for visual feedback
+    if (lightningRef.current.active) {
+      lightningRef.current.end = cellPos(x, y);
+      lightningRef.current.frame = Date.now();
+    }
+  }
+}, [pointerDown, dragStart, sel, isDragging, cellPos]);
+        
+        const resolveDragRelease = useCallback((targetX, targetY) => {
+            if (!sel || !dragStart) {
+              clearDragState();
+              return;
+            }
+
+            const sx = sel.x;
+            const sy = sel.y;
+
+            // release on nothing / outside grid -> fully cancel selection
+            if (targetX == null || targetY == null) {
+              cancelSelection();
+              return;
+            }
+
+            // release back onto the source cell -> keep it armed
+            if (targetX === sx && targetY === sy) {
+              clearDragState();
+              setInteractionMode("armed");
+              return;
+            }
+
+            const det = grid[targetY][targetX];
+            const src = grid[sy][sx];
+
+            // release onto empty/locked cell -> fully cancel selection
+            if (!det || det.e === 0 || det.locked) {
+              cancelSelection();
+              return;
+            }
+
+            const r = Math.sqrt((targetX - sx) ** 2 + (targetY - sy) ** 2);
+
+            if (det.e <= 0 || det.e < src.e) {
+              SoundManager.play("decorrelate", 0.8);
+              const now = Date.now();
+              const freshDecay = now + Math.max(DECAY_MIN, DECAY_BASE - level * 500);
+
+              setGrid(prev => {
+                const ng = prev.map((row, rowIndex) => 
+                  rowIndex === sy || rowIndex === targetY ? [...row] : row
+                );
+                if (ng[sy][sx].e > 0) {
+                  ng[sy][sx].born = now;
+                  ng[sy][sx].decay = freshDecay;
+                  if (ng[sy][sx].e < MAX_E) ng[sy][sx].e += 1;
+                  if (ng[sy][sx].e === MAX_E) ng[sy][sx].locked = true;
+                }
+                if (ng[targetY][targetX].e > 0) {
+                  ng[targetY][targetX].born = now;
+                  ng[targetY][targetX].decay = freshDecay;
+                  if (ng[targetY][targetX].e < MAX_E) ng[targetY][targetX].e += 1;
+                  if (ng[targetY][targetX].e === MAX_E) ng[targetY][targetX].locked = true;
+                }
+                return ng;
+              });
+
+              const sp2 = cellPos(sx, sy), dp2 = cellPos(targetX, targetY);
+              const mx = (sp2.px + dp2.px) / 2 + (Math.random() - 0.5) * 30;
+              const my = (sp2.py + dp2.py) / 2 + (Math.random() - 0.5) * 30;
+              fireBolt(sp2.px, sp2.py, mx, my, "#f87171", 400, 0.8);
+              firePart(mx, my, 10, "rgb(248,113,113)");
+              setScreenFlash("rgba(248,113,113,0.5)");
+              setTimeout(() => setScreenFlash(null), 80);
+              setShake(true);
+              setTimeout(() => setShake(false), 150);
+              setOverlayMsg({ text: "ENERGY MISMATCH", time: now });
+              setTimeout(() => setOverlayMsg(null), 1500);
+              setInfo({ type: "mis", sE: src.e, dE: det.e, time: now });
+
+              cancelSelection();
+              return;
+            }
+
+            let prob = corrProb(r);
+            prob = Math.min(0.98, prob + getEcho(targetX, targetY));
+
+            if (Math.random() < prob) {
+              execTrans(sx, sy, targetX, targetY);
+              setInteractionMode("idle");
+              clearDragState();
+            } else {
+              SoundManager.play("decorrelate", 0.6);
+              const now = Date.now();
+              const freshDecay = now + Math.max(DECAY_MIN, DECAY_BASE - level * 500);
+
+              setGrid(prev => {
+                const changedRows = new Set([sy, targetY]);
+                const spawns = [];
+                const sc = 1 + Math.floor(Math.random() * 2);
+                for (let i = 0, a = 0; i < sc && a < 20; a++) {
+                  const sx2 = Math.floor(Math.random() * COLS), sy2 = Math.floor(Math.random() * ROWS);
+                  if (prev[sy2][sx2].e === 0) {
+                    spawns.push({x: sx2, y: sy2, cell: mkCell(level, now)});
+                    changedRows.add(sy2);
+                    i++;
+                  }
+                }
+                
+                const ng = prev.map((row, rowIndex) => changedRows.has(rowIndex) ? [...row] : row);
+                
+                if (ng[sy][sx].e > 0) {
+                  ng[sy][sx].born = now;
+                  ng[sy][sx].decay = freshDecay;
+                  if (ng[sy][sx].e < MAX_E) ng[sy][sx].e += 1;
+                  if (ng[sy][sx].e === MAX_E) ng[sy][sx].locked = true;
+                }
+                if (ng[targetY][targetX].e > 0) {
+                  ng[targetY][targetX].born = now;
+                  ng[targetY][targetX].decay = freshDecay;
+                  if (ng[targetY][targetX].e < MAX_E) ng[targetY][targetX].e += 1;
+                  if (ng[targetY][targetX].e === MAX_E) ng[targetY][targetX].locked = true;
+                }
+                
+                spawns.forEach(({x, y, cell}) => {
+                  ng[y][x] = cell;
+                });
+                
+                return ng;
+              });
+
+              const sp2 = cellPos(sx, sy), dp2 = cellPos(targetX, targetY);
+              const mx = (sp2.px + dp2.px) / 2 + (Math.random() - 0.5) * 30;
+              const my = (sp2.py + dp2.py) / 2 + (Math.random() - 0.5) * 30;
+              fireBolt(sp2.px, sp2.py, mx, my, "#f87171", 400, 0.8);
+              firePart(mx, my, 10, "rgb(248,113,113)");
+              setScreenFlash("rgba(248,113,113,0.5)");
+              setTimeout(() => setScreenFlash(null), 80);
+              setShake(true);
+              setTimeout(() => setShake(false), 150);
+              setOverlayMsg({ text: "DECORRELATED", time: now });
+              setTimeout(() => setOverlayMsg(null), 1500);
+              setInfo({ type: "decorr", prob, r, time: now });
+
+              cancelSelection();
+            }
+          }, [
+            sel, dragStart, grid, level, cellPos, fireBolt, firePart,
+            getEcho, execTrans, clearDragState, cancelSelection
+          ]);
+
+        const handleMouseLeave = useCallback(() => {
+            // Clear lightning when leaving grid
+            lightningRef.current = {active:false,start:null,end:null,frame:0};
+            
+            if (interactionMode === "dragging") {
+              setDragHover(null);
+              return;
+            }
+
+            if (interactionMode === "armed" && sel) {
+              setDragHover(null);
+              // If we have a target selection (pointerDown with target role), 
+              // cancel it when leaving the grid to prevent stuck state
+              if (pointerDown && dragStart && dragStart.role === "target") {
+                clearDragState();
+              }
+            }
+          }, [interactionMode, sel, pointerDown, dragStart, clearDragState]);
+        
+        const handleTouchEnd = useCallback((event) => {
+  // preventDefault() removed - CSS touchAction: "none" already handles this
+  lastTouchTimeRef.current = Date.now();
+
+  if (!pointerDown) return;
+
+  const touch = event.changedTouches[0];
+
+  if (isDragging || interactionMode === "dragging") {
+    if (!touch) {
+      resolveDragRelease(null, null);
+      return;
+    }
+
+    const gridElement = gridRef.current;
+    if (!gridElement) {
+      resolveDragRelease(null, null);
+      return;
+    }
+
+    const {cw, ch} = dimsRef.current;
+    if (!cw || !ch) return; // Use cached dimensions
+
+    const rect = gridElement.getBoundingClientRect();
+    const cellWidth = cw; // Use cached cellWidth
+    const cellHeight = ch; // Use cached cellHeight
+
+    const x = Math.floor((touch.clientX - rect.left) / cellWidth);
+    const y = Math.floor((touch.clientY - rect.top) / cellHeight);
+
+    if (x < 0 || x >= COLS || y < 0 || y >= ROWS) {
+      resolveDragRelease(null, null);
+      return;
+    }
+
+    resolveDragRelease(x, y);
+    return;
+  }
+
+  if (!touch || !dragStart) {
+    clearDragState();
+    return;
+  }
+
+  const gridElement = gridRef.current;
+  if (!gridElement) {
+    clearDragState();
+    return;
+  }
+
+  const rect = gridElement.getBoundingClientRect();
+  const cellWidth = rect.width / COLS;
+  const cellHeight = rect.height / ROWS;
+
+  const x = Math.floor((touch.clientX - rect.left) / cellWidth);
+  const y = Math.floor((touch.clientY - rect.top) / cellHeight);
+
+  clearDragState();
+
+  if (x >= 0 && x < COLS && y >= 0 && y < ROWS) {
+    const now = Date.now();
+
+    if (
+      dragStart.role === "source" &&
+      dragStart.x === x &&
+      dragStart.y === y &&
+      interactionMode === "armed" &&
+      (now - lastSelectionTime) < 200
+    ) {
+      return;
+    }
+
+    processCellSelection(x, y);
+    return;
+  }
+
+  // If releasing outside grid or invalid spot, and we have a selection, cancel it
+  if (sel) {
+    cancelSelection();
+  }
+}, [
+  pointerDown, isDragging, interactionMode, dragStart, sel,
+  resolveDragRelease, clearDragState, processCellSelection, cancelSelection, lastSelectionTime
+]);
+
+        const handleMouseUp = useCallback((x, y) => {
+  if (Date.now() - lastTouchTimeRef.current < 700) return;
+  if (!pointerDown) return;
+
+  if (isDragging || interactionMode === "dragging") {
+    resolveDragRelease(x, y);
+    return;
+  }
+
+  clearDragState();
+
+  const now = Date.now();
+  if (
+    dragStart &&
+    dragStart.x === x &&
+    dragStart.y === y &&
+    interactionMode === "armed" &&
+    dragStart.role === "source" &&
+    (now - lastSelectionTime) < 200
+  ) {
+    return;
+  }
+
+  processCellSelection(x, y);
+}, [pointerDown, isDragging, interactionMode, resolveDragRelease, clearDragState, processCellSelection, dragStart, lastSelectionTime]);
+
+          useEffect(()=>{const h=e=>{if(e.key==="p"||e.key==="P")setPaused(p=>!p);if(e.key==="Escape"){SoundManager.stopWeldingLoop();SoundManager.play('deselect', 0.3);setSel(null);setInteractionMode("idle");clearDragState();}};
+            window.addEventListener("keydown",h);return()=>window.removeEventListener("keydown",h)},[clearDragState]);
+
+          
+          useEffect(()=>{
+            const handleVisibilityChange = () => {
+              if (document.hidden) {
+                // Page is hidden - pause everything
+                if (!paused) setPauseTime(Date.now());
+                setPaused(true);
+                SoundManager.pause();
+              } else {
+                // Page is visible again - restore sound state
+                SoundManager.resume();
+              }
+            };
+            
+            const handlePageHide = () => {
+              if (!paused) setPauseTime(Date.now());
+              setPaused(true);
+              SoundManager.pause();
+            };
+            
+            const handlePageShow = () => {
+              SoundManager.resume();
+            };
+            
+            const handleBlur = () => {
+              if (!paused) setPauseTime(Date.now());
+              setPaused(true);
+              SoundManager.pause();
+            };
+            
+            const handleFocus = () => {
+              SoundManager.resume();
+            };
+            
+            // Global mouse up handler to catch releases outside the grid
+            const handleGlobalMouseUp = () => {
+              if (pointerDown) {
+                // If we have a target selection that was never completed, cancel it
+                if (dragStart && dragStart.role === "target" && interactionMode === "armed") {
+                  clearDragState();
+                }
+              }
+            };
+            
+            // Page Visibility API
+            document.addEventListener('visibilitychange', handleVisibilityChange);
+            
+            // Page lifecycle events
+            window.addEventListener('pagehide', handlePageHide);
+            window.addEventListener('pageshow', handlePageShow);
+            
+            // Window focus/blur events
+            window.addEventListener('blur', handleBlur);
+            window.addEventListener('focus', handleFocus);
+            
+            // Global mouse events
+            window.addEventListener('mouseup', handleGlobalMouseUp);
+            
+            return () => {
+              document.removeEventListener('visibilitychange', handleVisibilityChange);
+              window.removeEventListener('pagehide', handlePageHide);
+              window.removeEventListener('pageshow', handlePageShow);
+              window.removeEventListener('blur', handleBlur);
+              window.removeEventListener('focus', handleFocus);
+              window.removeEventListener('mouseup', handleGlobalMouseUp);
+            };
+          }, [soundEnabled, pointerDown, dragStart, interactionMode, clearDragState]);
+
+          useEffect(()=>{
+            if (!paused && pauseTime) {
+              // Just unpaused - adjust all decay times
+              const pauseDuration = Date.now() - pauseTime;
+              setGrid(prev => {
+                const ng = prev.map(row => row.map(c => ({...c})));
+                for (let y = 0; y < ROWS; y++) {
+                  for (let x = 0; x < COLS; x++) {
+                    if (ng[y][x].decay > 0) {
+                      ng[y][x].decay += pauseDuration;
+                    }
+                    if (ng[y][x].born > 0) {
+                      ng[y][x].born += pauseDuration;
+                    }
+                  }
+                }
+                return ng;
+              });
+              setPauseTime(null);
+              setLastTickTime(Date.now());
+            } else if (paused && !pauseTime) {
+              // Just paused
+              setPauseTime(Date.now());
+            }
+          }, [paused, pauseTime]);
+
+          useEffect(()=>{
+            const isPopupOpen = showQuitConfirmation || showCredits || creditsPaused;
+            if (!isPopupOpen && popupTime) {
+              // Just closed popup - adjust all decay times
+              const popupDuration = Date.now() - popupTime;
+              setGrid(prev => {
+                const ng = prev.map(row => row.map(c => ({...c})));
+                for (let y = 0; y < ROWS; y++) {
+                  for (let x = 0; x < COLS; x++) {
+                    if (ng[y][x].decay > 0) {
+                      ng[y][x].decay += popupDuration;
+                    }
+                    if (ng[y][x].born > 0) {
+                      ng[y][x].born += popupDuration;
+                    }
+                  }
+                }
+                return ng;
+              });
+              setPopupTime(null);
+              setLastTickTime(Date.now());
+            } else if (isPopupOpen && !popupTime) {
+              // Just opened popup
+              setPopupTime(Date.now());
+            }
+          }, [showQuitConfirmation, showCredits, creditsPaused, popupTime]);
+
+          const startGame=useCallback(()=>{
+            setGrid(mkGrid());setScore(0);setLevel(1);setTotalT(0);setCombo(0);setComboT(0);setTransitionHistory([]);
+            setSel(null);setEchoes([]);setPhase("play");setInfo(null);setCascTxt(null);setPaused(false);setFillPct(0);setScreenFlash(null);setTick(0);setShowMenu(false);setShowTutorial(false);setShowQuitConfirmation(false);setShowPauseRules(false);setShowOverRules(false);
+            particlesRef.current=[];boltsRef.current=[];
+            
+            // Start countdown animation
+            setCountdown(3);
+            setTimeout(() => {
+              setCountdown(2);
+              setTimeout(() => {
+                setCountdown(1);
+                setTimeout(() => {
+                  setCountdown("START!");
+                  SoundManager.play('startSound', 0.8); // Play START sound
+                  setTimeout(() => setCountdown(null), 600);
+                }, 350);
+              }, 350);
+            }, 350);
+          },[]);
+
+          const restart=useCallback(()=>{setGrid(mkGrid());setScore(0);setLevel(1);setTotalT(0);setCombo(0);setComboT(0);setTransitionHistory([]);
+            setSel(null);setEchoes([]);setPhase("menu");setInfo(null);setCascTxt(null);setPaused(false);setFillPct(0);setScreenFlash(null);setTick(0);setShowMenu(true);setShowTutorial(false);setShowQuitConfirmation(false);setShowPauseRules(false);setShowOverRules(false);
+            particlesRef.current=[];boltsRef.current=[]},[]);
+
+          useEffect(() => {
+            let transitionTimer;
+
+            const loadingTimer = setTimeout(() => {
+              setIsLoading(false);
+              setIsTransitioning(true);
+
+              transitionTimer = setTimeout(() => {
+                setShowMenu(true);
+                setIsTransitioning(false);
+              }, 400);
+            }, 500);
+
+            return () => {
+              clearTimeout(loadingTimer);
+              clearTimeout(transitionTimer);
+            };
+          }, []);
+
+          useEffect(() => {
+            SoundManager.setEnabled(soundEnabled);
+          }, [soundEnabled]);
+
+          useEffect(()=>{const id="null-v3-css";if(document.getElementById(id))return;const s=document.createElement("style");s.id=id;
+            s.textContent=`@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&family=Orbitron:wght@700;900&display=swap');
+              @keyframes spawn{0%{opacity:0;transform:scale(0)}50%{opacity:1;transform:scale(1.25);filter:brightness(2.5)}100%{transform:scale(1);filter:brightness(1)}}
+              @keyframes shake{0%,100%{transform:translate(0)}25%{transform:translate(-4px,3px)}50%{transform:translate(4px,-3px)}75%{transform:translate(-2px,-2px)}}
+              @keyframes startShake{0%{transform:translate(-50%,-50%) scale(1)}10%{transform:translate(-52%,-48%) scale(1.1)}20%{transform:translate(-48%,-52%) scale(1.15)}30%{transform:translate(-53%,-47%) scale(1.2)}40%{transform:translate(-47%,-53%) scale(1.25)}50%{transform:translate(-54%,-46%) scale(1.3)}60%{transform:translate(-46%,-54%) scale(1.35)}70%{transform:translate(-51%,-49%) scale(1.4)}80%{transform:translate(-49%,-51%) scale(1.45)}90%{transform:translate(-52%,-48%) scale(1.5)}95%{transform:translate(-48%,-52%) scale(1.55)}100%{transform:translate(-50%,-50%) scale(1.6)}}
+              @keyframes echo{0%{box-shadow:0 0 0 0 rgba(103,232,249,0.5)}100%{box-shadow:0 0 0 10px rgba(103,232,249,0)}}
+              @keyframes overlayMsg{0%{opacity:0;transform:translateX(-50%) translateY(-20px) scale(0.8);filter:blur(2px)}20%{opacity:1;transform:translateX(-50%) translateY(0) scale(1);filter:blur(0)}80%{opacity:1;transform:translateX(-50%) translateY(0) scale(1);filter:blur(0)}100%{opacity:0;transform:translateX(-50%) translateY(-10px) scale(0.9);filter:blur(1px)}}
+              @keyframes flash{0%{opacity:0.25}100%{opacity:0}}
+              @keyframes orbit1{0%{transform:translate(0px,0px)}25%{transform:translate(37px,0px)}50%{transform:translate(37px,37px)}75%{transform:translate(0px,37px)}100%{transform:translate(0px,0px)}}
+              @keyframes orbit2{0%{transform:translate(0px,0px)}25%{transform:translate(37px,0px)}50%{transform:translate(37px,37px)}75%{transform:translate(0px,37px)}100%{transform:translate(0px,0px)}}
+
+              @keyframes orbit3{0%{transform:translate(0px,0px)}25%{transform:translate(37px,0px)}50%{transform:translate(37px,37px)}75%{transform:translate(0px,37px)}100%{transform:translate(0px,0px)}}
+
+              @keyframes levelUp{0%{transform:scale(1);opacity:1}50%{transform:scale(1.5);opacity:0.8}100%{transform:scale(1);opacity:1}}
+
+              @keyframes lvlOrbit1{0%{transform:rotate(0deg) translateX(12px) rotate(0deg)}100%{transform:rotate(360deg) translateX(12px) rotate(-360deg)}}
+
+              @keyframes lvlOrbit2{0%{transform:rotate(0deg) translateX(12px) rotate(0deg)}100%{transform:rotate(360deg) translateX(12px) rotate(-360deg)}}
+
+              @keyframes lvlOrbit3{0%{transform:rotate(0deg) translateX(12px) rotate(0deg)}100%{transform:rotate(360deg) translateX(12px) rotate(-360deg)}}
+
+              @keyframes lvlOrbit4{0%{transform:rotate(0deg) translateX(12px) rotate(0deg)}100%{transform:rotate(360deg) translateX(12px) rotate(-360deg)}}
+
+              @keyframes lvlOrbit5{0%{transform:rotate(0deg) translateX(12px) rotate(0deg)}100%{transform:rotate(360deg) translateX(12px) rotate(-360deg)}}
+
+              @keyframes lvlSmashIn{0%{transform:rotate(0deg) translateX(12px) rotate(0deg) scale(1);opacity:1}50%{transform:rotate(180deg) translateX(6px) rotate(-180deg) scale(0.8);opacity:1}100%{transform:rotate(360deg) translateX(0px) rotate(-360deg) scale(0);opacity:0}}
+
+              @keyframes lvlExplode{0%{transform:scale(0);opacity:0}50%{transform:scale(1.5);opacity:1}100%{transform:scale(2);opacity:0}}
+
+              @keyframes cascTxt{0%{opacity:0;transform:translateX(-50%) translateY(-50%) scale(0.4)}15%{opacity:1;transform:translateX(-50%) translateY(-50%) scale(1.15)}75%{opacity:1;transform:translateX(-50%) translateY(-50%) scale(1)}100%{opacity:0;transform:translateX(-50%) translateY(-50%) scale(0.9) translateY(-15px)}}
+
+              @keyframes textShimmer{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+
+              @keyframes recoilText{0%{opacity:0;transform:translateX(-50%) translateY(-50%) scale(0.3) rotate(0deg)}10%{opacity:1;transform:translateX(-50%) translateY(-50%) scale(1.2) rotate(5deg)}20%{transform:translateX(-50%) translateY(-50%) scale(1) rotate(-5deg)}30%{transform:translateX(-50%) translateY(-50%) scale(1.1) rotate(3deg)}40%{transform:translateX(-50%) translateY(-50%) scale(1) rotate(-3deg)}50%{transform:translateX(-50%) translateY(-50%) scale(1.05) rotate(2deg)}60%{transform:translateX(-50%) translateY(-50%) scale(1) rotate(-2deg)}70%{transform:translateX(-50%) translateY(-50%) scale(1) rotate(1deg)}80%{opacity:1;transform:translateX(-50%) translateY(-50%) scale(1) rotate(-1deg)}90%{transform:translateX(-50%) translateY(-50%) scale(1) rotate(0deg)}100%{opacity:0;transform:translateX(-50%) translateY(-50%) scale(0.8) translateY(-20px) rotate(0deg)}}
+
+              @keyframes smokePuff{0%{opacity:0;transform:translate(-50%, -50%) scale(0.5)}20%{opacity:1;transform:translate(-50%, -50%) scale(1.2)}60%{opacity:0.8;transform:translate(-50%, -50%) scale(1.5)}100%{opacity:0;transform:translate(-50%, -50%) scale(2)}}
+
+              @keyframes rotateBorder{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
+              @keyframes glowPulse{0%{text-shadow:0 0 6px rgba(255,255,255,0.7),0 0 12px rgba(255,255,255,0.4)}50%{text-shadow:0 0 4px rgba(255,255,255,0.5),0 0 8px rgba(255,255,255,0.25)}100%{text-shadow:0 0 6px rgba(255,255,255,0.7),0 0 12px rgba(255,255,255,0.4)}}
+              .n3-countdown{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-family:'Orbitron',sans-serif;font-size:120px;font-weight:900;color:#0e7490;text-shadow:0 0 50px rgba(14,116,144,0.8),0 0 100px rgba(14,116,144,0.4),inset 0 0 20px rgba(255,255,255,0.2);z-index:1000;pointer-events:none;animation:countdown 0.3s ease-out}
+              .n3-countdown.start{font-size:60px;color:#047857;text-shadow:0 0 50px rgba(4,120,87,0.8),0 0 100px rgba(4,120,87,0.4),inset 0 0 20px rgba(255,255,255,0.3);animation:startShake 0.25s ease-in-out}
+              .n3-spawn{animation:spawn 0.35s cubic-bezier(0.34,1.56,0.64,1) forwards}
+              .n3-shake{animation:shake 0.25s ease-in-out}.n3-echo{animation:echo 0.9s ease-out}
+              .paused-game *{animation-play-state:paused !important}`;
+            document.head.appendChild(s);return()=>{const el=document.getElementById(id);if(el)el.remove()}},[]);
+
+          const dreadBg=useMemo(()=>{if(fillPct<0.4)return"#030712";const r=Math.round(3+fillPct*60);
+            return`rgb(${r},${Math.max(3,7-fillPct*5)},${Math.max(5,18-fillPct*15)})`},[fillPct]);
+          const font="'IBM Plex Mono',monospace",tFont="'Orbitron',sans-serif";
+          const nowMsRef=useRef(Date.now());
+          
+          // Update nowMs only when needed (every frame for animations)
+          useEffect(() => {
+            const updateNow = () => {
+              nowMsRef.current = Date.now();
+              requestAnimationFrame(updateNow);
+            };
+            const raf = requestAnimationFrame(updateNow);
+            return () => cancelAnimationFrame(raf);
+          }, []);
+          
+          const nowMs = nowMsRef.current;
+
+          // Calculate responsive font sizes based on viewport width
+          const [viewportWidth, setViewportWidth] = useState(480);
+          useEffect(() => {
+            const updateWidth = () => {
+              const width = Math.min(window.innerWidth, 480);
+              setViewportWidth(width);
+            };
+            updateWidth();
+            window.addEventListener('resize', updateWidth);
+            return () => window.removeEventListener('resize', updateWidth);
+          }, []);
+          
+          const titleFontSize = Math.max(12, Math.min(22, viewportWidth / 34));
+          const orbitScale = Math.min(1, viewportWidth / 500);
+          const diffFontSize = 8;
+
+          // Loading Screen
+          if(isLoading){return(
+            <div style={{
+              width:"100%",
+              height:"var(--app-height, 100dvh)",
+              display:"flex",
+              flexDirection:"column",
+              alignItems:"center",
+              justifyContent:"center",
+              backgroundColor:"#030712",
+              fontFamily:font,
+              position:"relative",
+              overflow:"hidden"
+            }}>
+              {/* Reduced background particles for faster loading */}
+              {[...Array(8)].map((_, i) => (
+                <div key={i} style={{
+                  position:"absolute",
+                  width:2 + Math.random() * 3,
+                  height:2 + Math.random() * 3,
+                  backgroundColor:"rgba(255,255,255,0.6)",
+                  borderRadius:"50%",
+                  left:Math.random() * 100 + "%",
+                  top:Math.random() * 100 + "%",
+                  animation:`float ${3 + Math.random() * 2}s ease-in-out infinite`,
+                  animationDelay:Math.random() * 2 + "s",
+                  boxShadow:"0 0 6px rgba(255,255,255,0.8)"
+                }}/>
+              ))}
+              
+              {/* Core loading content */}
+              <div style={{
+                display:"flex",
+                flexDirection:"column",
+                alignItems:"center",
+                gap:24,
+                zIndex:2,
+                textAlign:"center"
+              }}>
+                {/* Energy orb animation */}
+                <div style={{
+                  width:80,
+                  height:80,
+                  borderRadius:"50%",
+                  background:"radial-gradient(circle, rgba(14,116,144,0.8) 0%, rgba(14,116,144,0.4) 40%, rgba(14,116,144,0) 70%)",
+                  boxShadow:"0 0 40px rgba(14,116,144,0.6), inset 0 0 20px rgba(255,255,255,0.2)",
+                  animation:"pulse 2s ease-in-out infinite, rotate 4s linear infinite",
+                  position:"relative"
+                }}>
+                  {/* Inner core */}
+                  <div style={{
+                    position:"absolute",
+                    top:"50%",
+                    left:"50%",
+                    transform:"translate(-50%, -50%)",
+                    width:30,
+                    height:30,
+                    borderRadius:"50%",
+                    background:"radial-gradient(circle, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.6) 50%, rgba(255,255,255,0) 100%)",
+                    animation:"innerPulse 1.5s ease-in-out infinite"
+                  }}/>
+                </div>
+                
+                {/* Loading text */}
+                <div style={{
+                  fontSize:12,
+                  color:"#94a3b8",
+                  letterSpacing:"0.15em",
+                  fontWeight:500,
+                  textTransform:"uppercase",
+                  animation:"fadeInOut 2s ease-in-out infinite"
+                }}>Initializing</div>
+              </div>
+              
+              {/* Loading animations CSS */}
+              <style jsx>{`
+                @keyframes float {
+                  0%, 100% { transform: translateY(0px) translateX(0px); }
+                  25% { transform: translateY(-20px) translateX(10px); }
+                  50% { transform: translateY(-10px) translateX(-10px); }
+                  75% { transform: translateY(-30px) translateX(5px); }
+                }
+                @keyframes pulse {
+                  0%, 100% { transform: scale(1); opacity: 0.8; }
+                  50% { transform: scale(1.1); opacity: 1; }
+                }
+                @keyframes rotate {
+                  from { transform: rotate(0deg); }
+                  to { transform: rotate(360deg); }
+                }
+                @keyframes innerPulse {
+                  0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.8; }
+                  50% { transform: translate(-50%, -50%) scale(1.3); opacity: 1; }
+                }
+                @keyframes fadeInOut {
+                  0%, 100% { opacity: 0.4; }
+                  50% { opacity: 1; }
+                }
+                @keyframes textShimmer {
+                  0% { background-position: 0% 50%; }
+                  50% { background-position: 100% 50%; }
+                  100% { background-position: 0% 50%; }
+                }
+              `}</style>
+            </div>
+          )}
+
+          // Diagonal Transition
+          if(isTransitioning){return(
+            <div style={{
+              width:"100%",
+              height:"var(--app-height, 100dvh)",
+              position:"relative",
+              overflow:"hidden",
+              backgroundColor:"#030712"
+            }}>
+              {/* Diagonal wipe overlay */}
+              <div style={{
+                position:"absolute",
+                top:0,
+                left:0,
+                width:"100%",
+                height:"100%",
+                background:"linear-gradient(135deg, #030712 0%, #030712 48%, rgba(14,116,144,0.3) 50%, rgba(14,116,144,0.1) 52%, transparent 54%, transparent 100%)",
+                backgroundSize:"200% 200%",
+                backgroundPosition:"100% 100%",
+                animation:"diagonalWipe 0.6s ease-out forwards",
+                zIndex:2
+              }}/>
+              
+              {/* Energy particles during transition */}
+              {[...Array(20)].map((_, i) => (
+                <div key={i} style={{
+                  position:"absolute",
+                  width:2 + Math.random() * 2,
+                  height:2 + Math.random() * 2,
+                  backgroundColor:"rgba(255,255,255,0.8)",
+                  borderRadius:"50%",
+                  left:Math.random() * 100 + "%",
+                  top:Math.random() * 100 + "%",
+                  animation:`transitionParticle ${0.6 + Math.random() * 0.4}s ease-out forwards`,
+                  animationDelay:Math.random() * 0.3 + "s",
+                  boxShadow:"0 0 8px rgba(255,255,255,0.9)",
+                  zIndex:1
+                }}/>
+              ))}
+              
+              {/* Transition CSS */}
+              <style jsx>{`
+                @keyframes diagonalWipe {
+                  0% {
+                    background-position: 100% 100%;
+                    opacity: 1;
+                  }
+                  100% {
+                    background-position: -100% -100%;
+                    opacity: 0;
+                  }
+                }
+                @keyframes transitionParticle {
+                  0% {
+                    transform: translate(0, 0) scale(1);
+                    opacity: 0;
+                  }
+                  20% {
+                    opacity: 1;
+                  }
+                  100% {
+                    transform: translate(${-50 - Math.random() * 100}px, ${-50 - Math.random() * 100}px) scale(0);
+                    opacity: 0;
+                  }
+                }
+              `}</style>
+            </div>
+          )}
+
+          // Main Menu Component
+          if(showMenu){return(
+            <div style={{...S.ctn, height:"var(--app-height, 100dvh)"}}>
+              <div style={{
+                width:"100%",
+                height:"var(--app-height, 100dvh)",
+                display:"flex",
+                flexDirection:"column",
+                justifyContent:"space-between",
+                padding:20,
+                boxSizing:"border-box",
+                backgroundColor:"#030712",
+                fontFamily:font
+              }}>
+                <div style={{
+                  maxWidth:480,
+                  display:"flex",
+                  flexDirection:"column",
+                  alignItems:"center",
+                  margin:"0 auto",
+                  flex:1,
+                  justifyContent:"center",
+                  width:"100%"
+                }}>
+                  <div style={{textAlign:"center", marginBottom:32}}>
+                    <GameTitle
+                      title={GAME_TITLE}
+                      fontFamily={tFont}
+                      size={"clamp(1.8rem, 8vw, 4rem)"}
+                      letterSpacing="0.2em"
+                      centered={true}
+                    />
+                  </div>
+
+                  <div style={{
+                    display:"flex",
+                    flexDirection:"column",
+                    gap:16,
+                    width:"100%",
+                    flexShrink: 0,
+                    marginTop: 32
+                  }}>
+                    <DifficultySelector
+                      value={difficulty}
+                      onChange={(nextDifficulty) => {
+                        setDifficulty(nextDifficulty);
+                        SoundManager.play("menu", 0.4);
+                      }}
+                      fontFamily={font}
+                    />
+
+                    <PrimaryButton
+                      onClick={() => {
+                        setShowMenu(false);
+                        setShowTutorial(false);
+                        startGame();
+                      }}
+                      fontFamily={tFont}
+                      padding="16px 40px"
+                      fontSize={16}
+                      borderRadius={8}
+                      letterSpacing="0.15em"
+                      width="100%"
+                      boxShadow="0 0 30px rgba(14,116,144,0.3)"
+                    >
+                      START
+                    </PrimaryButton>
+
+                    <div style={{display: "flex", gap: 8, width: "100%"}}>
+                      <TextActionButton
+                        onClick={() => {
+                          SoundManager.play("menu", 0.4);
+                          window.dispatchEvent(new Event('showMenuRules'));
+                        }}
+                        fontFamily={font}
+                        padding="12px 20px"
+                        fontSize={12}
+                        borderRadius={8}
+                        width="50%"
+                        style={{
+                          textShadow: "0 0 6px rgba(255,255,255,0.7), 0 0 12px rgba(255,255,255,0.4)",
+                          color: "#94a3b8",
+                          animation: "glowPulse 2s ease-in-out infinite"
+                        }}
+                      >
+                        VIEW RULES
+                      </TextActionButton>
+                      <TextActionButton
+                        onClick={() => {
+                          SoundManager.play("menu", 0.4);
+                          window.dispatchEvent(new Event('showMenuControls'));
+                        }}
+                        fontFamily={font}
+                        padding="12px 20px"
+                        fontSize={12}
+                        borderRadius={8}
+                        width="50%"
+                        style={{
+                          textShadow: "0 0 6px rgba(255,255,255,0.7), 0 0 12px rgba(255,255,255,0.4)",
+                          color: "#94a3b8",
+                          animation: "glowPulse 2s ease-in-out infinite"
+                        }}
+                      >
+                        VIEW CONTROLS
+                      </TextActionButton>
+                    </div>
+                    <div style={{display: "flex", justifyContent: "center", width: "100%", marginTop: 8}}>
+                      <TextActionButton
+                        onClick={() => {
+                          SoundManager.play("menu", 0.4);
+                          window.dispatchEvent(new Event('showCompanionPage'));
+                        }}
+                        fontFamily={font}
+                        padding="12px 20px"
+                        fontSize={12}
+                        borderRadius={8}
+                        width="auto"
+                        style={{
+                          textShadow: "0 0 6px rgba(255,255,255,0.7), 0 0 12px rgba(255,255,255,0.4)",
+                          color: "#94a3b8",
+                          animation: "glowPulse 2s ease-in-out infinite"
+                        }}
+                      >
+                        VIEW COMPANION PAGE
+                      </TextActionButton>
+                    </div>
+                  </div>
+                </div>
+
+                <FooterBar
+                  version={GAME_VERSION}
+                  copyright={COPYRIGHT_TEXT}
+                  soundEnabled={soundEnabled}
+                  onToggleSound={handleToggleSound}
+                  onShowCredits={() => window.dispatchEvent(new Event('showCredits'))}
+                  font={font}
+                />
+              </div>
+            </div>)}
+
+          if(showTutorial){return(
+            <div style={{...S.ctn,backgroundColor:"#030712",fontFamily:font,display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
+              <div style={{maxWidth:480,display:"flex",flexDirection:"column",alignItems:"center",gap:20}}>
+                <GameTitle
+                  title={GAME_TITLE}
+                  fontFamily={tFont}
+                  size={48}
+                  letterSpacing="0.4em"
+                  centered={true}
+                  glow={true}
+                />
+                
+                <RulesPanel
+                  items={RULE_ITEMS}
+                  font={font}
+                  maxWidth={480}
+                  alignItems="stretch"
+                  width="100%"
+                />
+
+                <PrimaryButton
+                  onClick={() => { setShowTutorial(false); }}
+                  fontFamily={tFont}
+                  padding="14px 40px"
+                  fontSize={14}
+                  borderRadius={8}
+                  letterSpacing="0.15em"
+                  boxShadow="0 0 30px rgba(14,116,144,0.3)"
+                >
+                  START
+                </PrimaryButton>
+
+                <div style={{ marginTop: 8, width: "100%" }}>
+                  <FooterBar
+                    version={GAME_VERSION}
+                    copyright={COPYRIGHT_TEXT}
+                    soundEnabled={soundEnabled}
+                    onToggleSound={handleToggleSound}
+                    compact={true}
+                    font={font}
+                  />
+                </div>
+              </div>
+            </div>)}
+
+          return(
+            <div style={{...S.ctn,backgroundColor:dreadBg,fontFamily:font,transition:"background-color 1.5s",height:"var(--app-height, 100dvh)",display:"flex",flexDirection:"column",justifyContent:"space-between"}} className={(paused||showQuitConfirmation||phase==="over")?"paused-game":""}>
+              {/* Full screen background canvas for particles */}
+              <canvas ref={bgCanvasRef} style={{position:"fixed",top:0,left:0,width:"100vw",height:"100vh",pointerEvents:"none",zIndex:0}}/>
+              
+              {fillPct>0.55&&<div style={{position:"fixed",top:"var(--app-top, 0px)",left:0,right:0,height:"var(--app-height, 100dvh)",pointerEvents:"none",zIndex:0,
+                background:`radial-gradient(ellipse at 50% 100%,rgba(185,28,28,${(fillPct-0.55)*0.4}) 0%,transparent 70%)`,transition:"all 1.5s"}}/>}
+              {screenFlash&&<div style={{position:"fixed",top:"var(--app-top, 0px)",left:0,right:0,height:"var(--app-height, 100dvh)",pointerEvents:"none",zIndex:50,backgroundColor:screenFlash,animation:"flash 0.12s ease-out forwards"}}/>}
+
+              <div style={{width:"100%",maxWidth:480,marginBottom:8,zIndex:1,position:"relative"}}>
+                <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+                  <div style={{display:"flex",flexDirection:"column",alignItems:"flex-start",gap:4,flex:1,minWidth:0,marginRight:12}}>
+                  <GameTitle
+                    title={GAME_TITLE}
+                    fontFamily={tFont}
+                    size={titleFontSize}
+                    letterSpacing="0.2em"
+                    centered={false}
+                  />
+                  <span
+                    style={{
+                      fontSize: diffFontSize,
+                      letterSpacing: "0.16em",
+                      color: "#94a3b8",
+                      fontWeight: 600,
+                      lineHeight: 1
+                    }}
+                  >
+                    DIFFICULTY: {difficulty}
+                  </span>
+                </div>
+                  <div style={{display:"flex",gap:14,flexWrap:"nowrap",flexShrink:0}}>
+                    {[["SCORE",score.toLocaleString()],["LVL",level],["COMBO",combo>0?`×${combo}`:"—"],["LINKS",totalT]].map(([l,v])=>(
+                      <div key={l} style={{display:"flex",flexDirection:"column",gap:8,flexShrink:0}}>
+                        <span style={{fontSize:8,letterSpacing:"0.15em",color:"#94a3b8",fontWeight:600,whiteSpace:"nowrap"}}>{l}</span>
+                        <div style={{position:"relative",display:"flex",alignItems:"center",justifyContent:"center"}}>
+                          {l==="COMBO"&&combo>0&&(() => {
+                            const colors = ["#e879f9", "#fcd34d", "#6ee7b7", "#67e8f9", "#93c5fd", "#b91c1c", "transparent"];
+                            const progress = comboT / 5;
+                            const colorIndex = Math.floor((1 - progress) * (colors.length - 1));
+                            const localProgress = ((1 - progress) * (colors.length - 1)) % 1;
+                            const startColor = colors[Math.min(colorIndex, colors.length - 1)];
+                            const endColor = colors[Math.min(colorIndex + 1, colors.length - 1)];
+                            
+                            const interpolateColor = (start, end, t) => {
+                              if (start === "transparent") return `rgba(255,255,255,${0.8 * (1 - t)})`;
+                              if (end === "transparent") return start;
+                              
+                              const startRGB = toRGB(start);
+                              const endRGB = toRGB(end);
+                              
+                              const r = Math.round(startRGB[0] + (endRGB[0] - startRGB[0]) * t);
+                              const g = Math.round(startRGB[1] + (endRGB[1] - startRGB[1]) * t);
+                              const b = Math.round(startRGB[2] + (endRGB[2] - startRGB[2]) * t);
+                              
+                              return `rgb(${r},${g},${b})`;
+                            };
+                            
+                            const currentColor = interpolateColor(startColor, endColor, localProgress);
+                            const opacity = endColor === "transparent" ? (1 - localProgress) * 0.8 : 0.8;
+                            
+                            return (
+                              <svg style={{position:"absolute",width:35,height:35,transform:"rotate(-90deg)",zIndex:1}}>
+                                <circle
+                                  cx="17.5"
+                                  cy="17.5"
+                                  r="15"
+                                  fill="none"
+                                  stroke="rgba(255,255,255,0.1)"
+                                  strokeWidth="1.5"
+                                />
+                                <circle
+                                  cx="17.5"
+                                  cy="17.5"
+                                  r="15"
+                                  fill="none"
+                                  stroke={currentColor}
+                                  strokeWidth="1.5"
+                                  strokeDasharray={`${2 * Math.PI * 15}`}
+                                  strokeDashoffset={`${2 * Math.PI * 15 * (1 - comboT/5)}`}
+                                  style={{
+                                    transition: "stroke-dashoffset 0.6s linear, stroke 0.3s ease-out",
+                                    filter: "drop-shadow(0 0 2px rgba(255,255,255,0.4))",
+                                    opacity
+                                  }}
+                                />
+                              </svg>
+                            );
+                          })()}
+                        {l==="COMBO"&&!combo&&comboT===0&&Date.now()-lastComboExpire<1000&&(
+                          <div style={{
+                            position:"absolute",
+                            top:"50%",
+                            left:"50%",
+                            transform:"translate(-50%, -50%)",
+                            width:40,
+                            height:40,
+                            borderRadius:"50%",
+                            background:"radial-gradient(circle, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0.2) 40%, transparent 70%)",
+                            animation:"smokePuff 1s ease-out forwards",
+                            pointerEvents:"none",
+                            zIndex:1
+                          }}/>
+                        )}
+                        <span style={{fontSize:15,fontWeight:700,color:l==="COMBO"&&combo>0?"#fbbf24":"#f1f5f9",position:"relative",zIndex:2,whiteSpace:"nowrap"}}>{v}</span>
+                        {l==="LVL"&&transitionHistory.map((lvl, i) => (
+                          <div key={i} style={{
+                            position:"absolute",
+                            width:3,
+                            height:3,
+                            backgroundColor:EB[Math.min(lvl, 5)] || "#93c5fd",
+                            borderRadius:"50%",
+                            animation:isLevelingUp ? `lvlSmashIn 0.8s ease-in forwards` : `lvlOrbit${i+1} 3s linear infinite`,
+                            transformOrigin:"center"
+                          }}/>
+                        ))}
+                        {l==="LVL" && isLevelingUp && (
+                          <div style={{
+                            position:"absolute",
+                            width:20,
+                            height:20,
+                            borderRadius:"50%",
+                            background:"radial-gradient(circle, rgba(251,191,36,0.8) 0%, rgba(251,191,36,0) 70%)",
+                            animation:"lvlExplode 0.8s ease-out forwards",
+                            transformOrigin:"center"
+                          }}/>
+                        )}
+                      </div>
+                    </div>))}</div>
+                </div>
+              </div>
+
+              <div className={shake?"n3-shake":""} style={{width:"100%",maxWidth:480,height:"auto",aspectRatio:`${COLS}/${ROWS}`,position:"relative",zIndex:1,overflow:"hidden"}} ref={gridRef}>
+                <canvas ref={canvasRef} style={{position:"absolute",inset:0,pointerEvents:"none",zIndex:15}}/>
+                {countdown && <div className={`n3-countdown ${countdown === "START!" ? "start" : ""}`}>{countdown}</div>}
+                {cascTxt&&<div style={{position:"absolute",top:"45%",left:"50%",transform:"translateX(-50%)",zIndex:20,pointerEvents:"none",
+                  fontSize:cascTxt.text.includes("MASSIVE")?18:15,fontWeight:900,
+                  color:cascTxtColor,
+                  letterSpacing:"0.1em",whiteSpace:"nowrap",
+                  textShadow:`0 0 25px ${cascTxtColor}66,0 0 50px ${cascTxtColor}33`,
+                  fontFamily:tFont,animation:cascTxt.text.includes("RECOIL")||cascTxt.text.includes("MASSIVE")?"recoilText 1.5s ease-out forwards":"cascTxt 1.5s ease-out forwards"}}>{cascTxt.text}</div>}
+                {overlayMsg&&<div style={{position:"fixed",top:"15%",left:"50%",transform:"translateX(-50%)",zIndex:200,pointerEvents:"none",
+                textAlign:"center",fontFamily:tFont,animation:"overlayMsg 1.5s ease-out forwards",whiteSpace:"nowrap",width:"100%",padding:"0 20px"}}>
+                <div style={{fontSize:24,fontWeight:900,letterSpacing:"0.3em",
+                  color:overlayMsg.text==="CORRELATED"?overlayMsgColor:overlayMsg.text==="DECORRELATED"?"#f87171":"#fca5a5",
+                  textShadow:overlayMsg.text==="CORRELATED"?`0 0 20px ${overlayMsgColor}99,0 0 40px ${overlayMsgColor}33`:
+                           overlayMsg.text==="DECORRELATED"?"0 0 20px rgba(248,113,113,0.6),0 0 40px rgba(248,113,113,0.3)":
+                           "0 0 20px rgba(252,165,165,0.6),0 0 40px rgba(252,165,165,0.3)"}}>
+                  {overlayMsg.text}
+                </div>
+              </div>}
+
+                <div style={{width:"100%",height:"100%",display:"grid",gap:2,padding:2,
+                  gridTemplateColumns:`repeat(${COLS},1fr)`,gridTemplateRows:`repeat(${ROWS},1fr)`,
+                  backgroundColor:"rgba(15,23,42,0.25)",borderRadius:6,
+                  border:fillPct>0.7?`1px solid rgba(185,28,28,${(fillPct-0.7)*2.5})`:"1px solid rgba(255,255,255,0.04)",transition:"border-color 1s"}}>
+                  {grid.slice(0, renderedRows).map((row,y)=>row.map((cell,x)=>{
+                    const isSel=sel&&sel.x===x&&sel.y===y;const det=detMap[`${x},${y}`];
+                    const dp=cell.e>0?Math.min(1,Math.max(0,(nowMs-cell.born)/(cell.decay-cell.born))):0;
+                    const isNew=cell.e>0&&(nowMs-cell.born)<350;
+                    return <Cell key={`${x}-${y}`} e={cell.e} mass={cell.mass} isSel={!!isSel}
+                      isDet={!!det} detProb={det?det.prob:0} echoB={echoMap[y*COLS+x]} dp={dp} isNew={isNew}
+                      locked={cell.locked||false}
+                      onMouseDown={()=>handleMouseDown(x,y)} onMouseEnter={()=>handleMouseEnter(x,y)} onMouseUp={()=>handleMouseUp(x,y)} 
+                      onMouseLeave={handleMouseLeave} onTouchStart={handleTouchStart} 
+                      onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd} 
+                      x={x} y={y} dragStart={dragStart} dragHover={dragHover} orbitScale={orbitScale}/>;
+                  }))}</div></div>
+
+              <div style={{width:"100%",maxWidth:480,marginTop:8,zIndex:10,position:"relative"}}>
+                <div style={{display:"flex",gap:6,marginTop:6}}>
+                  <button style={S.ctrl} onClick={()=>setPaused(p=>!p)}>{paused?"▶ RESUME":"⏸ PAUSE"}</button>
+                  <button style={S.ctrl} onClick={()=>setShowQuitConfirmation(true)}>↺ QUIT</button></div>
+                
+                <div style={{ marginTop: 12 }}>
+                  <FooterBar
+                    version={GAME_VERSION}
+                    copyright={COPYRIGHT_TEXT}
+                    soundEnabled={soundEnabled}
+                    onToggleSound={handleToggleSound}
+                    onShowCredits={() => window.dispatchEvent(new Event('showCredits'))}
+                    compact={true}
+                    font={font}
+                  />
+                </div>
+              </div>
+
+              {showQuitConfirmation&&<div style={{position:"fixed",top:"var(--app-top, 0px)",left:0,right:0,height:"var(--app-height, 100dvh)",backgroundColor:"rgba(3,7,18,0.92)",
+                display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:20,zIndex:100}}>
+                <span style={{fontSize:32,fontWeight:900,letterSpacing:"0.3em",color:"#f8fafc",fontFamily:tFont,textAlign:"center",width:"100%",display:"block"}}>ARE YOU SURE?</span>
+                <span style={{fontSize:16,color:"#94a3b8",fontFamily:font,textAlign:"center",maxWidth:320,lineHeight:1.5}}>All progress will be lost</span>
+                
+                <div style={{display:"flex",flexDirection:"column",gap:12,alignItems:"center"}}>
+                  <DangerButton
+                    onClick={() => {
+                      restart();
+                      setShowQuitConfirmation(false);
+                    }}
+                    fontFamily="inherit"
+                    fontSize={14}
+                    boxShadow="0 0 25px rgba(185,28,28,0.3)"
+                  >
+                    QUIT TO MENU
+                  </DangerButton>
+                  <TextActionButton
+                      onClick={() => setShowQuitConfirmation(false)}
+                      fontFamily={font}
+                    >
+                      CANCEL
+                    </TextActionButton>
+                </div></div>}
+
+              {phase==="over"&&<div style={{position:"fixed",top:"var(--app-top, 0px)",left:0,right:0,height:"var(--app-height, 100dvh)",backgroundColor:"rgba(3,7,18,0.92)",
+                display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:20,zIndex:100}}>
+                <span style={{fontSize:32,fontWeight:900,letterSpacing:"0.3em",color:"#f8fafc",fontFamily:tFont,textShadow:"0 0 40px rgba(185,28,28,0.5)",textAlign:"center",width:"100%",display:"block"}}>GRID SATURATED</span>
+
+                <div style={{display:"flex",gap:24,flexWrap:"wrap",justifyContent:"center"}}>
+                  {[["SCORE",score.toLocaleString()],["LVL",level],["COMBO",combo>0?`×${combo}`:"—"],["LINKS",totalT]].map(([l,v])=>(
+                    <div key={l} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:2}}>
+                      <span style={{fontSize:9,letterSpacing:"0.15em",color:"#94a3b8",fontWeight:600}}>{l}</span>
+                      <div style={{position:"relative",display:"flex",alignItems:"center",justifyContent:"center"}}>
+                        {l==="COMBO"&&combo>0&&(() => {
+                            const colors = ["#e879f9", "#fcd34d", "#6ee7b7", "#67e8f9", "#93c5fd", "#b91c1c", "transparent"];
+                            const progress = comboT / 5;
+                            const colorIndex = Math.floor((1 - progress) * (colors.length - 1));
+                            const localProgress = ((1 - progress) * (colors.length - 1)) % 1;
+                            const startColor = colors[Math.min(colorIndex, colors.length - 1)];
+                            const endColor = colors[Math.min(colorIndex + 1, colors.length - 1)];
+                            
+                            const interpolateColor = (start, end, t) => {
+                              if (start === "transparent") return `rgba(255,255,255,${0.8 * (1 - t)})`;
+                              if (end === "transparent") return start;
+                              
+                              const startRGB = toRGB(start);
+                              const endRGB = toRGB(end);
+                              
+                              const r = Math.round(startRGB[0] + (endRGB[0] - startRGB[0]) * t);
+                              const g = Math.round(startRGB[1] + (endRGB[1] - startRGB[1]) * t);
+                              const b = Math.round(startRGB[2] + (endRGB[2] - startRGB[2]) * t);
+                              
+                              return `rgb(${r},${g},${b})`;
+                            };
+                            
+                            const currentColor = interpolateColor(startColor, endColor, localProgress);
+                            const opacity = endColor === "transparent" ? (1 - localProgress) * 0.8 : 0.8;
+                            
+                            return (
+                              <svg style={{position:"absolute",width:50,height:50,transform:"rotate(-90deg)",zIndex:1}}>
+                                <circle
+                                  cx="25"
+                                  cy="25"
+                                  r="22"
+                                  fill="none"
+                                  stroke="rgba(255,255,255,0.1)"
+                                  strokeWidth="2"
+                                />
+                                <circle
+                                  cx="25"
+                                  cy="25"
+                                  r="22"
+                                  fill="none"
+                                  stroke={currentColor}
+                                  strokeWidth="2"
+                                  strokeDasharray={`${2 * Math.PI * 22}`}
+                                  strokeDashoffset={`${2 * Math.PI * 22 * (1 - comboT/5)}`}
+                                  style={{
+                                    transition: "stroke-dashoffset 0.6s linear, stroke 0.3s ease-out",
+                                    filter: "drop-shadow(0 0 3px rgba(255,255,255,0.4))",
+                                    opacity
+                                  }}
+                                />
+                              </svg>
+                            );
+                          })()}
+                        {l==="COMBO"&&!combo&&comboT===0&&Date.now()-lastComboExpire<1000&&(
+                          <div style={{
+                            position:"absolute",
+                            top:"50%",
+                            left:"50%",
+                            transform:"translate(-50%, -50%)",
+                            width:50,
+                            height:50,
+                            borderRadius:"50%",
+                            background:"radial-gradient(circle, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0.2) 40%, transparent 70%)",
+                            animation:"smokePuff 1s ease-out forwards",
+                            pointerEvents:"none",
+                            zIndex:1
+                          }}/>
+                        )}
+                        <span style={{fontSize:22,fontWeight:700,color:l==="COMBO"&&combo>0?"#fbbf24":"#f1f5f9",position:"relative",zIndex:2}}>{v}</span>
+                      </div>
+                    </div>))}
+                </div>
+
+                {showOverRules && (
+                  <RulesPanel
+                    items={RULE_ITEMS}
+                    font={font}
+                    maxWidth={480}
+                    alignItems="center"
+                    width="100%"
+                  />
+                )}
+
+                <div style={{display:"flex",flexDirection:"column",gap:12,alignItems:"center"}}>
+                  <PrimaryButton
+                    onClick={startGame}
+                    fontFamily="inherit"
+                  >
+                    PLAY AGAIN
+                  </PrimaryButton>
+                  <DangerButton
+                    onClick={restart}
+                    fontFamily="inherit"
+                  >
+                    QUIT TO MENU
+                  </DangerButton>
+                  <div style={{display: "flex", gap: 8, width: "100%"}}>
+                    <TextActionButton
+                      onClick={() => setShowOverRules(p => !p)}
+                      fontFamily={font}
+                      width="50%"
+                    >
+                      {showOverRules ? "HIDE RULES" : "VIEW RULES"}
+                    </TextActionButton>
+                    <TextActionButton
+                      onClick={() => {
+                        SoundManager.play("menu", 0.4);
+                        window.dispatchEvent(new Event('showMenuControls'));
+                      }}
+                      fontFamily={font}
+                      width="50%"
+                    >
+                      VIEW CONTROLS
+                    </TextActionButton>
+                  </div>
+                </div></div>}
+
+              {paused&&<div style={{position:"fixed",top:"var(--app-top, 0px)",left:0,right:0,height:"var(--app-height, 100dvh)",backgroundColor:"rgba(3,7,18,0.92)",
+                display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:20,zIndex:100}}>
+                <span style={{fontSize:32,fontWeight:900,letterSpacing:"0.3em",color:"#f8fafc",fontFamily:tFont}}>PAUSED</span>
+                
+                <PrimaryButton
+                  onClick={() => setPaused(false)}
+                  fontFamily="inherit"
+                  disableBorderAnimation={true}
+                >
+                  RESUME
+                </PrimaryButton>
+                <div style={{display: "flex", gap: 4, width: "100%", justifyContent: "center", flexDirection: "column", alignItems: "center", marginTop: 8}}>
+                  <div style={{display: "flex", gap: 4, width: "100%", justifyContent: "center"}}>
+                    <TextActionButton
+                      onClick={() => {
+                        SoundManager.play("menu", 0.4);
+                        window.dispatchEvent(new Event('showMenuRules'));
+                      }}
+                      fontFamily={font}
+                      width="auto"
+                      padding="12px 24px"
+                      style={{
+                        textShadow: "0 0 6px rgba(255,255,255,0.7), 0 0 12px rgba(255,255,255,0.4)",
+                        color: "#94a3b8",
+                        animation: "glowPulse 2s ease-in-out infinite"
+                      }}
+                    >
+                      VIEW RULES
+                    </TextActionButton>
+                    <TextActionButton
+                      onClick={() => {
+                        SoundManager.play("menu", 0.4);
+                        window.dispatchEvent(new Event('showMenuControls'));
+                      }}
+                      fontFamily={font}
+                      width="auto"
+                      padding="12px 24px"
+                      style={{
+                        textShadow: "0 0 6px rgba(255,255,255,0.7), 0 0 12px rgba(255,255,255,0.4)",
+                        color: "#94a3b8",
+                        animation: "glowPulse 2s ease-in-out infinite"
+                      }}
+                    >
+                      VIEW CONTROLS
+                    </TextActionButton>
+                  </div>
+                  <TextActionButton
+                    onClick={() => {
+                      SoundManager.play("menu", 0.4);
+                      window.dispatchEvent(new Event('showCompanionPage'));
+                    }}
+                    fontFamily={font}
+                    width="auto"
+                    padding="12px 24px"
+                    style={{
+                      textShadow: "0 0 6px rgba(255,255,255,0.7), 0 0 12px rgba(255,255,255,0.4)",
+                      color: "#94a3b8",
+                      animation: "glowPulse 2s ease-in-out infinite"
+                    }}
+                  >
+                    VIEW COMPANION PAGE
+                  </TextActionButton>
+                </div></div>}
+            </div>);
+          }
+
+        const S={
+          ctn:{width:"100%",height:"var(--app-height, 100dvh)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"space-between",
+            paddingTop:"max(12px, env(safe-area-inset-top))",paddingBottom:"max(12px, env(safe-area-inset-bottom))",paddingLeft:"max(12px, env(safe-area-inset-left))",paddingRight:"max(12px, env(safe-area-inset-right))",
+            boxSizing:"border-box",color:"#e2e8f0",position:"relative",overflow:"hidden"},
+          btn:{padding:"12px 32px",backgroundColor:"#0e7490",color:"#fff",border:"none",borderRadius:6,
+            fontSize:13,fontWeight:700,letterSpacing:"0.12em",cursor:"pointer",fontFamily:"inherit",
+            boxShadow:"0 0 25px rgba(14,116,144,0.3)"},
+          ctrl:{flex:1,padding:"7px 10px",backgroundColor:"rgba(30,41,59,0.7)",color:"#94a3b8",
+            border:"1px solid rgba(255,255,255,0.06)",borderRadius:4,fontSize:10,fontWeight:600,
+            letterSpacing:"0.08em",cursor:"pointer",fontFamily:"inherit"},
+        };
+
+        function AppWrapper() {
+          const [showCredits, setShowCredits] = React.useState(false);
+          const [showMenuRules, setShowMenuRules] = React.useState(false);
+          const [showMenuControls, setShowMenuControls] = React.useState(false);
+          const [showCompanionPage, setShowCompanionPage] = React.useState(false);
+          const [showFogOverlay, setShowFogOverlay] = React.useState(true);
+          const [isFogDisappearing, setIsFogDisappearing] = React.useState(false);
+          const [isPageLoaded, setIsPageLoaded] = React.useState(false);
+          const tFont = "'Orbitron',sans-serif";
+          const font = "'IBM Plex Mono',monospace";
+          
+          // Handle page load
+          React.useEffect(() => {
+            const handleLoad = () => {
+              setIsPageLoaded(true);
+            };
+            
+            if (document.readyState === 'complete') {
+              handleLoad();
+            } else {
+              window.addEventListener('load', handleLoad);
+              return () => window.removeEventListener('load', handleLoad);
+            }
+          }, []);
+          
+          // Listen for credits events from NullV3
+          React.useEffect(() => {
+            const handleShowCredits = () => {
+              setShowCredits(true);
+              window.dispatchEvent(new Event('pauseForCredits'));
+            };
+            const handleHideCredits = () => {
+              setShowCredits(false);
+              window.dispatchEvent(new Event('resumeFromCredits'));
+            };
+            const handleShowMenuRules = () => setShowMenuRules(true);
+            const handleHideMenuRules = () => setShowMenuRules(false);
+            const handleShowMenuControls = () => setShowMenuControls(true);
+            const handleHideMenuControls = () => setShowMenuControls(false);
+            const handleShowCompanionPage = () => setShowCompanionPage(true);
+            const handleHideCompanionPage = () => setShowCompanionPage(false);
+            
+            window.addEventListener('showCredits', handleShowCredits);
+            window.addEventListener('hideCredits', handleHideCredits);
+            window.addEventListener('showMenuRules', handleShowMenuRules);
+            window.addEventListener('hideMenuRules', handleHideMenuRules);
+            window.addEventListener('showMenuControls', handleShowMenuControls);
+            window.addEventListener('hideMenuControls', handleHideMenuControls);
+            window.addEventListener('showCompanionPage', handleShowCompanionPage);
+            window.addEventListener('hideCompanionPage', handleHideCompanionPage);
+            
+            return () => {
+              window.removeEventListener('showCredits', handleShowCredits);
+              window.removeEventListener('hideCredits', handleHideCredits);
+              window.removeEventListener('showMenuRules', handleShowMenuRules);
+              window.removeEventListener('hideMenuRules', handleHideMenuRules);
+              window.removeEventListener('showMenuControls', handleShowMenuControls);
+              window.removeEventListener('hideMenuControls', handleHideMenuControls);
+              window.removeEventListener('showCompanionPage', handleShowCompanionPage);
+              window.removeEventListener('hideCompanionPage', handleHideCompanionPage);
+            };
+          }, []);
+          
+          return (
+            <>
+              {/* Smokey Fog Overlay */}
+              {showFogOverlay && (
+                <div className={`fog-overlay ${isFogDisappearing ? 'disappearing' : ''}`} onClick={() => {
+                  if (!isFogDisappearing && isPageLoaded) {
+                    setIsFogDisappearing(true);
+                    // Initialize audio on user interaction
+                    SoundManager.init();
+                    SoundManager.playBackgroundMusic();
+                    setTimeout(() => {
+                      setShowFogOverlay(false);
+                      setIsFogDisappearing(false);
+                    }, 800);
+                  }
+                }}>
+                  <div className="fog-particles">
+                    <div className={`fog-particle ${isFogDisappearing ? 'disappearing' : ''}`} style={{left: '10%', animationDelay: '0s'}}></div>
+                    <div className={`fog-particle ${isFogDisappearing ? 'disappearing' : ''}`} style={{left: '30%', animationDelay: '3s'}}></div>
+                    <div className={`fog-particle ${isFogDisappearing ? 'disappearing' : ''}`} style={{left: '50%', animationDelay: '6s'}}></div>
+                    <div className={`fog-particle ${isFogDisappearing ? 'disappearing' : ''}`} style={{left: '70%', animationDelay: '9s'}}></div>
+                    <div className={`fog-particle ${isFogDisappearing ? 'disappearing' : ''}`} style={{left: '90%', animationDelay: '12s'}}></div>
+                  </div>
+                  <div className={`fog-text ${isFogDisappearing ? 'disappearing' : ''} ${isPageLoaded ? 'loaded' : ''}`}>
+                    PRESS ANYWHERE TO BEGIN<br/>CORRELATION
+                  </div>
+                  
+                  {/* Circular Progress Spinner */}
+                  {!isPageLoaded && (
+                    <div className="fog-progress-container">
+                      <div className="fog-progress-spinner">
+                        <div className="fog-progress-circle"></div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+              <NullV3 />
+              {/* Credits popup at root level */}
+              {showCredits && <div style={{position:"fixed",top:"var(--app-top, 0px)",left:0,right:0,height:"var(--app-height, 100dvh)",backgroundColor:"rgba(3,7,18,0.98)",
+                display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:20,zIndex:1000}}>
+                <span style={{fontSize:32,fontWeight:900,letterSpacing:"0.3em",color:"#f8fafc",fontFamily:tFont}}>CREDITS</span>
+                <span style={{fontSize:16,color:"#94a3b8",fontFamily:font,textAlign:"center",maxWidth:320,lineHeight:1.5}}>Sound Effects by Mixkit<br/>https://mixkit.co</span>
+                
+                <div style={{display:"flex",flexDirection:"column",gap:12,alignItems:"center"}}>
+                  <button
+                      onClick={() => {
+                        SoundManager.play("menu", 0.4);
+                        setShowCredits(false);
+                        window.dispatchEvent(new Event('hideCredits'));
+                      }}
+                      style={{
+                        padding:"12px 32px",
+                        backgroundColor:"transparent",
+                        color:"#94a3b8",
+                        border:"1px solid rgba(148,163,184,0.2)",
+                        borderRadius:6,
+                        fontSize:13,
+                        fontWeight:700,
+                        letterSpacing:"0.12em",
+                        cursor:"pointer",
+                        fontFamily:"inherit",
+                        transition:"all 0.2s"
+                      }}
+                    >
+                      CLOSE
+                    </button>
+                </div>
+              </div>}
+
+              {/* Menu Rules popup at root level */}
+              {showMenuRules && <div style={{position:"fixed",top:"var(--app-top, 0px)",left:0,right:0,height:"var(--app-height, 100dvh)",backgroundColor:"rgba(3,7,18,0.98)",
+                display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:20,zIndex:1000}}>
+                <span style={{fontSize:32,fontWeight:900,letterSpacing:"0.3em",color:"#f8fafc",fontFamily:tFont}}>RULES</span>
+                
+                <div style={{maxWidth:480,width:"100%",padding:"0 20px"}}>
+                  <RulesPanel
+                    items={RULE_ITEMS}
+                    font={font}
+                    maxWidth={480}
+                    alignItems="center"
+                  />
+                </div>
+                
+                <div style={{display:"flex",flexDirection:"column",gap:12,alignItems:"center"}}>
+                  <button
+                      onClick={() => {
+                        SoundManager.play("menu", 0.4);
+                        setShowMenuRules(false);
+                        window.dispatchEvent(new Event('hideMenuRules'));
+                      }}
+                      style={{
+                        padding:"12px 32px",
+                        backgroundColor:"transparent",
+                        color:"#94a3b8",
+                        border:"1px solid rgba(148,163,184,0.2)",
+                        borderRadius:6,
+                        fontSize:13,
+                        fontWeight:700,
+                        letterSpacing:"0.12em",
+                        cursor:"pointer",
+                        fontFamily:"inherit",
+                        transition:"all 0.2s"
+                      }}
+                    >
+                      CLOSE
+                    </button>
+                </div>
+              </div>}
+
+              {/* Menu Controls popup at root level */}
+              {showMenuControls && <div style={{position:"fixed",top:"var(--app-top, 0px)",left:0,right:0,height:"var(--app-height, 100dvh)",backgroundColor:"rgba(3,7,18,0.98)",
+                display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:20,zIndex:1000}}>
+                <span style={{fontSize:32,fontWeight:900,letterSpacing:"0.3em",color:"#f8fafc",fontFamily:tFont}}>CONTROLS</span>
+                
+                <div style={{maxWidth:480,width:"100%",padding:"0 20px"}}>
+                  <RulesPanel
+                    items={CONTROL_ITEMS}
+                    font={font}
+                    maxWidth={480}
+                    alignItems="center"
+                  />
+                </div>
+                
+                <div style={{display:"flex",flexDirection:"column",gap:12,alignItems:"center"}}>
+                  <button
+                      onClick={() => {
+                        SoundManager.play("menu", 0.4);
+                        setShowMenuControls(false);
+                        window.dispatchEvent(new Event('hideMenuControls'));
+                      }}
+                      style={{
+                        padding:"12px 32px",
+                        backgroundColor:"transparent",
+                        color:"#94a3b8",
+                        border:"1px solid rgba(148,163,184,0.2)",
+                        borderRadius:6,
+                        fontSize:13,
+                        fontWeight:700,
+                        letterSpacing:"0.12em",
+                        cursor:"pointer",
+                        fontFamily:"inherit",
+                        transition:"all 0.2s"
+                      }}
+                    >
+                      CLOSE
+                    </button>
+                </div>
+              </div>}
+
+              {/* Companion Page popup at root level */}
+              {showCompanionPage && <div style={{position:"fixed",top:"var(--app-top, 0px)",left:0,right:0,height:"var(--app-height, 100dvh)",backgroundColor:"rgba(3,7,18,0.98)",
+                display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",zIndex:1000}}>
+                <div style={{
+                  width:"95%",
+                  maxWidth:480,
+                  height:"90vh",
+                  backgroundColor:"#030712",
+                  borderRadius:12,
+                  border:"1px solid rgba(148,163,184,0.18)",
+                  boxShadow:"0 20px 60px rgba(0,0,0,0.35)",
+                  overflow:"hidden",
+                  display:"flex",
+                  flexDirection:"column"
+                }}>
+                  <div style={{
+                    display:"flex",
+                    justifyContent:"space-between",
+                    alignItems:"center",
+                    padding:"16px 20px",
+                    borderBottom:"1px solid rgba(148,163,184,0.18)",
+                    backgroundColor:"rgba(15,23,42,0.82)"
+                  }}>
+                    <span style={{
+                      fontSize:16,
+                      fontWeight:800,
+                      letterSpacing:"0.1em",
+                      color:"#e2e8f0",
+                      fontFamily:tFont
+                    }}>
+                      COMPANION PAGE
+                    </span>
+                    <button
+                      onClick={() => {
+                        SoundManager.play("menu", 0.4);
+                        setShowCompanionPage(false);
+                        window.dispatchEvent(new Event('hideCompanionPage'));
+                      }}
+                      style={{
+                        background:"none",
+                        border:"none",
+                        color:"#94a3b8",
+                        fontSize:20,
+                        cursor:"pointer",
+                        padding:4,
+                        borderRadius:4,
+                        transition:"all 0.2s"
+                      }}
+                      onMouseOver={(e) => {
+                        e.target.style.backgroundColor = "rgba(148,163,184,0.1)";
+                        e.target.style.color = "#e2e8f0";
+                      }}
+                      onMouseOut={(e) => {
+                        e.target.style.backgroundColor = "transparent";
+                        e.target.style.color = "#94a3b8";
+                      }}
+                    >
+                      ×
+                    </button>
+                  </div>
+                  <div style={{
+                    flex:1,
+                    overflow:"hidden",
+                    padding:0
+                  }}>
+                    <iframe
+                      src="companion-page.html"
+                      style={{
+                        width:"100%",
+                        height:"100%",
+                        border:"none",
+                        backgroundColor:"#030712"
+                      }}
+                      title="Companion Page"
+                      scrolling="yes"
+                    />
+                  </div>
+                </div>
+              </div>}
+            </>
+          );
+        }
+
+        ReactDOM.render(<AppWrapper />, document.getElementById('root'));
+    </script>
+</body>
+</html>
