@@ -2808,11 +2808,32 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
         setTimeout(() => {
             const container = document.querySelector('.math-in-space-container');
             if (container && window.Capacitor && window.Capacitor.platform === 'android') {
-                // Measure the visual viewport to detect status bar height
-                const visualViewport = window.visualViewport;
-                if (visualViewport) {
-                    // If visual viewport top is offset, apply that as padding
-                    const statusBarHeight = visualViewport.offsetTop || 24;
+                // Try multiple methods to detect status bar height
+                let statusBarHeight = 0;
+                
+                // Method 1: Check visualViewport.offsetTop
+                if (window.visualViewport && window.visualViewport.offsetTop) {
+                    statusBarHeight = window.visualViewport.offsetTop;
+                    console.log('Status bar height from visualViewport.offsetTop:', statusBarHeight);
+                }
+                
+                // Method 2: Compare window.innerHeight vs visualViewport.height
+                if (!statusBarHeight && window.visualViewport) {
+                    const diff = window.innerHeight - window.visualViewport.height;
+                    if (diff > 0) {
+                        statusBarHeight = diff;
+                        console.log('Status bar height from viewport diff:', statusBarHeight);
+                    }
+                }
+                
+                // Method 3: Check CSS env() variable (fallback)
+                if (!statusBarHeight) {
+                    statusBarHeight = 24; // Default Android status bar height
+                    console.log('Using default status bar height:', statusBarHeight);
+                }
+                
+                // Apply the padding
+                if (statusBarHeight > 0) {
                     container.style.paddingTop = statusBarHeight + 'px';
                     console.log('Applied Android status bar padding:', statusBarHeight + 'px');
                 }
