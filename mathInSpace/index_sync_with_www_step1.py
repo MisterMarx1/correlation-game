@@ -403,13 +403,13 @@ def main():
     print("\n=== Copying PNGs to Android Mipmap Folders ===")
     copy_resized_pngs_to_android()
     
-    # Install SafeArea plugin
-    print("\n=== Installing Capacitor SafeArea Plugin ===")
+    # Install dependencies including SafeArea plugin
+    print("\n=== Installing Dependencies (including SafeArea Plugin) ===")
     try:
         npm_commands = [
-            ["npm", "install", "@capacitor/safe-area"],
-            [r"C:\Users\spmar\AppData\Local\Programs\Python\Python312\Scripts\npm.cmd", "install", "@capacitor/safe-area"],
-            [r"C:\Program Files\nodejs\npm.cmd", "install", "@capacitor/safe-area"]
+            ["npm", "install"],
+            [r"C:\Users\spmar\AppData\Local\Programs\Python\Python312\Scripts\npm.cmd", "install"],
+            [r"C:\Program Files\nodejs\npm.cmd", "install"]
         ]
         
         result = None
@@ -422,15 +422,17 @@ def main():
                     text=True,
                     check=True
                 )
-                print("SafeArea plugin installed successfully")
+                print("Dependencies installed successfully")
+                if result.stdout:
+                    print(result.stdout)
                 break
             except (subprocess.CalledProcessError, FileNotFoundError):
                 continue
         
         if result is None:
-            print("WARNING: Could not install SafeArea plugin, continuing anyway...")
+            print("WARNING: Could not install dependencies, continuing anyway...")
     except Exception as e:
-        print(f"WARNING: SafeArea plugin installation failed: {e}")
+        print(f"WARNING: Dependency installation failed: {e}")
     
     # Run Capacitor sync
     print("\n=== Running Capacitor Sync ===")
