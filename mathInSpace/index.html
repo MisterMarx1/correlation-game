@@ -676,19 +676,22 @@
 
         .sound-toggle.muted {
             color: rgba(100, 100, 100, 0.5);
+        }
+
+        /* Music button strikethrough when muted - thin diagonal line top-left to bottom-right */
+        .music-toggle.muted {
             position: relative;
         }
 
-        .sound-toggle.muted::after {
+        .music-toggle.muted::after {
             content: '';
             position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%) rotate(-45deg);
-            width: 24px;
-            height: 2px;
+            top: 25%;
+            left: 15%;
+            width: 22px;
+            height: 1px;
             background-color: rgba(255, 0, 0, 0.7);
-            border-radius: 1px;
+            transform: rotate(45deg);
         }
 
         .sound-toggle.muted:hover {
@@ -1606,7 +1609,7 @@
 
             return (
                 <button 
-                    className={`sound-toggle ${isMusicMuted ? 'muted' : ''}`}
+                    className={`sound-toggle music-toggle ${isMusicMuted ? 'muted' : ''}`}
                     onClick={toggleMusic}
                     title={isMusicMuted ? 'Unmute music' : 'Mute music'}
                 >
