@@ -2858,28 +2858,48 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
         (adsbygoogle = window.adsbygoogle || []).push({});
         adLoaded = true;
 
-        // Check if ad filled after 3 seconds
-        setTimeout(() => {
+        // Check if ad filled and dynamically update height
+        let lastAdHeight = 100;
+        
+        function updateAdHeight() {
             const ins = container.querySelector("ins.adsbygoogle");
             const iframe = container.querySelector("iframe");
             
-            console.log("Ad check - iframe exists:", !!iframe);
-            if (iframe) {
-                console.log("Ad iframe offsetHeight:", iframe.offsetHeight + "px");
-                console.log("Ad iframe offsetWidth:", iframe.offsetWidth + "px");
-                console.log("Ad iframe clientHeight:", iframe.clientHeight + "px");
-                console.log("Ad iframe clientWidth:", iframe.clientWidth + "px");
-                console.log("Ad iframe computed height:", window.getComputedStyle(iframe).height);
-                console.log("Ad iframe computed width:", window.getComputedStyle(iframe).width);
-                console.log("Ad iframe style attribute:", iframe.getAttribute("style"));
-            }
-            if (ins) {
-                console.log("Ad ins status:", ins.dataset.adStatus);
-                console.log("Ad ins offsetHeight:", ins.offsetHeight + "px");
-                console.log("Ad ins offsetWidth:", ins.offsetWidth + "px");
+            if (!iframe) {
+                console.log("No iframe found");
+                return;
             }
             
-            // Only show fallback if there's NO iframe at all (real 400 error)
+            // Get the actual ad height from the iframe's style attribute
+            const styleAttr = iframe.getAttribute("style");
+            const heightMatch = styleAttr?.match(/height:(\d+)px/);
+            const adHeight = heightMatch ? parseInt(heightMatch[1]) : iframe.offsetHeight;
+            
+            console.log("Ad iframe actual height from style:", adHeight + "px");
+            console.log("Ad iframe offsetHeight:", iframe.offsetHeight + "px");
+            console.log("Ad ins offsetHeight:", ins?.offsetHeight + "px");
+            
+            // If height changed, update the container
+            if (adHeight !== lastAdHeight) {
+                console.log("Ad height changed from", lastAdHeight + "px", "to", adHeight + "px");
+                container.style.height = adHeight + "px";
+                lastAdHeight = adHeight;
+            }
+        }
+        
+        // Check immediately and every 500ms for height changes
+        setTimeout(updateAdHeight, 1000);
+        const heightCheckInterval = setInterval(updateAdHeight, 500);
+        
+        // Stop checking after 10 seconds
+        setTimeout(() => {
+            clearInterval(heightCheckInterval);
+            console.log("Stopped monitoring ad height");
+        }, 10000);
+        
+        // Check for fallback after 3 seconds
+        setTimeout(() => {
+            const iframe = container.querySelector("iframe");
             const hasIframe = !!iframe;
             const shouldShowFallback = !hasIframe;
             
