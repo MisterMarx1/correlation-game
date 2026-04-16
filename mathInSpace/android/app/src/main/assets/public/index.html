@@ -108,13 +108,21 @@
             justify-content: space-between;
             text-align: center;
             width: 100%;
-            height: calc(100vh - 100px - env(safe-area-inset-top));
-            padding-top: max(0px, env(safe-area-inset-top));
+            height: calc(100vh - 100px);
+            padding-top: 24px;
             color: #e0e0e0;
             box-sizing: border-box;
             overflow: hidden;
             position: relative;
             font-family: 'Orbitron', sans-serif;
+        }
+        
+        /* Web browsers with safe area support */
+        @supports (padding: max(0px)) {
+            .math-in-space-container {
+                padding-top: max(24px, env(safe-area-inset-top));
+                height: calc(100vh - 100px - env(safe-area-inset-top));
+            }
         }
 
         /* Default background for setup/results */
