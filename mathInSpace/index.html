@@ -1074,6 +1074,14 @@
             min-height: 100px !important;
         }
 
+        .banner-ad-space.admob-shifted {
+            bottom: 18px;
+        }
+
+        .math-in-space-container.admob-shifted {
+            height: calc(100vh - 100px - var(--safe-area-inset-bottom) - 18px);
+        }
+
             </style>
 </head>
 <body>
@@ -1718,18 +1726,19 @@
                             top: 0,
                             left: 0,
                             right: 0,
-                            height: "100vh",
+                            bottom: 100,
                             backgroundColor: "rgba(3,7,18,0.98)",
                             display: "flex",
                             flexDirection: "column",
                             alignItems: "center",
                             justifyContent: "center",
-                            zIndex: 3000
+                            zIndex: 3000,
+                            padding: "20px"
                         }}>
                             <div style={{
                                 width: "95%",
                                 maxWidth: "900px",
-                                height: "85vh",
+                                height: "100%",
                                 maxHeight: "800px",
                                 backgroundColor: "#030712",
                                 border: "1px solid rgba(148,163,184,0.18)",
@@ -2959,8 +2968,67 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
     }
 
     function loadAndroidAd() {
-        console.log("Loading Android AdSense ad...");
-        loadWebAd();
+        console.log("Loading Android AdMob ad...");
+        
+        // AdMob configuration
+        const ADMOB_APP_ID = 'ca-app-pub-2662863757001007~6977812828';
+        const ADMOB_BANNER_AD_UNIT_ID = 'ca-app-pub-2662863757001007/4499823296';
+        
+        // Simple bridge call - AdMob logic handled by native plugin
+        if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.AdMob) {
+            const { AdMob } = window.Capacitor.Plugins;
+            
+            AdMob.initialize({ requestTrackingAuthorization: true })
+                .then(() => {
+                    console.log("AdMob initialized with App ID:", ADMOB_APP_ID);
+                    return AdMob.showBanner({
+                        adId: ADMOB_BANNER_AD_UNIT_ID,
+                        position: 'bottom',
+                        size: 'BANNER',
+                    });
+                })
+                .then(() => {
+                    console.log("✓ Android AdMob banner shown - Ad Unit:", ADMOB_BANNER_AD_UNIT_ID);
+                    adLoaded = true;
+                    // Hide the web ad container since native AdMob is handling it
+                    const container = document.getElementById("ad-container");
+                    if (container) {
+                        container.style.display = 'none';
+                    }
+                    // Shift banner and game container up by 18px
+                    const bannerSpace = document.querySelector('.banner-ad-space');
+                    const gameContainer = document.querySelector('.math-in-space-container');
+                    if (bannerSpace) {
+                        bannerSpace.classList.add('admob-shifted');
+                    }
+                    if (gameContainer) {
+                        gameContainer.classList.add('admob-shifted');
+                    }
+                    // Watch for React re-renders and re-apply class
+                    const observer = new MutationObserver(() => {
+                        const banner = document.querySelector('.banner-ad-space');
+                        const game = document.querySelector('.math-in-space-container');
+                        if (banner && !banner.classList.contains('admob-shifted')) {
+                            banner.classList.add('admob-shifted');
+                        }
+                        if (game && !game.classList.contains('admob-shifted')) {
+                            game.classList.add('admob-shifted');
+                        }
+                    });
+                    if (gameContainer) {
+                        observer.observe(gameContainer, { attributes: true, attributeFilter: ['class'] });
+                    }
+                })
+                .catch((error) => {
+                    console.error("❌ AdMob failed:", error);
+                    console.error("App ID:", ADMOB_APP_ID);
+                    console.error("Ad Unit ID:", ADMOB_BANNER_AD_UNIT_ID);
+                    showFallbackAd(document.getElementById("ad-container"));
+                });
+        } else {
+            console.log("⚠ AdMob plugin not available, showing fallback");
+            showFallbackAd(document.getElementById("ad-container"));
+        }
     }
 
     function showFallbackAd(container) {
