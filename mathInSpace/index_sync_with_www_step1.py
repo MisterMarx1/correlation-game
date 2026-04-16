@@ -403,6 +403,35 @@ def main():
     print("\n=== Copying PNGs to Android Mipmap Folders ===")
     copy_resized_pngs_to_android()
     
+    # Install SafeArea plugin
+    print("\n=== Installing Capacitor SafeArea Plugin ===")
+    try:
+        npm_commands = [
+            ["npm", "install", "@capacitor/safe-area"],
+            [r"C:\Users\spmar\AppData\Local\Programs\Python\Python312\Scripts\npm.cmd", "install", "@capacitor/safe-area"],
+            [r"C:\Program Files\nodejs\npm.cmd", "install", "@capacitor/safe-area"]
+        ]
+        
+        result = None
+        for cmd in npm_commands:
+            try:
+                result = subprocess.run(
+                    cmd, 
+                    cwd=root_dir,
+                    capture_output=True,
+                    text=True,
+                    check=True
+                )
+                print("SafeArea plugin installed successfully")
+                break
+            except (subprocess.CalledProcessError, FileNotFoundError):
+                continue
+        
+        if result is None:
+            print("WARNING: Could not install SafeArea plugin, continuing anyway...")
+    except Exception as e:
+        print(f"WARNING: SafeArea plugin installation failed: {e}")
+    
     # Run Capacitor sync
     print("\n=== Running Capacitor Sync ===")
     try:

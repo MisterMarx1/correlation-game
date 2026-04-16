@@ -1294,45 +1294,52 @@
         const soundManager = new SoundManager();
 
         // --- Safe Area Management (Android Notch/Status Bar Support) ---
-        function initializeSafeAreaListener() {
-            // Check if running on Android via Capacitor
+        async function initializeSafeAreaListener() {
             const isAndroid = window.Capacitor && window.Capacitor.platform === 'android';
             
-            if (isAndroid && window.Capacitor.Plugins && window.Capacitor.Plugins.SafeArea) {
-                const { SafeArea } = window.Capacitor.Plugins;
-                
-                // Listen for safe area changes (notch, status bar, etc.)
-                SafeArea.addListener('safeAreaChanged', (info) => {
-                    const insets = info.insets;
-                    const topPadding = Math.max(24, insets.top || 0);
-                    document.documentElement.style.setProperty('--safe-area-top', topPadding + 'px');
-                    console.log(`Safe area updated: top=${topPadding}px`);
-                });
-                
-                // Get initial safe area
-                SafeArea.getSafeAreaInsets().then((info) => {
-                    const topPadding = Math.max(24, info.insets.top || 0);
-                    document.documentElement.style.setProperty('--safe-area-top', topPadding + 'px');
-                    console.log(`Initial safe area: top=${topPadding}px`);
-                }).catch((error) => {
-                    console.log('SafeArea plugin not available or error:', error);
-                });
-            } else if (isAndroid) {
-                // Fallback: use visualViewport for Android without SafeArea plugin
-                if (window.visualViewport) {
-                    const updateSafeArea = () => {
-                        const topPadding = Math.max(24, window.visualViewport.offsetTop || 0);
+            if (isAndroid) {
+                try {
+                    // Try to use SafeArea plugin
+                    if (window.Capacitor.Plugins && window.Capacitor.Plugins.SafeArea) {
+                        const { SafeArea } = window.Capacitor.Plugins;
+                        
+                        // Get initial safe area insets
+                        const result = await SafeArea.getSafeAreaInsets();
+                        const topInset = result.insets.top || 0;
+                        const topPadding = Math.max(24, topInset);
                         document.documentElement.style.setProperty('--safe-area-top', topPadding + 'px');
-                    };
+                        console.log(`SafeArea plugin: top inset=${topInset}px, padding=${topPadding}px`);
+                        
+                        // Listen for changes
+                        SafeArea.addListener('safeAreaChanged', (info) => {
+                            const newTop = Math.max(24, info.insets.top || 0);
+                            document.documentElement.style.setProperty('--safe-area-top', newTop + 'px');
+                            console.log(`SafeArea changed: top=${newTop}px`);
+                        });
+                    } else {
+                        throw new Error('SafeArea plugin not available');
+                    }
+                } catch (error) {
+                    console.log('SafeArea plugin failed, using visualViewport fallback:', error);
                     
-                    window.visualViewport.addEventListener('resize', updateSafeArea);
-                    window.visualViewport.addEventListener('scroll', updateSafeArea);
-                    updateSafeArea();
-                    console.log('Using visualViewport for safe area detection');
+                    // Fallback: use visualViewport API (native to Android WebView)
+                    if (window.visualViewport) {
+                        const updateSafeArea = () => {
+                            const offsetTop = window.visualViewport.offsetTop || 0;
+                            const topPadding = Math.max(24, offsetTop);
+                            document.documentElement.style.setProperty('--safe-area-top', topPadding + 'px');
+                            console.log(`visualViewport: offsetTop=${offsetTop}px, padding=${topPadding}px`);
+                        };
+                        
+                        window.visualViewport.addEventListener('resize', updateSafeArea);
+                        window.visualViewport.addEventListener('scroll', updateSafeArea);
+                        window.addEventListener('orientationchange', updateSafeArea);
+                        updateSafeArea();
+                    }
                 }
             } else {
-                // Web browsers: use CSS env(safe-area-inset-top)
-                console.log('Using CSS env(safe-area-inset-top) for safe area detection');
+                // Web browsers: CSS env(safe-area-inset-top) is handled by @supports rule
+                console.log('Web browser: using CSS env(safe-area-inset-top)');
             }
         }
 
