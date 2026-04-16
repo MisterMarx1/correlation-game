@@ -777,7 +777,7 @@
             top: 0;
             left: 0;
             width: 100%;
-            height: calc(100vh - 100px);
+            height: calc(100vh - var(--ad-height, 100px));
             background: radial-gradient(ellipse at center, 
                 rgba(20, 25, 40, 0.95) 0%, 
                 rgba(10, 15, 30, 0.98) 40%, 
@@ -2800,7 +2800,7 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
     <script>
     console.log("Ad script loading...");
     let adLoaded = false;
-    const BUILD_VERSION = "2026-04-16-v2-dynamic-container-height";
+    const BUILD_VERSION = "2026-04-16-v3-flexible-ad-heights";
     console.log("Math In Space Build:", BUILD_VERSION);
 
     // Platform detection using existing Capacitor pattern
@@ -2826,12 +2826,12 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
         if (!container) return;
         if (container.offsetWidth === 0) return;
         
-        // Force container height immediately
+        // Set container to be flexible, not fixed height
         container.style.cssText = `
             width: 100% !important;
-            height: 100px !important;
-            max-height: 100px !important;
-            min-height: 100px !important;
+            height: auto !important;
+            min-height: 60px !important;
+            max-height: 120px !important;
             overflow: hidden !important;
         `;
 
@@ -2840,9 +2840,9 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
         ad.style.cssText = `
             display: block !important;
             width: 100% !important;
-            height: 100px !important;
-            max-height: 100px !important;
-            min-height: 100px !important;
+            height: auto !important;
+            min-height: 60px !important;
+            max-height: 120px !important;
             overflow: hidden !important;
         `;
         ad.setAttribute("data-ad-client", "ca-pub-2662863757001007");
