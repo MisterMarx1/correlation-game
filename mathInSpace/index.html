@@ -427,12 +427,15 @@
         .results-content {
             background-color: rgba(0, 0, 0, 0.5);
             padding: 25px;
+            /* border-radius: 15px; */
             border: 1px solid rgba(255, 255, 255, 0.2);
             max-width: 600px;
             width: 90%;
             flex-direction: column;
-            height: 100%;
-            max-height: 100%;
+            height: calc(100vh - 100px - 50px);
+            max-height: calc(100vh - 100px - 50px);
+            overflow-y: auto;
+            margin-bottom: 25px;
         }
         .results-ops {
             font-size: 1.2em;
@@ -2930,12 +2933,6 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
                 const heightMatch = styleAttr.match(/height:(\d+)px/);
                 const heightValue = heightMatch ? parseInt(heightMatch[1]) : 0;
                 console.log("GOOGLE AD HEIGHT (parsed from style):", heightValue + "px");
-                
-                // Change background to white if ad is smaller than 100px
-                if (heightValue < 100 && bannerSpace) {
-                    bannerSpace.style.background = "white";
-                    console.log("Changed banner background to white (ad height:", heightValue + "px)");
-                }
             }
             if (ins) {
                 console.log("Ad ins status:", ins.dataset.adStatus);
