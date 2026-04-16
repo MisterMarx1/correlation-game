@@ -1294,52 +1294,33 @@
         const soundManager = new SoundManager();
 
         // --- Safe Area Management (Android Notch/Status Bar Support) ---
-        async function initializeSafeAreaListener() {
+        function initializeSafeAreaListener() {
             const isAndroid = window.Capacitor && window.Capacitor.platform === 'android';
             
-            if (isAndroid) {
-                try {
-                    // Try to use SafeArea plugin
-                    if (window.Capacitor.Plugins && window.Capacitor.Plugins.SafeArea) {
-                        const { SafeArea } = window.Capacitor.Plugins;
-                        
-                        // Get initial safe area insets
-                        const result = await SafeArea.getSafeAreaInsets();
-                        const topInset = result.insets.top || 0;
-                        const topPadding = Math.max(24, topInset);
-                        document.documentElement.style.setProperty('--safe-area-top', topPadding + 'px');
-                        console.log(`SafeArea plugin: top inset=${topInset}px, padding=${topPadding}px`);
-                        
-                        // Listen for changes
-                        SafeArea.addListener('safeAreaChanged', (info) => {
-                            const newTop = Math.max(24, info.insets.top || 0);
-                            document.documentElement.style.setProperty('--safe-area-top', newTop + 'px');
-                            console.log(`SafeArea changed: top=${newTop}px`);
-                        });
-                    } else {
-                        throw new Error('SafeArea plugin not available');
-                    }
-                } catch (error) {
-                    console.log('SafeArea plugin failed, using visualViewport fallback:', error);
-                    
-                    // Fallback: use visualViewport API (native to Android WebView)
-                    if (window.visualViewport) {
-                        const updateSafeArea = () => {
-                            const offsetTop = window.visualViewport.offsetTop || 0;
-                            const topPadding = Math.max(24, offsetTop);
-                            document.documentElement.style.setProperty('--safe-area-top', topPadding + 'px');
-                            console.log(`visualViewport: offsetTop=${offsetTop}px, padding=${topPadding}px`);
-                        };
-                        
-                        window.visualViewport.addEventListener('resize', updateSafeArea);
-                        window.visualViewport.addEventListener('scroll', updateSafeArea);
-                        window.addEventListener('orientationchange', updateSafeArea);
-                        updateSafeArea();
-                    }
-                }
-            } else {
+            if (isAndroid && window.visualViewport) {
+                // Use visualViewport API (native to Android WebView)
+                // visualViewport.offsetTop gives the distance from top of screen to viewport
+                // This accounts for status bar, notches, etc.
+                const updateSafeArea = () => {
+                    const offsetTop = window.visualViewport.offsetTop || 0;
+                    const topPadding = Math.max(24, offsetTop);
+                    document.documentElement.style.setProperty('--safe-area-top', topPadding + 'px');
+                    console.log(`[SafeArea] visualViewport.offsetTop=${offsetTop}px → padding=${topPadding}px`);
+                };
+                
+                // Update on viewport changes
+                window.visualViewport.addEventListener('resize', updateSafeArea);
+                window.visualViewport.addEventListener('scroll', updateSafeArea);
+                window.addEventListener('orientationchange', updateSafeArea);
+                
+                // Initial update
+                updateSafeArea();
+                console.log('[SafeArea] Android visualViewport listener initialized');
+            } else if (!isAndroid) {
                 // Web browsers: CSS env(safe-area-inset-top) is handled by @supports rule
-                console.log('Web browser: using CSS env(safe-area-inset-top)');
+                console.log('[SafeArea] Web browser: using CSS env(safe-area-inset-top)');
+            } else {
+                console.log('[SafeArea] Android but visualViewport not available');
             }
         }
 
