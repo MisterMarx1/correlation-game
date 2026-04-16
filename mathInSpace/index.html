@@ -2972,10 +2972,16 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
             AdMob.initialize({ requestTrackingAuthorization: true })
                 .then(() => {
                     console.log("AdMob initialized with App ID:", ADMOB_APP_ID);
+                    // Get the actual bottom safe-area inset from CSS variable
+                    const safeAreaBottom = getComputedStyle(document.documentElement).getPropertyValue('--safe-area-inset-bottom').trim();
+                    const bottomInsetPx = parseInt(safeAreaBottom) || 0;
+                    console.log("Bottom safe-area inset:", bottomInsetPx + "px");
+                    
                     return AdMob.showBanner({
                         adId: ADMOB_BANNER_AD_UNIT_ID,
                         position: 'bottom',
-                        size: 'BANNER'
+                        size: 'BANNER',
+                        margin: -bottomInsetPx
                     });
                 })
                 .then(() => {
