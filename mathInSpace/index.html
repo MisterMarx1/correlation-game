@@ -2797,7 +2797,7 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
     <script>
     console.log("Ad script loading...");
     let adLoaded = false;
-    const BUILD_VERSION = "2026-04-16-v4-pure-dynamic-heights";
+    const BUILD_VERSION = "2026-04-16-v5-remove-inline-minmax";
     console.log("Math In Space Build:", BUILD_VERSION);
 
     // Platform detection using existing Capacitor pattern
@@ -2883,8 +2883,6 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
                 
                 if (bannerAdSpace) {
                     bannerAdSpace.style.height = adHeight + "px !important";
-                    bannerAdSpace.style.minHeight = adHeight + "px !important";
-                    bannerAdSpace.style.maxHeight = adHeight + "px !important";
                     console.log("Updated .banner-ad-space height to", adHeight + "px");
                 }
                 
