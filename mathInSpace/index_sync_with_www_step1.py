@@ -241,7 +241,7 @@ def create_adaptive_icon_xmls():
             print(f"ERROR: Failed to create {xml_name}: {e}")
 
 def install_safe_area_plugin():
-    """Install @capacitor-community/safe-area plugin if not already installed"""
+    """Install @capacitor-community/safe-area@5.x plugin (compatible with Capacitor 6.x)"""
     root_dir = Path(__file__).parent
     package_json = root_dir / "package.json"
     
@@ -261,12 +261,12 @@ def install_safe_area_plugin():
         print(f"WARNING: Could not read package.json: {e}")
         return
     
-    # Plugin not installed, install it
-    print("Installing @capacitor-community/safe-area plugin...")
+    # Plugin not installed, install compatible version for Capacitor 6.x
+    print("Installing @capacitor-community/safe-area@7.0.0 (compatible with Capacitor 6.x)...")
     try:
         npm_commands = [
-            ["npm", "install", "@capacitor-community/safe-area"],
-            [r"C:\Program Files\nodejs\npm.cmd", "install", "@capacitor-community/safe-area"]
+            ["npm", "install", "@capacitor-community/safe-area@7.0.0"],
+            [r"C:\Program Files\nodejs\npm.cmd", "install", "@capacitor-community/safe-area@7.0.0"]
         ]
         
         result = None
