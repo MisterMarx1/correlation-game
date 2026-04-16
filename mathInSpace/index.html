@@ -108,7 +108,7 @@
             justify-content: space-between;
             text-align: center;
             width: 100%;
-            height: calc(100vh - var(--ad-height, 100px));
+            height: calc(100vh - var(--ad-height, 60px));
             padding-top: 24px;
             color: #e0e0e0;
             box-sizing: border-box;
@@ -776,7 +776,7 @@
             top: 0;
             left: 0;
             width: 100%;
-            height: calc(100vh - var(--ad-height, 100px));
+            height: calc(100vh - var(--ad-height, 60px));
             background: radial-gradient(ellipse at center, 
                 rgba(20, 25, 40, 0.95) 0%, 
                 rgba(10, 15, 30, 0.98) 40%, 
@@ -2797,7 +2797,7 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
     <script>
     console.log("Ad script loading...");
     let adLoaded = false;
-    const BUILD_VERSION = "2026-04-16-v8-fix-detection-logic";
+    const BUILD_VERSION = "2026-04-16-v9-fix-default-height";
     console.log("Math In Space Build:", BUILD_VERSION);
 
     // Platform detection using existing Capacitor pattern
