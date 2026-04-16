@@ -2862,12 +2862,19 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
         setTimeout(() => {
             const ins = container.querySelector("ins.adsbygoogle");
             const iframe = container.querySelector("iframe");
+            const bannerSpace = document.querySelector(".banner-ad-space");
             
             console.log("Ad check - iframe exists:", !!iframe);
             if (iframe) {
                 console.log("Ad iframe dimensions:", iframe.offsetWidth + "x" + iframe.offsetHeight);
                 console.log("Ad iframe style:", iframe.getAttribute("style"));
                 console.log("GOOGLE AD HEIGHT:", iframe.offsetHeight + "px");
+                
+                // Change background to white if ad is smaller than 100px
+                if (iframe.offsetHeight < 100 && bannerSpace) {
+                    bannerSpace.style.background = "white";
+                    console.log("Changed banner background to white (ad height:", iframe.offsetHeight + "px)");
+                }
             }
             if (ins) {
                 console.log("Ad ins status:", ins.dataset.adStatus);
