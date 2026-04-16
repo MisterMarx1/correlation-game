@@ -108,7 +108,7 @@
             justify-content: space-between;
             text-align: center;
             width: 100%;
-            height: calc(100vh - 100px);
+            height: calc(100vh - var(--ad-height, 100px));
             padding-top: 24px;
             color: #e0e0e0;
             box-sizing: border-box;
@@ -2800,7 +2800,7 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
     <script>
     console.log("Ad script loading...");
     let adLoaded = false;
-    const BUILD_VERSION = "2026-04-16-v1-ad-height-fix";
+    const BUILD_VERSION = "2026-04-16-v2-dynamic-container-height";
     console.log("Math In Space Build:", BUILD_VERSION);
 
     // Platform detection using existing Capacitor pattern
@@ -2882,21 +2882,25 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
             console.log("Ad ins offsetHeight:", ins?.offsetHeight + "px");
             console.log("Final detected ad height:", adHeight + "px");
             
-            // If height changed, update the banner-ad-space container AND game container padding
+            // If height changed, update the banner-ad-space container AND game container
             if (adHeight !== lastAdHeight) {
                 console.log("Ad height changed from", lastAdHeight + "px", "to", adHeight + "px");
                 const bannerAdSpace = document.querySelector(".banner-ad-space");
                 const gameContainer = document.querySelector(".math-in-space-container");
+                
                 if (bannerAdSpace) {
                     bannerAdSpace.style.height = adHeight + "px !important";
                     bannerAdSpace.style.minHeight = adHeight + "px !important";
                     bannerAdSpace.style.maxHeight = adHeight + "px !important";
                     console.log("Updated .banner-ad-space height to", adHeight + "px");
                 }
+                
                 if (gameContainer) {
-                    gameContainer.style.paddingBottom = adHeight + "px !important";
-                    console.log("Updated game container padding-bottom to", adHeight + "px");
+                    // Update CSS variable for dynamic height calculation
+                    document.documentElement.style.setProperty('--ad-height', adHeight + "px");
+                    console.log("Updated CSS --ad-height variable to", adHeight + "px");
                 }
+                
                 lastAdHeight = adHeight;
             }
         }
