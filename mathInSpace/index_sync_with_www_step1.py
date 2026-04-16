@@ -240,6 +240,67 @@ def create_adaptive_icon_xmls():
         except Exception as e:
             print(f"ERROR: Failed to create {xml_name}: {e}")
 
+def install_safe_area_plugin():
+    """Install @capacitor-community/safe-area plugin if not already installed"""
+    root_dir = Path(__file__).parent
+    package_json = root_dir / "package.json"
+    
+    if not package_json.exists():
+        print("WARNING: package.json not found, skipping safe-area plugin check")
+        return
+    
+    # Check if plugin is already installed
+    try:
+        with open(package_json, 'r', encoding='utf-8') as f:
+            content = f.read()
+        
+        if '@capacitor-community/safe-area' in content:
+            print("✓ Safe-area plugin already installed")
+            return
+    except Exception as e:
+        print(f"WARNING: Could not read package.json: {e}")
+        return
+    
+    # Plugin not installed, install it
+    print("Installing @capacitor-community/safe-area plugin...")
+    try:
+        npm_commands = [
+            ["npm", "install", "@capacitor-community/safe-area"],
+            [r"C:\Program Files\nodejs\npm.cmd", "install", "@capacitor-community/safe-area"]
+        ]
+        
+        result = None
+        for cmd in npm_commands:
+            try:
+                result = subprocess.run(
+                    cmd,
+                    cwd=root_dir,
+                    capture_output=True,
+                    text=True,
+                    check=True
+                )
+                break
+            except (subprocess.CalledProcessError, FileNotFoundError):
+                continue
+        
+        if result is None:
+            raise FileNotFoundError("npm command not found")
+        
+        print("✓ Safe-area plugin installed successfully")
+        print(result.stdout)
+        if result.stderr:
+            print("Installation notes:")
+            print(result.stderr)
+        return True
+    except subprocess.CalledProcessError as e:
+        print(f"ERROR: npm install failed with exit code {e.returncode}")
+        print(f"Output: {e.stdout}")
+        print(f"Error: {e.stderr}")
+        return False
+    except FileNotFoundError:
+        print("ERROR: npm command not found. Make sure Node.js is installed and in PATH")
+        return False
+
 def copy_resized_pngs_to_android():
     """Copy resized PNGs to Android mipmap folders and update manifest"""
     root_dir = Path(__file__).parent
@@ -403,36 +464,9 @@ def main():
     print("\n=== Copying PNGs to Android Mipmap Folders ===")
     copy_resized_pngs_to_android()
     
-    # Install dependencies including SafeArea plugin
-    print("\n=== Installing Dependencies (including SafeArea Plugin) ===")
-    try:
-        npm_commands = [
-            ["npm", "install"],
-            [r"C:\Users\spmar\AppData\Local\Programs\Python\Python312\Scripts\npm.cmd", "install"],
-            [r"C:\Program Files\nodejs\npm.cmd", "install"]
-        ]
-        
-        result = None
-        for cmd in npm_commands:
-            try:
-                result = subprocess.run(
-                    cmd, 
-                    cwd=root_dir,
-                    capture_output=True,
-                    text=True,
-                    check=True
-                )
-                print("Dependencies installed successfully")
-                if result.stdout:
-                    print(result.stdout)
-                break
-            except (subprocess.CalledProcessError, FileNotFoundError):
-                continue
-        
-        if result is None:
-            print("WARNING: Could not install dependencies, continuing anyway...")
-    except Exception as e:
-        print(f"WARNING: Dependency installation failed: {e}")
+    # Install safe-area plugin if needed
+    print("\n=== Checking Safe-Area Plugin ===")
+    install_safe_area_plugin()
     
     # Run Capacitor sync
     print("\n=== Running Capacitor Sync ===")

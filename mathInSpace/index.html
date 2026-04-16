@@ -40,7 +40,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Math In Space</title>
     
     <!-- Favicon -->
@@ -60,6 +60,14 @@
       crossorigin="anonymous">
     </script>
     <style>
+        /* Safe Area CSS Variables - injected by @capacitor-community/safe-area */
+        :root {
+            --safe-area-inset-top: 0px;
+            --safe-area-inset-right: 0px;
+            --safe-area-inset-bottom: 0px;
+            --safe-area-inset-left: 0px;
+        }
+
         /* Remove default browser margins and white border */
         * {
             margin: 0;
@@ -101,10 +109,6 @@
         }
 
         /* --- Base Container --- */
-        :root {
-            --safe-area-top: 24px;
-        }
-
         .math-in-space-container {
             display: flex;
             flex-direction: column;
@@ -113,19 +117,14 @@
             text-align: center;
             width: 100%;
             height: calc(100vh - 100px);
-            padding-top: var(--safe-area-top);
+            padding-top: max(24px, var(--safe-area-inset-top));
+            padding-left: var(--safe-area-inset-left);
+            padding-right: var(--safe-area-inset-right);
             color: #e0e0e0;
             box-sizing: border-box;
             overflow: hidden;
             position: relative;
             font-family: 'Orbitron', sans-serif;
-        }
-        
-        /* Web browsers with safe area support */
-        @supports (padding: max(0px)) {
-            .math-in-space-container {
-                padding-top: max(var(--safe-area-top), env(safe-area-inset-top));
-            }
         }
 
         /* Default background for setup/results */
@@ -147,7 +146,6 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            padding-top: var(--safe-area-top);
         }
         .setup-content h1 {
             color: #00ccff;
@@ -429,7 +427,6 @@
         .results-content {
             background-color: rgba(0, 0, 0, 0.5);
             padding: 25px;
-            padding-top: calc(25px + var(--safe-area-top));
             border: 1px solid rgba(255, 255, 255, 0.2);
             max-width: 600px;
             width: 90%;
@@ -1070,6 +1067,93 @@
         const { useSelector, useDispatch } = ReactRedux;
         const { createStore } = RTK;
 
+        // --- Safe Area Plugin Initialization ---
+        async function initializeSafeArea() {
+            console.log("=== SAFE AREA INITIALIZATION START ===");
+            console.log("Platform:", window.Capacitor ? window.Capacitor.platform : "Web");
+            console.log("Capacitor available:", !!window.Capacitor);
+            
+            try {
+                if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.SafeArea) {
+                    console.log("✓ SafeArea plugin found in Capacitor.Plugins");
+                    const { SafeArea } = window.Capacitor.Plugins;
+                    
+                    // Enable safe area
+                    console.log("Calling SafeArea.enable()...");
+                    await SafeArea.enable();
+                    console.log("✓ Safe Area plugin ENABLED successfully");
+                    
+                    // Log current CSS variables
+                    const root = document.documentElement;
+                    const top = getComputedStyle(root).getPropertyValue('--safe-area-inset-top');
+                    const right = getComputedStyle(root).getPropertyValue('--safe-area-inset-right');
+                    const bottom = getComputedStyle(root).getPropertyValue('--safe-area-inset-bottom');
+                    const left = getComputedStyle(root).getPropertyValue('--safe-area-inset-left');
+                    console.log("Current CSS variables:", { top, right, bottom, left });
+                    
+                    // Listen for safe area changes
+                    console.log("Setting up safeAreaChanged listener...");
+                    SafeArea.addListener('safeAreaChanged', (info) => {
+                        console.log("=== SAFE AREA CHANGED EVENT ===");
+                        console.log("New insets:", info.insets);
+                        
+                        // Update CSS variables
+                        const topVal = `${info.insets.top}px`;
+                        const rightVal = `${info.insets.right}px`;
+                        const bottomVal = `${info.insets.bottom}px`;
+                        const leftVal = `${info.insets.left}px`;
+                        
+                        console.log("Setting CSS variables to:", { top: topVal, right: rightVal, bottom: bottomVal, left: leftVal });
+                        
+                        document.documentElement.style.setProperty('--safe-area-inset-top', topVal);
+                        document.documentElement.style.setProperty('--safe-area-inset-right', rightVal);
+                        document.documentElement.style.setProperty('--safe-area-inset-bottom', bottomVal);
+                        document.documentElement.style.setProperty('--safe-area-inset-left', leftVal);
+                        
+                        // Verify CSS variables were set
+                        const verifyTop = getComputedStyle(document.documentElement).getPropertyValue('--safe-area-inset-top');
+                        const verifyRight = getComputedStyle(document.documentElement).getPropertyValue('--safe-area-inset-right');
+                        const verifyBottom = getComputedStyle(document.documentElement).getPropertyValue('--safe-area-inset-bottom');
+                        const verifyLeft = getComputedStyle(document.documentElement).getPropertyValue('--safe-area-inset-left');
+                        console.log("✓ CSS variables verified:", { top: verifyTop, right: verifyRight, bottom: verifyBottom, left: verifyLeft });
+                        
+                        // Check container padding
+                        const container = document.querySelector('.math-in-space-container');
+                        if (container) {
+                            const padding = getComputedStyle(container);
+                            console.log("Container padding-top:", padding.paddingTop);
+                            console.log("Container padding-left:", padding.paddingLeft);
+                            console.log("Container padding-right:", padding.paddingRight);
+                        }
+                    });
+                    console.log("✓ safeAreaChanged listener attached");
+                    console.log("=== SAFE AREA INITIALIZATION COMPLETE ===");
+                } else {
+                    console.log("⚠ SafeArea plugin NOT found");
+                    console.log("Capacitor:", window.Capacitor);
+                    console.log("Capacitor.Plugins:", window.Capacitor?.Plugins);
+                    console.log("Available plugins:", Object.keys(window.Capacitor?.Plugins || {}));
+                    console.log("(This is normal on web - plugin only available on Android/iOS)");
+                }
+            } catch (error) {
+                console.error("❌ Error initializing Safe Area:", error);
+                console.error("Error stack:", error.stack);
+            }
+        }
+
+        // Initialize safe area on load
+        console.log("Document ready state:", document.readyState);
+        if (document.readyState === 'loading') {
+            console.log("Document still loading, adding DOMContentLoaded listener...");
+            document.addEventListener('DOMContentLoaded', () => {
+                console.log("DOMContentLoaded fired, initializing safe area...");
+                initializeSafeArea();
+            });
+        } else {
+            console.log("Document already loaded, initializing safe area immediately...");
+            initializeSafeArea();
+        }
+
         // --- Sound Management System ---
         const SoundRoles = {
             // Background music track (will loop and overlap with itself)
@@ -1292,9 +1376,6 @@
 
         // Initialize sound manager
         const soundManager = new SoundManager();
-
-        // Safe area is now handled by CSS env(safe-area-inset-top) with viewport-fit=cover meta tag
-        console.log('[SafeArea] Using CSS env(safe-area-inset-top) - viewport-fit=cover enabled');
 
         // --- Configuration ---
         const DEFAULT_DURATION = 60;

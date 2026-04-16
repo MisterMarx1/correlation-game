@@ -101,10 +101,6 @@
         }
 
         /* --- Base Container --- */
-        :root {
-            --safe-area-top: 24px;
-        }
-
         .math-in-space-container {
             display: flex;
             flex-direction: column;
@@ -113,7 +109,7 @@
             text-align: center;
             width: 100%;
             height: calc(100vh - 100px);
-            padding-top: var(--safe-area-top);
+            padding-top: 24px;
             color: #e0e0e0;
             box-sizing: border-box;
             overflow: hidden;
@@ -124,7 +120,7 @@
         /* Web browsers with safe area support */
         @supports (padding: max(0px)) {
             .math-in-space-container {
-                padding-top: max(var(--safe-area-top), env(safe-area-inset-top));
+                padding-top: max(24px, env(safe-area-inset-top));
             }
         }
 
@@ -147,7 +143,6 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            padding-top: var(--safe-area-top);
         }
         .setup-content h1 {
             color: #00ccff;
@@ -429,7 +424,6 @@
         .results-content {
             background-color: rgba(0, 0, 0, 0.5);
             padding: 25px;
-            padding-top: calc(25px + var(--safe-area-top));
             border: 1px solid rgba(255, 255, 255, 0.2);
             max-width: 600px;
             width: 90%;
@@ -1292,41 +1286,6 @@
 
         // Initialize sound manager
         const soundManager = new SoundManager();
-
-        // --- Safe Area Management (Android Notch/Status Bar Support) ---
-        function initializeSafeAreaListener() {
-            const isAndroid = window.Capacitor && window.Capacitor.platform === 'android';
-            
-            if (isAndroid) {
-                // Calculate status bar height from window dimensions
-                // outerHeight includes status bar, innerHeight does not
-                // The difference is the status bar/notch offset
-                const updateSafeArea = () => {
-                    const statusBarHeight = window.outerHeight - window.innerHeight;
-                    const topPadding = Math.max(24, statusBarHeight);
-                    document.documentElement.style.setProperty('--safe-area-top', topPadding + 'px');
-                    console.log(`[SafeArea] outerHeight=${window.outerHeight}, innerHeight=${window.innerHeight}, statusBar=${statusBarHeight}px → padding=${topPadding}px`);
-                };
-                
-                // Update on window resize and orientation change
-                window.addEventListener('resize', updateSafeArea);
-                window.addEventListener('orientationchange', updateSafeArea);
-                
-                // Initial update after a small delay to ensure dimensions are correct
-                setTimeout(updateSafeArea, 100);
-                console.log('[SafeArea] Android status bar detection initialized');
-            } else {
-                // Web browsers: CSS env(safe-area-inset-top) is handled by @supports rule
-                console.log('[SafeArea] Web browser: using CSS env(safe-area-inset-top)');
-            }
-        }
-
-        // Initialize safe area listener on page load
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', initializeSafeAreaListener);
-        } else {
-            initializeSafeAreaListener();
-        }
 
         // --- Configuration ---
         const DEFAULT_DURATION = 60;

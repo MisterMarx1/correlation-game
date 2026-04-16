@@ -15,6 +15,7 @@
   "description": "",
   "dependencies": {
     "@capacitor-community/admob": "^8.0.0",
+    "@capacitor-community/safe-area": "^8.0.1",
     "@capacitor/android": "^6.0.0",
     "@capacitor/cli": "^6.0.0",
     "@capacitor/core": "^6.0.0"
