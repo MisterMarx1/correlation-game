@@ -2801,6 +2801,23 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
                 <MathInSpace />
             </Provider>
         );
+        
+        // --- Android Status Bar Padding Fix ---
+        // On Android Capacitor, the status bar is a native overlay
+        // We need to apply padding via JavaScript after the app renders
+        setTimeout(() => {
+            const container = document.querySelector('.math-in-space-container');
+            if (container && window.Capacitor && window.Capacitor.platform === 'android') {
+                // Measure the visual viewport to detect status bar height
+                const visualViewport = window.visualViewport;
+                if (visualViewport) {
+                    // If visual viewport top is offset, apply that as padding
+                    const statusBarHeight = visualViewport.offsetTop || 24;
+                    container.style.paddingTop = statusBarHeight + 'px';
+                    console.log('Applied Android status bar padding:', statusBarHeight + 'px');
+                }
+            }
+        }, 100);
     </script>
     
     <!-- AdSense Control Script -->
