@@ -676,6 +676,19 @@
 
         .sound-toggle.muted {
             color: rgba(100, 100, 100, 0.5);
+            position: relative;
+        }
+
+        .sound-toggle.muted::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-45deg);
+            width: 24px;
+            height: 2px;
+            background-color: rgba(255, 0, 0, 0.7);
+            border-radius: 1px;
         }
 
         .sound-toggle.muted:hover {
@@ -1597,7 +1610,7 @@
                     onClick={toggleMusic}
                     title={isMusicMuted ? 'Unmute music' : 'Mute music'}
                 >
-                    {isMusicMuted ? '🚫' : '🎵'}
+                    🎵
                 </button>
             );
         };
