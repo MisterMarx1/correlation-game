@@ -2865,33 +2865,20 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
                 console.log("Ad ins status:", ins.dataset.adStatus);
             }
             
-            // Debug the condition
+            // Only show fallback if there's NO iframe at all (real 400 error)
             const hasIframe = !!iframe;
-            const hasIns = !!ins;
-            const adStatus = ins?.dataset?.adStatus;
-            const shouldShowFallback = !hasIframe || (hasIns && (adStatus === "unfilled" || adStatus === undefined));
+            const shouldShowFallback = !hasIframe;
             
             console.log("Fallback condition debug:", {
                 hasIframe,
-                hasIns, 
-                adStatus,
                 shouldShowFallback
             });
             
             if (shouldShowFallback) {
-                console.log("Showing fallback - no iframe or adStatus:", adStatus);
+                console.log("Showing fallback - no iframe detected");
                 showFallbackAd(container);
             }
         }, 3000);
-
-        // Also check for 400 errors immediately
-        setTimeout(() => {
-            const ins = container.querySelector("ins.adsbygoogle");
-            if (ins && !ins.querySelector("iframe")) {
-                console.log("No iframe detected after 1s - likely 400 error, showing fallback");
-                showFallbackAd(container);
-            }
-        }, 1000);
     }
 
     function loadAndroidAd() {
