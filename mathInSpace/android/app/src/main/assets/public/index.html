@@ -425,14 +425,15 @@
         }
 
         .results-content {
-            background-color: rgba(0, 0, 0, 0.5);
-            padding: 25px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            background-color: transparent;
+            padding: 25px 25px 25px 25px;
+            border: none;
             max-width: 600px;
             width: 90%;
             flex-direction: column;
-            height: 100%;
-            max-height: 100%;
+            height: calc(100vh - 100px - 50px);
+            max-height: calc(100vh - 100px - 50px);
+            overflow-y: auto;
         }
         .results-ops {
             font-size: 1.2em;
@@ -676,6 +677,22 @@
 
         .sound-toggle.muted {
             color: rgba(100, 100, 100, 0.5);
+        }
+
+        /* Music button strikethrough when muted - thin diagonal line top-left to bottom-right */
+        .music-toggle.muted {
+            position: relative;
+        }
+
+        .music-toggle.muted::after {
+            content: '';
+            position: absolute;
+            top: 48%;
+            left: 30%;
+            width: 22px;
+            height: 1px;
+            background-color: rgba(255, 0, 0, 0.7);
+            transform: rotate(45deg);
         }
 
         .sound-toggle.muted:hover {
@@ -1101,7 +1118,8 @@
                 this.sounds = {};
                 this.musicStarted = false;
                 this.userInteracted = false;
-                this.isMuted = false;
+                this.isMusicMuted = false;
+                this.isEffectsMuted = false;
                 this.isPaused = false;
                 this.basePath = './sfx/';
                 this.loopTimer = null;
@@ -1113,6 +1131,7 @@
                 this.nextStartTime = 0;
                 this.gainNode = null;
                 this.musicGainNode = null;
+                this.effectsGainNode = null;
                 this.effectsVolume = 0.5;
                 
                 this.initAudioContext();
@@ -1162,23 +1181,24 @@
                 await Promise.all(soundPromises);
             }
 
-            setMuted(isMuted) {
-                this.isMuted = isMuted;
+            toggleMusicMute() {
+                this.isMusicMuted = !this.isMusicMuted;
                 
-                // Main gain node controls all audio (music + effects)
-                if (this.gainNode) {
-                    this.gainNode.gain.value = isMuted ? 0 : 1;
-                }
-                
-                // Music gain node controls relative music volume
                 if (this.musicGainNode) {
-                    this.musicGainNode.gain.value = 0.3; // Music at 30% volume
+                    this.musicGainNode.gain.value = this.isMusicMuted ? 0 : 0.3;
                 }
+                
+                return this.isMusicMuted;
             }
 
-            toggleMute() {
-                this.setMuted(!this.isMuted);
-                return this.isMuted;
+            toggleEffectsMute() {
+                this.isEffectsMuted = !this.isEffectsMuted;
+                
+                if (this.effectsGainNode) {
+                    this.effectsGainNode.gain.value = this.isEffectsMuted ? 0 : 1;
+                }
+                
+                return this.isEffectsMuted;
             }
 
             startBackgroundMusic() {
@@ -1235,7 +1255,7 @@
             }
 
             play(role) {
-                if (!this.audioContext) return;
+                if (!this.audioContext || this.isEffectsMuted) return;
                 
                 const buffer = this.soundBuffers[role];
                 if (!buffer) return;
@@ -1247,7 +1267,7 @@
                 gain.gain.value = this.effectsVolume || 0.5;
                 
                 source.connect(gain);
-                gain.connect(this.gainNode); // Connect to main gain for mute control
+                gain.connect(this.gainNode);
                 
                 source.start(0);
             }
@@ -1579,22 +1599,42 @@
             );
         };
 
-        // --- Sound Toggle Component ---
-        const SoundToggle = () => {
-            const [isMuted, setIsMuted] = useState(soundManager.isMuted);
+        // --- Music Toggle Component ---
+        const MusicToggle = () => {
+            const [isMusicMuted, setIsMusicMuted] = useState(soundManager.isMusicMuted);
 
-            const toggleSound = () => {
-                const newMutedState = soundManager.toggleMute();
-                setIsMuted(newMutedState);
+            const toggleMusic = () => {
+                const newMutedState = soundManager.toggleMusicMute();
+                setIsMusicMuted(newMutedState);
             };
 
             return (
                 <button 
-                    className={`sound-toggle ${isMuted ? 'muted' : ''}`}
-                    onClick={toggleSound}
-                    title={isMuted ? 'Unmute sound' : 'Mute sound'}
+                    className={`sound-toggle music-toggle ${isMusicMuted ? 'muted' : ''}`}
+                    onClick={toggleMusic}
+                    title={isMusicMuted ? 'Unmute music' : 'Mute music'}
                 >
-                    {isMuted ? '🔇' : '🔊'}
+                    🎵
+                </button>
+            );
+        };
+
+        // --- Effects Toggle Component ---
+        const EffectsToggle = () => {
+            const [isEffectsMuted, setIsEffectsMuted] = useState(soundManager.isEffectsMuted);
+
+            const toggleEffects = () => {
+                const newMutedState = soundManager.toggleEffectsMute();
+                setIsEffectsMuted(newMutedState);
+            };
+
+            return (
+                <button 
+                    className={`sound-toggle ${isEffectsMuted ? 'muted' : ''}`}
+                    onClick={toggleEffects}
+                    title={isEffectsMuted ? 'Unmute effects' : 'Mute effects'}
+                >
+                    {isEffectsMuted ? '🔇' : '🔊'}
                 </button>
             );
         };
@@ -2764,7 +2804,8 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
 
                         {/* Bottom left stacked controls */}
                         <div className="bottom-controls-stack">
-                            <SoundToggle />
+                            <EffectsToggle />
+                            <MusicToggle />
                             <CreditsToggle />
                         </div>
                         
@@ -2808,7 +2849,7 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
         // IMPORTANT: Before you git push origin main you MUST update this timestamp
         // Format: YYYY-MM-DDTHH:MM:SSZ (UTC)
         // This ensures you know if you need to hard refresh to see the latest version
-        console.log("=== MATH IN SPACE v1.75 [2026-04-16T22:13:00Z] DEPLOYED ===");
+        console.log("=== MATH IN SPACE v1.78 [2026-04-16T22:25:00Z] DEPLOYED ===");
         
         root.render(
             <Provider store={store}>
@@ -2890,28 +2931,28 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
                 const heightMatch = styleAttr.match(/height:(\d+)px/);
                 const heightValue = heightMatch ? parseInt(heightMatch[1]) : 0;
                 console.log("GOOGLE AD HEIGHT (parsed from style):", heightValue + "px");
-                
-                // Change background to white if ad is smaller than 100px
-                if (heightValue < 100 && bannerSpace) {
-                    bannerSpace.style.background = "white";
-                    console.log("Changed banner background to white (ad height:", heightValue + "px)");
-                }
             }
             if (ins) {
                 console.log("Ad ins status:", ins.dataset.adStatus);
             }
             
-            // Only show fallback if there's NO iframe at all (real 400 error)
+            // Show fallback if no iframe OR if ad is unfilled
             const hasIframe = !!iframe;
-            const shouldShowFallback = !hasIframe;
+            const isUnfilled = ins && ins.dataset.adStatus === 'unfilled';
+            const shouldShowFallback = !hasIframe || isUnfilled;
             
             console.log("Fallback condition debug:", {
                 hasIframe,
+                isUnfilled,
                 shouldShowFallback
             });
             
             if (shouldShowFallback) {
-                console.log("Showing fallback - no iframe detected");
+                if (!hasIframe) {
+                    console.log("Showing fallback - no iframe detected");
+                } else {
+                    console.log("Showing fallback - ad unfilled (no inventory)");
+                }
                 showFallbackAd(container);
             }
         }, 3000);
@@ -2920,26 +2961,35 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
     function loadAndroidAd() {
         console.log("Loading Android AdMob ad...");
         
+        // AdMob configuration
+        const ADMOB_APP_ID = 'ca-app-pub-2662863757001007~6977812828';
+        const ADMOB_BANNER_AD_UNIT_ID = 'ca-app-pub-2662863757001007/4499823296';
+        
         // Simple bridge call - AdMob logic handled by native plugin
         if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.AdMob) {
             const { AdMob } = window.Capacitor.Plugins;
             
-            AdMob.initialize()
-                .then(() => AdMob.showBanner({
-                    adId: 'ca-pub-2662863757001007/2870000676',
-                    position: 'bottom',
-                    size: 'BANNER'
-                }))
+            AdMob.initialize({ requestTrackingAuthorization: true })
                 .then(() => {
-                    console.log("Android AdMob banner shown");
+                    console.log("AdMob initialized with App ID:", ADMOB_APP_ID);
+                    return AdMob.showBanner({
+                        adId: ADMOB_BANNER_AD_UNIT_ID,
+                        position: 'bottom',
+                        size: 'BANNER'
+                    });
+                })
+                .then(() => {
+                    console.log("✓ Android AdMob banner shown - Ad Unit:", ADMOB_BANNER_AD_UNIT_ID);
                     adLoaded = true;
                 })
                 .catch((error) => {
-                    console.error("AdMob failed, showing fallback:", error);
+                    console.error("❌ AdMob failed:", error);
+                    console.error("App ID:", ADMOB_APP_ID);
+                    console.error("Ad Unit ID:", ADMOB_BANNER_AD_UNIT_ID);
                     showFallbackAd(document.getElementById("ad-container"));
                 });
         } else {
-            console.log("AdMob plugin not available, showing fallback");
+            console.log("⚠ AdMob plugin not available, showing fallback");
             showFallbackAd(document.getElementById("ad-container"));
         }
     }

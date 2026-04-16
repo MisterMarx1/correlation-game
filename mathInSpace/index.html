@@ -2981,6 +2981,11 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
                 .then(() => {
                     console.log("✓ Android AdMob banner shown - Ad Unit:", ADMOB_BANNER_AD_UNIT_ID);
                     adLoaded = true;
+                    // Hide the web ad container since native AdMob is handling it
+                    const container = document.getElementById("ad-container");
+                    if (container) {
+                        container.style.display = 'none';
+                    }
                 })
                 .catch((error) => {
                     console.error("❌ AdMob failed:", error);
