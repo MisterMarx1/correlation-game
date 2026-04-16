@@ -1005,7 +1005,7 @@
             font-size: 8px;
             font-family: 'Orbitron', sans-serif;
             color: rgba(255, 255, 255, 0.2);
-            font-weight: 600;
+            font-weight: 400;
             letter-spacing: 0.05em;
             text-transform: uppercase;
             pointer-events: none;
@@ -2797,7 +2797,7 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
         
         // Version console log - update this on each deploy
         // Before you git push origin main you must update this with tiemstamp so i can ensure I dont need to hard refresh
-        console.log("=== MATH IN SPACE v1.59 [2026-04-16T21:22:00Z] DEPLOYED ===");
+        console.log("=== MATH IN SPACE v1.60 [2026-04-16T21:24:00Z] DEPLOYED ===");
         
         root.render(
             <Provider store={store}>
@@ -2882,8 +2882,7 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
                 
                 // Change background to solid white if ad is smaller than 100px
                 if (heightValue < 100 && bannerSpace) {
-                    bannerSpace.style.background = "#ffffff";
-                    bannerSpace.style.borderTop = "none";
+                    bannerSpace.style.cssText = "background: #ffffff !important; border-top: none !important;";
                     console.log("Changed banner background to white (ad height:", heightValue + "px)");
                 }
             }
