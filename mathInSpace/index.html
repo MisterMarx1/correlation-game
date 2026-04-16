@@ -2871,13 +2871,18 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
             console.log("Ad iframe offsetHeight:", iframe.offsetHeight + "px");
             console.log("Ad ins offsetHeight:", ins?.offsetHeight + "px");
             
-            // If height changed, update the banner-ad-space container
+            // If height changed, update the banner-ad-space container AND game container padding
             if (adHeight !== lastAdHeight) {
                 console.log("Ad height changed from", lastAdHeight + "px", "to", adHeight + "px");
                 const bannerAdSpace = document.querySelector(".banner-ad-space");
+                const gameContainer = document.querySelector(".math-in-space-container");
                 if (bannerAdSpace) {
                     bannerAdSpace.style.height = adHeight + "px";
                     console.log("Updated .banner-ad-space height to", adHeight + "px");
+                }
+                if (gameContainer) {
+                    gameContainer.style.paddingBottom = adHeight + "px";
+                    console.log("Updated game container padding-bottom to", adHeight + "px");
                 }
                 lastAdHeight = adHeight;
             }
