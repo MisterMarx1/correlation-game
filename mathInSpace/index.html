@@ -2797,7 +2797,7 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
         
         // Version console log - update this on each deploy
         // Before you git push origin main you must update this with tiemstamp so i can ensure I dont need to hard refresh
-        console.log("=== MATH IN SPACE v1.61 [2026-04-16T21:26:00Z] DEPLOYED ===");
+        console.log("=== MATH IN SPACE v1.62 [2026-04-16T21:27:00Z] DEPLOYED ===");
         
         root.render(
             <Provider store={store}>
@@ -2863,6 +2863,25 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
         (adsbygoogle = window.adsbygoogle || []).push({});
         adLoaded = true;
 
+        // Function to apply white background if ad is under 100px
+        function applyWhiteBackgroundIfSmallAd() {
+            const iframe = container.querySelector("iframe");
+            const bannerSpace = document.querySelector(".banner-ad-space");
+            
+            if (iframe && bannerSpace) {
+                const styleAttr = iframe.getAttribute("style");
+                const heightMatch = styleAttr.match(/height:(\d+)px/);
+                const heightValue = heightMatch ? parseInt(heightMatch[1]) : 0;
+                
+                if (heightValue < 100) {
+                    bannerSpace.style.cssText = "background: #ffffff !important; border-top: none !important;";
+                    console.log("Applied white background (ad height:", heightValue + "px)");
+                    return true;
+                }
+            }
+            return false;
+        }
+        
         // Check if ad filled after 3 seconds
         setTimeout(() => {
             const ins = container.querySelector("ins.adsbygoogle");
@@ -2880,17 +2899,21 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
                 const heightValue = heightMatch ? parseInt(heightMatch[1]) : 0;
                 console.log("GOOGLE AD HEIGHT (parsed from style):", heightValue + "px");
                 
-                // Change background to solid white if ad is smaller than 100px
-                if (heightValue < 100 && bannerSpace) {
-                    console.log("BEFORE: bannerSpace.style.background =", bannerSpace.style.background);
-                    console.log("BEFORE: bannerSpace computed background =", window.getComputedStyle(bannerSpace).background);
+                // Apply white background if needed
+                applyWhiteBackgroundIfSmallAd();
+                
+                // Watch for iframe style changes
+                if (iframe) {
+                    const observer = new MutationObserver(() => {
+                        console.log("Iframe style changed, checking height...");
+                        applyWhiteBackgroundIfSmallAd();
+                    });
                     
-                    bannerSpace.style.cssText = "background: #ffffff !important; border-top: none !important;";
-                    
-                    console.log("AFTER: bannerSpace.style.background =", bannerSpace.style.background);
-                    console.log("AFTER: bannerSpace computed background =", window.getComputedStyle(bannerSpace).background);
-                    console.log("AFTER: bannerSpace.style.cssText =", bannerSpace.style.cssText);
-                    console.log("Changed banner background to white (ad height:", heightValue + "px)");
+                    observer.observe(iframe, {
+                        attributes: true,
+                        attributeFilter: ["style"]
+                    });
+                    console.log("MutationObserver started for iframe style changes");
                 }
             }
             if (ins) {
