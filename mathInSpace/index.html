@@ -108,7 +108,7 @@
             justify-content: space-between;
             text-align: center;
             width: 100%;
-            height: calc(100vh - var(--ad-height, 60px));
+            height: calc(100vh - 100px);
             padding-top: 24px;
             color: #e0e0e0;
             box-sizing: border-box;
@@ -497,7 +497,8 @@
             font-size: 0.8em;
             padding: 10px;
             border-radius: 4px;
-            height: auto;
+            height: 100px;
+            min-height: 100px;
             resize: vertical;
             overflow: auto;
         }
@@ -776,7 +777,7 @@
             top: 0;
             left: 0;
             width: 100%;
-            height: calc(100vh - var(--ad-height, 60px));
+            height: calc(100vh - 100px);
             background: radial-gradient(ellipse at center, 
                 rgba(20, 25, 40, 0.95) 0%, 
                 rgba(10, 15, 30, 0.98) 40%, 
@@ -902,8 +903,8 @@
 
         .fog-particle {
             position: absolute;
-            width: auto;
-            height: auto;
+            width: 100px;
+            height: 100px;
             background: radial-gradient(circle, 
                 rgba(147, 197, 253, 0.1) 0%, 
                 transparent 70%);
@@ -1017,7 +1018,7 @@
             bottom: 0;
             left: 0;
             width: 100%;
-            height: var(--ad-height, auto);
+            height: 100px;
             background: linear-gradient(135deg, #1a1a2e, #0f0f1e);
             border-top: 2px solid #00ccff;
             display: flex;
@@ -1029,19 +1030,27 @@
             font-size: 12px;
             text-transform: uppercase;
             letter-spacing: 2px;
-            box-sizing: border-box;
-            overflow: hidden;
         }
 
         #ad-container {
             width: 100%;
-            height: auto;
+            height: 100px;
+            max-height: 100px;
+            min-height: 100px;
             overflow: hidden;
         }
 
         #ad-container ins {
             display: block !important;
             width: 100% !important;
+            height: 100px !important;
+            max-height: 100px !important;
+            min-height: 100px !important;
+        }
+
+        #ad-container iframe {
+            max-height: 100px !important;
+            min-height: 100px !important;
         }
 
             </style>
@@ -2797,8 +2806,6 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
     <script>
     console.log("Ad script loading...");
     let adLoaded = false;
-    const BUILD_VERSION = "2026-04-16-v9-fix-default-height";
-    console.log("Math In Space Build:", BUILD_VERSION);
 
     // Platform detection using existing Capacitor pattern
     const isAndroidApp = window.Capacitor && window.Capacitor.platform === 'android';
@@ -2823,10 +2830,12 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
         if (!container) return;
         if (container.offsetWidth === 0) return;
         
-        // Set container to be flexible, not fixed height
+        // Force container height immediately
         container.style.cssText = `
             width: 100% !important;
-            height: auto !important;
+            height: 100px !important;
+            max-height: 100px !important;
+            min-height: 100px !important;
             overflow: hidden !important;
         `;
 
@@ -2835,7 +2844,9 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
         ad.style.cssText = `
             display: block !important;
             width: 100% !important;
-            height: auto !important;
+            height: 100px !important;
+            max-height: 100px !important;
+            min-height: 100px !important;
             overflow: hidden !important;
         `;
         ad.setAttribute("data-ad-client", "ca-pub-2662863757001007");
@@ -2847,62 +2858,21 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
         (adsbygoogle = window.adsbygoogle || []).push({});
         adLoaded = true;
 
-        // Check if ad filled and dynamically update height
-        let lastAdHeight = null;
-        
-        function updateAdHeight() {
+        // Check if ad filled after 3 seconds
+        setTimeout(() => {
             const ins = container.querySelector("ins.adsbygoogle");
             const iframe = container.querySelector("iframe");
             
-            if (!iframe) {
-                console.log("No iframe found");
-                return;
+            console.log("Ad check - iframe exists:", !!iframe);
+            if (iframe) {
+                console.log("Ad iframe dimensions:", iframe.offsetWidth + "x" + iframe.offsetHeight);
+                console.log("Ad iframe style:", iframe.getAttribute("style"));
+            }
+            if (ins) {
+                console.log("Ad ins status:", ins.dataset.adStatus);
             }
             
-            // Get the actual ad height from iframe style attribute only
-            const styleAttr = iframe.getAttribute("style");
-            const heightMatch = styleAttr?.match(/height:(\d+)px/);
-            const styleHeight = heightMatch ? parseInt(heightMatch[1]) : null;
-            
-            // Only trust the iframe's explicit style height
-            const adHeight = styleHeight || 60; // fallback to 60px if no style found
-            
-            console.log("Ad iframe style height:", styleHeight + "px");
-            console.log("Final detected ad height:", adHeight + "px");
-            
-            // Always update - don't skip if height is same as initial value
-            if (adHeight !== lastAdHeight) {
-                if (lastAdHeight !== null) {
-                    console.log("Ad height changed from", lastAdHeight + "px", "to", adHeight + "px");
-                } else {
-                    console.log("Ad height detected:", adHeight + "px");
-                }
-                const bannerAdSpace = document.querySelector(".banner-ad-space");
-                const gameContainer = document.querySelector(".math-in-space-container");
-                
-                if (gameContainer) {
-                    // Update CSS variable for dynamic height calculation
-                    document.documentElement.style.setProperty('--ad-height', adHeight + "px");
-                    console.log("Updated CSS --ad-height variable to", adHeight + "px");
-                }
-                
-                lastAdHeight = adHeight;
-            }
-        }
-        
-        // Check immediately and every 500ms for height changes
-        setTimeout(updateAdHeight, 1000);
-        const heightCheckInterval = setInterval(updateAdHeight, 500);
-        
-        // Stop checking after 10 seconds
-        setTimeout(() => {
-            clearInterval(heightCheckInterval);
-            console.log("Stopped monitoring ad height");
-        }, 10000);
-        
-        // Check for fallback after 3 seconds
-        setTimeout(() => {
-            const iframe = container.querySelector("iframe");
+            // Only show fallback if there's NO iframe at all (real 400 error)
             const hasIframe = !!iframe;
             const shouldShowFallback = !hasIframe;
             
@@ -2951,7 +2921,7 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
         const fallback = document.createElement("div");
         fallback.style.cssText = `
             width: 100%;
-            height: auto;
+            height: 100px;
             display: flex;
             flex-direction: column;
             align-items: center;
