@@ -498,8 +498,6 @@
             padding: 10px;
             border-radius: 4px;
             height: auto;
-            min-height: 80px;
-            max-height: 150px;
             resize: vertical;
             overflow: auto;
         }
@@ -904,8 +902,8 @@
 
         .fog-particle {
             position: absolute;
-            width: 80px;
-            height: 80px;
+            width: auto;
+            height: auto;
             background: radial-gradient(circle, 
                 rgba(147, 197, 253, 0.1) 0%, 
                 transparent 70%);
@@ -1020,8 +1018,6 @@
             left: 0;
             width: 100%;
             height: auto;
-            min-height: 60px;
-            max-height: 120px;
             background: linear-gradient(135deg, #1a1a2e, #0f0f1e);
             border-top: 2px solid #00ccff;
             display: flex;
@@ -2801,7 +2797,7 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
     <script>
     console.log("Ad script loading...");
     let adLoaded = false;
-    const BUILD_VERSION = "2026-04-16-v3-flexible-ad-heights";
+    const BUILD_VERSION = "2026-04-16-v4-pure-dynamic-heights";
     console.log("Math In Space Build:", BUILD_VERSION);
 
     // Platform detection using existing Capacitor pattern
@@ -2831,8 +2827,6 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
         container.style.cssText = `
             width: 100% !important;
             height: auto !important;
-            min-height: 60px !important;
-            max-height: 120px !important;
             overflow: hidden !important;
         `;
 
@@ -2842,8 +2836,6 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
             display: block !important;
             width: 100% !important;
             height: auto !important;
-            min-height: 60px !important;
-            max-height: 120px !important;
             overflow: hidden !important;
         `;
         ad.setAttribute("data-ad-client", "ca-pub-2662863757001007");
@@ -2968,8 +2960,6 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
         fallback.style.cssText = `
             width: 100%;
             height: auto;
-            min-height: 60px;
-            max-height: 120px;
             display: flex;
             flex-direction: column;
             align-items: center;
