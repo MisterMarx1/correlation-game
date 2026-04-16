@@ -60,14 +60,6 @@
       crossorigin="anonymous">
     </script>
     <style>
-        /* Safe Area Insets - Define once, use everywhere */
-        :root {
-            --safe-top: max(10px, env(safe-area-inset-top));
-            --safe-bottom: max(10px, env(safe-area-inset-bottom));
-            --safe-left: max(10px, env(safe-area-inset-left));
-            --safe-right: max(10px, env(safe-area-inset-right));
-        }
-
         /* Remove default browser margins and white border */
         * {
             margin: 0;
@@ -116,7 +108,8 @@
             justify-content: space-between;
             text-align: center;
             width: 100%;
-            height: calc(100vh - 100px);
+            height: calc(100vh - 100px - env(safe-area-inset-top));
+            padding-top: max(0px, env(safe-area-inset-top));
             color: #e0e0e0;
             box-sizing: border-box;
             overflow: hidden;
@@ -1018,15 +1011,19 @@
             bottom: 0;
             left: 0;
             width: 100%;
-            height: calc(100px + var(--safe-bottom));
-            padding-bottom: var(--safe-bottom);
+            height: calc(100px + env(safe-area-inset-bottom));
+            padding-bottom: env(safe-area-inset-bottom);
             background: linear-gradient(135deg, #1a1a2e, #0f0f1e);
             border-top: 2px solid #00ccff;
             display: flex;
             align-items: center;
             justify-content: center;
             z-index: 10000;
-            box-sizing: border-box;
+            font-family: 'Orbitron', sans-serif;
+            color: #666;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
         }
 
         #ad-container {
@@ -2846,7 +2843,7 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
             overflow: hidden !important;
         `;
         ad.setAttribute("data-ad-client", "ca-pub-2662863757001007");
-        ad.setAttribute("data-ad-slot", "4499823296");
+        ad.setAttribute("data-ad-slot", "2870000676");
         ad.setAttribute("data-ad-format", "horizontal");
         ad.setAttribute("data-full-width-responsive", "false");
         
@@ -2868,33 +2865,20 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
                 console.log("Ad ins status:", ins.dataset.adStatus);
             }
             
-            // Debug the condition
+            // Only show fallback if there's NO iframe at all (real 400 error)
             const hasIframe = !!iframe;
-            const hasIns = !!ins;
-            const adStatus = ins?.dataset?.adStatus;
-            const shouldShowFallback = !hasIframe || (hasIns && (adStatus === "unfilled" || adStatus === undefined));
+            const shouldShowFallback = !hasIframe;
             
             console.log("Fallback condition debug:", {
                 hasIframe,
-                hasIns, 
-                adStatus,
                 shouldShowFallback
             });
             
             if (shouldShowFallback) {
-                console.log("Showing fallback - no iframe or adStatus:", adStatus);
+                console.log("Showing fallback - no iframe detected");
                 showFallbackAd(container);
             }
         }, 3000);
-
-        // Also check for 400 errors immediately
-        setTimeout(() => {
-            const ins = container.querySelector("ins.adsbygoogle");
-            if (ins && !ins.querySelector("iframe")) {
-                console.log("No iframe detected after 1s - likely 400 error, showing fallback");
-                showFallbackAd(container);
-            }
-        }, 1000);
     }
 
     function loadAndroidAd() {
@@ -2906,7 +2890,7 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
             
             AdMob.initialize()
                 .then(() => AdMob.showBanner({
-                    adId: 'ca-pub-2662863757001007/4499823296',
+                    adId: 'ca-pub-2662863757001007/2870000676',
                     position: 'bottom',
                     size: 'BANNER'
                 }))
