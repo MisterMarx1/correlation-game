@@ -40,7 +40,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Math In Space</title>
     
     <!-- Favicon -->
@@ -1293,40 +1293,8 @@
         // Initialize sound manager
         const soundManager = new SoundManager();
 
-        // --- Safe Area Management (Android Notch/Status Bar Support) ---
-        function initializeSafeAreaListener() {
-            const isAndroid = window.Capacitor && window.Capacitor.platform === 'android';
-            
-            if (isAndroid) {
-                // Calculate status bar height from window dimensions
-                // outerHeight includes status bar, innerHeight does not
-                // The difference is the status bar/notch offset
-                const updateSafeArea = () => {
-                    const statusBarHeight = window.outerHeight - window.innerHeight;
-                    const topPadding = Math.max(24, statusBarHeight);
-                    document.documentElement.style.setProperty('--safe-area-top', topPadding + 'px');
-                    console.log(`[SafeArea] outerHeight=${window.outerHeight}, innerHeight=${window.innerHeight}, statusBar=${statusBarHeight}px → padding=${topPadding}px`);
-                };
-                
-                // Update on window resize and orientation change
-                window.addEventListener('resize', updateSafeArea);
-                window.addEventListener('orientationchange', updateSafeArea);
-                
-                // Initial update after a small delay to ensure dimensions are correct
-                setTimeout(updateSafeArea, 100);
-                console.log('[SafeArea] Android status bar detection initialized');
-            } else {
-                // Web browsers: CSS env(safe-area-inset-top) is handled by @supports rule
-                console.log('[SafeArea] Web browser: using CSS env(safe-area-inset-top)');
-            }
-        }
-
-        // Initialize safe area listener on page load
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', initializeSafeAreaListener);
-        } else {
-            initializeSafeAreaListener();
-        }
+        // Safe area is now handled by CSS env(safe-area-inset-top) with viewport-fit=cover meta tag
+        console.log('[SafeArea] Using CSS env(safe-area-inset-top) - viewport-fit=cover enabled');
 
         // --- Configuration ---
         const DEFAULT_DURATION = 60;

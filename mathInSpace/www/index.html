@@ -1297,30 +1297,27 @@
         function initializeSafeAreaListener() {
             const isAndroid = window.Capacitor && window.Capacitor.platform === 'android';
             
-            if (isAndroid && window.visualViewport) {
-                // Use visualViewport API (native to Android WebView)
-                // visualViewport.offsetTop gives the distance from top of screen to viewport
-                // This accounts for status bar, notches, etc.
+            if (isAndroid) {
+                // Calculate status bar height from window dimensions
+                // outerHeight includes status bar, innerHeight does not
+                // The difference is the status bar/notch offset
                 const updateSafeArea = () => {
-                    const offsetTop = window.visualViewport.offsetTop || 0;
-                    const topPadding = Math.max(24, offsetTop);
+                    const statusBarHeight = window.outerHeight - window.innerHeight;
+                    const topPadding = Math.max(24, statusBarHeight);
                     document.documentElement.style.setProperty('--safe-area-top', topPadding + 'px');
-                    console.log(`[SafeArea] visualViewport.offsetTop=${offsetTop}px → padding=${topPadding}px`);
+                    console.log(`[SafeArea] outerHeight=${window.outerHeight}, innerHeight=${window.innerHeight}, statusBar=${statusBarHeight}px → padding=${topPadding}px`);
                 };
                 
-                // Update on viewport changes
-                window.visualViewport.addEventListener('resize', updateSafeArea);
-                window.visualViewport.addEventListener('scroll', updateSafeArea);
+                // Update on window resize and orientation change
+                window.addEventListener('resize', updateSafeArea);
                 window.addEventListener('orientationchange', updateSafeArea);
                 
-                // Initial update
-                updateSafeArea();
-                console.log('[SafeArea] Android visualViewport listener initialized');
-            } else if (!isAndroid) {
+                // Initial update after a small delay to ensure dimensions are correct
+                setTimeout(updateSafeArea, 100);
+                console.log('[SafeArea] Android status bar detection initialized');
+            } else {
                 // Web browsers: CSS env(safe-area-inset-top) is handled by @supports rule
                 console.log('[SafeArea] Web browser: using CSS env(safe-area-inset-top)');
-            } else {
-                console.log('[SafeArea] Android but visualViewport not available');
             }
         }
 
