@@ -2887,6 +2887,16 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
                 } catch (e) {
                     // Cross-origin iframe, can't access content
                     console.log("Cannot access iframe content (cross-origin)");
+                    
+                    // Parse iframe style to get actual height
+                    const style = iframe.getAttribute("style");
+                    if (style && style.includes("height:")) {
+                        const heightMatch = style.match(/height:\s*(\d+)px/);
+                        if (heightMatch && heightMatch[1]) {
+                            actualAdHeight = parseInt(heightMatch[1]);
+                            console.log("Parsed height from iframe style:", actualAdHeight + "px");
+                        }
+                    }
                 }
                 
                 console.log("GOOGLE AD HEIGHT:", actualAdHeight + "px");
