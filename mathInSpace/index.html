@@ -2872,13 +2872,13 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
             console.log("Ad check - iframe exists:", !!iframe);
             if (iframe) {
                 console.log("Ad iframe dimensions:", iframe.offsetWidth + "x" + iframe.offsetHeight);
-                console.log("Ad iframe style:", iframe.getAttribute("style"));
+                const styleAttr = iframe.getAttribute("style");
+                console.log("Ad iframe style:", styleAttr);
                 
-                // Extract height from CSS style attribute
-                const styleHeight = iframe.style.height || "0px";
-                const heightValue = parseInt(styleHeight.replace("px", ""));
-                console.log("GOOGLE AD HEIGHT (from style):", styleHeight);
-                console.log("GOOGLE AD HEIGHT (parsed):", heightValue + "px");
+                // Extract height from style attribute string
+                const heightMatch = styleAttr.match(/height:(\d+)px/);
+                const heightValue = heightMatch ? parseInt(heightMatch[1]) : 0;
+                console.log("GOOGLE AD HEIGHT (parsed from style):", heightValue + "px");
                 
                 // Change background to white if ad is smaller than 100px
                 if (heightValue < 100 && bannerSpace) {
