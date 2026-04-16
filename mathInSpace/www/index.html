@@ -2865,11 +2865,18 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
             
             console.log("Ad check - iframe exists:", !!iframe);
             if (iframe) {
-                console.log("Ad iframe dimensions:", iframe.offsetWidth + "x" + iframe.offsetHeight);
-                console.log("Ad iframe style:", iframe.getAttribute("style"));
+                console.log("Ad iframe offsetHeight:", iframe.offsetHeight + "px");
+                console.log("Ad iframe offsetWidth:", iframe.offsetWidth + "px");
+                console.log("Ad iframe clientHeight:", iframe.clientHeight + "px");
+                console.log("Ad iframe clientWidth:", iframe.clientWidth + "px");
+                console.log("Ad iframe computed height:", window.getComputedStyle(iframe).height);
+                console.log("Ad iframe computed width:", window.getComputedStyle(iframe).width);
+                console.log("Ad iframe style attribute:", iframe.getAttribute("style"));
             }
             if (ins) {
                 console.log("Ad ins status:", ins.dataset.adStatus);
+                console.log("Ad ins offsetHeight:", ins.offsetHeight + "px");
+                console.log("Ad ins offsetWidth:", ins.offsetWidth + "px");
             }
             
             // Only show fallback if there's NO iframe at all (real 400 error)
