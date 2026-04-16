@@ -1052,6 +1052,7 @@
         }
 
         #ad-container iframe {
+            height: 100px !important;
             max-height: 100px !important;
             min-height: 100px !important;
         }
@@ -2886,8 +2887,10 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
         const root = ReactDOM.createRoot(document.getElementById('root'));
         
         // Version console log - update this on each deploy
-        // Before you git push origin main you must update this with tiemstamp so i can ensure I dont need to hard refresh
-        console.log("=== MATH IN SPACE v1.58 [2026-04-16T21:20:00Z] DEPLOYED ===");
+        // IMPORTANT: Before you git push origin main you MUST update this timestamp
+        // Format: YYYY-MM-DDTHH:MM:SSZ (UTC)
+        // This ensures you know if you need to hard refresh to see the latest version
+        console.log("=== MATH IN SPACE v1.73 [2026-04-16T22:04:00Z] DEPLOYED ===");
         
         root.render(
             <Provider store={store}>
