@@ -1005,7 +1005,7 @@
             font-size: 8px;
             font-family: 'Orbitron', sans-serif;
             color: rgba(255, 255, 255, 0.2);
-            font-weight: 600;
+            font-weight: 400;
             letter-spacing: 0.05em;
             text-transform: uppercase;
             pointer-events: none;
@@ -2796,7 +2796,8 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
         const root = ReactDOM.createRoot(document.getElementById('root'));
         
         // Version console log - update this on each deploy
-        console.log("=== MATH IN SPACE v1.61 DEPLOYED ===");
+        // Before you git push origin main you must update this with tiemstamp so i can ensure I dont need to hard refresh
+        console.log("=== MATH IN SPACE v1.58 [2026-04-16T21:20:00Z] DEPLOYED ===");
         
         root.render(
             <Provider store={store}>
@@ -2871,40 +2872,18 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
             console.log("Ad check - iframe exists:", !!iframe);
             if (iframe) {
                 console.log("Ad iframe dimensions:", iframe.offsetWidth + "x" + iframe.offsetHeight);
-                console.log("Ad iframe style:", iframe.getAttribute("style"));
+                const styleAttr = iframe.getAttribute("style");
+                console.log("Ad iframe style:", styleAttr);
                 
-                // Try to get actual ad content height
-                let actualAdHeight = iframe.offsetHeight;
-                
-                // Check if iframe has content and get its actual height
-                try {
-                    const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
-                    if (iframeDoc) {
-                        const adElement = iframeDoc.body || iframeDoc.documentElement;
-                        actualAdHeight = adElement.scrollHeight || adElement.offsetHeight || iframe.offsetHeight;
-                        console.log("Actual ad content height:", actualAdHeight + "px");
-                    }
-                } catch (e) {
-                    // Cross-origin iframe, can't access content
-                    console.log("Cannot access iframe content (cross-origin)");
-                    
-                    // Parse iframe style to get actual height
-                    const style = iframe.getAttribute("style");
-                    if (style && style.includes("height:")) {
-                        const heightMatch = style.match(/height:\s*(\d+)px/);
-                        if (heightMatch && heightMatch[1]) {
-                            actualAdHeight = parseInt(heightMatch[1]);
-                            console.log("Parsed height from iframe style:", actualAdHeight + "px");
-                        }
-                    }
-                }
-                
-                console.log("GOOGLE AD HEIGHT:", actualAdHeight + "px");
+                // Extract height from style attribute string
+                const heightMatch = styleAttr.match(/height:(\d+)px/);
+                const heightValue = heightMatch ? parseInt(heightMatch[1]) : 0;
+                console.log("GOOGLE AD HEIGHT (parsed from style):", heightValue + "px");
                 
                 // Change background to white if ad is smaller than 100px
-                if (actualAdHeight < 100 && bannerSpace) {
+                if (heightValue < 100 && bannerSpace) {
                     bannerSpace.style.background = "white";
-                    console.log("Changed banner background to white (ad height:", actualAdHeight + "px)");
+                    console.log("Changed banner background to white (ad height:", heightValue + "px)");
                 }
             }
             if (ins) {
