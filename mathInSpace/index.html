@@ -1017,7 +1017,7 @@
             bottom: 0;
             left: 0;
             width: 100%;
-            height: auto;
+            height: var(--ad-height, auto);
             background: linear-gradient(135deg, #1a1a2e, #0f0f1e);
             border-top: 2px solid #00ccff;
             display: flex;
@@ -1035,7 +1035,7 @@
 
         #ad-container {
             width: 100%;
-            height: 100%;
+            height: auto;
             overflow: hidden;
         }
 
@@ -2797,7 +2797,7 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
     <script>
     console.log("Ad script loading...");
     let adLoaded = false;
-    const BUILD_VERSION = "2026-04-16-v6-fix-initial-height-detection";
+    const BUILD_VERSION = "2026-04-16-v8-fix-detection-logic";
     console.log("Math In Space Build:", BUILD_VERSION);
 
     // Platform detection using existing Capacitor pattern
@@ -2859,20 +2859,15 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
                 return;
             }
             
-            // Get the actual ad height from multiple sources
+            // Get the actual ad height from iframe style attribute only
             const styleAttr = iframe.getAttribute("style");
             const heightMatch = styleAttr?.match(/height:(\d+)px/);
             const styleHeight = heightMatch ? parseInt(heightMatch[1]) : null;
-            const computedHeight = iframe.getBoundingClientRect().height;
-            const offsetHeight = iframe.offsetHeight;
             
-            // Use the most reliable measurement
-            const adHeight = styleHeight || Math.round(computedHeight) || offsetHeight || 100;
+            // Only trust the iframe's explicit style height
+            const adHeight = styleHeight || 60; // fallback to 60px if no style found
             
             console.log("Ad iframe style height:", styleHeight + "px");
-            console.log("Ad iframe computed height:", Math.round(computedHeight) + "px");
-            console.log("Ad iframe offsetHeight:", offsetHeight + "px");
-            console.log("Ad ins offsetHeight:", ins?.offsetHeight + "px");
             console.log("Final detected ad height:", adHeight + "px");
             
             // Always update - don't skip if height is same as initial value
@@ -2884,11 +2879,6 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
                 }
                 const bannerAdSpace = document.querySelector(".banner-ad-space");
                 const gameContainer = document.querySelector(".math-in-space-container");
-                
-                if (bannerAdSpace) {
-                    bannerAdSpace.style.height = adHeight + "px !important";
-                    console.log("Updated .banner-ad-space height to", adHeight + "px");
-                }
                 
                 if (gameContainer) {
                     // Update CSS variable for dynamic height calculation
