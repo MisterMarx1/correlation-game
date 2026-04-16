@@ -101,6 +101,10 @@
         }
 
         /* --- Base Container --- */
+        :root {
+            --safe-area-top: 24px;
+        }
+
         .math-in-space-container {
             display: flex;
             flex-direction: column;
@@ -109,7 +113,7 @@
             text-align: center;
             width: 100%;
             height: calc(100vh - 100px);
-            padding-top: 24px;
+            padding-top: var(--safe-area-top);
             color: #e0e0e0;
             box-sizing: border-box;
             overflow: hidden;
@@ -120,7 +124,7 @@
         /* Web browsers with safe area support */
         @supports (padding: max(0px)) {
             .math-in-space-container {
-                padding-top: max(24px, env(safe-area-inset-top));
+                padding-top: max(var(--safe-area-top), env(safe-area-inset-top));
             }
         }
 
@@ -1286,6 +1290,56 @@
 
         // Initialize sound manager
         const soundManager = new SoundManager();
+
+        // --- Safe Area Management (Android Notch/Status Bar Support) ---
+        function initializeSafeAreaListener() {
+            // Check if running on Android via Capacitor
+            const isAndroid = window.Capacitor && window.Capacitor.platform === 'android';
+            
+            if (isAndroid && window.Capacitor.Plugins && window.Capacitor.Plugins.SafeArea) {
+                const { SafeArea } = window.Capacitor.Plugins;
+                
+                // Listen for safe area changes (notch, status bar, etc.)
+                SafeArea.addListener('safeAreaChanged', (info) => {
+                    const insets = info.insets;
+                    const topPadding = Math.max(24, insets.top || 0);
+                    document.documentElement.style.setProperty('--safe-area-top', topPadding + 'px');
+                    console.log(`Safe area updated: top=${topPadding}px`);
+                });
+                
+                // Get initial safe area
+                SafeArea.getSafeAreaInsets().then((info) => {
+                    const topPadding = Math.max(24, info.insets.top || 0);
+                    document.documentElement.style.setProperty('--safe-area-top', topPadding + 'px');
+                    console.log(`Initial safe area: top=${topPadding}px`);
+                }).catch((error) => {
+                    console.log('SafeArea plugin not available or error:', error);
+                });
+            } else if (isAndroid) {
+                // Fallback: use visualViewport for Android without SafeArea plugin
+                if (window.visualViewport) {
+                    const updateSafeArea = () => {
+                        const topPadding = Math.max(24, window.visualViewport.offsetTop || 0);
+                        document.documentElement.style.setProperty('--safe-area-top', topPadding + 'px');
+                    };
+                    
+                    window.visualViewport.addEventListener('resize', updateSafeArea);
+                    window.visualViewport.addEventListener('scroll', updateSafeArea);
+                    updateSafeArea();
+                    console.log('Using visualViewport for safe area detection');
+                }
+            } else {
+                // Web browsers: use CSS env(safe-area-inset-top)
+                console.log('Using CSS env(safe-area-inset-top) for safe area detection');
+            }
+        }
+
+        // Initialize safe area listener on page load
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initializeSafeAreaListener);
+        } else {
+            initializeSafeAreaListener();
+        }
 
         // --- Configuration ---
         const DEFAULT_DURATION = 60;
