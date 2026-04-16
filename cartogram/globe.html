@@ -1,0 +1,1192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Interactive Globe</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Outfit:wght@300;600&display=swap');
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    width: 100vw; height: 100vh; overflow: hidden;
+    background: #050a18;
+    font-family: 'Outfit', sans-serif;
+  }
+  canvas { display: block; width: 100%; height: 100%; }
+
+  .hud {
+    position: absolute; top: 24px; left: 24px;
+    background: rgba(5,10,24,0.85);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(0,255,136,0.2);
+    border-radius: 12px;
+    padding: 20px 24px;
+    color: #e0e0e0;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    min-width: 220px;
+  }
+  .hud h2 {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 600; font-size: 18px;
+    color: #00ff88; margin-bottom: 14px;
+    letter-spacing: 1px;
+  }
+  .hud .row { display: flex; justify-content: space-between; margin: 6px 0; }
+  .hud .label { color: #6a8a7a; }
+  .hud .val { color: #00ff88; font-weight: 700; }
+  .hud .checkbox-row { display: flex; align-items: center; margin: 8px 0; }
+  .hud .checkbox-row input[type="checkbox"] { 
+    margin-right: 8px; 
+    accent-color: #00ff88;
+    cursor: pointer;
+  }
+  .hud .checkbox-row label { 
+    color: #6a8a7a; 
+    cursor: pointer;
+    font-size: 12px;
+    flex: 1;
+  }
+  .hud .divider {
+    height: 1px;
+    background: rgba(0,255,136,0.2);
+    margin: 12px 0;
+  }
+
+  .country-tooltip {
+    position: absolute; pointer-events: none;
+    background: rgba(5,10,24,0.95);
+    backdrop-filter: blur(8px);
+    border: 1px solid #00ff88;
+    border-radius: 8px;
+    padding: 12px 16px;
+    color: #00ff88;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    display: none;
+    min-width: 200px;
+    transform: translate(-50%, -120%);
+    line-height: 1.4;
+  }
+  .tooltip-title {
+    font-weight: 700;
+    font-size: 14px;
+    margin-bottom: 8px;
+    color: #ffffff;
+  }
+  .tooltip-stat {
+    display: flex;
+    justify-content: space-between;
+    margin: 4px 0;
+  }
+  .tooltip-label {
+    color: #6a8a7a;
+  }
+  .tooltip-value {
+    font-weight: 600;
+  }
+  .tooltip-loading {
+    color: #ffa500;
+    font-size: 11px;
+    margin-top: 4px;
+  }
+
+  .controls-bar {
+    position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+    background: rgba(5,10,24,0.8);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(0,255,136,0.15);
+    border-radius: 10px;
+    padding: 10px 28px;
+    color: #6a8a7a;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.5px;
+  }
+
+  .loading-screen {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    background: #050a18; z-index: 100;
+    color: #00ff88;
+    font-family: 'JetBrains Mono', monospace;
+    transition: opacity 0.6s, backdrop-filter 0.6s;
+    backdrop-filter: blur(0px);
+  }
+  .loading-screen.hidden { 
+    opacity: 0; 
+    pointer-events: none; 
+    backdrop-filter: blur(10px);
+  }
+  .loading-screen.loading-complete {
+    backdrop-filter: blur(10px);
+  }
+  .loading-progress {
+    margin-top: 20px;
+    font-size: 12px;
+    color: #6a8a7a;
+  }
+  .loading-bar {
+    width: 200px;
+    height: 4px;
+    background: rgba(0,255,136,0.1);
+    border-radius: 2px;
+    margin-top: 12px;
+    overflow: hidden;
+  }
+  .loading-bar-fill {
+    height: 100%;
+    background: #00ff88;
+    border-radius: 2px;
+    transition: width 0.3s ease;
+    width: 0%;
+  }
+  .spinner {
+    width: 48px; height: 48px;
+    border: 3px solid rgba(0,255,136,0.15);
+    border-top-color: #00ff88;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin-bottom: 18px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<div class="loading-screen" id="loader">
+  <div class="spinner"></div>
+  <div>Loading country data...</div>
+  <div class="loading-progress" id="loadingProgress">Initializing...</div>
+  <div class="loading-bar">
+    <div class="loading-bar-fill" id="loadingBarFill"></div>
+  </div>
+</div>
+
+<div class="hud">
+  <h2>EARTH</h2>
+  <div class="row"><span class="label">Countries</span><span class="val" id="statCountries">â</span></div>
+  <div class="row"><span class="label">Polygons</span><span class="val" id="statPolygons">â</span></div>
+  <div class="row"><span class="label">Hover</span><span class="val" id="statHover">â</span></div>
+  
+  <div class="divider"></div>
+  
+  <div class="checkbox-row">
+    <input type="checkbox" id="toggleGDP">
+    <label for="toggleGDP">Show GDP</label>
+  </div>
+  <div class="checkbox-row">
+    <input type="checkbox" id="togglePopulation">
+    <label for="togglePopulation">Show Population</label>
+  </div>
+  <div class="checkbox-row">
+    <input type="checkbox" id="toggleGDPPerCapita">
+    <label for="toggleGDPPerCapita">Show GDP per capita</label>
+  </div>
+  <div class="checkbox-row">
+    <input type="checkbox" id="toggleUnemployment">
+    <label for="toggleUnemployment">Show Unemployment</label>
+  </div>
+  
+  <div class="divider"></div>
+  
+  <div class="country-selector">
+    <select id="countrySelect" style="width: 100%; padding: 6px; background: rgba(0,255,136,0.1); border: 1px solid rgba(0,255,136,0.3); color: #00ff88; font-family: 'JetBrains Mono', monospace; font-size: 12px; border-radius: 4px; margin-bottom: 8px;">
+      <option value="">Select a country...</option>
+    </select>
+    <div style="display: flex; gap: 8px;">
+      <button id="btnNormalSize" style="flex: 1; padding: 6px; background: rgba(0,255,136,0.2); border: 1px solid rgba(0,255,136,0.4); color: #00ff88; font-family: 'JetBrains Mono', monospace; font-size: 11px; border-radius: 4px; cursor: pointer;">Normal Size</button>
+      <button id="btnDoubleSize" style="flex: 1; padding: 6px; background: rgba(0,255,136,0.2); border: 1px solid rgba(0,255,136,0.4); color: #00ff88; font-family: 'JetBrains Mono', monospace; font-size: 11px; border-radius: 4px; cursor: pointer;">Double Size</button>
+    </div>
+  </div>
+</div>
+
+<div class="country-tooltip" id="tooltip"></div>
+
+<div class="controls-bar">
+  drag to rotate · scroll to zoom · double-click to reset
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function(){
+
+/* ── Scene ── */
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(50, innerWidth/innerHeight, 0.01, 100);
+camera.position.set(0, 0, 3);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+renderer.setSize(innerWidth, innerHeight);
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setClearColor(0x050a18);
+document.body.appendChild(renderer.domElement);
+
+/* ── Lights ── */
+scene.add(new THREE.AmbientLight(0xffffff, 0.55));
+const sun = new THREE.DirectionalLight(0xffffff, 0.9);
+sun.position.set(5, 3, 4);
+scene.add(sun);
+const backLight = new THREE.DirectionalLight(0x4488cc, 0.3);
+backLight.position.set(-4, -2, -3);
+scene.add(backLight);
+
+/* ── Atmosphere glow removed - was causing blurriness */
+
+/* ── Ocean sphere - NEVER TOUCH depthWrite: false - CRITICAL FOR VISIBILITY */
+const R = 1.0;
+const oceanMat = new THREE.MeshPhongMaterial({
+  color: 0x0e4a7a,
+  emissive: 0x000000,
+  specular: 0x336699,
+  shininess: 35,
+  depthWrite: false
+});
+const ocean = new THREE.Mesh(new THREE.SphereGeometry(R, 96, 96), oceanMat);
+scene.add(ocean);
+
+/* ── Globe group (land sits here) ── */
+const globeGroup = new THREE.Group();
+scene.add(globeGroup);
+globeGroup.add(ocean);
+
+/* ── Stars ── */
+const starGeo = new THREE.BufferGeometry();
+const starVerts = [];
+for(let i=0;i<4000;i++){
+  const r = 30 + Math.random()*70;
+  const theta = Math.random()*Math.PI*2;
+  const phi = Math.acos(2*Math.random()-1);
+  starVerts.push(r*Math.sin(phi)*Math.cos(theta), r*Math.cos(phi), r*Math.sin(phi)*Math.sin(theta));
+}
+starGeo.setAttribute('position', new THREE.Float32BufferAttribute(starVerts,3));
+scene.add(new THREE.Points(starGeo, new THREE.PointsMaterial({color:0xffffff, size:0.15, sizeAttenuation:true})));
+
+/* ── Interaction state ── */
+let isDrag = false, prevMouse = {x:0,y:0};
+let rotTarget = {x:0.3, y:-0.5};
+let rotCurrent = {x:0.3, y:-0.5};
+let zoomTarget = 3, zoomCurrent = 3;
+
+/* Country data cache */
+const countryDataCache = new Map();
+let currentHoveredCountry = null;
+
+renderer.domElement.addEventListener('pointerdown', e => { isDrag=true; prevMouse={x:e.clientX,y:e.clientY}; });
+window.addEventListener('pointermove', e => {
+  if(!isDrag) return;
+  rotTarget.y += (e.clientX - prevMouse.x)*0.004;
+  rotTarget.x += (e.clientY - prevMouse.y)*0.004;
+  rotTarget.x = Math.max(-1.2, Math.min(1.2, rotTarget.x));
+  prevMouse = {x:e.clientX, y:e.clientY};
+});
+window.addEventListener('pointerup', ()=>{ isDrag=false; });
+renderer.domElement.addEventListener('wheel', e => {
+  e.preventDefault();
+  zoomTarget += e.deltaY*0.001;
+  zoomTarget = Math.max(1.6, Math.min(6, zoomTarget));
+}, {passive:false});
+renderer.domElement.addEventListener('dblclick', ()=>{ rotTarget={x:0.3,y:-0.5}; zoomTarget=3; });
+
+/* ── World Bank API functions */
+const nameToISO = {
+  'United States': 'USA',
+  'United States of America': 'USA',
+  'China': 'CHN',
+  'Japan': 'JPN',
+  'Germany': 'DEU',
+  'United Kingdom': 'GBR',
+  'France': 'FRA',
+  'India': 'IND',
+  'Italy': 'ITA',
+  'Brazil': 'BRA',
+  'Canada': 'CAN',
+  'Russia': 'RUS',
+  'Australia': 'AUS',
+  'Mexico': 'MEX',
+  'Spain': 'ESP',
+  'Indonesia': 'IDN',
+  'Netherlands': 'NLD',
+  'Saudi Arabia': 'SAU',
+  'Turkey': 'TUR',
+  'Switzerland': 'CHE',
+  'Argentina': 'ARG',
+  'South Korea': 'KOR',
+  'Korea': 'KOR',
+  'Republic of Korea': 'KOR',
+  'South Africa': 'ZAF',
+  'Egypt': 'EGY',
+  'Nigeria': 'NGA',
+  'Kenya': 'KEN',
+  'Morocco': 'MAR',
+  'Ghana': 'GHA',
+  'Ethiopia': 'ETH',
+  'Poland': 'POL',
+  'Belgium': 'BEL',
+  'Sweden': 'SWE',
+  'Norway': 'NOR',
+  'Denmark': 'DNK',
+  'Finland': 'FIN',
+  'Austria': 'AUT',
+  'Greece': 'GRC',
+  'Portugal': 'PRT',
+  'Ireland': 'IRL',
+  'Czech Republic': 'CZE',
+  'Hungary': 'HUN',
+  'Romania': 'ROU',
+  'Bulgaria': 'BGR',
+  'Croatia': 'HRV',
+  'Slovakia': 'SVK',
+  'Slovenia': 'SVN',
+  'Estonia': 'EST',
+  'Latvia': 'LVA',
+  'Lithuania': 'LTU',
+  'Luxembourg': 'LUX',
+  'Malta': 'MLT',
+  'Cyprus': 'CYP',
+  'Ukraine': 'UKR',
+  'Belarus': 'BLR',
+  'Moldova': 'MDA',
+  'Georgia': 'GEO',
+  'Armenia': 'ARM',
+  'Azerbaijan': 'AZE',
+  'Kazakhstan': 'KAZ',
+  'Uzbekistan': 'UZB',
+  'Turkmenistan': 'TKM',
+  'Kyrgyzstan': 'KGZ',
+  'Tajikistan': 'TJK',
+  'Afghanistan': 'AFG',
+  'Pakistan': 'PAK',
+  'Bangladesh': 'BGD',
+  'Sri Lanka': 'LKA',
+  'Nepal': 'NPL',
+  'Bhutan': 'BTN',
+  'Maldives': 'MDV',
+  'Myanmar': 'MMR',
+  'Thailand': 'THA',
+  'Vietnam': 'VNM',
+  'Philippines': 'PHL',
+  'Malaysia': 'MYS',
+  'Singapore': 'SGP',
+  'New Zealand': 'NZL',
+  'Fiji': 'FJI',
+  'Papua New Guinea': 'PNG',
+  'Solomon Islands': 'SLB',
+  'Vanuatu': 'VUT',
+  'Samoa': 'WSM',
+  'Tonga': 'TON',
+  'Kiribati': 'KIR',
+  'Micronesia': 'FSM',
+  'Palau': 'PLW',
+  'Marshall Islands': 'MHL',
+  'Tuvalu': 'TUV',
+  'Nauru': 'NRU',
+  'Chile': 'CHL',
+  'Peru': 'PER',
+  'Colombia': 'COL',
+  'Venezuela': 'VEN',
+  'Ecuador': 'ECU',
+  'Bolivia': 'BOL',
+  'Paraguay': 'PRY',
+  'Uruguay': 'URY',
+  'Guyana': 'GUY',
+  'Suriname': 'SUR',
+  'French Guiana': 'GUF',
+  'Greenland': 'GRL',
+  'Iceland': 'ISL',
+  'Faroe Islands': 'FRO',
+  'Algeria': 'DZA',
+  'Libya': 'LBY',
+  'Tunisia': 'TUN',
+  'Sudan': 'SDN',
+  'South Sudan': 'SSD',
+  'Eritrea': 'ERI',
+  'Djibouti': 'DJI',
+  'Somalia': 'SOM',
+  'Uganda': 'UGA',
+  'Rwanda': 'RWA',
+  'Burundi': 'BDI',
+  'Tanzania': 'TZA',
+  'Zambia': 'ZMB',
+  'Zimbabwe': 'ZWE',
+  'Botswana': 'BWA',
+  'Namibia': 'NAM',
+  'Angola': 'AGO',
+  'Mozambique': 'MOZ',
+  'Madagascar': 'MDG',
+  'Mauritius': 'MUS',
+  'Seychelles': 'SYC',
+  'Comoros': 'COM',
+  'Cabo Verde': 'CPV',
+  'Guinea': 'GIN',
+  'Guinea-Bissau': 'GNB',
+  'Sierra Leone': 'SLE',
+  'Liberia': 'LBR',
+  'Cote d\'Ivoire': 'CIV',
+  'Ivory Coast': 'CIV',
+  'Burkina Faso': 'BFA',
+  'Mali': 'MLI',
+  'Niger': 'NER',
+  'Chad': 'TCD',
+  'Central African Republic': 'CAF',
+  'Cameroon': 'CMR',
+  'Equatorial Guinea': 'GNQ',
+  'Gabon': 'GAB',
+  'Congo': 'COG',
+  'Democratic Republic of the Congo': 'COD',
+  'DRC': 'COD',
+  'Burundi': 'BDI',
+  'Lesotho': 'LSO',
+  'Eswatini': 'SWZ',
+  'Senegal': 'SEN',
+  'Gambia': 'GMB',
+  'Mauritania': 'MRT',
+  'Western Sahara': 'ESH',
+  'Israel': 'ISR',
+  'Jordan': 'JOR',
+  'Lebanon': 'LBN',
+  'Syria': 'SYR',
+  'Iraq': 'IRQ',
+  'Iran': 'IRN',
+  'Kuwait': 'KWT',
+  'Bahrain': 'BHR',
+  'Qatar': 'QAT',
+  'United Arab Emirates': 'ARE',
+  'UAE': 'ARE',
+  'Oman': 'OMN',
+  'Yemen': 'YEM',
+  'Cuba': 'CUB',
+  'Haiti': 'HTI',
+  'Dominican Republic': 'DOM',
+  'Jamaica': 'JAM',
+  'Trinidad and Tobago': 'TTO',
+  'Barbados': 'BRB',
+  'Bahamas': 'BHS',
+  'Belize': 'BLZ',
+  'Guatemala': 'GTM',
+  'El Salvador': 'SLV',
+  'Honduras': 'HND',
+  'Nicaragua': 'NIC',
+  'Costa Rica': 'CRI',
+  'Panama': 'PAN',
+  'Puerto Rico': 'PRI',
+  'Antarctica': 'ATA'
+};
+
+async function fetchCountryData(countryName) {
+  if (countryDataCache.has(countryName)) {
+    return countryDataCache.get(countryName);
+  }
+
+  const isoCode = nameToISO[countryName];
+  if (!isoCode) return null;
+
+  try {
+    // Fetch multiple indicators at once
+    const indicators = [
+      'NY.GDP.MKTP.CD', // GDP (current US$)
+      'SP.POP.TOTL',    // Population total
+      'NY.GDP.PCAP.CD', // GDP per capita
+      'SL.UEM.TOTL.ZS'  // Unemployment rate
+    ];
+
+    const promises = indicators.map(indicator =>
+      fetch(`https://api.worldbank.org/v2/country/${isoCode}/indicator/${indicator}?format=json&date=2022&per_page=1`)
+        .then(r => r.json())
+    );
+
+    const results = await Promise.all(promises);
+    
+    const data = {
+      gdp: results[0][1]?.[0]?.value || null,
+      population: results[1][1]?.[0]?.value || null,
+      gdpPerCapita: results[2][1]?.[0]?.value || null,
+      unemployment: results[3][1]?.[0]?.value || null,
+      lastUpdated: new Date().toISOString()
+    };
+
+    countryDataCache.set(countryName, data);
+    return data;
+  } catch (error) {
+    console.warn('Failed to fetch country data:', error);
+    return null;
+  }
+}
+
+async function preloadAllCountryData(countryNames, progressCallback) {
+  const totalCountries = countryNames.length;
+  let loadedCount = 0;
+  
+  // Process all countries in parallel for maximum speed
+  const promises = countryNames.map(countryName => {
+    return fetchCountryData(countryName).then(() => {
+      loadedCount++;
+      const progress = (loadedCount / totalCountries) * 100;
+      progressCallback(progress, loadedCount, totalCountries, countryName);
+    }).catch(error => {
+      // Continue even if one country fails
+      console.warn(`Failed to load ${countryName}:`, error);
+      loadedCount++;
+      const progress = (loadedCount / totalCountries) * 100;
+      progressCallback(progress, loadedCount, totalCountries, countryName);
+    });
+  });
+  
+  // Wait for all parallel requests to complete
+  await Promise.allSettled(promises);
+}
+
+function updateLoadingProgress(progress, loaded, total, currentCountry) {
+  const progressText = document.getElementById('loadingProgress');
+  const barFill = document.getElementById('loadingBarFill');
+  
+  progressText.textContent = `Loading ${currentCountry}... (${loaded}/${total})`;
+  barFill.style.width = `${progress}%`;
+}
+
+function getRankingColor(value, allValues, isHigherBetter = true) {
+  if (!value || !allValues || allValues.length === 0) return '#6a8a7a';
+  
+  // Filter out null/undefined values and sort
+  const validValues = allValues.filter(v => v !== null && v !== undefined);
+  if (validValues.length === 0) return '#6a8a7a';
+  
+  validValues.sort((a, b) => isHigherBetter ? b - a : a - b);
+  
+  // Find rank (0 = best, 1 = worst)
+  let rank = validValues.indexOf(value);
+  if (rank === -1) return '#6a8a7a';
+  rank = rank / (validValues.length - 1);
+  
+  // Convert rank to color (red to green)
+  const red = Math.round(255 * rank);
+  const green = Math.round(255 * (1 - rank));
+  return `rgb(${red}, ${green}, 0)`;
+}
+
+function formatTooltipContent(countryName, data) {
+  let html = `<div class="tooltip-title">${countryName}</div>`;
+  
+  if (!data) {
+    html += '<div class="tooltip-loading">Loading data...</div>';
+    return html;
+  }
+
+  // Get checkbox states
+  const showGDP = document.getElementById('toggleGDP').checked;
+  const showPopulation = document.getElementById('togglePopulation').checked;
+  const showGDPPerCapita = document.getElementById('toggleGDPPerCapita').checked;
+  const showUnemployment = document.getElementById('toggleUnemployment').checked;
+
+  // Get all values for ranking
+  const allGdp = Array.from(countryDataCache.values()).map(d => d?.gdp).filter(v => v);
+  const allPop = Array.from(countryDataCache.values()).map(d => d?.population).filter(v => v);
+  const allGdpPerCapita = Array.from(countryDataCache.values()).map(d => d?.gdpPerCapita).filter(v => v);
+  const allUnemployment = Array.from(countryDataCache.values()).map(d => d?.unemployment).filter(v => v !== null && v !== undefined);
+
+  if (showGDP && data.gdp) {
+    const color = getRankingColor(data.gdp, allGdp, true);
+    html += `<div class="tooltip-stat">
+      <span class="tooltip-label">GDP:</span>
+      <span class="tooltip-value" style="color: ${color}">$${(data.gdp / 1e12).toFixed(2)}T</span>
+    </div>`;
+  }
+
+  if (showPopulation && data.population) {
+    const color = getRankingColor(data.population, allPop, true);
+    html += `<div class="tooltip-stat">
+      <span class="tooltip-label">Population:</span>
+      <span class="tooltip-value" style="color: ${color}">${(data.population / 1e9).toFixed(2)}B</span>
+    </div>`;
+  }
+
+  if (showGDPPerCapita && data.gdpPerCapita) {
+    const color = getRankingColor(data.gdpPerCapita, allGdpPerCapita, true);
+    html += `<div class="tooltip-stat">
+      <span class="tooltip-label">GDP per capita:</span>
+      <span class="tooltip-value" style="color: ${color}">$${Math.round(data.gdpPerCapita).toLocaleString()}</span>
+    </div>`;
+  }
+
+  if (showUnemployment && data.unemployment !== null) {
+    // For unemployment, lower is better (reverse ranking)
+    const color = getRankingColor(data.unemployment, allUnemployment, false);
+    html += `<div class="tooltip-stat">
+      <span class="tooltip-label">Unemployment:</span>
+      <span class="tooltip-value" style="color: ${color}">${data.unemployment.toFixed(1)}%</span>
+    </div>`;
+  }
+
+  return html;
+}
+
+/* ── Tooltip / hover ── */
+const tooltip = document.getElementById('tooltip');
+const raycaster = new THREE.Raycaster();
+const mouseNDC = new THREE.Vector2(9999,9999);
+let hoveredName = '—';
+const countryMeshes = [];
+
+renderer.domElement.addEventListener('pointermove', e => {
+  mouseNDC.x = (e.clientX / innerWidth)*2 - 1;
+  mouseNDC.y = -(e.clientY / innerHeight)*2 + 1;
+  // Tooltip follow
+  tooltip.style.left = e.clientX + 'px';
+  tooltip.style.top = e.clientY + 'px';
+});
+
+/* ── Earcut triangulation (embedded minimal version) ── */
+// Minimal earcut for 2D polygon triangulation
+function earcut(data, holeIndices, dim) {
+  dim = dim || 2;
+  var hasHoles = holeIndices && holeIndices.length,
+      outerLen = hasHoles ? holeIndices[0] * dim : data.length,
+      outerNode = linkedList(data, 0, outerLen, dim, true),
+      triangles = [];
+  if (!outerNode || outerNode.next === outerNode.prev) return triangles;
+  if (hasHoles) outerNode = eliminateHoles(data, holeIndices, outerNode, dim);
+  var minX, minY, maxX, maxY, x, y, invSize;
+  if (data.length > 80 * dim) {
+    minX = maxX = data[0]; minY = maxY = data[1];
+    for (var i = dim; i < outerLen; i += dim) {
+      x = data[i]; y = data[i+1];
+      if (x < minX) minX = x; if (y < minY) minY = y;
+      if (x > maxX) maxX = x; if (y > maxY) maxY = y;
+    }
+    invSize = Math.max(maxX - minX, maxY - minY);
+    invSize = invSize !== 0 ? 1 / invSize : 0;
+  }
+  earcutLinked(outerNode, triangles, dim, minX, minY, invSize, 0);
+  return triangles;
+}
+function linkedList(data,start,end,dim,cw){var last;if(cw===(signedArea(data,start,end,dim)>0)){for(var i=start;i<end;i+=dim)last=insertNode(i,data[i],data[i+1],last);}else{for(var i=end-dim;i>=start;i-=dim)last=insertNode(i,data[i],data[i+1],last);}if(last&&equals(last,last.next)){removeNode(last);last=last.next;}if(!last)return null;last.next.prev=last;last.prev.next=last;return last;}
+function filterPoints(start,end){if(!start)return start;if(!end)end=start;var p=start,again;do{again=false;if(!p.steiner&&(equals(p,p.next)||area(p.prev,p,p.next)===0)){removeNode(p);p=end=p.prev;if(p===p.next)break;again=true;}else{p=p.next;}}while(again||p!==end);return end;}
+function earcutLinked(ear,triangles,dim,minX,minY,invSize,pass){if(!ear)return;if(!pass&&invSize)indexCurve(ear,minX,minY,invSize);var stop=ear,p,n;while(ear.prev!==ear.next){p=ear.prev;n=ear.next;if(invSize?isEarHashed(ear,minX,minY,invSize):isEar(ear)){triangles.push(p.i/dim);triangles.push(ear.i/dim);triangles.push(n.i/dim);removeNode(ear);ear=n.next;stop=n.next;continue;}ear=n;if(ear===stop){if(!pass){earcutLinked(filterPoints(ear),triangles,dim,minX,minY,invSize,1);}else if(pass===1){ear=cureLocalIntersections(filterPoints(ear),triangles,dim);earcutLinked(ear,triangles,dim,minX,minY,invSize,2);}else if(pass===2){splitEarcut(ear,triangles,dim,minX,minY,invSize);}break;}}}
+function isEar(ear){var a=ear.prev,b=ear,c=ear.next;if(area(a,b,c)>=0)return false;var p=ear.next.next;while(p!==ear.prev){if(pointInTriangle(a.x,a.y,b.x,b.y,c.x,c.y,p.x,p.y)&&area(p.prev,p,p.next)>=0)return false;p=p.next;}return true;}
+function isEarHashed(ear,minX,minY,invSize){var a=ear.prev,b=ear,c=ear.next;if(area(a,b,c)>=0)return false;var minTX=a.x<b.x?a.x<c.x?a.x:c.x:b.x<c.x?b.x:c.x,minTY=a.y<b.y?a.y<c.y?a.y:c.y:b.y<c.y?b.y:c.y,maxTX=a.x>b.x?a.x>c.x?a.x:c.x:b.x>c.x?b.x:c.x,maxTY=a.y>b.y?a.y>c.y?a.y:c.y:b.y>c.y?b.y:c.y,minZ=zOrder(minTX,minTY,minX,minY,invSize),maxZ=zOrder(maxTX,maxTY,minX,minY,invSize),p=ear.prevZ,n=ear.nextZ;while(p&&p.z>=minZ&&n&&n.z<=maxZ){if(p!==ear.prev&&p!==ear.next&&pointInTriangle(a.x,a.y,b.x,b.y,c.x,c.y,p.x,p.y)&&area(p.prev,p,p.next)>=0)return false;p=p.prevZ;if(n!==ear.prev&&n!==ear.next&&pointInTriangle(a.x,a.y,b.x,b.y,c.x,c.y,n.x,n.y)&&area(n.prev,n,n.next)>=0)return false;n=n.nextZ;}while(p&&p.z>=minZ){if(p!==ear.prev&&p!==ear.next&&pointInTriangle(a.x,a.y,b.x,b.y,c.x,c.y,p.x,p.y)&&area(p.prev,p,p.next)>=0)return false;p=p.prevZ;}while(n&&n.z<=maxZ){if(n!==ear.prev&&n!==ear.next&&pointInTriangle(a.x,a.y,b.x,b.y,c.x,c.y,n.x,n.y)&&area(n.prev,n,n.next)>=0)return false;n=n.nextZ;}return true;}
+function cureLocalIntersections(start,triangles,dim){var p=start;do{var a=p.prev,b=p.next.next;if(!equals(a,b)&&intersects(a,p,p.next,b)&&locallyInside(a,b)&&locallyInside(b,a)){triangles.push(a.i/dim);triangles.push(p.i/dim);triangles.push(b.i/dim);removeNode(p);removeNode(p.next);p=start=b;}p=p.next;}while(p!==start);return filterPoints(p);}
+function splitEarcut(start,triangles,dim,minX,minY,invSize){var a=start;do{var b=a.next.next;while(b!==a.prev){if(a.i!==b.i&&isValidDiagonal(a,b)){var c=splitPolygon(a,b);a=filterPoints(a,a.next);c=filterPoints(c,c.next);earcutLinked(a,triangles,dim,minX,minY,invSize,0);earcutLinked(c,triangles,dim,minX,minY,invSize,0);return;}b=b.next;}a=a.next;}while(a!==start);}
+function eliminateHoles(data,holeIndices,outerNode,dim){var queue=[],i,len,start,end,list;for(i=0,len=holeIndices.length;i<len;i++){start=holeIndices[i]*dim;end=i<len-1?holeIndices[i+1]*dim:data.length;list=linkedList(data,start,end,dim,false);if(list===list.next)list.steiner=true;queue.push(getLeftmost(list));}queue.sort(compareX);for(i=0;i<queue.length;i++){outerNode=eliminateHole(queue[i],outerNode);outerNode=filterPoints(outerNode,outerNode.next);}return outerNode;}
+function eliminateHole(hole,outerNode){var bridge=findHoleBridge(hole,outerNode);if(!bridge){return outerNode;}var bridgeReverse=splitPolygon(bridge,hole);filterPoints(bridgeReverse,bridgeReverse.next);return filterPoints(bridge,bridge.next);}
+function findHoleBridge(hole,outerNode){var p=outerNode,hx=hole.x,hy=hole.y,qx=-Infinity,m;do{if(hy<=p.y&&hy>=p.next.y&&p.next.y!==p.y){var x=p.x+(hy-p.y)*(p.next.x-p.x)/(p.next.y-p.y);if(x<=hx&&x>qx){qx=x;if(x===hx){if(hy===p.y)return p;if(hy===p.next.y)return p.next;}m=p.x<p.next.x?p:p.next;}}p=p.next;}while(p!==outerNode);if(!m)return null;if(hx===qx)return m;var stop=m,mx=m.x,my=m.y,tanMin=Infinity,tan;p=m;do{if(hx>=p.x&&p.x>=mx&&hx!==p.x&&pointInTriangle(hy<my?hx:qx,hy,mx,my,hy<my?qx:hx,hy,p.x,p.y)){tan=Math.abs(hy-p.y)/(hx-p.x);if(locallyInside(p,hole)&&(tan<tanMin||(tan===tanMin&&(p.x>m.x||(p.x===m.x&&sectorContainsSector(m,p)))))){m=p;tanMin=tan;}}p=p.next;}while(p!==stop);return m;}
+function sectorContainsSector(m,p){return area(m.prev,m,p.prev)<0&&area(p.next,m,m.next)<0;}
+function indexCurve(start,minX,minY,invSize){var p=start;do{if(p.z===null)p.z=zOrder(p.x,p.y,minX,minY,invSize);p.prevZ=p.prev;p.nextZ=p.next;p=p.next;}while(p!==start);p.prevZ.nextZ=null;p.prevZ=null;sortLinked(p);}
+function sortLinked(list){var i,p,q,e,tail,numMerges,pSize,qSize,inSize=1;do{p=list;list=null;tail=null;numMerges=0;while(p){numMerges++;q=p;pSize=0;for(i=0;i<inSize;i++){pSize++;q=q.nextZ;if(!q)break;}qSize=inSize;while(pSize>0||qSize>0&&q){if(pSize!==0&&(qSize===0||!q||p.z<=q.z)){e=p;p=p.nextZ;pSize--;}else{e=q;q=q.nextZ;qSize--;}if(tail)tail.nextZ=e;else list=e;e.prevZ=tail;tail=e;}p=q;}tail.nextZ=null;inSize*=2;}while(numMerges>1);return list;}
+function zOrder(x,y,minX,minY,invSize){x=32767*(x-minX)*invSize;y=32767*(y-minY)*invSize;x=(x|(x<<8))&0x00FF00FF;x=(x|(x<<4))&0x0F0F0F0F;x=(x|(x<<2))&0x33333333;x=(x|(x<<1))&0x55555555;y=(y|(y<<8))&0x00FF00FF;y=(y|(y<<4))&0x0F0F0F0F;y=(y|(y<<2))&0x33333333;y=(y|(y<<1))&0x55555555;return x|(y<<1);}
+function getLeftmost(start){var p=start,leftmost=start;do{if(p.x<leftmost.x||(p.x===leftmost.x&&p.y<leftmost.y))leftmost=p;p=p.next;}while(p!==start);return leftmost;}
+function pointInTriangle(ax,ay,bx,by,cx,cy,px,py){return(cx-px)*(ay-py)-(ax-px)*(cy-py)>=0&&(ax-px)*(by-py)-(bx-px)*(ay-py)>=0&&(bx-px)*(cy-py)-(cx-px)*(by-py)>=0;}
+function isValidDiagonal(a,b){return a.next.i!==b.i&&a.prev.i!==b.i&&!intersectsPolygon(a,b)&&(locallyInside(a,b)&&locallyInside(b,a)&&middleInside(a,b)&&(area(a.prev,a,b.prev)||area(a,b.prev,b))||equals(a,b)&&area(a.prev,a,a.next)>0&&area(b.prev,b,b.next)>0);}
+function area(p,q,r){return(q.y-p.y)*(r.x-q.x)-(q.x-p.x)*(r.y-q.y);}
+function equals(p1,p2){return p1.x===p2.x&&p1.y===p2.y;}
+function intersects(p1,q1,p2,q2){var o1=sign(area(p1,q1,p2)),o2=sign(area(p1,q1,q2)),o3=sign(area(p2,q2,p1)),o4=sign(area(p2,q2,q1));if(o1!==o2&&o3!==o4)return true;if(o1===0&&onSegment(p1,p2,q1))return true;if(o2===0&&onSegment(p1,q2,q1))return true;if(o3===0&&onSegment(p2,p1,q2))return true;if(o4===0&&onSegment(p2,q1,q2))return true;return false;}
+function onSegment(p,q,r){return q.x<=Math.max(p.x,r.x)&&q.x>=Math.min(p.x,r.x)&&q.y<=Math.max(p.y,r.y)&&q.y>=Math.min(p.y,r.y);}
+function sign(n){return n>0?1:n<0?-1:0;}
+function intersectsPolygon(a,b){var p=a;do{if(p.i!==a.i&&p.next.i!==a.i&&p.i!==b.i&&p.next.i!==b.i&&intersects(p,p.next,a,b))return true;p=p.next;}while(p!==a);return false;}
+function locallyInside(a,b){return area(a.prev,a,a.next)<0?area(a,b,a.next)>=0&&area(a,a.prev,b)>=0:area(a,b,a.prev)<0||area(a,a.next,b)<0;}
+function middleInside(a,b){var p=a,inside=false,px=(a.x+b.x)/2,py=(a.y+b.y)/2;do{if(p.y>py!==p.next.y>py&&p.next.y!==p.y&&px<(p.next.x-p.x)*(py-p.y)/(p.next.y-p.y)+p.x)inside=!inside;p=p.next;}while(p!==a);return inside;}
+function splitPolygon(a,b){var a2=new Node(a.i,a.x,a.y),b2=new Node(b.i,b.x,b.y),an=a.next,bp=b.prev;a.next=b;b.prev=a;a2.next=an;an.prev=a2;b2.next=a2;a2.prev=b2;bp.next=b2;b2.prev=bp;return b2;}
+function insertNode(i,x,y,last){var p=new Node(i,x,y);if(!last){p.prev=p;p.next=p;}else{p.next=last.next;p.prev=last;last.next.prev=p;last.next=p;}return p;}
+function removeNode(p){p.next.prev=p.prev;p.prev.next=p.next;if(p.prevZ)p.prevZ.nextZ=p.nextZ;if(p.nextZ)p.nextZ.prevZ=p.prevZ;}
+function Node(i,x,y){this.i=i;this.x=x;this.y=y;this.prev=null;this.next=null;this.z=null;this.prevZ=null;this.nextZ=null;this.steiner=false;}
+function signedArea(data,start,end,dim){var sum=0;for(var i=start,j=end-dim;i<end;i+=dim){sum+=(data[j]-data[i])*(data[i+1]+data[j+1]);j=i;}return sum;}
+function compareX(a,b){return a.x-b.x;}
+
+/* ── Convert lon/lat to 3D on sphere ── */
+function llTo3D(lon, lat, r) {
+  const phi = (90 - lat) * Math.PI / 180;
+  const theta = (lon + 180) * Math.PI / 180;
+  return new THREE.Vector3(
+    -r * Math.sin(phi) * Math.cos(theta),
+     r * Math.cos(phi),
+     r * Math.sin(phi) * Math.sin(theta)
+  );
+}
+
+/* ── Build land mesh from a ring of lon/lat coords ── */
+function buildPolygonMesh(ring, name) {
+  if (ring.length < 4) return null;
+  // Flatten for earcut (2D: lon, lat)
+  const flat = [];
+  for (let i = 0; i < ring.length - 1; i++) { // skip closing duplicate
+    flat.push(ring[i][0], ring[i][1]);
+  }
+  const indices = earcut(flat);
+  if (indices.length === 0) return null;
+
+  const r = 1.008; // further above ocean to prevent clipping
+  const verts = [];
+  const norms = [];
+  const count = flat.length / 2;
+
+  // Build 3D positions
+  const pts3D = [];
+  for (let i = 0; i < count; i++) {
+    const v = llTo3D(flat[i*2], flat[i*2+1], r);
+    pts3D.push(v);
+  }
+
+  for (let i = 0; i < indices.length; i++) {
+    const v = pts3D[indices[i]];
+    verts.push(v.x, v.y, v.z);
+    const n = v.clone().normalize();
+    norms.push(n.x, n.y, n.z);
+  }
+
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(verts, 3));
+  geo.setAttribute('normal', new THREE.Float32BufferAttribute(norms, 3));
+
+  const mat = new THREE.ShaderMaterial({
+    uniforms: {
+      lightDirection: { value: new THREE.Vector3(0.5, 0.5, 1).normalize() },
+      frontColor: { value: new THREE.Color(0x2d8a4e) }, // Green for front
+      backColor: { value: new THREE.Color(0x3e2723) }  // Extremely dark brown for back
+    },
+    vertexShader: `
+      varying vec3 vNormal;
+      varying vec3 vPosition;
+      void main() {
+        vNormal = normalize(normalMatrix * normal);
+        vPosition = (modelViewMatrix * vec4(position, 1.0)).xyz;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }
+    `,
+    fragmentShader: `
+      uniform vec3 lightDirection;
+      uniform vec3 frontColor;
+      uniform vec3 backColor;
+      varying vec3 vNormal;
+      varying vec3 vPosition;
+      
+      void main() {
+        vec3 normal = normalize(vNormal);
+        vec3 viewDirection = normalize(-vPosition);
+        
+        float dotProduct = dot(normal, viewDirection);
+        
+        vec3 color;
+        if (dotProduct > 0.0) {
+          color = frontColor;
+        } else {
+          color = backColor;
+        }
+        
+        // Simple lighting
+        float light = max(0.0, dot(normal, lightDirection)) * 0.3 + 0.7;
+        color *= light;
+        
+        gl_FragColor = vec4(color, 1.0);
+      }
+    `,
+    side: THREE.DoubleSide
+  });
+
+  const mesh = new THREE.Mesh(geo, mat);
+  mesh.userData.country = name;
+  return mesh;
+}
+
+/* ── Build border lines from a ring ── */
+function buildBorderLine(ring) {
+  const r = 1.010;
+  const pts = [];
+  for (const coord of ring) {
+    const v = llTo3D(coord[0], coord[1], r);
+    pts.push(v.x, v.y, v.z);
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3));
+  return new THREE.Line(geo, new THREE.LineBasicMaterial({ color: 0x145530, linewidth: 1 }));
+}
+
+/* ── Load GeoJSON ── */
+async function loadGlobe() {
+  try {
+    // Update loading text
+    document.getElementById('loadingProgress').textContent = 'Loading world geography...';
+    
+    const res = await fetch('https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_110m_admin_0_countries.geojson');
+    const geo = await res.json();
+
+    let countryCount = 0, polyCount = 0;
+    const supportedCountries = [];
+
+    for (const feature of geo.features) {
+      const name = feature.properties.ADMIN || feature.properties.NAME || 'Unknown';
+      const geom = feature.geometry;
+      const rings = [];
+
+      if (geom.type === 'Polygon') {
+        rings.push(geom.coordinates[0]);
+      } else if (geom.type === 'MultiPolygon') {
+        for (const poly of geom.coordinates) rings.push(poly[0]);
+      }
+
+      countryCount++;
+      for (const ring of rings) {
+        const mesh = buildPolygonMesh(ring, name);
+        if (mesh) {
+          globeGroup.add(mesh);
+          countryMeshes.push(mesh);
+          polyCount++;
+        }
+        const borderLine = buildBorderLine(ring);
+        globeGroup.add(borderLine);
+        if (!window.borderLines) window.borderLines = [];
+        borderLine.userData.country = name;
+        borderLine.userData.originalRing = ring.slice(); // Store original coordinates
+        window.borderLines.push(borderLine);
+      }
+
+      // Collect supported countries for data preloading
+      if (nameToISO[name]) {
+        supportedCountries.push(name);
+      }
+    }
+
+    document.getElementById('statCountries').textContent = countryCount;
+    document.getElementById('statPolygons').textContent = polyCount;
+
+    // Preload all country data
+    document.getElementById('loadingProgress').textContent = 'Loading country statistics...';
+    await preloadAllCountryData(supportedCountries, updateLoadingProgress);
+
+    // Complete loading
+    document.getElementById('loadingProgress').textContent = 'Complete!';
+    document.getElementById('loadingBarFill').style.width = '100%';
+    
+    // Add blur transition and hide
+    const loader = document.getElementById('loader');
+    loader.classList.add('loading-complete');
+    
+    setTimeout(() => {
+      loader.classList.add('hidden');
+    }, 600);
+
+    // Store original positions and populate country dropdown
+    storeOriginalPositions();
+    populateCountryDropdown();
+
+  } catch(e) {
+    console.error(e);
+    document.getElementById('loader').innerHTML = '<div style="color:#ff4444">Failed to load data. Check network.</div>';
+  }
+}
+
+/* Country sizing functionality */
+function populateCountryDropdown() {
+  const select = document.getElementById('countrySelect');
+  const countryNames = new Set();
+  
+  // Collect all unique country names
+  for (const mesh of countryMeshes) {
+    if (mesh.userData.country) {
+      countryNames.add(mesh.userData.country);
+    }
+  }
+  
+  // Sort and add to dropdown
+  const sortedCountries = Array.from(countryNames).sort();
+  for (const country of sortedCountries) {
+    const option = document.createElement('option');
+    option.value = country;
+    option.textContent = country;
+    select.appendChild(option);
+  }
+}
+
+// Store original positions for each country mesh
+const originalPositions = new Map();
+const currentAnimations = new Map();
+
+function getCountryMeshes(countryName) {
+  return countryMeshes.filter(mesh => mesh.userData.country === countryName);
+}
+
+function storeOriginalPositions() {
+  for (const mesh of countryMeshes) {
+    if (!originalPositions.has(mesh.userData.country)) {
+      originalPositions.set(mesh.userData.country, new Map());
+    }
+    const countryMap = originalPositions.get(mesh.userData.country);
+    countryMap.set(mesh, mesh.geometry.attributes.position.array.slice());
+  }
+}
+
+function animateCountrySize(countryName, scaleFactor) {
+  if (!window.borderLines) return;
+  
+  const allBorders = window.borderLines;
+  
+  // Cancel any existing animation
+  for (const [country, animId] of currentAnimations) {
+    cancelAnimationFrame(animId);
+  }
+  currentAnimations.clear();
+
+  const startTime = performance.now();
+  const duration = 1500; // 1.5 second animation
+
+  function animate(currentTime) {
+    const elapsed = currentTime - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+    
+    // Easing function for smooth animation
+    const easeProgress = 1 - Math.pow(1 - progress, 3);
+
+    // If scale factor is 1.0, just restore original positions
+    if (scaleFactor === 1.0) {
+      for (const border of allBorders) {
+        const originalRing = border.userData.originalRing;
+        const pts = [];
+        for (const coord of originalRing) {
+          const v = llTo3D(coord[0], coord[1], 1.010);
+          pts.push(v.x, v.y, v.z);
+        }
+        border.geometry.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3));
+      }
+    } else {
+      // Calculate target country center and influence radius
+      const targetBorders = allBorders.filter(line => line.userData.country === countryName);
+      const targetCenter = new THREE.Vector3();
+      let maxDist = 0;
+      
+      for (const border of targetBorders) {
+        const originalRing = border.userData.originalRing;
+        for (const coord of originalRing) {
+          const v = llTo3D(coord[0], coord[1], 1.010);
+          targetCenter.x += v.x;
+          targetCenter.y += v.y;
+          targetCenter.z += v.z;
+          
+          const dist = v.distanceTo(new THREE.Vector3(0, 0, 0));
+          maxDist = Math.max(maxDist, dist);
+        }
+      }
+      
+      if (targetBorders.length === 0) return;
+      targetCenter.divideScalar(targetBorders.reduce((sum, border) => sum + border.userData.originalRing.length, 0));
+      const influenceRadius = maxDist * 2.5;
+
+      // Apply transformation to all border lines
+      for (const border of allBorders) {
+        const originalRing = border.userData.originalRing;
+        const isTargetCountry = border.userData.country === countryName;
+        
+        const newCoords = [];
+        
+        for (const coord of originalRing) {
+          const originalPos = llTo3D(coord[0], coord[1], 1.010);
+          
+          if (isTargetCountry) {
+            // Scale target country along sphere surface
+            const lon = coord[0] * Math.PI / 180;
+            const lat = coord[1] * Math.PI / 180;
+            
+            // Convert center to spherical coordinates
+            const centerLon = Math.atan2(targetCenter.z, targetCenter.x);
+            const centerLat = Math.asin(targetCenter.y / targetCenter.length());
+            
+            // Calculate angular distance
+            const angularDist = Math.acos(
+              Math.sin(lat) * Math.sin(centerLat) + 
+              Math.cos(lat) * Math.cos(centerLat) * Math.cos(lon - centerLon)
+            );
+            
+            if (angularDist > 0.001) {
+              const scaledAngularDist = angularDist * (1 + (scaleFactor - 1) * easeProgress);
+              
+              // Calculate new position
+              const a = Math.sin(centerLat) * Math.cos(scaledAngularDist) + 
+                       Math.cos(centerLat) * Math.sin(scaledAngularDist) * Math.cos(lat);
+              const b = Math.sin(scaledAngularDist) * Math.sin(lat);
+              const c = Math.cos(centerLat) * Math.cos(scaledAngularDist) - 
+                       Math.sin(centerLat) * Math.sin(scaledAngularDist) * Math.cos(lat);
+              
+              const newLon = centerLon + Math.atan2(b, c);
+              const newLat = Math.asin(a);
+              
+              // Convert back to lat/lon
+              const newLatDeg = newLat * 180 / Math.PI;
+              const newLonDeg = newLon * 180 / Math.PI;
+              
+              newCoords.push([newLonDeg, newLatDeg]);
+            } else {
+              // At center, no change
+              newCoords.push(coord);
+            }
+          } else {
+            // Push neighboring countries away
+            const distToTarget = originalPos.distanceTo(targetCenter);
+            if (distToTarget < influenceRadius) {
+              const influence = 1 - (distToTarget / influenceRadius);
+              const pushStrength = influence * (scaleFactor - 1) * easeProgress * 0.2;
+              
+              // Push along sphere surface
+              const pushDirection = originalPos.clone().sub(targetCenter).normalize();
+              const tangent = pushDirection.clone().cross(originalPos).normalize();
+              const pushVector = originalPos.clone().cross(tangent).normalize().multiplyScalar(pushStrength);
+              
+              const newPos = originalPos.clone().add(pushVector);
+              newPos.normalize().multiplyScalar(1.010);
+              
+              // Convert back to lat/lon
+              const newLon = Math.atan2(newPos.z, newPos.x) * 180 / Math.PI;
+              const newLat = Math.asin(newPos.y / newPos.length()) * 180 / Math.PI;
+              
+              newCoords.push([newLon, newLat]);
+            } else {
+              // No change for distant countries
+              newCoords.push(coord);
+            }
+          }
+        }
+        
+        // Update border line geometry
+        const pts = [];
+        for (const coord of newCoords) {
+          const v = llTo3D(coord[0], coord[1], 1.010);
+          pts.push(v.x, v.y, v.z);
+        }
+        
+        border.geometry.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3));
+      }
+    }
+
+    if (progress < 1) {
+      currentAnimations.set('global', requestAnimationFrame(animate));
+    } else {
+      currentAnimations.delete('global');
+    }
+  }
+
+  requestAnimationFrame(animate);
+}
+
+// Button event listeners
+document.getElementById('btnNormalSize').addEventListener('click', () => {
+  const selectedCountry = document.getElementById('countrySelect').value;
+  if (selectedCountry) {
+    animateCountrySize(selectedCountry, 1.0);
+  }
+});
+
+document.getElementById('btnDoubleSize').addEventListener('click', () => {
+  const selectedCountry = document.getElementById('countrySelect').value;
+  if (selectedCountry) {
+    animateCountrySize(selectedCountry, 2.0);
+  }
+});
+
+/* ── Hover highlight ── */
+const highlightColor = new THREE.Color(0x4ade80);
+const normalColor = new THREE.Color(0x2d8a4e);
+let lastHovered = null;
+
+function doHover() {
+  raycaster.setFromCamera(mouseNDC, camera);
+  const hits = raycaster.intersectObjects(countryMeshes);
+  
+  if (lastHovered) {
+    lastHovered.material.color.copy(normalColor);
+    lastHovered.material.emissive.setHex(0x000000);
+    lastHovered = null;
+  }
+
+  if (hits.length > 0) {
+    const hit = hits[0];
+    const obj = hit.object;
+    
+    // Check if the hit is on the front side of the globe
+    // Calculate if the hit point is facing the camera
+    const hitPoint = hit.point;
+    const toCamera = new THREE.Vector3().subVectors(camera.position, hitPoint).normalize();
+    const hitNormal = hit.face.normal.clone().transformDirection(obj.matrixWorld).normalize();
+    const dotProduct = toCamera.dot(hitNormal);
+    
+    // Only select if facing forward (dot product > 0)
+    if (dotProduct > 0) {
+      obj.material.color.copy(highlightColor);
+      obj.material.emissive.setHex(0x1a5a2a);
+      lastHovered = obj;
+      hoveredName = obj.userData.country;
+      
+      // Check if this is a different country than before
+      if (currentHoveredCountry !== hoveredName) {
+        currentHoveredCountry = hoveredName;
+        
+        // Show cached data immediately
+        const cachedData = countryDataCache.get(hoveredName);
+        tooltip.innerHTML = formatTooltipContent(hoveredName, cachedData);
+        tooltip.style.display = 'block';
+      }
+    }
+  } else {
+    hoveredName = 'â';
+    currentHoveredCountry = null;
+    tooltip.style.display = 'none';
+  }
+  document.getElementById('statHover').textContent = hoveredName;
+}
+
+/* ── Animate ── */
+function animate() {
+  requestAnimationFrame(animate);
+
+  // Smooth rotation
+  rotCurrent.x += (rotTarget.x - rotCurrent.x) * 0.08;
+  rotCurrent.y += (rotTarget.y - rotCurrent.y) * 0.08;
+  zoomCurrent += (zoomTarget - zoomCurrent) * 0.08;
+
+  globeGroup.rotation.x = rotCurrent.x;
+  globeGroup.rotation.y = rotCurrent.y;
+  camera.position.z = zoomCurrent;
+
+  // Slow auto-rotate when not dragging
+  if (!isDrag) {
+    rotTarget.y += 0.0008;
+  }
+
+  doHover();
+  renderer.render(scene, camera);
+}
+
+window.addEventListener('resize', () => {
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+});
+
+// Add radio button behavior - only one statistic can be selected at a time
+const checkboxes = ['toggleGDP', 'togglePopulation', 'toggleGDPPerCapita', 'toggleUnemployment'];
+
+checkboxes.forEach(id => {
+  document.getElementById(id).addEventListener('change', function() {
+    if (this.checked) {
+      // Uncheck all other checkboxes
+      checkboxes.forEach(otherId => {
+        if (otherId !== id) {
+          document.getElementById(otherId).checked = false;
+        }
+      });
+    }
+    updateTooltipIfHovering();
+  });
+});
+
+function updateTooltipIfHovering() {
+  if (currentHoveredCountry) {
+    const data = countryDataCache.get(currentHoveredCountry);
+    tooltip.innerHTML = formatTooltipContent(currentHoveredCountry, data);
+    tooltip.style.display = 'block';
+  }
+}
+
+loadGlobe();
+animate();
+
+})();
+</script>
+</body>
+</html>

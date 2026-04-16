@@ -9,6 +9,14 @@ import subprocess
 import re
 from pathlib import Path
 
+try:
+    from PIL import Image
+    PIL_AVAILABLE = True
+except ImportError:
+    PIL_AVAILABLE = False
+    print("WARNING: PIL not available. Install with: pip install Pillow")
+    print("Launcher icons will not be processed.")
+
 def increment_version():
     """Increment version code and name in build.gradle"""
     root_dir = Path(__file__).parent
@@ -55,6 +63,293 @@ def increment_version():
     print(f"Version updated: {current_code} ({current_name}) -> {new_code} ({new_name})")
     return new_code, new_name
 
+def create_resized_pngs():
+    """Create resized PNG versions (48, 72, 96, 144, 192) from 512x512 source"""
+    if not PIL_AVAILABLE:
+        print("Skipping PNG resizing (PIL not available)")
+        return
+    
+    root_dir = Path(__file__).parent
+    
+    # Find source icon (try multiple locations)
+    source_paths = [
+        root_dir / "images" / "mathinspace_512_512.png",
+        root_dir / "favicon" / "math_space_favicon.png",
+        root_dir / "mathinspace_512_512.png"
+    ]
+    
+    source_icon = None
+    for path in source_paths:
+        if path.exists():
+            source_icon = path
+            break
+    
+    if not source_icon:
+        print("WARNING: No source icon found for PNG resizing. Expected locations:")
+        for path in source_paths:
+            print(f"  - {path}")
+        return
+    
+    print(f"Creating resized PNGs from: {source_icon}")
+    source_dir = source_icon.parent
+    
+    # Sizes to create
+    sizes = [48, 72, 96, 144, 192]
+    
+    try:
+        with Image.open(source_icon) as img:
+            # Convert to RGB (opaque, no alpha channel) to prevent Android adaptive icon shrinking
+            if img.mode != 'RGB':
+                # If image has transparency, composite it on white background
+                if img.mode == 'RGBA':
+                    background = Image.new('RGB', img.size, (255, 255, 255))
+                    background.paste(img, mask=img.split()[3])  # Use alpha as mask
+                    img = background
+                else:
+                    img = img.convert('RGB')
+            
+            for size in sizes:
+                # Scale image to fill entire canvas (100%, not safe zone)
+                resized = img.resize((size, size), Image.Resampling.LANCZOS)
+                output_path = source_dir / f"mathinspace_{size}_{size}.png"
+                resized.save(output_path, "PNG")
+                print(f"Created: {output_path.name}")
+    except Exception as e:
+        print(f"ERROR: Failed to create resized PNGs: {e}")
+
+def create_foreground_pngs():
+    """Create foreground PNGs at 108dp density-specific sizes from source"""
+    if not PIL_AVAILABLE:
+        print("Skipping foreground PNG creation (PIL not available)")
+        return
+    
+    root_dir = Path(__file__).parent
+    
+    # Find source icon
+    source_paths = [
+        root_dir / "images" / "mathinspace_512_512.png",
+        root_dir / "favicon" / "math_space_favicon.png",
+        root_dir / "mathinspace_512_512.png"
+    ]
+    
+    source_icon = None
+    for path in source_paths:
+        if path.exists():
+            source_icon = path
+            break
+    
+    if not source_icon:
+        print("WARNING: No source icon found for foreground PNG creation")
+        return
+    
+    # 108dp foreground sizes for each density
+    foreground_sizes = {
+        108: "mipmap-mdpi",      # 108×108
+        162: "mipmap-hdpi",      # 162×162
+        216: "mipmap-xhdpi",     # 216×216
+        324: "mipmap-xxhdpi",    # 324×324
+        432: "mipmap-xxxhdpi"    # 432×432
+    }
+    
+    android_res_dir = root_dir / "android" / "app" / "src" / "main" / "res"
+    scale_factor = 0.70  # Scale PNG to 70% of canvas size
+    offset_x = 5  # Move right by 5 pixels
+    offset_y = 20  # Move down by 20 pixels
+    
+    try:
+        with Image.open(source_icon) as img:
+            # Convert to RGBA for foreground (needs transparency support)
+            if img.mode != 'RGBA':
+                img = img.convert('RGBA')
+            
+            print("Creating foreground PNGs (108dp sizes, scaled to 70%, offset right 5px down 20px)...")
+            for size, mipmap_name in foreground_sizes.items():
+                # Scale to full size first
+                resized = img.resize((size, size), Image.Resampling.LANCZOS)
+                
+                # Scale down to 70% and center on transparent canvas
+                scaled_size = int(size * scale_factor)
+                scaled_img = resized.resize((scaled_size, scaled_size), Image.Resampling.LANCZOS)
+                
+                # Create transparent canvas at full size
+                canvas = Image.new('RGBA', (size, size), (0, 0, 0, 0))
+                
+                # Calculate centered offset, then apply custom offset
+                center_offset_x = (size - scaled_size) // 2
+                center_offset_y = (size - scaled_size) // 2
+                final_offset_x = center_offset_x + offset_x
+                final_offset_y = center_offset_y + offset_y
+                
+                # Paste scaled image with custom offset on canvas
+                canvas.paste(scaled_img, (final_offset_x, final_offset_y), scaled_img)
+                
+                mipmap_dir = android_res_dir / mipmap_name
+                mipmap_dir.mkdir(parents=True, exist_ok=True)
+                
+                dst_path = mipmap_dir / "ic_launcher_foreground.png"
+                canvas.save(dst_path, "PNG")
+                print(f"Created: {mipmap_name}/ic_launcher_foreground.png ({size}×{size}, scaled to {scaled_size}×{scaled_size})")
+    except Exception as e:
+        print(f"ERROR: Failed to create foreground PNGs: {e}")
+
+def create_adaptive_icon_xmls():
+    """Create adaptive icon XML files and background color XML"""
+    root_dir = Path(__file__).parent
+    android_res_dir = root_dir / "android" / "app" / "src" / "main" / "res"
+    
+    if not android_res_dir.exists():
+        print(f"WARNING: Android res directory not found")
+        return
+    
+    # Create background color XML
+    print("Creating ic_launcher_background.xml...")
+    values_dir = android_res_dir / "values"
+    values_dir.mkdir(parents=True, exist_ok=True)
+    
+    bg_xml_path = values_dir / "ic_launcher_background.xml"
+    bg_xml_content = '''<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="ic_launcher_background">#050224</color>
+</resources>
+'''
+    try:
+        with open(bg_xml_path, 'w', encoding='utf-8') as f:
+            f.write(bg_xml_content)
+        print(f"Created: values/ic_launcher_background.xml")
+    except Exception as e:
+        print(f"ERROR: Failed to create background XML: {e}")
+    
+    # Create adaptive icon XMLs
+    print("Creating adaptive icon XMLs...")
+    adaptive_dir = android_res_dir / "mipmap-anydpi-v26"
+    adaptive_dir.mkdir(parents=True, exist_ok=True)
+    
+    adaptive_xml_content = '''<?xml version="1.0" encoding="utf-8"?>
+<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+    <background android:drawable="@color/ic_launcher_background"/>
+    <foreground android:drawable="@mipmap/ic_launcher_foreground"/>
+</adaptive-icon>
+'''
+    
+    for xml_name in ["ic_launcher.xml", "ic_launcher_round.xml"]:
+        xml_path = adaptive_dir / xml_name
+        try:
+            with open(xml_path, 'w', encoding='utf-8') as f:
+                f.write(adaptive_xml_content)
+            print(f"Created: mipmap-anydpi-v26/{xml_name}")
+        except Exception as e:
+            print(f"ERROR: Failed to create {xml_name}: {e}")
+
+def copy_resized_pngs_to_android():
+    """Copy resized PNGs to Android mipmap folders and update manifest"""
+    root_dir = Path(__file__).parent
+    android_res_dir = root_dir / "android" / "app" / "src" / "main" / "res"
+    
+    if not android_res_dir.exists():
+        print(f"WARNING: Android res directory not found: {android_res_dir}")
+        return
+    
+    # Map resized PNG sizes to Android mipmap folders (for ic_launcher.png)
+    size_to_mipmap = {
+        48: "mipmap-mdpi",
+        72: "mipmap-hdpi",
+        96: "mipmap-xhdpi",
+        144: "mipmap-xxhdpi",
+        192: "mipmap-xxxhdpi"
+    }
+    
+    # Find and copy resized PNGs
+    source_dir = None
+    for possible_dir in [root_dir / "images", root_dir / "favicon", root_dir]:
+        if possible_dir.exists():
+            # Check if any resized PNG exists in this directory
+            for size in size_to_mipmap.keys():
+                png_path = possible_dir / f"mathinspace_{size}_{size}.png"
+                if png_path.exists():
+                    source_dir = possible_dir
+                    break
+        if source_dir:
+            break
+    
+    if not source_dir:
+        print("WARNING: No resized PNGs found. Run create_resized_pngs() first.")
+        return
+    
+    print(f"Copying ic_launcher.png files from: {source_dir}")
+    copied_count = 0
+    
+    for size, mipmap_name in size_to_mipmap.items():
+        src_png = source_dir / f"mathinspace_{size}_{size}.png"
+        
+        if not src_png.exists():
+            print(f"WARNING: Missing {src_png.name}")
+            continue
+        
+        mipmap_dir = android_res_dir / mipmap_name
+        mipmap_dir.mkdir(parents=True, exist_ok=True)
+        
+        dst_png = mipmap_dir / "ic_launcher.png"
+        try:
+            shutil.copy2(src_png, dst_png)
+            print(f"Copied: {mipmap_name}/ic_launcher.png ({size}x{size})")
+            copied_count += 1
+        except Exception as e:
+            print(f"ERROR: Failed to copy to {mipmap_name}: {e}")
+    
+    print(f"Successfully copied {copied_count} PNG files to Android mipmap folders")
+    
+    # Create foreground PNGs and adaptive icon XMLs
+    print("\n=== Creating Adaptive Icon Setup ===")
+    create_foreground_pngs()
+    create_adaptive_icon_xmls()
+    
+    # Update AndroidManifest.xml
+    print("\nUpdating AndroidManifest.xml...")
+    manifest_path = root_dir / "android" / "app" / "src" / "main" / "AndroidManifest.xml"
+    
+    if not manifest_path.exists():
+        print(f"WARNING: AndroidManifest.xml not found at {manifest_path}")
+        return
+    
+    try:
+        with open(manifest_path, 'r', encoding='utf-8') as f:
+            manifest_content = f.read()
+        
+        # Ensure android:icon is set
+        if 'android:icon=' in manifest_content:
+            manifest_content = re.sub(
+                r'android:icon="[^"]*"',
+                'android:icon="@mipmap/ic_launcher"',
+                manifest_content
+            )
+        else:
+            manifest_content = re.sub(
+                r'(<application[^>]*?)(\s*>)',
+                r'\1\n        android:icon="@mipmap/ic_launcher"\2',
+                manifest_content
+            )
+        
+        # Ensure android:roundIcon is set
+        if 'android:roundIcon=' in manifest_content:
+            manifest_content = re.sub(
+                r'android:roundIcon="[^"]*"',
+                'android:roundIcon="@mipmap/ic_launcher_round"',
+                manifest_content
+            )
+        else:
+            manifest_content = re.sub(
+                r'(android:icon="@mipmap/ic_launcher")(\s+android:label)',
+                r'\1\n        android:roundIcon="@mipmap/ic_launcher_round"\2',
+                manifest_content
+            )
+        
+        with open(manifest_path, 'w', encoding='utf-8') as f:
+            f.write(manifest_content)
+        
+        print("Updated AndroidManifest.xml with adaptive icon references")
+    except Exception as e:
+        print(f"ERROR: Failed to update AndroidManifest.xml: {e}")
+
 def main():
     # Paths
     root_dir = Path(__file__).parent
@@ -99,6 +394,14 @@ def main():
             dst_folder = www_dir / folder
             print(f"Copying {src_folder} -> {dst_folder}")
             shutil.copytree(src_folder, dst_folder)
+    
+    # Create resized PNG versions
+    print("\n=== Creating Resized PNG Versions ===")
+    create_resized_pngs()
+    
+    # Copy resized PNGs to Android and update manifest
+    print("\n=== Copying PNGs to Android Mipmap Folders ===")
+    copy_resized_pngs_to_android()
     
     # Run Capacitor sync
     print("\n=== Running Capacitor Sync ===")
