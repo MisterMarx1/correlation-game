@@ -2796,6 +2796,7 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
         const root = ReactDOM.createRoot(document.getElementById('root'));
         
         // Version console log - update this on each deploy
+        // Before you git push origin main you must update this with tiemstamp so i can ensure I dont need to hard refresh
         console.log("=== MATH IN SPACE v1.57 DEPLOYED ===");
         
         root.render(
@@ -2872,12 +2873,17 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
             if (iframe) {
                 console.log("Ad iframe dimensions:", iframe.offsetWidth + "x" + iframe.offsetHeight);
                 console.log("Ad iframe style:", iframe.getAttribute("style"));
-                console.log("GOOGLE AD HEIGHT:", iframe.offsetHeight + "px");
+                
+                // Extract height from CSS style attribute
+                const styleHeight = iframe.style.height || "0px";
+                const heightValue = parseInt(styleHeight.replace("px", ""));
+                console.log("GOOGLE AD HEIGHT (from style):", styleHeight);
+                console.log("GOOGLE AD HEIGHT (parsed):", heightValue + "px");
                 
                 // Change background to white if ad is smaller than 100px
-                if (iframe.offsetHeight < 100 && bannerSpace) {
+                if (heightValue < 100 && bannerSpace) {
                     bannerSpace.style.background = "white";
-                    console.log("Changed banner background to white (ad height:", iframe.offsetHeight + "px)");
+                    console.log("Changed banner background to white (ad height:", heightValue + "px)");
                 }
             }
             if (ins) {
