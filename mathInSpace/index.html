@@ -2941,17 +2941,23 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
                 console.log("Ad ins status:", ins.dataset.adStatus);
             }
             
-            // Only show fallback if there's NO iframe at all (real 400 error)
+            // Show fallback if no iframe OR if ad is unfilled
             const hasIframe = !!iframe;
-            const shouldShowFallback = !hasIframe;
+            const isUnfilled = ins && ins.dataset.adStatus === 'unfilled';
+            const shouldShowFallback = !hasIframe || isUnfilled;
             
             console.log("Fallback condition debug:", {
                 hasIframe,
+                isUnfilled,
                 shouldShowFallback
             });
             
             if (shouldShowFallback) {
-                console.log("Showing fallback - no iframe detected");
+                if (!hasIframe) {
+                    console.log("Showing fallback - no iframe detected");
+                } else {
+                    console.log("Showing fallback - ad unfilled (no inventory)");
+                }
                 showFallbackAd(container);
             }
         }, 3000);
