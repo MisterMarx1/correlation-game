@@ -2802,51 +2802,6 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
             </Provider>
         );
         
-        // --- Android Status Bar Padding Fix ---
-        // On Android Capacitor, use the StatusBar plugin to get actual height
-        async function applyStatusBarPadding() {
-            const container = document.querySelector('.math-in-space-container');
-            if (!container || !window.Capacitor || window.Capacitor.platform !== 'android') return;
-            
-            try {
-                // Try to use Capacitor StatusBar plugin
-                const { StatusBar } = window.Capacitor.Plugins;
-                if (StatusBar && StatusBar.getInfo) {
-                    const info = await StatusBar.getInfo();
-                    console.log('StatusBar info:', info);
-                    
-                    // The height should be in info.height or we can calculate from screen metrics
-                    let statusBarHeight = info.height || 0;
-                    
-                    // If no height info, try measuring the safe area
-                    if (!statusBarHeight) {
-                        // On Android, check if there's a visual offset
-                        const rect = container.getBoundingClientRect();
-                        if (rect.top > 0) {
-                            statusBarHeight = rect.top;
-                            console.log('Detected status bar height from DOM:', statusBarHeight);
-                        }
-                    }
-                    
-                    if (statusBarHeight > 0) {
-                        container.style.paddingTop = statusBarHeight + 'px';
-                        console.log('Applied Android status bar padding:', statusBarHeight + 'px');
-                    }
-                }
-            } catch (e) {
-                console.log('StatusBar plugin not available, trying DOM measurement');
-                
-                // Fallback: measure the actual visual offset
-                const rect = container.getBoundingClientRect();
-                if (rect.top > 0) {
-                    container.style.paddingTop = rect.top + 'px';
-                    console.log('Applied DOM-measured status bar padding:', rect.top + 'px');
-                }
-            }
-        }
-        
-        // Call after render completes
-        setTimeout(applyStatusBarPadding, 200);
     </script>
     
     <!-- AdSense Control Script -->
