@@ -2797,7 +2797,7 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
     <script>
     console.log("Ad script loading...");
     let adLoaded = false;
-    const BUILD_VERSION = "2026-04-16-v5-remove-inline-minmax";
+    const BUILD_VERSION = "2026-04-16-v6-fix-initial-height-detection";
     console.log("Math In Space Build:", BUILD_VERSION);
 
     // Platform detection using existing Capacitor pattern
@@ -2848,7 +2848,7 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
         adLoaded = true;
 
         // Check if ad filled and dynamically update height
-        let lastAdHeight = 100;
+        let lastAdHeight = null;
         
         function updateAdHeight() {
             const ins = container.querySelector("ins.adsbygoogle");
@@ -2875,9 +2875,13 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
             console.log("Ad ins offsetHeight:", ins?.offsetHeight + "px");
             console.log("Final detected ad height:", adHeight + "px");
             
-            // If height changed, update the banner-ad-space container AND game container
+            // Always update - don't skip if height is same as initial value
             if (adHeight !== lastAdHeight) {
-                console.log("Ad height changed from", lastAdHeight + "px", "to", adHeight + "px");
+                if (lastAdHeight !== null) {
+                    console.log("Ad height changed from", lastAdHeight + "px", "to", adHeight + "px");
+                } else {
+                    console.log("Ad height detected:", adHeight + "px");
+                }
                 const bannerAdSpace = document.querySelector(".banner-ad-space");
                 const gameContainer = document.querySelector(".math-in-space-container");
                 
