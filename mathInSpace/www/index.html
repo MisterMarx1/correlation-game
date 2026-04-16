@@ -60,6 +60,14 @@
       crossorigin="anonymous">
     </script>
     <style>
+        /* Safe Area Insets - Define once, use everywhere */
+        :root {
+            --safe-top: max(10px, env(safe-area-inset-top));
+            --safe-bottom: max(10px, env(safe-area-inset-bottom));
+            --safe-left: max(10px, env(safe-area-inset-left));
+            --safe-right: max(10px, env(safe-area-inset-right));
+        }
+
         /* Remove default browser margins and white border */
         * {
             margin: 0;
@@ -1010,18 +1018,15 @@
             bottom: 0;
             left: 0;
             width: 100%;
-            height: 100px;
+            height: calc(100px + var(--safe-bottom));
+            padding-bottom: var(--safe-bottom);
             background: linear-gradient(135deg, #1a1a2e, #0f0f1e);
             border-top: 2px solid #00ccff;
             display: flex;
             align-items: center;
             justify-content: center;
             z-index: 10000;
-            font-family: 'Orbitron', sans-serif;
-            color: #666;
-            font-size: 12px;
-            text-transform: uppercase;
-            letter-spacing: 2px;
+            box-sizing: border-box;
         }
 
         #ad-container {
