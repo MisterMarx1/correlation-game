@@ -3023,6 +3023,9 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
     function tryLoadAdSense(container) {
         if (adLoaded) return;
 
+        // Clear fallback so AdSense can show
+        container.innerHTML = "";
+
         const ad = document.createElement("ins");
         ad.className = "adsbygoogle";
         ad.style.cssText = `
