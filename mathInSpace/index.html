@@ -33,8 +33,8 @@
   - Canvas API (native)
   
   Author: Mister Marx
-  Version: v0.1
-  Last Modified: 2026-03-23
+  Version: v1.79
+  Last Modified: 2026-04-17
 -->
 <!DOCTYPE html>
 <html lang="en">
@@ -3042,8 +3042,19 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
         ad.setAttribute("data-full-width-responsive", "false");
         
         container.appendChild(ad);
-        (adsbygoogle = window.adsbygoogle || []).push({});
-        adLoaded = true;
+        
+        // Wait for adsbygoogle to be available, then push
+        const pushAd = () => {
+            if (window.adsbygoogle && window.adsbygoogle.push) {
+                window.adsbygoogle.push({});
+                adLoaded = true;
+                console.log("✓ AdSense ad pushed successfully");
+            } else {
+                // Retry if not ready yet
+                setTimeout(pushAd, 50);
+            }
+        };
+        pushAd();
 
         // Check if ad filled after 3 seconds
         setTimeout(() => {
