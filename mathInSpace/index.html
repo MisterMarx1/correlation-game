@@ -754,6 +754,8 @@
             text-align: center;
             max-width: 320px;
             line-height: 1.5;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
         }
 
         .credits-close-button {
@@ -1038,7 +1040,9 @@
             bottom: 0;
             left: 0;
             width: 100%;
-            height: 100px;
+            height: 100px !important;
+            max-height: 100px !important;
+            min-height: 100px !important;
             background: linear-gradient(135deg, #1a1a2e, #0f0f1e);
             border-top: 2px solid #00ccff;
             display: flex;
@@ -1075,7 +1079,7 @@
         }
 
         .banner-ad-space.admob-shifted {
-            bottom: 18px;
+            height: calc(100px + 18px) !important;
         }
 
         .math-in-space-container.admob-shifted {
@@ -1101,7 +1105,7 @@
         // --- Sound Management System ---
         const SoundRoles = {
             // Background music track (will loop and overlap with itself)
-            BACKGROUND_MUSIC: 'mixkit-dark-space-motion-3026.wav',
+            BACKGROUND_MUSIC: 'Pinball Spring.mp3',
             
             // UI Sounds
             BUTTON_CLICK: 'mixkit-cinematic-impact-waves-781.wav',
@@ -1142,8 +1146,12 @@
                 this.effectsGainNode = null;
                 this.effectsVolume = 0.5;
                 
+                // Music loading state
+                this.isMusicReady = false;
+                this.musicLoadingPromise = null;
+                
                 this.initAudioContext();
-                this.loadAllSounds();
+                this.musicLoadingPromise = this.loadAllSounds();
             }
 
             initAudioContext() {
@@ -1168,8 +1176,10 @@
                     const response = await fetch(this.basePath + SoundRoles.BACKGROUND_MUSIC);
                     const arrayBuffer = await response.arrayBuffer();
                     this.musicBuffer = await this.audioContext.decodeAudioData(arrayBuffer);
+                    this.isMusicReady = true;
                 } catch (e) {
                     console.log('Failed to load music buffer:', e);
+                    this.isMusicReady = false;
                 }
 
                 // Load all sound effects as Web Audio buffers
@@ -1193,7 +1203,8 @@
                 this.isMusicMuted = !this.isMusicMuted;
                 
                 if (this.musicGainNode) {
-                    this.musicGainNode.gain.value = this.isMusicMuted ? 0 : 0.3;
+                    const newGainValue = this.isMusicMuted ? 0 : 1.0;
+                    this.musicGainNode.gain.value = newGainValue;
                 }
                 
                 return this.isMusicMuted;
@@ -1235,7 +1246,7 @@
 
                 const fadeTime = 2.0; // seconds
 
-                // Smooth crossfade
+                // Smooth crossfade - fade in, then fade out last 2 seconds
                 gain.gain.setValueAtTime(0, startTime);
                 gain.gain.linearRampToValueAtTime(1, startTime + 0.5);
                 gain.gain.setValueAtTime(1, startTime + this.musicBuffer.duration - fadeTime);
@@ -1253,7 +1264,7 @@
                     this.nextStartTime = now;
                 }
 
-                const overlapOffset = this.musicBuffer.duration - 10; // Your 22s overlap idea
+                const overlapOffset = this.musicBuffer.duration - 2; // 2-second crossfade
 
                 this.playBufferedTrack(this.nextStartTime);
 
@@ -1678,7 +1689,14 @@
                     {showCredits && (
                         <div className="credits-popup">
                             <div className="credits-title">Credits</div>
+                                Licensed under Creative Commons: By Attribution 4.0 License<br/>
                             <div className="credits-content">
+                                http://creativecommons.org/licenses/by/4.0/<br/>
+                                <br/>
+                            </div>
+                            <div className="credits-content">
+                                Music "Pinball Spring" by Kevin MacLeod (incompetech.com)<br/>
+                                <hr className="results-divider" style={{width: "100%"}}/>
                                 Sound Effects by Mixkit<br/>
                                 https://mixkit.co
                             </div>
@@ -2282,7 +2300,15 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
 
             // --- Handle page load ---
             useEffect(() => {
-                const handleLoad = () => {
+                const handleLoad = async () => {
+                    // Wait for music loading to complete
+                    if (soundManager.musicLoadingPromise) {
+                        try {
+                            await soundManager.musicLoadingPromise;
+                        } catch (e) {
+                            console.log('Music loading failed:', e);
+                        }
+                    }
                     setIsPageLoaded(true);
                 };
                 
@@ -2896,7 +2922,7 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
         if (!container) return;
         if (container.offsetWidth === 0) return;
         
-        // Force container height immediately
+        // Force container height immediately and show fallback during loading
         container.style.cssText = `
             width: 100% !important;
             height: 100px !important;
@@ -2904,6 +2930,18 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
             min-height: 100px !important;
             overflow: hidden !important;
         `;
+        
+        // Show fallback immediately to prevent white flash during 403 errors
+        showFallbackAd(container);
+        
+        // Try AdSense anyway (will replace fallback if successful)
+        setTimeout(() => {
+            tryLoadAdSense(container);
+        }, 100);
+    }
+    
+    function tryLoadAdSense(container) {
+        if (adLoaded) return;
 
         const ad = document.createElement("ins");
         ad.className = "adsbygoogle";
@@ -3051,11 +3089,11 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
         `;
         fallback.innerHTML = `
             <span style="font-size: 18px; color: #ff9900;">YOUR AD HERE</span>
-            <span style="color: #888; font-size: 11px;">&#9658; mistermmarx+ads@mistermarx.com</span>
+            <span style="color: #888; font-size: 11px;">&#9658; mistermarx+ads@mistermarx.com</span>
         `;
         fallback.addEventListener("click", () => {
             if (confirm("You are about to leave the page to open your email client. Continue?")) {
-                window.location.href = "mailto:mistermmarx+ads@mistermarx.com?subject=Ad Inquiry - Math In Space";
+                window.location.href = "mailto:mistermarx+ads@mistermarx.com?subject=Ad Inquiry - Math In Space";
             }
         });
         
