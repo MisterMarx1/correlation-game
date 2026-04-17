@@ -1283,7 +1283,7 @@
                 this.isMusicMuted = !this.isMusicMuted;
                 
                 if (this.musicGainNode) {
-                    const newGainValue = this.isMusicMuted ? 0 : 1.0;
+                    const newGainValue = this.isMusicMuted ? 0 : 1;
                     this.musicGainNode.gain.value = newGainValue;
                 }
                 
@@ -1328,8 +1328,8 @@
 
                 // Smooth crossfade - fade in, then fade out last 2 seconds
                 gain.gain.setValueAtTime(0, startTime);
-                gain.gain.linearRampToValueAtTime(1, startTime + 0.5);
-                gain.gain.setValueAtTime(1, startTime + this.musicBuffer.duration - fadeTime);
+                gain.gain.linearRampToValueAtTime(0.2, startTime + 0.5);
+                gain.gain.setValueAtTime(0.2, startTime + this.musicBuffer.duration - fadeTime);
                 gain.gain.linearRampToValueAtTime(0, startTime + this.musicBuffer.duration);
 
                 source.start(startTime);
