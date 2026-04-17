@@ -2401,6 +2401,15 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
                 }
             }, []);
 
+            // --- Dynamic Background Color Toggle ---
+            useEffect(() => {
+                if (gameState === 'playing') {
+                    document.documentElement.style.backgroundColor = 'transparent';
+                } else {
+                    document.documentElement.style.backgroundColor = '#001f3f';
+                }
+            }, [gameState]);
+
             
             // --- Memos ---
             const totalQuestionsAnswered = useMemo(() => correctCount + incorrectCount + timeoutCount, [correctCount, incorrectCount, timeoutCount]);
