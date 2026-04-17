@@ -1166,15 +1166,6 @@
         .math-in-space-container.admob-failed {
             height: calc(100vh - 100px - var(--safe-area-inset-bottom));
         }
-
-        /* Companion page AdMob adjustments */
-        .companion-overlay {
-            bottom: 100px;
-        }
-
-        body.admob-shifted .companion-overlay {
-            bottom: 118px;
-        }
             </style>
 </head>
 <body>
@@ -1828,11 +1819,12 @@
             return (
                 <>
                     {showCompanionPage && (
-                        <div className="companion-overlay" style={{
+                        <div style={{
                             position: "fixed",
                             top: 0,
                             left: 0,
                             right: 0,
+                            bottom: 100,
                             backgroundColor: "rgba(3,7,18,0.98)",
                             display: "flex",
                             flexDirection: "column",
