@@ -1068,23 +1068,55 @@
             letter-spacing: 2px;
         }
 
-        #ad-container {
-            width: 100%;
-            height: 100px;
-            max-height: 100px;
-            min-height: 100px;
-            overflow: hidden;
+        
+        /* Android always starts at 118px */
+        body.android #ad-container {
+            height: calc(100px + 18px) !important;
+            max-height: calc(100px + 18px) !important;
+            min-height: calc(100px + 18px) !important;
         }
 
-        #ad-container ins {
-            display: block !important;
-            width: 100% !important;
+        
+        /* Non-Android (Web) starts at 100px */
+        body:not(.android) #ad-container {
             height: 100px !important;
             max-height: 100px !important;
             min-height: 100px !important;
         }
 
-        #ad-container iframe {
+        #ad-container {
+            width: 100%;
+            overflow: hidden;
+        }
+
+        /* Android always starts at 118px */
+        body.android #ad-container ins {
+            height: calc(100px + 18px) !important;
+            max-height: calc(100px + 18px) !important;
+            min-height: calc(100px + 18px) !important;
+        }
+        
+        /* Non-Android (Web) starts at 100px */
+        body:not(.android) #ad-container ins {
+            height: 100px !important;
+            max-height: 100px !important;
+            min-height: 100px !important;
+        }
+
+        #ad-container ins {
+            display: block !important;
+            width: 100% !important;
+        }
+
+        /* Android always starts at 118px */
+        body.android #ad-container iframe {
+            height: calc(100px + 18px) !important;
+            max-height: calc(100px + 18px) !important;
+            min-height: calc(100px + 18px) !important;
+        }
+        
+        /* Non-Android (Web) starts at 100px */
+        body:not(.android) #ad-container iframe {
             height: 100px !important;
             max-height: 100px !important;
             min-height: 100px !important;

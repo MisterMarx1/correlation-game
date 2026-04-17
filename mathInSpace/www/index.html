@@ -1034,15 +1034,27 @@
             z-index: 5;
         }
 
+        /* Android always starts at 118px */
+        body.android .banner-ad-space {
+            height: calc(100px + 18px) !important;
+            max-height: calc(100px + 18px) !important;
+            min-height: calc(100px + 18px) !important;
+        }
+
+        
+        /* Non-Android (Web) starts at 100px */
+        body:not(.android) .banner-ad-space {
+            height: 100px !important;
+            max-height: 100px !important;
+            min-height: 100px !important;
+        }
+
         /* --- Banner Ad Space --- */
         .banner-ad-space {
             position: fixed;
             bottom: 0;
             left: 0;
             width: 100%;
-            height: 100px !important;
-            max-height: 100px !important;
-            min-height: 100px !important;
             background: linear-gradient(135deg, #1a1a2e, #0f0f1e);
             border-top: 2px solid #00ccff;
             display: flex;
@@ -1100,6 +1112,27 @@
             height: calc(100vh - 100px - var(--safe-area-inset-bottom) - 18px);
         }
 
+        .banner-ad-space.admob-failed {
+            height: 100px !important;
+            max-height: 100px !important;
+            min-height: 100px !important;
+        }
+
+        #ad-container.admob-failed ins {
+            height: 100px !important;
+            max-height: 100px !important;
+            min-height: 100px !important;
+        }
+
+        #ad-container.admob-failed iframe {
+            height: 100px !important;
+            max-height: 100px !important;
+            min-height: 100px !important;
+        }
+
+        .math-in-space-container.admob-failed {
+            height: calc(100vh - 100px - var(--safe-area-inset-bottom));
+        }
             </style>
 </head>
 <body>
@@ -3084,6 +3117,7 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
     }
 
     function showFallbackAd(container) {
+        document.body.classList.add('admob-failed');
         container.innerHTML = "";
         
         const fallback = document.createElement("div");
