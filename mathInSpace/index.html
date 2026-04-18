@@ -33,7 +33,7 @@
   - Canvas API (native)
   
   Author: Mister Marx
-  Version: v1.96
+  Version: v1.97
   Last Modified: 2026-04-17
 -->
 <!DOCTYPE html>
@@ -2894,7 +2894,7 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
         // IMPORTANT: Before you git push origin main you MUST update this timestamp
         // Format: YYYY-MM-DDTHH:MM:SSZ (UTC)
         // This ensures you know if you need to hard refresh to see the latest version
-        console.log("=== MATH IN SPACE v1.96 [2026-04-16T22:25:00Z] DEPLOYED ===");
+        console.log("=== MATH IN SPACE v1.97 [2026-04-16T22:25:00Z] DEPLOYED ===");
         
         root.render(
             <Provider store={store}>
@@ -3036,6 +3036,66 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
                 document.documentElement.style.setProperty('--unified-ad-space-height', adHeight);
                 container.classList.add('ad-verified');
                 bannerSpace.classList.add('ad-visible');
+
+                // DEBUG: Log every nested element's computed dimensions
+                setTimeout(() => {
+                    console.log("=== AD CONTAINER HIERARCHY DEBUG ===");
+                    const bs = document.querySelector('.banner-ad-space');
+                    const ct = document.getElementById('ad-container');
+                    console.log("banner-ad-space:", bs ? {
+                        offset: bs.offsetWidth + "x" + bs.offsetHeight,
+                        client: bs.clientWidth + "x" + bs.clientHeight,
+                        bottom: getComputedStyle(bs).bottom,
+                        position: getComputedStyle(bs).position,
+                        overflow: getComputedStyle(bs).overflow,
+                        display: getComputedStyle(bs).display,
+                        visibility: getComputedStyle(bs).visibility,
+                        opacity: getComputedStyle(bs).opacity,
+                        zIndex: getComputedStyle(bs).zIndex,
+                        classes: bs.className
+                    } : "NOT FOUND");
+                    console.log("ad-container:", ct ? {
+                        offset: ct.offsetWidth + "x" + ct.offsetHeight,
+                        client: ct.clientWidth + "x" + ct.clientHeight,
+                        position: getComputedStyle(ct).position,
+                        overflow: getComputedStyle(ct).overflow,
+                        display: getComputedStyle(ct).display,
+                        visibility: getComputedStyle(ct).visibility,
+                        opacity: getComputedStyle(ct).opacity,
+                        classes: ct.className
+                    } : "NOT FOUND");
+                    if (ct) {
+                        Array.from(ct.children).forEach((child, i) => {
+                            const cs = getComputedStyle(child);
+                            console.log("ad-container child[" + i + "] <" + child.tagName + ">:", {
+                                offset: child.offsetWidth + "x" + child.offsetHeight,
+                                client: child.clientWidth + "x" + child.clientHeight,
+                                position: cs.position,
+                                overflow: cs.overflow,
+                                display: cs.display,
+                                visibility: cs.visibility,
+                                opacity: cs.opacity,
+                                style: child.getAttribute('style'),
+                                classes: child.className
+                            });
+                            // Go one level deeper (iframe inside ins)
+                            Array.from(child.children).forEach((grandchild, j) => {
+                                const gs = getComputedStyle(grandchild);
+                                console.log("  child[" + i + "] > child[" + j + "] <" + grandchild.tagName + ">:", {
+                                    offset: grandchild.offsetWidth + "x" + grandchild.offsetHeight,
+                                    client: grandchild.clientWidth + "x" + grandchild.clientHeight,
+                                    position: gs.position,
+                                    overflow: gs.overflow,
+                                    display: gs.display,
+                                    visibility: gs.visibility,
+                                    opacity: gs.opacity,
+                                    style: grandchild.getAttribute('style')
+                                });
+                            });
+                        });
+                    }
+                    console.log("=== END AD HIERARCHY DEBUG ===");
+                }, 500);
             }
         }, 5000);
     }
