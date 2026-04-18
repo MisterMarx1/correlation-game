@@ -66,7 +66,7 @@
             --safe-area-inset-right: 0px;
             --safe-area-inset-bottom: 0px;
             --safe-area-inset-left: 0px;
-            --unified-ad-space-height: 100px;
+            --unified-ad-space-height: 0px;
         }
 
         /* Remove default browser margins and white border */
@@ -3034,9 +3034,7 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
             } else {
                 // Ad is filled - now show the real ad
                 console.log("✓ Ad verified as filled - showing real ad at " + adHeight);
-                // SET THE HEIGHT VARIABLE FIRST
                 document.documentElement.style.setProperty('--unified-ad-space-height', adHeight);
-                // THEN add the visibility classes
                 container.classList.add('ad-verified');
                 bannerSpace.classList.add('ad-visible');
             }
