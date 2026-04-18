@@ -33,7 +33,7 @@
   - Canvas API (native)
   
   Author: Mister Marx
-  Version: v1.991
+  Version: v1.79
   Last Modified: 2026-04-17
 -->
 <!DOCTYPE html>
@@ -66,7 +66,6 @@
             --safe-area-inset-right: 0px;
             --safe-area-inset-bottom: 0px;
             --safe-area-inset-left: 0px;
-            --unified-ad-space-height: 0px;
         }
 
         /* Remove default browser margins and white border */
@@ -80,7 +79,7 @@
             -webkit-user-select: none;
             user-select: none;
         }
-
+        
         html, body {
             margin: 0;
             padding: 0;
@@ -118,7 +117,7 @@
             justify-content: space-between;
             text-align: center;
             width: 100%;
-            height: calc(100vh - var(--unified-ad-space-height) - var(--safe-area-inset-bottom));
+            height: calc(100vh - 100px - var(--safe-area-inset-bottom));
             padding-top: max(24px, var(--safe-area-inset-top));
             padding-left: var(--safe-area-inset-left);
             padding-right: var(--safe-area-inset-right);
@@ -433,8 +432,8 @@
             max-width: 600px;
             width: 90%;
             flex-direction: column;
-            height: calc(100vh - var(--unified-ad-space-height) - 50px);
-            max-height: calc(100vh - var(--unified-ad-space-height) - 50px);
+            height: calc(100vh - 100px - 50px);
+            max-height: calc(100vh - 100px - 50px);
             overflow-y: auto;
         }
         .results-ops {
@@ -801,7 +800,7 @@
             top: 0;
             left: 0;
             width: 100%;
-            height: calc(100vh - var(--unified-ad-space-height));
+            height: calc(100vh - 100px);
             background: radial-gradient(ellipse at center, 
                 rgba(20, 25, 40, 0.95) 0%, 
                 rgba(10, 15, 30, 0.98) 40%, 
@@ -1036,16 +1035,27 @@
             z-index: 5;
         }
 
+        /* Android always starts at 118px */
+        body.android .banner-ad-space {
+            height: calc(100px + 18px) !important;
+            max-height: calc(100px + 18px) !important;
+            min-height: calc(100px + 18px) !important;
+        }
+
+        
+        /* Non-Android (Web) starts at 100px */
+        body:not(.android) .banner-ad-space {
+            height: 100px !important;
+            max-height: 100px !important;
+            min-height: 100px !important;
+        }
 
         /* --- Banner Ad Space --- */
         .banner-ad-space {
             position: fixed;
-            bottom: -200px; 
+            bottom: 0;
             left: 0;
             width: 100%;
-            height: 100px;
-            max-height: 100px;
-            min-height: 100px;
             background: linear-gradient(135deg, #1a1a2e, #0f0f1e);
             border-top: 2px solid #00ccff;
             display: flex;
@@ -1057,20 +1067,42 @@
             font-size: 12px;
             text-transform: uppercase;
             letter-spacing: 2px;
-            overflow: hidden;
         }
 
         
-        .banner-ad-space.ad-visible {
-            bottom: 0;
+        /* Android always starts at 118px */
+        body.android #ad-container {
+            height: calc(100px + 18px) !important;
+            max-height: calc(100px + 18px) !important;
+            min-height: calc(100px + 18px) !important;
+        }
+
+        
+        /* Non-Android (Web) starts at 100px */
+        body:not(.android) #ad-container {
+            height: 100px !important;
+            max-height: 100px !important;
+            min-height: 100px !important;
         }
 
         #ad-container {
             width: 100%;
             overflow: hidden;
             background: linear-gradient(135deg, #1a1a2e, #0f0f1e);
-            position: relative;
-            height: 100px;
+        }
+
+        /* Android always starts at 118px */
+        body.android #ad-container ins {
+            height: calc(100px + 18px) !important;
+            max-height: calc(100px + 18px) !important;
+            min-height: calc(100px + 18px) !important;
+        }
+        
+        /* Non-Android (Web) starts at 100px */
+        body:not(.android) #ad-container ins {
+            height: 100px !important;
+            max-height: 100px !important;
+            min-height: 100px !important;
         }
 
         #ad-container ins {
@@ -1078,14 +1110,62 @@
             width: 100% !important;
         }
 
-        .math-in-space-container.admob-shifted {
-            height: calc(100vh - var(--unified-ad-space-height) - var(--safe-area-inset-bottom));
+        /* Android always starts at 118px */
+        body.android #ad-container iframe {
+            height: calc(100px + 18px) !important;
+            max-height: calc(100px + 18px) !important;
+            min-height: calc(100px + 18px) !important;
+        }
+        
+        /* Non-Android (Web) starts at 100px */
+        body:not(.android) #ad-container iframe {
+            height: 100px !important;
+            max-height: 100px !important;
+            min-height: 100px !important;
         }
 
+        .banner-ad-space.admob-shifted {
+            height: calc(100px + 18px) !important;
+            max-height: calc(100px + 18px) !important;
+            min-height: calc(100px + 18px) !important;
+        }
 
+        #ad-container.admob-shifted ins {
+            height: calc(100px + 18px) !important;
+            max-height: calc(100px + 18px) !important;
+            min-height: calc(100px + 18px) !important;
+        }
+
+        #ad-container.admob-shifted iframe {
+            height: calc(100px + 18px) !important;
+            max-height: calc(100px + 18px) !important;
+            min-height: calc(100px + 18px) !important;
+        }
+
+        .math-in-space-container.admob-shifted {
+            height: calc(100vh - 100px - var(--safe-area-inset-bottom) - 18px);
+        }
+
+        .banner-ad-space.admob-failed {
+            height: 100px !important;
+            max-height: 100px !important;
+            min-height: 100px !important;
+        }
+
+        #ad-container.admob-failed ins {
+            height: 100px !important;
+            max-height: 100px !important;
+            min-height: 100px !important;
+        }
+
+        #ad-container.admob-failed iframe {
+            height: 100px !important;
+            max-height: 100px !important;
+            min-height: 100px !important;
+        }
 
         .math-in-space-container.admob-failed {
-            height: calc(100vh - var(--unified-ad-space-height) - var(--safe-area-inset-bottom));
+            height: calc(100vh - 100px - var(--safe-area-inset-bottom));
         }
             </style>
 </head>
@@ -2894,7 +2974,7 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
         // IMPORTANT: Before you git push origin main you MUST update this timestamp
         // Format: YYYY-MM-DDTHH:MM:SSZ (UTC)
         // This ensures you know if you need to hard refresh to see the latest version
-        console.log("=== MATH IN SPACE v1.991 [2026-04-16T22:25:00Z] DEPLOYED ===");
+        console.log("=== MATH IN SPACE v1.78 [2026-04-16T22:25:00Z] DEPLOYED ===");
         
         root.render(
             <Provider store={store}>
@@ -2927,36 +3007,33 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
     function loadWebAd() {
         console.log("Loading web AdSense ad...");
         if (adLoaded) return;
-        console.log("Made it and adLoaded is false.")
+        
         const container = document.getElementById("ad-container");
         if (!container) return;
-        console.log("Made it and container exists")
-
-
-        // If container is hidden z index -10000, show it so AdSense can measure width so update its z index to 500
-        if (container.offsetWidth === 0) {
-            container.style.zIndex = '500';
-            container.style.width = '100%';
-            console.log("Container was hidden, now showing for ad measurement");
-            
-            // Force layout recalculation by reading offsetWidth
-            const _ = container.offsetWidth;
-            console.log("Forced reflow, container width is now:", _);
-        }
+        if (container.offsetWidth === 0) return;
         
+        // Force container height immediately and show fallback during loading
         container.style.cssText = `
             width: 100% !important;
+            height: 100px !important;
+            max-height: 100px !important;
+            min-height: 100px !important;
             overflow: hidden !important;
         `;
         
-        // Let AdSense try first — shouldNotShowAd on failure
-        tryLoadAdSense(container);
+        // Show fallback immediately to prevent white flash during 403 errors
+        showFallbackAd(container);
+        
+        // Try AdSense anyway (will replace fallback if successful)
+        setTimeout(() => {
+            tryLoadAdSense(container);
+        }, 100);
     }
     
     function tryLoadAdSense(container) {
         if (adLoaded) return;
 
-        // Clear shouldNotShowAd so AdSense can show
+        // Clear fallback so AdSense can show
         container.innerHTML = "";
 
         const ad = document.createElement("ins");
@@ -2965,7 +3042,9 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
             display: block !important;
             width: 100% !important;
             height: 100px !important;
-            position: relative !important;
+            max-height: 100px !important;
+            min-height: 100px !important;
+            overflow: hidden !important;
         `;
         ad.setAttribute("data-ad-client", "ca-pub-2662863757001007");
         ad.setAttribute("data-ad-slot", "2870000676");
@@ -2976,13 +3055,12 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
         
         // Wait for adsbygoogle to be available, then push
         const pushAd = () => {
-            console.log("pushAd() called, adsbygoogle available:", !!window.adsbygoogle);
             if (window.adsbygoogle && window.adsbygoogle.push) {
                 window.adsbygoogle.push({});
                 adLoaded = true;
                 console.log("✓ AdSense ad pushed successfully");
             } else {
-                console.log("⚠ adsbygoogle not ready yet, retrying...");
+                // Retry if not ready yet
                 setTimeout(pushAd, 50);
             }
         };
@@ -2993,7 +3071,7 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
             const ins = container.querySelector("ins.adsbygoogle");
             const iframe = container.querySelector("iframe");
             const bannerSpace = document.querySelector(".banner-ad-space");
-            const adHeight = '100px'; // Hard Coded for now. eventually will be dyanmic based on the height of the received ad. if i can ever get the ad to actually be visible.            
+            
             console.log("Ad check - iframe exists:", !!iframe);
             if (iframe) {
                 console.log("Ad iframe dimensions:", iframe.offsetWidth + "x" + iframe.offsetHeight);
@@ -3009,101 +3087,26 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
                 console.log("Ad ins status:", ins.dataset.adStatus);
             }
             
-            // shouldNotShowAd if no iframe OR if ad is unfilled
+            // Show fallback if no iframe OR if ad is unfilled
             const hasIframe = !!iframe;
             const isUnfilled = ins && ins.dataset.adStatus === 'unfilled';
-            const shouldNotShowAd = !hasIframe || isUnfilled;
+            const shouldShowFallback = !hasIframe || isUnfilled;
             
-            console.log("shouldNotShowAd condition debug:", {
+            console.log("Fallback condition debug:", {
                 hasIframe,
                 isUnfilled,
-                shouldNotShowAd
+                shouldShowFallback
             });
             
-            if (shouldNotShowAd) {
+            if (shouldShowFallback) {
                 if (!hasIframe) {
-                    console.log("shouldNotShowAd - no iframe detected");
+                    console.log("Showing fallback - no iframe detected");
                 } else {
-                    console.log("shouldNotShowAd - ad unfilled (no inventory)");
+                    console.log("Showing fallback - ad unfilled (no inventory)");
                 }
-            } else {
-                // Ad is filled - now show the real ad
-                console.log("✓ Ad verified as filled - showing real ad at " + adHeight);
-                adLoaded = true;
-                // Always re-query live DOM in case React re-rendered
-                const liveBanner = document.querySelector('.banner-ad-space');
-                const liveCt = document.getElementById('ad-container');
-                document.documentElement.style.setProperty('--unified-ad-space-height', adHeight);
-                if (liveCt) liveCt.classList.add('ad-verified');
-                
-                // Grab the real ad iframe from <body> (Google puts it there with display:none)
-                const bodyIns = document.body.querySelector(':scope > ins.adsbygoogle');
-                if (bodyIns && liveCt) {
-                    const realIframe = bodyIns.querySelector('iframe');
-                    if (realIframe) {
-                        console.log("✓ Found real ad iframe on <body>, moving into #ad-container");
-                        liveCt.innerHTML = '';
-                        bodyIns.style.display = 'block';
-                        bodyIns.style.width = '100%';
-                        bodyIns.style.height = '100px';
-                        bodyIns.style.position = 'relative';
-                        realIframe.style.width = '100%';
-                        realIframe.style.height = '100px';
-                        liveCt.appendChild(bodyIns);
-                    }
-                }
-                
-                if (liveBanner) liveBanner.classList.add('ad-visible');
-
-                // DEBUG: Walk every iframe ancestor to <html>
-                setTimeout(() => {
-                    console.log("=== FULL AD VISIBILITY TRACE ===");
-                    const vh = window.innerHeight;
-                    const vw = window.innerWidth;
-                    console.log("VIEWPORT:", vw + "x" + vh);
-                    
-                    // Find ALL banner-ad-space and ad-container elements
-                    const allBanners = document.querySelectorAll('.banner-ad-space');
-                    const allContainers = document.querySelectorAll('#ad-container');
-                    console.log("TOTAL .banner-ad-space elements in DOM:", allBanners.length);
-                    console.log("TOTAL #ad-container elements in DOM:", allContainers.length);
-                    
-                    // Find ALL iframes anywhere in page
-                    const allIframes = document.querySelectorAll('iframe');
-                    console.log("TOTAL iframes in DOM:", allIframes.length);
-                    
-                    allIframes.forEach((iframe, idx) => {
-                        const iRect = iframe.getBoundingClientRect();
-                        const onScreen = iRect.bottom > 0 && iRect.top < vh && iRect.right > 0 && iRect.left < vw && iRect.width > 0 && iRect.height > 0;
-                        console.log("--- IFRAME[" + idx + "] ---");
-                        console.log("  screenRect: top=" + iRect.top.toFixed(0) + " left=" + iRect.left.toFixed(0) + " bottom=" + iRect.bottom.toFixed(0) + " right=" + iRect.right.toFixed(0) + " w=" + iRect.width.toFixed(0) + " h=" + iRect.height.toFixed(0));
-                        console.log("  ON SCREEN:", onScreen);
-                        console.log("  style attr:", iframe.getAttribute('style'));
-                        console.log("  src:", (iframe.src || '').substring(0, 80));
-                        
-                        // Walk up every ancestor
-                        let el = iframe.parentElement;
-                        let depth = 0;
-                        while (el) {
-                            const r = el.getBoundingClientRect();
-                            const cs = getComputedStyle(el);
-                            const tag = el.tagName;
-                            const cls = el.className ? String(el.className).substring(0, 60) : '';
-                            const id = el.id || '';
-                            const clips = cs.overflow !== 'visible';
-                            const elOnScreen = r.bottom > 0 && r.top < vh && r.right > 0 && r.left < vw && r.width > 0 && r.height > 0;
-                            console.log("  ANCESTOR[" + depth + "] <" + tag + "> id=" + id + " class=" + cls);
-                            console.log("    screenRect: top=" + r.top.toFixed(0) + " left=" + r.left.toFixed(0) + " bottom=" + r.bottom.toFixed(0) + " right=" + r.right.toFixed(0) + " w=" + r.width.toFixed(0) + " h=" + r.height.toFixed(0));
-                            console.log("    position:" + cs.position + " overflow:" + cs.overflow + " display:" + cs.display + " visibility:" + cs.visibility + " opacity:" + cs.opacity + " zIndex:" + cs.zIndex);
-                            console.log("    CLIPS_CHILDREN:" + clips + " ON_SCREEN:" + elOnScreen);
-                            el = el.parentElement;
-                            depth++;
-                        }
-                    });
-                    console.log("=== END FULL AD VISIBILITY TRACE ===");
-                }, 500);
+                showFallbackAd(container);
             }
-        }, 5000);
+        }, 3000);
     }
 
     function loadAndroidAd() {
@@ -3162,14 +3165,56 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
                     console.error("❌ AdMob failed:", error);
                     console.error("App ID:", ADMOB_APP_ID);
                     console.error("Ad Unit ID:", ADMOB_BANNER_AD_UNIT_ID);
+                    showFallbackAd(document.getElementById("ad-container"));
                 });
         } else {
-            console.log("⚠ AdMob plugin not available, shouldNotShowAd");
+            console.log("⚠ AdMob plugin not available, showing fallback");
+            showFallbackAd(document.getElementById("ad-container"));
         }
+    }
+
+    function showFallbackAd(container) {
+        document.body.classList.add('admob-failed');
+        container.innerHTML = "";
+        
+        const fallback = document.createElement("div");
+        fallback.style.cssText = `
+            width: 100%;
+            height: 100px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            font-family: 'Orbitron', sans-serif;
+            color: #00ccff;
+            font-size: 14px;
+            letter-spacing: 1px;
+            cursor: pointer;
+        `;
+        fallback.innerHTML = `
+            <span style="font-size: 18px; color: #ff9900;">YOUR AD HERE</span>
+            <span style="color: #888; font-size: 11px;">&#9658; mistermarx+ads@mistermarx.com</span>
+        `;
+        fallback.addEventListener("click", () => {
+            if (confirm("You are about to leave the page to open your email client. Continue?")) {
+                window.location.href = "mailto:mistermarx+ads@mistermarx.com?subject=Ad Inquiry - Math In Space";
+            }
+        });
+        
+        container.appendChild(fallback);
     }
 
     window.addEventListener("load", () => setTimeout(loadAd, 300));
     
+    // Emergency fallback - show after 5 seconds if nothing else worked
+    setTimeout(() => {
+        const container = document.getElementById("ad-container");
+        if (container && !container.querySelector("div")) {
+            console.log("Emergency fallback triggered");
+            showFallbackAd(container);
+        }
+    }, 5000);
     </script>
 </body>
 </html>
