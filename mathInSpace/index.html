@@ -33,7 +33,7 @@
   - Canvas API (native)
   
   Author: Mister Marx
-  Version: v1.801
+  Version: v1.802
   Last Modified: 2026-04-17
 -->
 <!DOCTYPE html>
@@ -2972,7 +2972,7 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
         // IMPORTANT: Before you git push origin main you MUST update this timestamp
         // Format: YYYY-MM-DDTHH:MM:SSZ (UTC)
         // This ensures you know if you need to hard refresh to see the latest version
-        console.log("=== MATH IN SPACE v1.801 [2026-04-16T22:25:00Z] DEPLOYED ===");
+        console.log("=== MATH IN SPACE v1.802 [2026-04-16T22:25:00Z] DEPLOYED ===");
         
         root.render(
             <Provider store={store}>
@@ -3069,6 +3069,7 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
             
             console.log("Ad check - iframe exists:", !!iframe);
             if (iframe) {
+                console.log("=== SUCCESSFUL GOOGLE AD LOADED ===");
                 console.log("Ad iframe dimensions:", iframe.offsetWidth + "x" + iframe.offsetHeight);
                 const styleAttr = iframe.getAttribute("style");
                 console.log("Ad iframe style:", styleAttr);
@@ -3077,6 +3078,55 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
                 const heightMatch = styleAttr.match(/height:(\d+)px/);
                 const heightValue = heightMatch ? parseInt(heightMatch[1]) : 0;
                 console.log("GOOGLE AD HEIGHT (parsed from style):", heightValue + "px");
+                
+                // Log container hierarchy and CSS details
+                console.log("=== CONTAINER HIERARCHY & CSS ===");
+                
+                // Banner Ad Space (outermost)
+                if (bannerSpace) {
+                    const bannerStyles = window.getComputedStyle(bannerSpace);
+                    console.log("1. BANNER-AD-SPACE (outermost):");
+                    console.log("   - Element:", bannerSpace);
+                    console.log("   - Display:", bannerStyles.display);
+                    console.log("   - Position:", bannerStyles.position);
+                    console.log("   - Height:", bannerStyles.height);
+                    console.log("   - Align-items:", bannerStyles.alignItems);
+                    console.log("   - Justify-content:", bannerStyles.justifyContent);
+                    console.log("   - Classes:", bannerSpace.className);
+                }
+                
+                // Ad Container (middle)
+                if (container) {
+                    const containerStyles = window.getComputedStyle(container);
+                    console.log("2. AD-CONTAINER (middle):");
+                    console.log("   - Element:", container);
+                    console.log("   - Display:", containerStyles.display);
+                    console.log("   - Height:", containerStyles.height);
+                    console.log("   - Overflow:", containerStyles.overflow);
+                    console.log("   - Classes:", container.className);
+                }
+                
+                // INS Element (AdSense wrapper)
+                if (ins) {
+                    const insStyles = window.getComputedStyle(ins);
+                    console.log("3. INS.ADSBYGOOGLE (AdSense wrapper):");
+                    console.log("   - Element:", ins);
+                    console.log("   - Display:", insStyles.display);
+                    console.log("   - Height:", insStyles.height);
+                    console.log("   - Width:", insStyles.width);
+                    console.log("   - Ad Status:", ins.dataset.adStatus);
+                    console.log("   - Classes:", ins.className);
+                }
+                
+                // Iframe (actual Google ad)
+                console.log("4. IFRAME (actual Google ad):");
+                console.log("   - Element:", iframe);
+                console.log("   - Offset dimensions:", iframe.offsetWidth + "x" + iframe.offsetHeight);
+                console.log("   - Client dimensions:", iframe.clientWidth + "x" + iframe.clientHeight);
+                console.log("   - Style attribute:", iframe.getAttribute("style"));
+                console.log("   - Classes:", iframe.className);
+                
+                console.log("=== END CONTAINER DEBUG ===");
             }
             if (ins) {
                 console.log("Ad ins status:", ins.dataset.adStatus);
