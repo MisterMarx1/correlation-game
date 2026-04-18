@@ -33,7 +33,7 @@
   - Canvas API (native)
   
   Author: Mister Marx
-  Version: v1.87
+  Version: v1.88
   Last Modified: 2026-04-17
 -->
 <!DOCTYPE html>
@@ -1065,11 +1065,11 @@
             width: 100%;
             overflow: hidden;
             background: linear-gradient(135deg, #1a1a2e, #0f0f1e);
-            display: none; /* Hide until ad is verified as filled */
+            z-index: -10000;
         }
 
         #ad-container.ad-verified {
-            display: block; /* Show only after confirmed filled */
+            z-index: 500;
         }
 
         #ad-container ins {
@@ -2893,7 +2893,7 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
         // IMPORTANT: Before you git push origin main you MUST update this timestamp
         // Format: YYYY-MM-DDTHH:MM:SSZ (UTC)
         // This ensures you know if you need to hard refresh to see the latest version
-        console.log("=== MATH IN SPACE v1.87 [2026-04-16T22:25:00Z] DEPLOYED ===");
+        console.log("=== MATH IN SPACE v1.88 [2026-04-16T22:25:00Z] DEPLOYED ===");
         
         root.render(
             <Provider store={store}>
@@ -2932,9 +2932,9 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
         console.log("Made it and container exists")
 
 
-        // If container is hidden (display: none), show it so AdSense can measure width
+        // If container is hidden z index -10000, show it so AdSense can measure width so update its z index to 500
         if (container.offsetWidth === 0) {
-            container.style.display = 'block';
+            container.style.zIndex = '500';
             container.style.width = '100%';
             console.log("Container was hidden, now showing for ad measurement");
             
