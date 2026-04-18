@@ -33,7 +33,7 @@
   - Canvas API (native)
   
   Author: Mister Marx
-  Version: v1.82
+  Version: v1.83
   Last Modified: 2026-04-17
 -->
 <!DOCTYPE html>
@@ -2893,7 +2893,7 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
         // IMPORTANT: Before you git push origin main you MUST update this timestamp
         // Format: YYYY-MM-DDTHH:MM:SSZ (UTC)
         // This ensures you know if you need to hard refresh to see the latest version
-        console.log("=== MATH IN SPACE v1.82 [2026-04-16T22:25:00Z] DEPLOYED ===");
+        console.log("=== MATH IN SPACE v1.83 [2026-04-16T22:25:00Z] DEPLOYED ===");
         
         root.render(
             <Provider store={store}>
@@ -2936,14 +2936,14 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
             overflow: hidden !important;
         `;
         
-        // Let AdSense try first — fallback only shows on failure
+        // Let AdSense try first — shouldNotShowAd on failure
         tryLoadAdSense(container);
     }
     
     function tryLoadAdSense(container) {
         if (adLoaded) return;
 
-        // Clear fallback so AdSense can show
+        // Clear shouldNotShowAd so AdSense can show
         container.innerHTML = "";
 
         const ad = document.createElement("ins");
@@ -2995,25 +2995,23 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
                 console.log("Ad ins status:", ins.dataset.adStatus);
             }
             
-            // Show fallback if no iframe OR if ad is unfilled
+            // shouldNotShowAd if no iframe OR if ad is unfilled
             const hasIframe = !!iframe;
             const isUnfilled = ins && ins.dataset.adStatus === 'unfilled';
-            const shouldShowFallback = !hasIframe || isUnfilled;
+            const shouldNotShowAd = !hasIframe || isUnfilled;
             
-            console.log("Fallback condition debug:", {
+            console.log("shouldNotShowAd condition debug:", {
                 hasIframe,
                 isUnfilled,
-                shouldShowFallback
+                shouldNotShowAd
             });
             
-            if (shouldShowFallback) {
+            if (shouldNotShowAd) {
                 if (!hasIframe) {
-                    console.log("Showing fallback - no iframe detected");
+                    console.log("shouldNotShowAd - no iframe detected");
                 } else {
-                    console.log("Showing fallback - ad unfilled (no inventory)");
+                    console.log("shouldNotShowAd - ad unfilled (no inventory)");
                 }
-                // Keep ad container hidden, show fallback instead
-                showFallbackAd(container);
             } else {
                 // Ad is filled - now show the real ad
                 console.log("✓ Ad verified as filled - showing real ad at " + adHeight + "px");
@@ -3079,57 +3077,14 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
                     console.error("❌ AdMob failed:", error);
                     console.error("App ID:", ADMOB_APP_ID);
                     console.error("Ad Unit ID:", ADMOB_BANNER_AD_UNIT_ID);
-                    showFallbackAd(document.getElementById("ad-container"));
                 });
         } else {
-            console.log("⚠ AdMob plugin not available, showing fallback");
-            showFallbackAd(document.getElementById("ad-container"));
+            console.log("⚠ AdMob plugin not available, shouldNotShowAd");
         }
-    }
-
-    function showFallbackAd(container) {
-        document.body.classList.add('admob-failed');
-        container.innerHTML = "";
-        
-        const fallback = document.createElement("div");
-        fallback.style.cssText = `
-            width: 100%;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 4px;
-            font-family: 'Orbitron', sans-serif;
-            color: #00ccff;
-            font-size: 14px;
-            letter-spacing: 1px;
-            cursor: pointer;
-        `;
-        fallback.innerHTML = `
-            <span style="font-size: 18px; color: #ff9900;">YOUR AD HERE</span>
-            <span style="color: #888; font-size: 11px;">&#9658; mistermarx+ads@mistermarx.com</span>
-        `;
-        fallback.addEventListener("click", () => {
-            if (confirm("You are about to leave the page to open your email client. Continue?")) {
-                window.location.href = "mailto:mistermarx+ads@mistermarx.com?subject=Ad Inquiry - Math In Space";
-            }
-        });
-        
-        container.appendChild(fallback);
     }
 
     window.addEventListener("load", () => setTimeout(loadAd, 300));
     
-    // Emergency fallback - show after 5 seconds if nothing else worked
-    setTimeout(() => {
-        const container = document.getElementById("ad-container");
-        if (container && !container.querySelector("div")) {
-            console.log("Emergency fallback triggered");
-            document.documentElement.style.setProperty('--unified-ad-space-height', '60px');
-            container.classList.add('ad-verified');
-            showFallbackAd(container);
-        }
-    }, 5000);
     </script>
 </body>
 </html>
