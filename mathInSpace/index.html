@@ -33,7 +33,7 @@
   - Canvas API (native)
   
   Author: Mister Marx
-  Version: v1.92
+  Version: v1.93
   Last Modified: 2026-04-17
 -->
 <!DOCTYPE html>
@@ -2895,7 +2895,7 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
         // IMPORTANT: Before you git push origin main you MUST update this timestamp
         // Format: YYYY-MM-DDTHH:MM:SSZ (UTC)
         // This ensures you know if you need to hard refresh to see the latest version
-        console.log("=== MATH IN SPACE v1.92 [2026-04-16T22:25:00Z] DEPLOYED ===");
+        console.log("=== MATH IN SPACE v1.93 [2026-04-16T22:25:00Z] DEPLOYED ===");
         
         root.render(
             <Provider store={store}>
@@ -2945,8 +2945,6 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
             console.log("Forced reflow, container width is now:", _);
         }
         
-        document.documentElement.style.setProperty('--unified-ad-space-height', '100px');
-
         container.style.cssText = `
             width: 100% !important;
             overflow: hidden !important;
@@ -3034,6 +3032,7 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
                 console.log("✓ Ad verified as filled - showing real ad at " + adHeight + "px");
                 container.classList.add('ad-verified');
                 bannerSpace.classList.add('ad-visible');  // Add this line
+                document.documentElement.style.setProperty('--unified-ad-space-height', adHeight);
             }
         }, 5000);
     }
