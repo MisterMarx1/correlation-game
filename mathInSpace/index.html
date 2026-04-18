@@ -66,7 +66,7 @@
             --safe-area-inset-right: 0px;
             --safe-area-inset-bottom: 0px;
             --safe-area-inset-left: 0px;
-            --unified-ad-space-height: 100px;
+            --unified-ad-space-height: 0px;
         }
 
         /* Remove default browser margins and white border */
@@ -79,11 +79,6 @@
             -webkit-touch-callout: none;
             -webkit-user-select: none;
             user-select: none;
-        }
-        
-        /* Body.not is already handled and left at 100px */
-        body.android {
-            --unified-ad-space-height: calc(100px + 18px);
         }
 
         html, body {
@@ -1049,6 +1044,8 @@
             left: 0;
             width: 100%;
             height: var(--unified-ad-space-height);
+            max-height: var(--unified-ad-space-height);
+            min-height: var(--unified-ad-space-height);
             background: linear-gradient(135deg, #1a1a2e, #0f0f1e);
             border-top: 2px solid #00ccff;
             display: flex;
@@ -1060,6 +1057,7 @@
             font-size: 12px;
             text-transform: uppercase;
             letter-spacing: 2px;
+            overflow: hidden;
         }
 
         
@@ -1067,8 +1065,12 @@
             width: 100%;
             overflow: hidden;
             background: linear-gradient(135deg, #1a1a2e, #0f0f1e);
+            display: none; /* Hide until ad is verified as filled */
         }
 
+        #ad-container.ad-verified {
+            display: block; /* Show only after confirmed filled */
+        }
 
         #ad-container ins {
             display: block !important;
@@ -2929,19 +2931,13 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
         if (!container) return;
         if (container.offsetWidth === 0) return;
         
-        // Force container height immediately and show fallback during loading
         container.style.cssText = `
             width: 100% !important;
             overflow: hidden !important;
         `;
         
-        // Show fallback immediately to prevent white flash during 403 errors
-        showFallbackAd(container);
-        
-        // Try AdSense anyway (will replace fallback if successful)
-        setTimeout(() => {
-            tryLoadAdSense(container);
-        }, 100);
+        // Let AdSense try first — fallback only shows on failure
+        tryLoadAdSense(container);
     }
     
     function tryLoadAdSense(container) {
@@ -3015,7 +3011,13 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
                 } else {
                     console.log("Showing fallback - ad unfilled (no inventory)");
                 }
+                // Keep ad container hidden, show fallback instead
                 showFallbackAd(container);
+            } else {
+                // Ad is filled - now show the real ad
+                console.log("✓ Ad verified as filled - showing real ad at " + adHeight + "px");
+                container.classList.add('ad-verified');
+                document.documentElement.style.setProperty('--unified-ad-space-height', adHeight + 'px');
             }
         }, 3000);
     }
@@ -3122,6 +3124,8 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
         const container = document.getElementById("ad-container");
         if (container && !container.querySelector("div")) {
             console.log("Emergency fallback triggered");
+            document.documentElement.style.setProperty('--unified-ad-space-height', '60px');
+            container.classList.add('ad-verified');
             showFallbackAd(container);
         }
     }, 5000);
