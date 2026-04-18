@@ -117,7 +117,7 @@
             justify-content: space-between;
             text-align: center;
             width: 100%;
-            height: calc(100vh - 100px - var(--safe-area-inset-bottom));
+            height: calc(100vh - var(--safe-area-inset-bottom));
             padding-top: max(24px, var(--safe-area-inset-top));
             padding-left: var(--safe-area-inset-left);
             padding-right: var(--safe-area-inset-right);
@@ -432,8 +432,8 @@
             max-width: 600px;
             width: 90%;
             flex-direction: column;
-            height: calc(100vh - 100px - 50px);
-            max-height: calc(100vh - 100px - 50px);
+            height: calc(100vh - 50px);
+            max-height: calc(100vh - 50px);
             overflow-y: auto;
         }
         .results-ops {
@@ -800,7 +800,7 @@
             top: 0;
             left: 0;
             width: 100%;
-            height: calc(100vh - 100px);
+            height: calc(100vh);
             background: radial-gradient(ellipse at center, 
                 rgba(20, 25, 40, 0.95) 0%, 
                 rgba(10, 15, 30, 0.98) 40%, 
@@ -1056,8 +1056,7 @@
             bottom: 0;
             left: 0;
             width: 100%;
-            background: linear-gradient(135deg, #1a1a2e, #0f0f1e);
-            border-top: 2px solid #00ccff;
+            background: transparent;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -1088,7 +1087,6 @@
         #ad-container {
             width: 100%;
             overflow: hidden;
-            background: linear-gradient(135deg, #1a1a2e, #0f0f1e);
         }
 
         /* Android always starts at 118px */
@@ -1143,7 +1141,7 @@
         }
 
         .math-in-space-container.admob-shifted {
-            height: calc(100vh - 100px - var(--safe-area-inset-bottom) - 18px);
+            height: calc(100vh - var(--safe-area-inset-bottom) - 18px);
         }
 
         .banner-ad-space.admob-failed {
@@ -1165,7 +1163,7 @@
         }
 
         .math-in-space-container.admob-failed {
-            height: calc(100vh - 100px - var(--safe-area-inset-bottom));
+            height: calc(100vh - var(--safe-area-inset-bottom));
         }
             </style>
 </head>
@@ -3191,6 +3189,10 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
             font-size: 14px;
             letter-spacing: 1px;
             cursor: pointer;
+            background: linear-gradient(135deg, #1a1a2e, #0f0f1e);
+            border-top: 2px solid #00ccff;
+
+
         `;
         fallback.innerHTML = `
             <span style="font-size: 18px; color: #ff9900;">YOUR AD HERE</span>
