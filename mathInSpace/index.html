@@ -33,7 +33,7 @@
   - Canvas API (native)
   
   Author: Mister Marx
-  Version: v1.81
+  Version: v1.82
   Last Modified: 2026-04-17
 -->
 <!DOCTYPE html>
@@ -2893,7 +2893,7 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
         // IMPORTANT: Before you git push origin main you MUST update this timestamp
         // Format: YYYY-MM-DDTHH:MM:SSZ (UTC)
         // This ensures you know if you need to hard refresh to see the latest version
-        console.log("=== MATH IN SPACE v1.81 [2026-04-16T22:25:00Z] DEPLOYED ===");
+        console.log("=== MATH IN SPACE v1.82 [2026-04-16T22:25:00Z] DEPLOYED ===");
         
         root.render(
             <Provider store={store}>
@@ -2962,12 +2962,13 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
         
         // Wait for adsbygoogle to be available, then push
         const pushAd = () => {
+            console.log("pushAd() called, adsbygoogle available:", !!window.adsbygoogle);
             if (window.adsbygoogle && window.adsbygoogle.push) {
                 window.adsbygoogle.push({});
                 adLoaded = true;
                 console.log("✓ AdSense ad pushed successfully");
             } else {
-                // Retry if not ready yet
+                console.log("⚠ adsbygoogle not ready yet, retrying...");
                 setTimeout(pushAd, 50);
             }
         };
@@ -3019,7 +3020,7 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
                 container.classList.add('ad-verified');
                 document.documentElement.style.setProperty('--unified-ad-space-height', adHeight + 'px');
             }
-        }, 3000);
+        }, 30000);
     }
 
     function loadAndroidAd() {
