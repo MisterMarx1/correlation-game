@@ -33,7 +33,7 @@
   - Canvas API (native)
   
   Author: Mister Marx
-  Version: v1.809
+  Version: v1.810
   Last Modified: 2026-04-17
 -->
 <!DOCTYPE html>
@@ -2973,7 +2973,7 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
         // IMPORTANT: Before you git push origin main you MUST update this timestamp
         // Format: YYYY-MM-DDTHH:MM:SSZ (UTC)
         // This ensures you know if you need to hard refresh to see the latest version
-        console.log("=== MATH IN SPACE v1.809 [2026-04-16T22:25:00Z] DEPLOYED ===");
+        console.log("=== MATH IN SPACE v1.810 [2026-04-16T22:25:00Z] DEPLOYED ===");
         
         root.render(
             <Provider store={store}>
@@ -3072,33 +3072,33 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
             
             console.log("Ad check - iframe exists:", !!iframe);
             if (iframe) {
-                console.log("=== SUCCESSFUL GOOGLE AD LOADED ===");
+                console.log("=== SUCCESSFUL GOOGLE AD LOADED, but may be the initial 100px nothing placeholder. beware ===");
                 console.log("Ad iframe dimensions:", iframe.offsetWidth + "x" + iframe.offsetHeight);
                 const styleAttr = iframe.getAttribute("style");
-                console.log("Ad iframe style:", styleAttr);
+                console.log("Ad iframe style, but may be the initial 100px nothing placeholder. beware:", styleAttr);
                 
                 // Extract height from style attribute string
                 const heightMatch = styleAttr.match(/height:(\d+)px/);
                 const heightValue = heightMatch ? parseInt(heightMatch[1]) : 0;
-                console.log("GOOGLE AD HEIGHT (parsed from style):", heightValue + "px");
+                console.log("GOOGLE AD HEIGHT (parsed from style), but may be the initial 100px nothing placeholder:", heightValue + "px");
                 
                 // Only update if ad height is not 100px
                 if (heightValue !== 100) {
                     const bannerHeight = 100;
                     const adOffset = bannerHeight - heightValue;
-                    console.log("BANNER HEIGHT:", bannerHeight + "px");
-                    console.log("AD HEIGHT:", heightValue + "px"); 
-                    console.log("CALCULATED OFFSET:", adOffset + "px");
+                    console.log("BANNER HEIGHT, but may be the initial 100px nothing placeholder:", bannerHeight + "px");
+                    console.log("AD HEIGHT, but may be the initial 100px nothing placeholder:", heightValue + "px"); 
+                    console.log("CALCULATED OFFSET, but may be the initial 100px nothing placeholder:", adOffset + "px");
 
                     // Update the root variable
                     document.documentElement.style.setProperty('--ad-height-offset-from-hundred', adOffset + 'px');
-                    console.log("CSS variable --ad-height-offset-from-hundred updated to:", adOffset + "px");
+                    console.log("CSS variable --ad-height-offset-from-hundred updated to, but may be the initial 100px nothing placeholder:", adOffset + "px");
                 } else {
-                    console.log("AD height is 100px, no offset needed. also this may be the placehodler offset so ignore this always pay attention if it changed to a diff number earlier, that is good and the actual ad height not 100px");
+                    console.log("AD height is 100px, no offset needed. also this may be the placehodler offset so ignore this always pay attention if it changed to a diff number earlier, that is good and the actual ad height not 100px, but may be the initial 100px nothing placeholder");
                 }
                 
                 // Log container hierarchy and CSS details
-                console.log("=== CONTAINER HIERARCHY & CSS ===");
+                console.log("=== CONTAINER HIERARCHY & CSS , but may be the initial 100px nothing placeholder===");
                 
                 // Banner Ad Space (outermost)
                 if (bannerSpace) {
@@ -3155,7 +3155,7 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
             const isUnfilled = ins && ins.dataset.adStatus === 'unfilled';
             const shouldShowFallback = !hasIframe || isUnfilled;
             
-            console.log("Fallback condition debug:", {
+            console.log("Fallback condition debug, it was in fact the initial placeholder:", {
                 hasIframe,
                 isUnfilled,
                 shouldShowFallback
@@ -3168,6 +3168,26 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
                     console.log("Showing fallback - ad unfilled (no inventory)");
                 }
                 showFallbackAd(container);
+            } else {
+                console.log("Ad loaded successfully, no fallback needed, it is not the fake 100px initial placeholder.");
+                
+                // Log container heights and root variable
+                if (bannerSpace) {
+                    const bannerStyles = window.getComputedStyle(bannerSpace);
+                    console.log("Banner Ad Space Height:", bannerStyles.height);
+                }
+                if (container) {
+                    const containerStyles = window.getComputedStyle(container);
+                    console.log("Ad Container Height:", containerStyles.height);
+                }
+                if (ins) {
+                    const insStyles = window.getComputedStyle(ins);
+                    console.log("INS Element Height:", insStyles.height);
+                }
+                
+                // Log root variable value
+                const rootVar = getComputedStyle(document.documentElement).getPropertyValue('--ad-height-offset-from-hundred');
+                console.log("Root Variable --ad-height-offset-from-hundred:", rootVar || "not set");
             }
         }, 3000);
     }
