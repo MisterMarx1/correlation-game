@@ -33,7 +33,7 @@
   - Canvas API (native)
   
   Author: Mister Marx
-  Version: v1.98
+  Version: v1.99
   Last Modified: 2026-04-17
 -->
 <!DOCTYPE html>
@@ -2894,7 +2894,7 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
         // IMPORTANT: Before you git push origin main you MUST update this timestamp
         // Format: YYYY-MM-DDTHH:MM:SSZ (UTC)
         // This ensures you know if you need to hard refresh to see the latest version
-        console.log("=== MATH IN SPACE v1.98 [2026-04-16T22:25:00Z] DEPLOYED ===");
+        console.log("=== MATH IN SPACE v1.99 [2026-04-16T22:25:00Z] DEPLOYED ===");
         
         root.render(
             <Provider store={store}>
@@ -3037,64 +3037,52 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
                 if (liveCt) liveCt.classList.add('ad-verified');
                 if (liveBanner) liveBanner.classList.add('ad-visible');
 
-                // DEBUG: Log every nested element's computed dimensions
+                // DEBUG: Walk every iframe ancestor to <html>
                 setTimeout(() => {
-                    console.log("=== AD CONTAINER HIERARCHY DEBUG ===");
-                    const bs = document.querySelector('.banner-ad-space');
-                    const ct = document.getElementById('ad-container');
-                    console.log("banner-ad-space:", bs ? {
-                        offset: bs.offsetWidth + "x" + bs.offsetHeight,
-                        client: bs.clientWidth + "x" + bs.clientHeight,
-                        bottom: getComputedStyle(bs).bottom,
-                        position: getComputedStyle(bs).position,
-                        overflow: getComputedStyle(bs).overflow,
-                        display: getComputedStyle(bs).display,
-                        visibility: getComputedStyle(bs).visibility,
-                        opacity: getComputedStyle(bs).opacity,
-                        zIndex: getComputedStyle(bs).zIndex,
-                        classes: bs.className
-                    } : "NOT FOUND");
-                    console.log("ad-container:", ct ? {
-                        offset: ct.offsetWidth + "x" + ct.offsetHeight,
-                        client: ct.clientWidth + "x" + ct.clientHeight,
-                        position: getComputedStyle(ct).position,
-                        overflow: getComputedStyle(ct).overflow,
-                        display: getComputedStyle(ct).display,
-                        visibility: getComputedStyle(ct).visibility,
-                        opacity: getComputedStyle(ct).opacity,
-                        classes: ct.className
-                    } : "NOT FOUND");
-                    if (ct) {
-                        Array.from(ct.children).forEach((child, i) => {
-                            const cs = getComputedStyle(child);
-                            console.log("ad-container child[" + i + "] <" + child.tagName + ">:", {
-                                offset: child.offsetWidth + "x" + child.offsetHeight,
-                                client: child.clientWidth + "x" + child.clientHeight,
-                                position: cs.position,
-                                overflow: cs.overflow,
-                                display: cs.display,
-                                visibility: cs.visibility,
-                                opacity: cs.opacity,
-                                style: child.getAttribute('style'),
-                                classes: child.className
-                            });
-                            // Go one level deeper (iframe inside ins)
-                            Array.from(child.children).forEach((grandchild, j) => {
-                                const gs = getComputedStyle(grandchild);
-                                console.log("  child[" + i + "] > child[" + j + "] <" + grandchild.tagName + ">:", {
-                                    offset: grandchild.offsetWidth + "x" + grandchild.offsetHeight,
-                                    client: grandchild.clientWidth + "x" + grandchild.clientHeight,
-                                    position: gs.position,
-                                    overflow: gs.overflow,
-                                    display: gs.display,
-                                    visibility: gs.visibility,
-                                    opacity: gs.opacity,
-                                    style: grandchild.getAttribute('style')
-                                });
-                            });
-                        });
-                    }
-                    console.log("=== END AD HIERARCHY DEBUG ===");
+                    console.log("=== FULL AD VISIBILITY TRACE ===");
+                    const vh = window.innerHeight;
+                    const vw = window.innerWidth;
+                    console.log("VIEWPORT:", vw + "x" + vh);
+                    
+                    // Find ALL banner-ad-space and ad-container elements
+                    const allBanners = document.querySelectorAll('.banner-ad-space');
+                    const allContainers = document.querySelectorAll('#ad-container');
+                    console.log("TOTAL .banner-ad-space elements in DOM:", allBanners.length);
+                    console.log("TOTAL #ad-container elements in DOM:", allContainers.length);
+                    
+                    // Find ALL iframes anywhere in page
+                    const allIframes = document.querySelectorAll('iframe');
+                    console.log("TOTAL iframes in DOM:", allIframes.length);
+                    
+                    allIframes.forEach((iframe, idx) => {
+                        const iRect = iframe.getBoundingClientRect();
+                        const onScreen = iRect.bottom > 0 && iRect.top < vh && iRect.right > 0 && iRect.left < vw && iRect.width > 0 && iRect.height > 0;
+                        console.log("--- IFRAME[" + idx + "] ---");
+                        console.log("  screenRect: top=" + iRect.top.toFixed(0) + " left=" + iRect.left.toFixed(0) + " bottom=" + iRect.bottom.toFixed(0) + " right=" + iRect.right.toFixed(0) + " w=" + iRect.width.toFixed(0) + " h=" + iRect.height.toFixed(0));
+                        console.log("  ON SCREEN:", onScreen);
+                        console.log("  style attr:", iframe.getAttribute('style'));
+                        console.log("  src:", (iframe.src || '').substring(0, 80));
+                        
+                        // Walk up every ancestor
+                        let el = iframe.parentElement;
+                        let depth = 0;
+                        while (el) {
+                            const r = el.getBoundingClientRect();
+                            const cs = getComputedStyle(el);
+                            const tag = el.tagName;
+                            const cls = el.className ? String(el.className).substring(0, 60) : '';
+                            const id = el.id || '';
+                            const clips = cs.overflow !== 'visible';
+                            const elOnScreen = r.bottom > 0 && r.top < vh && r.right > 0 && r.left < vw && r.width > 0 && r.height > 0;
+                            console.log("  ANCESTOR[" + depth + "] <" + tag + "> id=" + id + " class=" + cls);
+                            console.log("    screenRect: top=" + r.top.toFixed(0) + " left=" + r.left.toFixed(0) + " bottom=" + r.bottom.toFixed(0) + " right=" + r.right.toFixed(0) + " w=" + r.width.toFixed(0) + " h=" + r.height.toFixed(0));
+                            console.log("    position:" + cs.position + " overflow:" + cs.overflow + " display:" + cs.display + " visibility:" + cs.visibility + " opacity:" + cs.opacity + " zIndex:" + cs.zIndex);
+                            console.log("    CLIPS_CHILDREN:" + clips + " ON_SCREEN:" + elOnScreen);
+                            el = el.parentElement;
+                            depth++;
+                        }
+                    });
+                    console.log("=== END FULL AD VISIBILITY TRACE ===");
                 }, 500);
             }
         }, 5000);
