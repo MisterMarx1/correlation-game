@@ -33,7 +33,7 @@
   - Canvas API (native)
   
   Author: Mister Marx
-  Version: v1.95
+  Version: v1.96
   Last Modified: 2026-04-17
 -->
 <!DOCTYPE html>
@@ -1043,9 +1043,9 @@
             bottom: -200px; 
             left: 0;
             width: 100%;
-            height: var(--unified-ad-space-height);
-            max-height: var(--unified-ad-space-height);
-            min-height: var(--unified-ad-space-height);
+            height: 100px;
+            max-height: 100px;
+            min-height: 100px;
             background: linear-gradient(135deg, #1a1a2e, #0f0f1e);
             border-top: 2px solid #00ccff;
             display: flex;
@@ -2894,7 +2894,7 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
         // IMPORTANT: Before you git push origin main you MUST update this timestamp
         // Format: YYYY-MM-DDTHH:MM:SSZ (UTC)
         // This ensures you know if you need to hard refresh to see the latest version
-        console.log("=== MATH IN SPACE v1.95 [2026-04-16T22:25:00Z] DEPLOYED ===");
+        console.log("=== MATH IN SPACE v1.96 [2026-04-16T22:25:00Z] DEPLOYED ===");
         
         root.render(
             <Provider store={store}>
@@ -2997,8 +2997,7 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
             const ins = container.querySelector("ins.adsbygoogle");
             const iframe = container.querySelector("iframe");
             const bannerSpace = document.querySelector(".banner-ad-space");
-            const adHeight = '100px';
-            
+            const adHeight = '100px'; // Hard Coded for now. eventually will be dyanmic based on the height of the received ad. if i can ever get the ad to actually be visible.            
             console.log("Ad check - iframe exists:", !!iframe);
             if (iframe) {
                 console.log("Ad iframe dimensions:", iframe.offsetWidth + "x" + iframe.offsetHeight);
