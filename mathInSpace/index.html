@@ -33,7 +33,7 @@
   - Canvas API (native)
   
   Author: Mister Marx
-  Version: v1.992
+  Version: v1.993
   Last Modified: 2026-04-17
 -->
 <!DOCTYPE html>
@@ -1068,6 +1068,7 @@
         #ad-container {
             width: 100% !important;
             overflow: hidden;
+            background: transparent;
             position: relative !important;
             height: 100px !important;
         }
@@ -1075,25 +1076,12 @@
         #ad-container ins {
             display: block !important;
             width: 100% !important;
-            height: 100px !important;
         }
 
-        #ad-container [id^="aswift_"] {
-            width: 100% !important;
+        #ad-container iframe {
             height: 100px !important;
-            position: relative !important;
-        }
-
-        #ad-container [id^="google_ads_iframe"] {
-            width: 100% !important;
-            height: 100px !important;
-            border: none !important;
-            position: absolute !important;
-            top: 0 !important;
-            left: 0 !important;
-            z-index: 1 !important;
-            display: block !important;
-            visibility: visible !important;
+            max-height: 100px !important;
+            min-height: 100px !important;
         }
 
         .math-in-space-container.admob-shifted {
@@ -2912,7 +2900,7 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
         // IMPORTANT: Before you git push origin main you MUST update this timestamp
         // Format: YYYY-MM-DDTHH:MM:SSZ (UTC)
         // This ensures you know if you need to hard refresh to see the latest version
-        console.log("=== MATH IN SPACE v1.992 [2026-04-16T22:25:00Z] DEPLOYED ===");
+        console.log("=== MATH IN SPACE v1.993 [2026-04-16T22:25:00Z] DEPLOYED ===");
         
         root.render(
             <Provider store={store}>
