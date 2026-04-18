@@ -33,7 +33,7 @@
   - Canvas API (native)
   
   Author: Mister Marx
-  Version: v1.83
+  Version: v1.84
   Last Modified: 2026-04-17
 -->
 <!DOCTYPE html>
@@ -2893,7 +2893,7 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
         // IMPORTANT: Before you git push origin main you MUST update this timestamp
         // Format: YYYY-MM-DDTHH:MM:SSZ (UTC)
         // This ensures you know if you need to hard refresh to see the latest version
-        console.log("=== MATH IN SPACE v1.83 [2026-04-16T22:25:00Z] DEPLOYED ===");
+        console.log("=== MATH IN SPACE v1.84 [2026-04-16T22:25:00Z] DEPLOYED ===");
         
         root.render(
             <Provider store={store}>
@@ -2926,10 +2926,14 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
     function loadWebAd() {
         console.log("Loading web AdSense ad...");
         if (adLoaded) return;
-        
+        console.log("Made it and adLoaded is false.")
         const container = document.getElementById("ad-container");
         if (!container) return;
+        console.log("Made it and container exists")
+
         if (container.offsetWidth === 0) return;
+        
+        console.log("Made it and container has width")
         
         container.style.cssText = `
             width: 100% !important;
