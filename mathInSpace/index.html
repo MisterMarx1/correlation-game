@@ -33,7 +33,7 @@
   - Canvas API (native)
   
   Author: Mister Marx
-  Version: v1.818
+  Version: v1.819
   Last Modified: 2026-04-17
 -->
 <!DOCTYPE html>
@@ -2585,8 +2585,6 @@
                                     console.log("adSenseFinalReceivedHeight set to:", adSenseFinalReceivedHeight);
                                     // Update CSS variable
                                     document.documentElement.style.setProperty('--ad-height', adSenseFinalReceivedHeight + 'px');
-                                    // Add border to blankDiv when ad loads
-                                    blankDiv.style.borderTop = '3px solid rgba(147, 197, 253, 0.8)';
                                 } else {
                                     console.log("Ad not filled or blank - not setting height");
                                     // Allow clicks to pass through the transparent wrapper
@@ -3708,7 +3706,7 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
         // IMPORTANT: Before you git push origin main you MUST update this timestamp
         // Format: YYYY-MM-DDTHH:MM:SSZ (UTC)
         // This ensures you know if you need to hard refresh to see the latest version
-        console.log("=== MATH IN SPACE v1.818 [2026-04-16T22:25:00Z] DEPLOYED ===");
+        console.log("=== MATH IN SPACE v1.819 [2026-04-16T22:25:00Z] DEPLOYED ===");
         
         root.render(
             <Provider store={store}>
