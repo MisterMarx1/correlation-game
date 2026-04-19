@@ -411,79 +411,6 @@ def copy_resized_pngs_to_android():
     except Exception as e:
         print(f"ERROR: Failed to update AndroidManifest.xml: {e}")
 
-def ensure_capacitor_config_with_admob():
-    """Ensure capacitor.config.json exists with AdMob configuration"""
-    root_dir = Path(__file__).parent
-    config_path = root_dir / "capacitor.config.json"
-
-    # Default config with AdMob
-    default_config = {
-        "appId": "com.mistermarx.mathinspace",
-        "appName": "Math In Space",
-        "webDir": "www",
-        "server": {
-            "androidScheme": "https",
-            "cleartext": True
-        },
-        "plugins": {
-            "SplashScreen": {
-                "launchShowDuration": 2000,
-                "backgroundColor": "#000428"
-            },
-            "AdMob": {
-                "initializeForTesting": False,
-                "appId": "ca-app-pub-2662863757001007~6977812828",
-                "adUnits": {
-                    "banner": {
-                        "id": "ca-app-pub-2662863757001007/4499823296"
-                    }
-                }
-            }
-        }
-    }
-
-    import json
-
-    # If config doesn't exist, create it
-    if not config_path.exists():
-        print(f"Creating capacitor.config.json with AdMob configuration...")
-        with open(config_path, 'w', encoding='utf-8') as f:
-            json.dump(default_config, f, indent=2)
-        print(f"Created: {config_path}")
-        return
-
-    # If config exists, ensure AdMob is configured
-    try:
-        with open(config_path, 'r', encoding='utf-8') as f:
-            config = json.load(f)
-
-        # Ensure AdMob section exists with correct config
-        if 'plugins' not in config:
-            config['plugins'] = {}
-
-        if 'AdMob' not in config['plugins']:
-            config['plugins']['AdMob'] = {}
-
-        config['plugins']['AdMob']['initializeForTesting'] = False
-        config['plugins']['AdMob']['appId'] = "ca-app-pub-2662863757001007~6977812828"
-
-        if 'adUnits' not in config['plugins']['AdMob']:
-            config['plugins']['AdMob']['adUnits'] = {}
-
-        if 'banner' not in config['plugins']['AdMob']['adUnits']:
-            config['plugins']['AdMob']['adUnits']['banner'] = {}
-
-        config['plugins']['AdMob']['adUnits']['banner']['id'] = "ca-app-pub-2662863757001007/4499823296"
-
-        # Write back
-        with open(config_path, 'w', encoding='utf-8') as f:
-            json.dump(config, f, indent=2)
-
-        print(f"Updated capacitor.config.json with AdMob configuration")
-
-    except Exception as e:
-        print(f"WARNING: Could not update capacitor.config.json: {e}")
-
 def main():
     # Paths
     root_dir = Path(__file__).parent
@@ -540,11 +467,7 @@ def main():
     # Install safe-area plugin if needed
     print("\n=== Checking Safe-Area Plugin ===")
     install_safe_area_plugin()
-
-    # Ensure capacitor.config.json has AdMob configuration
-    print("\n=== Ensuring AdMob Configuration ===")
-    ensure_capacitor_config_with_admob()
-
+    
     # Run Capacitor sync
     print("\n=== Running Capacitor Sync ===")
     try:

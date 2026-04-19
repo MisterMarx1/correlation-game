@@ -170,9 +170,9 @@
             text-align: center;
             width: 100%;
             height: calc(100vh - var(--safe-area-inset-bottom) - var(--ad-height));
-            bottom:0;
+            top:0;
             position: absolute;  /* ADD THIS */
-            padding-top: max(24px, var(--safe-area-inset-top));
+            padding-bottom: var(--safe-area-inset-top);
             padding-left: var(--safe-area-inset-left);
             padding-right: var(--safe-area-inset-right);
             color: #e0e0e0;
@@ -1126,7 +1126,7 @@
         /* --- Credits Popup --- */
         .credits-popup {
             position: fixed;
-            bottom: 0;
+            top: 0;
             left: 0;
             right: 0;
             height: calc(100vh - var(--safe-area-inset-bottom) - var(--ad-height));
@@ -1200,7 +1200,7 @@
             left: 0;
             width: 100%;
             height: calc(100vh - var(--safe-area-inset-bottom) - var(--ad-height));
-            bottom:0;
+            top:0;
             background: radial-gradient(ellipse at center, 
                 rgba(20, 25, 40, 0.95) 0%, 
                 rgba(10, 15, 30, 0.98) 40%, 
@@ -2394,7 +2394,7 @@
                             position: "fixed",
                             left: 0,
                             right: 0,
-                            bottom: 0,
+                            top: 0,
                             height: "calc(100vh - var(--safe-area-inset-bottom) - var(--ad-height))",
                             backgroundColor: "rgba(3,7,18,0.98)",
                             display: "flex",
@@ -2519,9 +2519,9 @@
                     // Create blank div wrapper (100vw width)
                     const blankDiv = document.createElement('div');
                     blankDiv.style.width = '100vw';
-                    blankDiv.style.height = '50px';
+                    blankDiv.style.height = '100px';
                     blankDiv.style.position = 'fixed';
-                    blankDiv.style.top = '0';
+                    blankDiv.style.bottom = '0';
                     blankDiv.style.left = '0';
                     blankDiv.style.background = 'transparent';
                     blankDiv.style.pointerEvents = 'none';
@@ -2529,11 +2529,11 @@
                     // Create wrapper with proper layout context
                     const wrapper = document.createElement('div');
                     wrapper.style.position = 'fixed';
-                    wrapper.style.top = '0';
+                    wrapper.style.bottom = '0';
                     wrapper.style.left = '50%';
                     wrapper.style.transform = 'translateX(-50%)';
                     wrapper.style.width = '320px';
-                    wrapper.style.height = '50px';
+                    wrapper.style.height = '100px';
                     wrapper.style.zIndex = '5000';
                     wrapper.style.background = 'transparent';
                     wrapper.style.pointerEvents = 'auto';
@@ -2543,12 +2543,12 @@
                     adContainer.className = 'adsbygoogle';
                     adContainer.style.display = 'inline-block';
                     adContainer.style.width = '320px';
-                    adContainer.style.height = '50px';
+                    adContainer.style.height = '100px';
                     adContainer.setAttribute('data-ad-client', 'ca-pub-2662863757001007');
                     adContainer.setAttribute('data-ad-slot', '2870000676');
 
                     console.log("=== AD CONTAINER CREATED ===");
-                    console.log("Dimensions: 320px × 50px");
+                    console.log("Dimensions: 320px × 100px");
                     console.log("Display: inline-block");
                     console.log("Format: auto (removed rectangle)");
                     console.log("Wrapper: fixed bottom center");

@@ -247,84 +247,11 @@ def create_adaptive_icon_xmls():
         except Exception as e:
             print(f"ERROR: Failed to create {xml_name}: {e}")
 
-def ensure_capacitor_config_with_admob():
-    """Ensure capacitor.config.json exists with AdMob configuration"""
-    root_dir = Path(__file__).parent
-    config_path = root_dir / "capacitor.config.json"
-
-    # Default config with AdMob
-    default_config = {
-        "appId": "com.mistermarx.mathinspace",
-        "appName": "Math In Space",
-        "webDir": "www",
-        "server": {
-            "androidScheme": "https",
-            "cleartext": True
-        },
-        "plugins": {
-            "SplashScreen": {
-                "launchShowDuration": 2000,
-                "backgroundColor": "#000428"
-            },
-            "AdMob": {
-                "initializeForTesting": False,
-                "appId": "ca-app-pub-2662863757001007~6977812828",
-                "adUnits": {
-                    "banner": {
-                        "id": "ca-app-pub-2662863757001007/4499823296"
-                    }
-                }
-            }
-        }
-    }
-
-    import json
-
-    # If config doesn't exist, create it
-    if not config_path.exists():
-        print(f"Creating capacitor.config.json with AdMob configuration...")
-        with open(config_path, 'w', encoding='utf-8') as f:
-            json.dump(default_config, f, indent=2)
-        print(f"Created: {config_path}")
-        return
-
-    # If config exists, ensure AdMob is configured
-    try:
-        with open(config_path, 'r', encoding='utf-8') as f:
-            config = json.load(f)
-
-        # Ensure AdMob section exists with correct config
-        if 'plugins' not in config:
-            config['plugins'] = {}
-
-        if 'AdMob' not in config['plugins']:
-            config['plugins']['AdMob'] = {}
-
-        config['plugins']['AdMob']['initializeForTesting'] = False
-        config['plugins']['AdMob']['appId'] = "ca-app-pub-2662863757001007~6977812828"
-
-        if 'adUnits' not in config['plugins']['AdMob']:
-            config['plugins']['AdMob']['adUnits'] = {}
-
-        if 'banner' not in config['plugins']['AdMob']['adUnits']:
-            config['plugins']['AdMob']['adUnits']['banner'] = {}
-
-        config['plugins']['AdMob']['adUnits']['banner']['id'] = "ca-app-pub-2662863757001007/4499823296"
-
-        # Write back
-        with open(config_path, 'w', encoding='utf-8') as f:
-            json.dump(config, f, indent=2)
-
-        print(f"Updated capacitor.config.json with AdMob configuration")
-
-    except Exception as e:
-        print(f"WARNING: Could not update capacitor.config.json: {e}")
-
 def copy_resized_pngs_to_android():
     """Copy resized PNGs to Android mipmap folders and update manifest"""
     root_dir = Path(__file__).parent
     android_res_dir = root_dir / "android" / "app" / "src" / "main" / "res"
-
+    
     if not android_res_dir.exists():
         print(f"WARNING: Android res directory not found: {android_res_dir}")
         return False
@@ -490,14 +417,29 @@ def main():
             print("Sync warnings/errors:")
             print(result.stderr)
         
-        # Ensure capacitor.config.json has AdMob configuration
-        print("\n=== Ensuring AdMob Configuration ===")
-        ensure_capacitor_config_with_admob()
-
         # Copy resized PNGs to Android mipmap folders
         print("\n=== Copying PNGs to Android Mipmap Folders ===")
         copy_resized_pngs_to_android()
-
+        
+        # Apply AdMob configuration after sync
+        print("\nApplying AdMob configuration...")
+        try:
+            admob_result = subprocess.run(
+                ["node", "scripts/apply-admob-config.js"],
+                cwd=root_dir,
+                capture_output=True,
+                text=True,
+                check=True
+            )
+            print("AdMob config output:")
+            print(admob_result.stdout)
+            if admob_result.stderr:
+                print("AdMob config warnings:")
+                print(admob_result.stderr)
+        except subprocess.CalledProcessError as e:
+            print(f"AdMob config failed: {e}")
+            print("Continuing anyway...")
+        
         # Open Android Studio
         print("\nOpening Android Studio...")
         open_commands = [
