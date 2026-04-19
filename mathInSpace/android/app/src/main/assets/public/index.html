@@ -2615,6 +2615,14 @@
                     // Initialize AdMob
                     const { AdMob } = window.Capacitor.Plugins;
                     
+                    // Store original safe area inset top value
+                    const originalSafeAreaTop = getComputedStyle(document.documentElement).getPropertyValue('--safe-area-inset-top');
+                    console.log("Original safe-area-inset-top:", originalSafeAreaTop);
+                    
+                    // Temporarily set safe-area-inset-top to 0px so AdMob positions at absolute top
+                    document.documentElement.style.setProperty('--safe-area-inset-top', '0px');
+                    console.log("Temporarily set safe-area-inset-top to 0px for AdMob positioning");
+                    
                     // Initialize AdMob first
                     AdMob.initialize().then(() => {
                         console.log("AdMob initialized successfully");
@@ -2630,14 +2638,22 @@
                         }).then(() => {
                             console.log("AdMob banner shown successfully");
                             
+                            // Restore original safe area inset top value after banner is positioned
+                            document.documentElement.style.setProperty('--safe-area-inset-top', originalSafeAreaTop);
+                            console.log("Restored safe-area-inset-top to:", originalSafeAreaTop);
+                            
                             // Don't set ad-height for Android since overlap: true makes it overlay the webview
                             // No space needs to be reserved in the container
                             console.log("AdMob using overlap mode, not reserving space in container");
                         }).catch(error => {
                             console.error("AdMob banner error:", error);
+                            // Restore safe area even on error
+                            document.documentElement.style.setProperty('--safe-area-inset-top', originalSafeAreaTop);
                         });
                     }).catch(error => {
                         console.error("AdMob initialization error:", error);
+                        // Restore safe area even on error
+                        document.documentElement.style.setProperty('--safe-area-inset-top', originalSafeAreaTop);
                     });
                 }
 
