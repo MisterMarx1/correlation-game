@@ -1825,16 +1825,26 @@
                         // Debug check for iframe height
                         setTimeout(() => {
                             const iframe = document.querySelector('iframe');
+                            const ins = document.querySelector('ins.adsbygoogle');
                             console.log("=== IFRAME DEBUG CHECK ===");
                             console.log("iframe exists:", !!iframe);
+                            console.log("ins exists:", !!ins);
+                            
+                            if (ins) {
+                                console.log("ad status:", ins.dataset.adStatus);
+                            }
+                            
                             if (iframe) {
                                 console.log("iframe height:", iframe.offsetHeight);
                                 console.log("iframe width:", iframe.offsetWidth);
                                 
-                                // Set root variable to actual iframe height when successfully rendered
-                                if (iframe.offsetHeight > 0) {
+                                // Only set height if ad is actually filled (not unfilled/blank)
+                                const isFilled = ins && ins.dataset.adStatus !== 'unfilled';
+                                if (iframe.offsetHeight > 0 && isFilled) {
                                     adSenseFinalReceivedHeight = iframe.offsetHeight;
                                     console.log("adSenseFinalReceivedHeight set to:", adSenseFinalReceivedHeight);
+                                } else {
+                                    console.log("Ad not filled or blank - not setting height");
                                 }
                             }
                         }, 2000);
