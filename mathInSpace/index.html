@@ -436,9 +436,10 @@
             max-width: 600px;
             width: 90%;
             flex-direction: column;
-            height: calc(100vh - 50px);
+            height: calc(100vh - var(--safe-area-inset-bottom) - var(--ad-height-offset-from-hundred));
             bottom: 0;
-            max-height: calc(100vh - 50px);
+            top: var(--ad-height-offset-from-hundred);
+            max-height: calc(100vh - var(--ad-height-offset-from-hundred));
             overflow-y: auto;
         }
         .results-ops {
@@ -1829,10 +1830,10 @@
                     {showCompanionPage && (
                         <div style={{
                             position: "fixed",
-                            top: 0,
+                            top: "var(--ad-height-offset-from-hundred)",
                             left: 0,
                             right: 0,
-                            bottom: 100,
+                            bottom: 0,
                             backgroundColor: "rgba(3,7,18,0.98)",
                             display: "flex",
                             flexDirection: "column",
