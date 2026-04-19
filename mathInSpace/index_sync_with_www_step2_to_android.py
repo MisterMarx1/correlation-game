@@ -261,6 +261,9 @@ def ensure_capacitor_config_with_admob():
             "androidScheme": "https",
             "cleartext": True
         },
+        "android": {
+            "adjustMarginsForEdgeToEdge": "auto"
+        },
         "plugins": {
             "SplashScreen": {
                 "launchShowDuration": 2000,
@@ -274,13 +277,7 @@ def ensure_capacitor_config_with_admob():
                         "id": "ca-app-pub-2662863757001007/4499823296"
                     }
                 }
-            },
-            "SystemBars": {
-                "insetsHandling": "disable"
             }
-        },
-        "android": {
-            "adjustMarginsForEdgeToEdge": "disable"
         }
     }
 
@@ -299,6 +296,12 @@ def ensure_capacitor_config_with_admob():
         with open(config_path, 'r', encoding='utf-8') as f:
             config = json.load(f)
 
+        # Ensure android section exists with edge-to-edge config
+        if 'android' not in config:
+            config['android'] = {}
+
+        config['android']['adjustMarginsForEdgeToEdge'] = "auto"
+
         # Ensure AdMob section exists with correct config
         if 'plugins' not in config:
             config['plugins'] = {}
@@ -316,16 +319,6 @@ def ensure_capacitor_config_with_admob():
             config['plugins']['AdMob']['adUnits']['banner'] = {}
 
         config['plugins']['AdMob']['adUnits']['banner']['id'] = "ca-app-pub-2662863757001007/4499823296"
-
-        # Ensure SystemBars configuration
-        if 'SystemBars' not in config['plugins']:
-            config['plugins']['SystemBars'] = {}
-        config['plugins']['SystemBars']['insetsHandling'] = "disable"
-
-        # Ensure android section with adjustMarginsForEdgeToEdge
-        if 'android' not in config:
-            config['android'] = {}
-        config['android']['adjustMarginsForEdgeToEdge'] = "disable"
 
         # Write back
         with open(config_path, 'w', encoding='utf-8') as f:

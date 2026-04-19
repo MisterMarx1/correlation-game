@@ -172,7 +172,7 @@
             height: calc(100vh - var(--safe-area-inset-bottom) - var(--ad-height));
             bottom:0;
             position: absolute;  /* ADD THIS */
-            padding-top: var(--safe-area-inset-top);
+            padding-top: max(24px, var(--safe-area-inset-top));
             padding-left: var(--safe-area-inset-left);
             padding-right: var(--safe-area-inset-right);
             color: #e0e0e0;
@@ -2638,166 +2638,6 @@
             );
         };
 
-        // --- AdMob Banner Component (Android Only) ---
-        const AdMobBanner = () => {
-            const [isReady, setIsReady] = React.useState(false);
-
-            React.useEffect(() => {
-                // Only run on Android Capacitor app
-                const isAndroidApp = window.Capacitor && window.Capacitor.platform === 'android';
-                
-                if (!isAndroidApp) {
-                    console.log("AdMobBanner: Not on Android, skipping");
-                    return;
-                }
-
-                console.log("=== ADMOB BANNER INITIALIZING ===");
-
-                // Initialize AdMob
-                const initializeAdMob = async () => {
-                    try {
-                        const { AdMob, BannerAdSize, BannerAdPosition } = window.Capacitor.Plugins;
-
-                        if (!AdMob) {
-                            console.error("AdMob plugin not found");
-                            return;
-                        }
-
-                        await AdMob.initialize();
-
-                        const options = {
-                            adId: 'ca-app-pub-2662863757001007/4499823296',
-                            adSize: BannerAdSize.ADAPTIVE_BANNER,
-                            position: BannerAdPosition.TOP_CENTER,
-                            margin: 0,
-                            overlap: true,
-                            isTesting: false
-                        };
-
-                        await AdMob.showBanner(options);
-
-                        // Listen to banner size changes
-                        AdMob.addListener('onBannerSizeChanged', (size) => {
-                            console.log('Banner size changed:', size);
-                            document.documentElement.style.setProperty('--ad-height', size.height + 'px');
-                        });
-
-                        // Log all AdMob-related DOM elements
-                        setTimeout(() => {
-                            console.log("=== ADMOB DOM ELEMENTS ===");
-                            
-                            // Log all iframes
-                            const iframes = document.querySelectorAll('iframe');
-                            console.log(`Found ${iframes.length} iframe(s):`);
-                            iframes.forEach((iframe, index) => {
-                                console.log(`  iframe[${index}]:`, {
-                                    src: iframe.src,
-                                    width: iframe.offsetWidth,
-                                    height: iframe.offsetHeight,
-                                    style: iframe.getAttribute('style'),
-                                    className: iframe.className
-                                });
-                            });
-
-                            // Log all divs with admob in class
-                            const admobDivs = document.querySelectorAll('div[class*="admob"]');
-                            console.log(`Found ${admobDivs.length} admob div(s):`);
-                            admobDivs.forEach((div, index) => {
-                                console.log(`  admobDiv[${index}]:`, {
-                                    className: div.className,
-                                    width: div.offsetWidth,
-                                    height: div.offsetHeight,
-                                    style: div.getAttribute('style'),
-                                    position: window.getComputedStyle(div).position,
-                                    top: window.getComputedStyle(div).top,
-                                    left: window.getComputedStyle(div).left
-                                });
-                            });
-
-                            // Log all ins elements (AdSense/AdMob containers)
-                            const insElements = document.querySelectorAll('ins');
-                            console.log(`Found ${insElements.length} ins element(s):`);
-                            insElements.forEach((ins, index) => {
-                                console.log(`  ins[${index}]:`, {
-                                    className: ins.className,
-                                    width: ins.offsetWidth,
-                                    height: ins.offsetHeight,
-                                    dataset: ins.dataset
-                                });
-                            });
-
-                            // Force banner to -100px
-                            const banner = document.querySelector('div[class*="admob"]');
-                            if (banner) {
-                                banner.style.top = '-100px';
-                                console.log("Forced banner to -100px top position");
-                            }
-                        }, 1200);
-
-                        setIsReady(true);
-
-                    } catch (error) {
-                        console.error("AdMob error:", error);
-                    }
-                };
-
-                // Delay initialization slightly to ensure Capacitor is ready
-                const timer = setTimeout(() => {
-                    initializeAdMob();
-                }, 1000);
-
-                return () => {
-                    clearTimeout(timer);
-                    // Cleanup: hide banner and remove listeners
-                    if (window.Capacitor?.Plugins?.AdMob) {
-                        window.Capacitor.Plugins.AdMob.hideBanner().catch(console.error);
-                        window.Capacitor.Plugins.AdMob.removeAllListeners().catch(console.error);
-                    }
-                };
-            }, []);
-
-            // Only render on Android
-            const isAndroidApp = window.Capacitor && window.Capacitor.platform === 'android';
-            
-            if (!isAndroidApp) {
-                return null;
-            }
-
-            return (
-                <div
-                    style={{
-                        position: 'fixed',
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        width: '100vw',
-                        height: '100vh',
-                        zIndex: 1,
-                        pointerEvents: 'none',
-                        backgroundColor: 'black',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        margin: '0 auto'
-                    }}
-                >
-                    {isReady && (
-                        <div style={{
-                            position: 'absolute',
-                            top: '50%',
-                            left: '50%',
-                            transform: 'translate(-50%, -50%)',
-                            color: 'rgba(255,255,255,0.3)',
-                            fontSize: '12px',
-                            fontFamily: 'Orbitron, sans-serif'
-                        }}>
-                            Ad Loaded
-                        </div>
-                    )}
-                </div>
-            );
-        };
-
         // --- View Components ---
         const SetupScreen = ({
             username,
@@ -3886,7 +3726,6 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
         
         root.render(
             <Provider store={store}>
-                <AdMobBanner />
                 <MathInSpace />
             </Provider>
         );

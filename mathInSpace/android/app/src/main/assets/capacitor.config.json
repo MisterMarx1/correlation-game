@@ -25,6 +25,6 @@
 		}
 	},
 	"android": {
-		"adjustMarginsForEdgeToEdge": "disable"
+		"adjustMarginsForEdgeToEdge": "auto"
 	}
 }
