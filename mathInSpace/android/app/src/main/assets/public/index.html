@@ -2681,6 +2681,16 @@
                         });
                         console.log("AdMob banner shown successfully at TOP_CENTER with overlap");
 
+                        // Manually re-center banner after it loads
+                        setTimeout(() => {
+                            const banner = document.querySelector('div[class*="admob"]');
+                            if (banner) {
+                                banner.style.left = '50%';
+                                banner.style.transform = 'translateX(-50%)';
+                                console.log("Manually re-centered banner");
+                            }
+                        }, 800);
+
                         setIsReady(true);
 
                     } catch (error) {
@@ -2724,7 +2734,8 @@
                         backgroundColor: 'black',
                         display: 'flex',
                         flexDirection: 'column',
-                        alignItems: 'center'
+                        alignItems: 'center',
+                        margin: '0 auto'
                     }}
                 >
                     {isReady && (
