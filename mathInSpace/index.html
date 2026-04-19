@@ -33,7 +33,7 @@
   - Canvas API (native)
   
   Author: Mister Marx
-  Version: v1.800
+  Version: v1.801
   Last Modified: 2026-04-17
 -->
 <!DOCTYPE html>
@@ -1831,6 +1831,43 @@
                     console.log("Platform:", isAndroidApp ? "Android App (skipping AdSense)" : "Web (loading AdSense)");
                 }
 
+                // Create wrapper with proper layout context
+                const wrapper = document.createElement('div');
+                wrapper.style.position = 'fixed';
+                wrapper.style.top = '0';
+                wrapper.style.left = '50%';
+                wrapper.style.transform = 'translateX(-50%)';
+                wrapper.style.width = '320px';
+                wrapper.style.height = '100px';
+                wrapper.style.zIndex = '5000';
+                wrapper.style.background = 'transparent';
+                wrapper.style.pointerEvents = 'auto';
+
+                // Create ad container
+                const adContainer = document.createElement('ins');
+                adContainer.className = 'adsbygoogle';
+                adContainer.style.display = 'inline-block';
+                adContainer.style.width = '320px';
+                adContainer.style.height = '100px';
+                adContainer.setAttribute('data-ad-client', 'ca-pub-2662863757001007');
+                adContainer.setAttribute('data-ad-slot', '2870000676');
+                
+                console.log("=== AD CONTAINER CREATED ===");
+                console.log("Dimensions: 320px × 100px");
+                console.log("Display: inline-block");
+                console.log("Format: auto (removed rectangle)");
+                console.log("Wrapper: fixed bottom center");
+                console.log("Ad client: ca-pub-2662863757001007");
+                console.log("Ad slot: 2870000676");
+                
+                wrapper.appendChild(adContainer);
+                
+                // Append wrapper to overlay
+                if (adRef.current) {
+                    adRef.current.appendChild(wrapper);
+                    console.log("Wrapper with ad container appended to overlay");
+                }
+
                 // Only load AdSense if NOT on Android app
                 if (!isAndroidApp) {
                     // Inject AdSense script tag
@@ -1867,6 +1904,8 @@
                                     console.log("adSenseFinalReceivedHeight set to:", adSenseFinalReceivedHeight);
                                     // Update CSS variable
                                     document.documentElement.style.setProperty('--ad-height', adSenseFinalReceivedHeight + 'px');
+                                    // Set wrapper background to white
+                                    wrapper.style.background = 'white';
                                 } else {
                                     console.log("Ad not filled or blank - not setting height");
                                 }
@@ -1874,42 +1913,6 @@
                         }, 2000);
                     };
                     document.head.appendChild(script);
-
-                    // Create wrapper with proper layout context
-                    const wrapper = document.createElement('div');
-                    wrapper.style.position = 'fixed';
-                    wrapper.style.top = '0';
-                    wrapper.style.left = '50%';
-                    wrapper.style.transform = 'translateX(-50%)';
-                    wrapper.style.width = '320px';
-                    wrapper.style.height = '100px';
-                    wrapper.style.zIndex = '5000';
-                    wrapper.style.background = 'transparent';
-                    wrapper.style.pointerEvents = 'auto';
-
-                    // Create ad container
-                    const adContainer = document.createElement('ins');
-                    adContainer.className = 'adsbygoogle';
-                    adContainer.style.display = 'inline-block';
-                    adContainer.style.width = '320px';
-                    adContainer.style.height = '100px';
-                    adContainer.setAttribute('data-ad-client', 'ca-pub-2662863757001007');
-                    adContainer.setAttribute('data-ad-slot', '2870000676');
-                    
-                    console.log("=== AD CONTAINER CREATED ===");
-                    console.log("Dimensions: 320px × 100px");
-                    console.log("Display: inline-block");
-                    console.log("Format: auto (removed rectangle)");
-                    console.log("Wrapper: fixed bottom center");
-                    console.log("Ad client: ca-pub-2662863757001007");
-                    console.log("Ad slot: 2870000676");
-                    
-                    wrapper.appendChild(adContainer);
-                    
-                    if (adRef.current) {
-                        adRef.current.appendChild(wrapper);
-                        console.log("Wrapper with ad container appended to overlay");
-                    }
                 }
 
                 return () => {
@@ -3006,7 +3009,7 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
         // IMPORTANT: Before you git push origin main you MUST update this timestamp
         // Format: YYYY-MM-DDTHH:MM:SSZ (UTC)
         // This ensures you know if you need to hard refresh to see the latest version
-        console.log("=== MATH IN SPACE v1.800 [2026-04-16T22:25:00Z] DEPLOYED ===");
+        console.log("=== MATH IN SPACE v1.801 [2026-04-16T22:25:00Z] DEPLOYED ===");
         
         root.render(
             <Provider store={store}>
