@@ -33,7 +33,7 @@
   - Canvas API (native)
   
   Author: Mister Marx
-  Version: v1.822
+  Version: v1.823
   Last Modified: 2026-04-17
 -->
 <!DOCTYPE html>
@@ -1979,6 +1979,32 @@
         const ADMOB_APP_ID = 'ca-app-pub-2662863757001007~6977812828';
         const ADMOB_BANNER_AD_UNIT_ID = 'ca-app-pub-2662863757001007/4499823296';
 
+        // --- AdMob Platform Detection ---
+        const isNativeAndroid = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.AdMob;
+
+        // --- AdMob Initialization ---
+        if (isNativeAndroid) {
+            window.Capacitor.Plugins.AdMob.initialize({ requestTrackingAuthorization: true });
+        }
+
+        // --- Show Banner Ad ---
+        if (isNativeAndroid) {
+            window.Capacitor.Plugins.AdMob.showBanner({
+                adId: ADMOB_BANNER_AD_UNIT_ID,
+                position: 'bottom',
+                size: 'BANNER',
+            });
+        }
+
+        // --- Mark Ad Loaded ---
+        let adLoaded = true;
+
+        // --- Disable Web Ad Container ---
+        const container = document.getElementById("ad-container");
+        if (container) {
+            container.style.display = 'none';
+        }
+
         // --- Configuration ---
         const DEFAULT_DURATION = 60;
         const DEFAULT_MAX_DIGITS = 1;
@@ -2332,6 +2358,11 @@
                     
                     {showCredits && (
                         <div className="credits-popup">
+                            <div
+                                style={{
+                                    padding: '20px'
+                                }}
+                            >
                             <div className="credits-title">Credits</div>
                                 Licensed under Creative Commons: By Attribution 4.0 License<br/>
                             <div className="credits-content">
@@ -2350,6 +2381,7 @@
                             >
                                 Close
                             </button>
+                            </div>
                         </div>
                     )}
                 </>
@@ -3712,7 +3744,7 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
         // IMPORTANT: Before you git push origin main you MUST update this timestamp
         // Format: YYYY-MM-DDTHH:MM:SSZ (UTC)
         // This ensures you know if you need to hard refresh to see the latest version
-        console.log("=== MATH IN SPACE v1.822 [2026-04-16T22:25:00Z] DEPLOYED ===");
+        console.log("=== MATH IN SPACE v1.823 [2026-04-16T22:25:00Z] DEPLOYED ===");
         
         root.render(
             <Provider store={store}>
