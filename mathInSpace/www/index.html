@@ -33,7 +33,7 @@
   - Canvas API (native)
   
   Author: Mister Marx
-  Version: v1.814
+  Version: v1.834
   Last Modified: 2026-04-17
 -->
 <!DOCTYPE html>
@@ -57,15 +57,14 @@
     <script>
         // --- AdSense Height Tracking ---
         let adSenseFinalReceivedHeight = 0;
+        let adSenseSettledPromiseResolve = null;
+        const adSenseSettledPromise = new Promise(resolve => {
+            adSenseSettledPromiseResolve = resolve;
+        });
     </script>
     
     <style>
-        /* Safe Area CSS Variables - injected by @capacitor-community/safe-area */
         :root {
-            --safe-area-inset-top: 0px;
-            --safe-area-inset-right: 0px;
-            --safe-area-inset-bottom: 0px;
-            --safe-area-inset-left: 0px;
             --ad-height: 0px;
         }
 
@@ -169,12 +168,9 @@
             justify-content: space-between;
             text-align: center;
             width: 100%;
-            height: calc(100vh - var(--safe-area-inset-bottom) - var(--ad-height));
+            height: 100vh;
             bottom:0;
             position: absolute;  /* ADD THIS */
-            padding-top: max(24px, var(--safe-area-inset-top));
-            padding-left: var(--safe-area-inset-left);
-            padding-right: var(--safe-area-inset-right);
             color: #e0e0e0;
             box-sizing: border-box;
             overflow: hidden;
@@ -453,7 +449,7 @@
         /* --- Progress Bars --- */
         .progress-bar-container {
             position: absolute;
-            bottom: 5px;
+            bottom: calc(5px + var(--ad-height));
             left: 50%;
             transform: translateX(-50%);
             width: 80%;
@@ -489,7 +485,7 @@
             flex-direction: column;
             display: flex;
             height: 100%;
-            bottom: 0;
+            padding-bottom: calc(25px + var(--ad-height));
             overflow-y: auto;
         }
         .results-ops {
@@ -988,7 +984,7 @@
 
         .question-timer-container {
             position: absolute;
-            bottom: 5px;
+            bottom: calc(5px + var(--ad-height));
             width: 100px;
             height: 6px;
             background: rgba(255,255,255,0.2);
@@ -1042,7 +1038,7 @@
         }
 
         .multiplier-label {
-            font-size: 0.5rem;
+            font-size: clamp(0.3rem, 2vw, .5rem);
             color: #ffffff;
             margin-bottom: 0.25rem;
         }
@@ -1126,10 +1122,10 @@
         /* --- Credits Popup --- */
         .credits-popup {
             position: fixed;
-            bottom: 0;
+            top: 0;
             left: 0;
             right: 0;
-            height: calc(100vh - var(--safe-area-inset-bottom) - var(--ad-height));
+            height: 100vh;
             background-color: rgba(0, 31, 63, 0.98);
             display: flex;
             flex-direction: column;
@@ -1137,6 +1133,7 @@
             justify-content: center;
             gap: 20px;
             z-index: 2000;
+            padding-bottom: calc(0px + var(--ad-height));
         }
 
         .credits-title {
@@ -1146,6 +1143,8 @@
             color: #f8fafc;
             font-family: 'Orbitron', sans-serif;
             text-transform: uppercase;
+            text-align: center;
+            margin-bottom: 8px;
         }
 
         .credits-content {
@@ -1154,7 +1153,7 @@
             font-family: 'IBM Plex Mono', monospace;
             text-align: center;
             max-width: 320px;
-            margin: 0 auto;
+            margin: 0 auto 8px auto;
             line-height: 1.5;
             word-wrap: break-word;
             overflow-wrap: break-word;
@@ -1164,6 +1163,7 @@
             padding: 12px 32px;
             background: transparent;
             color: #94a3b8;
+            margin-top: 16px;
             border: 1px solid rgba(148, 163, 184, 0.2);
             border-radius: 6px;
             font-size: 13px;
@@ -1179,6 +1179,7 @@
             background-color: rgba(0, 204, 255, 0.1);
             color: #fff;
             border-color: rgba(0, 204, 255, 0.3);
+            padding-top: 4px;
         }
 
         /* --- Glow Pulse Animation --- */
@@ -1200,7 +1201,7 @@
             position: fixed;
             left: 0;
             width: 100%;
-            height: calc(100vh - var(--safe-area-inset-bottom) - var(--ad-height));
+            height: 100vh;
             bottom:0;
             background: radial-gradient(ellipse at center, 
                 rgba(20, 25, 40, 0.95) 0%, 
@@ -1395,7 +1396,7 @@
         /* --- Bottom Left Controls Stack --- */
         .bottom-controls-stack {
             position: absolute;
-            bottom: 0px;
+            bottom: calc(0px + var(--ad-height));
             left: 0px;
             display: flex;
             flex-direction: column;
@@ -1426,12 +1427,13 @@
         /* --- Bottom Right Copyright --- */
         .copyright-text {
             position: absolute;
-            bottom: 0px;
+            bottom: calc(0px + var(--ad-height));
             padding-right: 2px;
+            padding-bottom: 2px;
             right: 0px;
-            font-size: 8px;
+            font-size: clamp(3px, 4vw, 5px);
             font-family: 'Orbitron', sans-serif;
-            color: rgba(255, 255, 255, 0.2);
+            color: rgba(255, 255, 255, 0.651);
             font-weight: 400;
             letter-spacing: 0.05em;
             text-transform: uppercase;
@@ -1749,11 +1751,6 @@
         const { useSelector, useDispatch } = ReactRedux;
         const { createStore } = RTK;
 
-        // --- Safe Area Plugin ---
-        // @capacitor-community/safe-area automatically injects CSS variables
-        // No JS API calls needed - plugin handles it all
-        console.log("✓ Safe-area plugin CSS variables ready (injected by @capacitor-community/safe-area)");
-
         // --- Sound Management System ---
         const SoundRoles = {
             // Background music track (will loop and overlap with itself)
@@ -1986,6 +1983,36 @@
 
         // Initialize sound manager
         const soundManager = new SoundManager();
+
+        // --- AdMob Configuration ---
+        const ADMOB_APP_ID = 'ca-app-pub-2662863757001007~6977812828';
+        const ADMOB_BANNER_AD_UNIT_ID = 'ca-app-pub-2662863757001007/4499823296';
+
+        // --- AdMob Platform Detection ---
+        const isNativeAndroid = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.AdMob;
+
+        // --- AdMob Initialization ---
+        if (isNativeAndroid) {
+            window.Capacitor.Plugins.AdMob.initialize({ requestTrackingAuthorization: true });
+        }
+
+        // --- Show Banner Ad ---
+        if (isNativeAndroid) {
+            window.Capacitor.Plugins.AdMob.showBanner({
+                adId: ADMOB_BANNER_AD_UNIT_ID,
+                position: 'bottom',
+                size: 'BANNER',
+            });
+        }
+
+        // --- Mark Ad Loaded ---
+        let adLoaded = true;
+
+        // --- Disable Web Ad Container ---
+        const container = document.getElementById("ad-container");
+        if (container) {
+            container.style.display = 'none';
+        }
 
         // --- Configuration ---
         const DEFAULT_DURATION = 60;
@@ -2340,6 +2367,15 @@
                     
                     {showCredits && (
                         <div className="credits-popup">
+                            <div
+                                style={{
+                                    padding: '20px',
+                                    width: '100%',
+                                    maxWidth: '100%',
+                                    boxSizing: 'border-box',
+                                    textAlign: 'center'
+                                }}
+                            >
                             <div className="credits-title">Credits</div>
                             <div className="credits-content">
                                 Licensed under Creative Commons: By Attribution 4.0 License<br/>
@@ -2358,6 +2394,7 @@
                             >
                                 Close
                             </button>
+                            </div>
                         </div>
                     )}
                 </>
@@ -2396,14 +2433,15 @@
                             left: 0,
                             right: 0,
                             bottom: 0,
-                            height: "calc(100vh - var(--safe-area-inset-bottom) - var(--ad-height))",
+                            height: "calc(100vh)",
                             backgroundColor: "rgba(3,7,18,0.98)",
                             display: "flex",
                             flexDirection: "column",
                             alignItems: "center",
                             justifyContent: "center",
                             zIndex: 3000,
-                            padding: "20px"
+                            padding: "20px",
+                            paddingBottom: "calc(var(--ad-height) + 20px)"
                         }}>
                             <div style={{
                                 width: "95%",
@@ -2427,7 +2465,7 @@
                                     backgroundColor: "rgba(15,23,42,0.82)"
                                 }}>
                                     <span style={{
-                                        fontSize: "24px",
+                                        fontSize: "clamp(14px, 4vw, 24px)",
                                         fontWeight: 900,
                                         letterSpacing: "0.08em",
                                         textTransform: "uppercase",
@@ -2522,7 +2560,7 @@
                     blankDiv.style.width = '100vw';
                     blankDiv.style.height = '100px';
                     blankDiv.style.position = 'fixed';
-                    blankDiv.style.top = '0';
+                    blankDiv.style.bottom = '0';
                     blankDiv.style.left = '0';
                     blankDiv.style.background = 'transparent';
                     blankDiv.style.pointerEvents = 'none';
@@ -2530,7 +2568,7 @@
                     // Create wrapper with proper layout context
                     const wrapper = document.createElement('div');
                     wrapper.style.position = 'fixed';
-                    wrapper.style.top = '0';
+                    wrapper.style.bottom = '0';
                     wrapper.style.left = '50%';
                     wrapper.style.transform = 'translateX(-50%)';
                     wrapper.style.width = '320px';
@@ -2598,12 +2636,15 @@
                                     console.log("adSenseFinalReceivedHeight set to:", adSenseFinalReceivedHeight);
                                     // Update CSS variable
                                     document.documentElement.style.setProperty('--ad-height', adSenseFinalReceivedHeight + 'px');
-                                    // Add border to blankDiv when ad loads
-                                    blankDiv.style.borderBottom = '3px solid rgba(147, 197, 253, 0.8)';
                                 } else {
                                     console.log("Ad not filled or blank - not setting height");
                                     // Allow clicks to pass through the transparent wrapper
                                     wrapper.style.pointerEvents = 'none';
+                                }
+                                // Resolve promise regardless of outcome
+                                if (adSenseSettledPromiseResolve) {
+                                    adSenseSettledPromiseResolve();
+                                    adSenseSettledPromiseResolve = null;
                                 }
                             }
                         }, 2000);
@@ -2668,7 +2709,7 @@
                 canvas.style.bottom = '0';
                 canvas.style.left = '0';
                 canvas.style.width = '100%';
-                canvas.style.height = 'calc(100vh - var(--safe-area-inset-bottom) - var(--ad-height))';
+                canvas.style.height = 'calc(100vh)';
                 canvas.style.zIndex = '1';
                 canvas.style.pointerEvents = 'none';
                 document.body.appendChild(canvas);
@@ -2687,9 +2728,7 @@
                 function resizeCanvas() {
                     width = canvas.width = window.innerWidth;
                     const viewportHeight = window.innerHeight;
-                    const safeAreaBottom = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--safe-area-inset-bottom')) || 0;
-                    const adHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ad-height')) || 0;
-                    height = canvas.height = viewportHeight - safeAreaBottom - adHeight;
+                    height = canvas.height = viewportHeight;
                 }
 
                 function drawWaveField() {
@@ -3124,9 +3163,18 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
                             console.log('Music loading failed:', e);
                         }
                     }
+                    // Wait for AdSense to settle
+                    if (window.adSenseSettledPromise) {
+                        try {
+                            await window.adSenseSettledPromise;
+                            console.log('AdSense settled');
+                        } catch (e) {
+                            console.log('AdSense settling failed:', e);
+                        }
+                    }
                     setIsPageLoaded(true);
                 };
-                
+
                 if (document.readyState === 'complete') {
                     handleLoad();
                 } else {
@@ -3723,7 +3771,7 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
         // IMPORTANT: Before you git push origin main you MUST update this timestamp
         // Format: YYYY-MM-DDTHH:MM:SSZ (UTC)
         // This ensures you know if you need to hard refresh to see the latest version
-        console.log("=== MATH IN SPACE v1.814 [2026-04-16T22:25:00Z] DEPLOYED ===");
+        console.log("=== MATH IN SPACE v1.834 [2026-04-16T22:25:00Z] DEPLOYED ===");
         
         root.render(
             <Provider store={store}>

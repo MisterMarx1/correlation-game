@@ -33,6 +33,62 @@ def get_current_version():
         return int(version_code_match.group(1)), version_name_match.group(1)
     return None, None
 
+def generate_google_services_json():
+    """Generate google-services.json with AdMob configuration"""
+    root_dir = Path(__file__).parent
+    android_app_dir = root_dir / "android" / "app"
+    
+    google_services_path = android_app_dir / "google-services.json"
+    
+    # Check if already exists
+    if google_services_path.exists():
+        print("google-services.json already exists, skipping generation")
+        return
+    
+    # AdMob configuration values
+    app_id = "ca-app-pub-2662863757001007~6977812828"
+    banner_ad_unit = "ca-app-pub-2662863757001007/4499823296"
+    
+    # Generate google-services.json content
+    json_content = f'''{{
+  "project_info": {{
+    "project_number": "123456789",
+    "project_id": "mathinspace-admob",
+    "storage_bucket": "mathinspace-admob.appspot.com"
+  }},
+  "client": [
+    {{
+      "client_info": {{
+        "mobilesdk_app_id": "1:123456789:android:abcdef",
+        "android_client_info": {{
+          "package_name": "com.mistermarx.mathinspace"
+        }}
+      }},
+      "oauth_client": [],
+      "api_key": [
+        {{
+          "current_key": "AIzaSyDummyKeyForAdMob"
+        }}
+      ],
+      "services": {{
+        "adservice": {{
+          "status": 2,
+          "ads_app_id": "{app_id}",
+          "ad_unit_ids": ["{banner_ad_unit}"]
+        }}
+      }}
+    }}
+  ],
+  "configuration_version": "1"
+}}'''
+    
+    try:
+        with open(google_services_path, 'w', encoding='utf-8') as f:
+            f.write(json_content)
+        print(f"Generated google-services.json at {google_services_path}")
+    except Exception as e:
+        print(f"ERROR: Failed to generate google-services.json: {e}")
+
 def rename_aab_with_version(root_dir):
     """Rename the generated AAB file to include version number"""
     version_code, version_name = get_current_version()
@@ -439,6 +495,10 @@ def main():
         except subprocess.CalledProcessError as e:
             print(f"AdMob config failed: {e}")
             print("Continuing anyway...")
+        
+        # Generate google-services.json
+        print("\nGenerating google-services.json...")
+        generate_google_services_json()
         
         # Open Android Studio
         print("\nOpening Android Studio...")
