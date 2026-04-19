@@ -1825,11 +1825,12 @@
                     const adContainer = document.createElement('ins');
                     adContainer.className = 'adsbygoogle';
                     adContainer.style.display = 'block';
-                    adContainer.style.height = '120px';
+                    adContainer.style.width = '320px';
+                    adContainer.style.height = '100px';
                     adContainer.setAttribute('data-ad-client', 'ca-pub-2662863757001007');
                     adContainer.setAttribute('data-ad-slot', '2870000676');
-                    adContainer.setAttribute('data-ad-format', 'auto');
-                    adContainer.setAttribute('data-full-width-responsive', 'true');
+                    adContainer.setAttribute('data-ad-format', 'rectangle');
+                    adContainer.setAttribute('data-full-width-responsive', 'false');
                     
                     if (adRef.current) {
                         adRef.current.appendChild(adContainer);
