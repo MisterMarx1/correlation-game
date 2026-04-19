@@ -425,9 +425,6 @@ def ensure_capacitor_config_with_admob():
             "androidScheme": "https",
             "cleartext": True
         },
-        "android": {
-            "adjustMarginsForEdgeToEdge": "auto"
-        },
         "plugins": {
             "SplashScreen": {
                 "launchShowDuration": 2000,
@@ -459,12 +456,6 @@ def ensure_capacitor_config_with_admob():
     try:
         with open(config_path, 'r', encoding='utf-8') as f:
             config = json.load(f)
-
-        # Ensure android section exists with edge-to-edge config
-        if 'android' not in config:
-            config['android'] = {}
-
-        config['android']['adjustMarginsForEdgeToEdge'] = "auto"
 
         # Ensure AdMob section exists with correct config
         if 'plugins' not in config:

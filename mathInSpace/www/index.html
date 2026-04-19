@@ -67,6 +67,7 @@
             --safe-area-inset-bottom: 0px;
             --safe-area-inset-left: 0px;
             --ad-height: 0px;
+            --admob-height: 0px;
         }
 
         /* Remove default browser margins and white border */
@@ -2532,9 +2533,9 @@
                                 console.log('Size object:', size);
                                 console.log('Banner height:', size.height);
                                 console.log('Banner width:', size.width);
-                                // Tell the game exactly how tall the banner is
-                        document.documentElement.style.setProperty('--ad-height', `${size.height}px`);
-                                console.log('✅ CSS variable --ad-height updated to:', size.height + 'px');
+                                // Tell the game exactly how tall the AdMob banner is
+                        document.documentElement.style.setProperty('--admob-height', `${size.height}px`);
+                                console.log('✅ CSS variable --admob-height updated to:', size.height + 'px');
                             }
                         );
                         console.log("✅ SizeChanged listener registered");
@@ -2542,7 +2543,7 @@
                         const options = {
                             adId: 'ca-app-pub-2662863757001007/4499823296',
                             adSize: 'ADAPTIVE_BANNER',   // ← use string value
-                            position: 'TOP_CENTER',
+                            position: 'BOTTOM_CENTER',
                             margin: 0,
                             overlap: true,          // important
                             isTesting: false
@@ -2552,7 +2553,7 @@
                         console.log("Calling AdMob.showBanner()...");
 
                         await AdMob.showBanner(options);
-                        console.log("✅ AdMob adaptive banner shown at TOP_CENTER");
+                        console.log("✅ AdMob adaptive banner shown at BOTTOM_CENTER");
 
                         setIsReady(true);
                         console.log("=== ADMOB BANNER READY ===");
