@@ -33,7 +33,7 @@
   - Canvas API (native)
   
   Author: Mister Marx
-  Version: v1.814
+  Version: v1.815
   Last Modified: 2026-04-17
 -->
 <!DOCTYPE html>
@@ -2615,23 +2615,30 @@
                     // Initialize AdMob
                     const { AdMob } = window.Capacitor.Plugins;
                     
-                    // Show banner ad
-                    AdMob.showBanner({
-                        adId: 'ca-app-pub-2662863757001007/4499823296',
-                        position: 'top',
-                        margin: 0,
-                        isTesting: false,
-                        npa: true
-                    }).then(() => {
-                        console.log("AdMob banner shown successfully");
+                    // Initialize AdMob first
+                    AdMob.initialize().then(() => {
+                        console.log("AdMob initialized successfully");
                         
-                        // Set default height for banner (typical banner height is 100px)
-                        setTimeout(() => {
-                            document.documentElement.style.setProperty('--ad-height', '100px');
-                            console.log("AdMob height set to 100px");
-                        }, 500);
+                        // Show banner ad
+                        AdMob.showBanner({
+                            adId: 'ca-app-pub-2662863757001007/4499823296',
+                            position: 'top',
+                            margin: 0,
+                            isTesting: false,
+                            npa: true
+                        }).then(() => {
+                            console.log("AdMob banner shown successfully");
+                            
+                            // Set default height for banner (typical banner height is 100px)
+                            setTimeout(() => {
+                                document.documentElement.style.setProperty('--ad-height', '100px');
+                                console.log("AdMob height set to 100px");
+                            }, 500);
+                        }).catch(error => {
+                            console.error("AdMob banner error:", error);
+                        });
                     }).catch(error => {
-                        console.error("AdMob banner error:", error);
+                        console.error("AdMob initialization error:", error);
                     });
                 }
 
@@ -3747,7 +3754,7 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
         // IMPORTANT: Before you git push origin main you MUST update this timestamp
         // Format: YYYY-MM-DDTHH:MM:SSZ (UTC)
         // This ensures you know if you need to hard refresh to see the latest version
-        console.log("=== MATH IN SPACE v1.814 [2026-04-16T22:25:00Z] DEPLOYED ===");
+        console.log("=== MATH IN SPACE v1.815 [2026-04-16T22:25:00Z] DEPLOYED ===");
         
         root.render(
             <Provider store={store}>
