@@ -33,7 +33,7 @@
   - Canvas API (native)
   
   Author: Mister Marx
-  Version: v1.794
+  Version: v1.796
   Last Modified: 2026-04-17
 -->
 <!DOCTYPE html>
@@ -119,7 +119,6 @@
             text-align: center;
             width: 100%;
             height: calc(100vh - var(--safe-area-inset-bottom) - var(--ad-height));
-            top:0;
             bottom:0;
             padding-top: max(24px, var(--safe-area-inset-top));
             padding-left: var(--safe-area-inset-left);
@@ -735,7 +734,6 @@
             left: 0;
             right: 0;
             height: calc(100vh - var(--safe-area-inset-bottom) - var(--ad-height));
-            top:0;
             bottom:0;
             background-color: rgba(0, 31, 63, 0.98);
             display: flex;
@@ -808,7 +806,6 @@
             left: 0;
             width: 100%;
             height: calc(100vh - var(--safe-area-inset-bottom) - var(--ad-height));
-            top:0;
             bottom:0;
             background: radial-gradient(ellipse at center, 
                 rgba(20, 25, 40, 0.95) 0%, 
@@ -2851,11 +2848,21 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
                                 }
                             }}>
                                 <div className="fog-particles">
-                                    <div className={`fog-particle ${isFogDisappearing ? 'disappearing' : ''}`} style={{left: '10%', animationDelay: '0s'}}></div>
-                                    <div className={`fog-particle ${isFogDisappearing ? 'disappearing' : ''}`} style={{left: '30%', animationDelay: '3s'}}></div>
-                                    <div className={`fog-particle ${isFogDisappearing ? 'disappearing' : ''}`} style={{left: '50%', animationDelay: '6s'}}></div>
-                                    <div className={`fog-particle ${isFogDisappearing ? 'disappearing' : ''}`} style={{left: '70%', animationDelay: '9s'}}></div>
-                                    <div className={`fog-particle ${isFogDisappearing ? 'disappearing' : ''}`} style={{left: '90%', animationDelay: '12s'}}></div>
+                                    {(() => {
+                                        const particles = [];
+                                        for (let i = 0; i < 5; i++) {
+                                            const left = Math.random() * 90 + 5; // 5% to 95% to stay on screen
+                                            const top = Math.random() * 80 + 10; // 10% to 90% to stay on screen
+                                            particles.push(
+                                                <div 
+                                                    key={i}
+                                                    className={`fog-particle ${isFogDisappearing ? 'disappearing' : ''}`} 
+                                                    style={{left: `${left}%`, top: `${top}%`, animationDelay: '0s'}}
+                                                />
+                                            );
+                                        }
+                                        return particles;
+                                    })()}
                                 </div>
                                 <div className={`fog-text ${isFogDisappearing ? 'disappearing' : ''} ${isPageLoaded ? 'loaded' : ''}`}>
                                     PRESS ANYWHERE TO BEGIN<br/>MATH IN SPACE
@@ -2983,7 +2990,7 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
         // IMPORTANT: Before you git push origin main you MUST update this timestamp
         // Format: YYYY-MM-DDTHH:MM:SSZ (UTC)
         // This ensures you know if you need to hard refresh to see the latest version
-        console.log("=== MATH IN SPACE v1.794 [2026-04-16T22:25:00Z] DEPLOYED ===");
+        console.log("=== MATH IN SPACE v1.796 [2026-04-16T22:25:00Z] DEPLOYED ===");
         
         root.render(
             <Provider store={store}>
