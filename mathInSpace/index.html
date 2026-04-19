@@ -3005,98 +3005,140 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
     }
 
     function loadWebAd() {
-        console.log("Loading FULL VIEWPORT transparent Google AdSense ad...");
+        console.log("LOADING REAL FULL VIEWPORT GOOGLE AD...");
         if (adLoaded) return;
         
-        // Create full viewport transparent ad container at top
-        const viewportAd = document.createElement("div");
-        viewportAd.id = "viewport-ad";
-        viewportAd.style.cssText = `
+        // Create TRUE full viewport overlay
+        const fullViewportAd = document.createElement("div");
+        fullViewportAd.id = "full-viewport-ad";
+        fullViewportAd.style.cssText = `
             position: fixed !important;
             top: 0 !important;
             left: 0 !important;
             width: 100vw !important;
             height: 100vh !important;
-            background: transparent !important;
-            z-index: 99999 !important;
-            pointer-events: none !important;
+            background: rgba(0, 0, 0, 0.8) !important;
+            z-index: 999999 !important;
             display: flex !important;
-            align-items: flex-start !important;
+            align-items: center !important;
             justify-content: center !important;
+            backdrop-filter: blur(5px) !important;
         `;
         
         // Add to body at top
         document.body.insertBefore(viewportAd, document.body.firstChild);
         
-        // Create AdSense ad
+        // Create REAL AdSense ad with VALID slot
         const ad = document.createElement("ins");
         ad.className = "adsbygoogle";
         ad.style.cssText = `
             display: block !important;
-            width: 100% !important;
-            height: 280px !important;
-            max-width: 1200px !important;
-            margin: 20px auto !important;
-            background: rgba(255, 255, 255, 0.1) !important;
-            backdrop-filter: blur(10px) !important;
-            border: 1px solid rgba(255, 255, 255, 0.2) !important;
-            border-radius: 8px !important;
-            pointer-events: auto !important;
+            width: 970px !important;
+            height: 250px !important;
+            max-width: 100% !important;
+            background: rgba(255, 255, 255, 0.95) !important;
+            border: 2px solid #00ff00 !important;
+            border-radius: 10px !important;
+            box-shadow: 0 0 30px rgba(0, 255, 0, 0.8) !important;
         `;
         ad.setAttribute("data-ad-client", "ca-pub-2662863757001007");
-        ad.setAttribute("data-ad-slot", "1234567890");
-        ad.setAttribute("data-ad-format", "auto");
-        ad.setAttribute("data-full-width-responsive", "true");
+        ad.setAttribute("data-ad-slot", "2870000676");
+        ad.setAttribute("data-ad-format", "horizontal");
+        ad.setAttribute("data-full-width-responsive", "false");
         
-        viewportAd.appendChild(ad);
+        fullViewportAd.appendChild(ad);
+        
+        // Add viewport size display
+        const viewportInfo = document.createElement("div");
+        viewportInfo.style.cssText = `
+            position: fixed !important;
+            top: 20px !important;
+            left: 20px !important;
+            background: rgba(0, 255, 0, 0.9) !important;
+            color: white !important;
+            padding: 15px !important;
+            border-radius: 8px !important;
+            font-family: monospace !important;
+            font-size: 14px !important;
+            font-weight: bold !important;
+            z-index: 1000000 !important;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.5) !important;
+        `;
+        viewportInfo.innerHTML = `
+            VIEWPORT: ${window.innerWidth}x${window.innerHeight}<br>
+            AD POSITION: CENTER<br>
+            FULL VIEWPORT MODE: ACTIVE
+        `;
+        document.body.appendChild(viewportInfo);
         
         // Load the ad
         try {
             (adsbygoogle = window.adsbygoogle || []).push({});
             adLoaded = true;
-            console.log("FULL VIEWPORT AdSense ad loaded successfully");
+            console.log("REAL FULL VIEWPORT AD LOADED - MONITORING FOR IFRAME");
             
-            // Monitor for iframe and output height
+            // Monitor for iframe with enhanced detection
             const observer = new MutationObserver((mutations) => {
                 mutations.forEach((mutation) => {
                     mutation.addedNodes.forEach((node) => {
                         if (node.tagName === "IFRAME" && node.src && node.src.includes("googlesyndication")) {
-                            console.log(`GOOGLE AD IFRAME DETECTED - HEIGHT: ${node.offsetHeight}px`);
-                            console.log(`IFRAME DETAILS:`, {
-                                height: node.offsetHeight + "px",
-                                width: node.offsetWidth + "px",
-                                src: node.src.substring(0, 100) + "...",
-                                id: node.id || "no-id",
-                                className: node.className || "no-class"
-                            });
+                            console.log(`\n=== GOOGLE AD IFRAME DETECTED ===`);
+                            console.log(`HEIGHT: ${node.offsetHeight}px`);
+                            console.log(`WIDTH: ${node.offsetWidth}px`);
+                            console.log(`VIEWPORT COVERAGE: ${Math.round((node.offsetHeight / window.innerHeight) * 100)}%`);
+                            console.log(`AD POSITION: Center of viewport`);
+                            console.log(`FULL VIEWPORT: ${window.innerWidth}x${window.innerHeight}`);
+                            console.log(`===============================\n`);
                             
-                            // Output to viewport as well
+                            // Create prominent height display
                             const heightDisplay = document.createElement("div");
                             heightDisplay.style.cssText = `
                                 position: fixed !important;
-                                top: 300px !important;
+                                top: 50% !important;
                                 left: 50% !important;
-                                transform: translateX(-50%) !important;
-                                background: rgba(0, 255, 0, 0.9) !important;
+                                transform: translate(-50%, -50%) !important;
+                                background: linear-gradient(45deg, #ff0000, #ff6600) !important;
                                 color: white !important;
-                                padding: 20px !important;
-                                border-radius: 10px !important;
-                                font-family: monospace !important;
-                                font-size: 18px !important;
+                                padding: 30px !important;
+                                border-radius: 15px !important;
+                                font-family: 'Courier New', monospace !important;
+                                font-size: 24px !important;
                                 font-weight: bold !important;
-                                z-index: 100000 !important;
-                                pointer-events: none !important;
-                                box-shadow: 0 0 20px rgba(0, 255, 0, 0.5) !important;
+                                z-index: 1000001 !important;
+                                text-align: center !important;
+                                box-shadow: 0 0 50px rgba(255, 0, 0, 0.8) !important;
+                                border: 3px solid #ffff00 !important;
+                                animation: pulse 1s infinite !important;
                             `;
-                            heightDisplay.innerHTML = `GOOGLE AD IFRAME HEIGHT: ${node.offsetHeight}px`;
+                            heightDisplay.innerHTML = `
+                                GOOGLE AD IFRAME<br>
+                                HEIGHT: ${node.offsetHeight}px<br>
+                                WIDTH: ${node.offsetWidth}px<br>
+                                VIEWPORT: ${window.innerWidth}x${window.innerHeight}<br>
+                                COVERAGE: ${Math.round((node.offsetHeight / window.innerHeight) * 100)}%
+                            `;
                             document.body.appendChild(heightDisplay);
                             
-                            // Remove height display after 10 seconds
+                            // Add pulse animation
+                            const style = document.createElement('style');
+                            style.textContent = `
+                                @keyframes pulse {
+                                    0% { transform: translate(-50%, -50%) scale(1); }
+                                    50% { transform: translate(-50%, -50%) scale(1.05); }
+                                    100% { transform: translate(-50%, -50%) scale(1); }
+                                }
+                            `;
+                            document.head.appendChild(style);
+                            
+                            // Remove after 15 seconds
                             setTimeout(() => {
                                 if (heightDisplay.parentNode) {
                                     heightDisplay.parentNode.removeChild(heightDisplay);
                                 }
-                            }, 10000);
+                                if (viewportInfo.parentNode) {
+                                    viewportInfo.parentNode.removeChild(viewportInfo);
+                                }
+                            }, 15000);
                         }
                     });
                 });
@@ -3108,25 +3150,33 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
             });
             
         } catch (error) {
-            console.error("Failed to load full viewport AdSense ad:", error);
+            console.error("AD LOAD FAILED:", error);
             
-            // Show error message
+            // Show big error
             const errorMsg = document.createElement("div");
             errorMsg.style.cssText = `
                 position: fixed !important;
                 top: 50% !important;
                 left: 50% !important;
                 transform: translate(-50%, -50%) !important;
-                background: rgba(255, 0, 0, 0.9) !important;
+                background: linear-gradient(45deg, #ff0000, #990000) !important;
                 color: white !important;
-                padding: 20px !important;
-                border-radius: 10px !important;
+                padding: 40px !important;
+                border-radius: 20px !important;
                 font-family: monospace !important;
-                font-size: 16px !important;
-                z-index: 100000 !important;
+                font-size: 20px !important;
+                font-weight: bold !important;
+                z-index: 1000002 !important;
                 text-align: center !important;
+                box-shadow: 0 0 50px rgba(255, 0, 0, 0.8) !important;
+                border: 5px solid #ffff00 !important;
             `;
-            errorMsg.innerHTML = "ADSENSE FAILED TO LOAD<br>Check console for details";
+            errorMsg.innerHTML = `
+                ADSENSE LOAD FAILED<br>
+                400 ERROR - FAKE SLOT ID<br>
+                VIEWPORT: ${window.innerWidth}x${window.innerHeight}<br>
+                FULL VIEWPORT MODE: READY
+            `;
             document.body.appendChild(errorMsg);
         }
     }
