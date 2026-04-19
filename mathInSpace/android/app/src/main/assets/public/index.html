@@ -33,7 +33,7 @@
   - Canvas API (native)
   
   Author: Mister Marx
-  Version: v1.815
+  Version: v1.816
   Last Modified: 2026-04-17
 -->
 <!DOCTYPE html>
@@ -2625,7 +2625,8 @@
                             position: 'TOP_CENTER',
                             margin: 0,
                             isTesting: false,
-                            npa: true
+                            npa: true,
+                            overlap: true
                         }).then(() => {
                             console.log("AdMob banner shown successfully");
                             
@@ -3588,6 +3589,9 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
 
             return (
                 <>
+                    {/* Ad Overlay - transparent full-screen overlay - OUTSIDE container */}
+                    <AdOverlay />
+
                     <div
                         className={`math-in-space-container ${gameState}-screen ${showFeedbackFlash ? `flash-${feedbackType}` : ''}`}
                         ref={gameAreaRef}
@@ -3720,9 +3724,6 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
                         
                         {/* Companion Page popup */}
                         <CompanionPage />
-                        
-                        {/* Ad Overlay - transparent full-screen overlay */}
-                        <AdOverlay />
                     </div>
                     
                 </>
@@ -3754,7 +3755,7 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
         // IMPORTANT: Before you git push origin main you MUST update this timestamp
         // Format: YYYY-MM-DDTHH:MM:SSZ (UTC)
         // This ensures you know if you need to hard refresh to see the latest version
-        console.log("=== MATH IN SPACE v1.815 [2026-04-16T22:25:00Z] DEPLOYED ===");
+        console.log("=== MATH IN SPACE v1.816 [2026-04-16T22:25:00Z] DEPLOYED ===");
         
         root.render(
             <Provider store={store}>

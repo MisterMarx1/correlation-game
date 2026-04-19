@@ -2630,11 +2630,9 @@
                         }).then(() => {
                             console.log("AdMob banner shown successfully");
                             
-                            // Set default height for banner (typical banner height is 100px)
-                            setTimeout(() => {
-                                document.documentElement.style.setProperty('--ad-height', '100px');
-                                console.log("AdMob height set to 100px");
-                            }, 500);
+                            // Don't set ad-height for Android since overlap: true makes it overlay the webview
+                            // No space needs to be reserved in the container
+                            console.log("AdMob using overlap mode, not reserving space in container");
                         }).catch(error => {
                             console.error("AdMob banner error:", error);
                         });
