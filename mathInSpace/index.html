@@ -33,7 +33,7 @@
   - Canvas API (native)
   
   Author: Mister Marx
-  Version: v1.805
+  Version: v1.806
   Last Modified: 2026-04-17
 -->
 <!DOCTYPE html>
@@ -108,6 +108,57 @@
         /* Keep pointer cursor for interactive elements */
         button, [role="button"], a {
             cursor: pointer;
+        }
+
+        /* --- Landscape Orientation Warning --- */
+        .landscape-warning {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #001f3f;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 99999;
+            color: #00ccff;
+            font-family: 'Orbitron', sans-serif;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .landscape-warning.visible {
+            display: flex;
+        }
+
+        .landscape-warning-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+            animation: rotateIcon 2s ease-in-out infinite;
+        }
+
+        @keyframes rotateIcon {
+            0%, 100% {
+                transform: rotate(0deg);
+            }
+            25% {
+                transform: rotate(-90deg);
+            }
+            75% {
+                transform: rotate(-90deg);
+            }
+        }
+
+        .landscape-warning h1 {
+            font-size: 1.5em;
+            margin-bottom: 10px;
+        }
+
+        .landscape-warning p {
+            font-size: 1em;
+            opacity: 0.8;
         }
 
         /* --- Base Container --- */
@@ -3010,7 +3061,7 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
         // IMPORTANT: Before you git push origin main you MUST update this timestamp
         // Format: YYYY-MM-DDTHH:MM:SSZ (UTC)
         // This ensures you know if you need to hard refresh to see the latest version
-        console.log("=== MATH IN SPACE v1.805 [2026-04-16T22:25:00Z] DEPLOYED ===");
+        console.log("=== MATH IN SPACE v1.806 [2026-04-16T22:25:00Z] DEPLOYED ===");
         
         root.render(
             <Provider store={store}>
@@ -3019,6 +3070,33 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
         );
         
     </script>
+    </script>
+
+    <!-- Landscape Orientation Warning -->
+    <div id="landscape-warning" class="landscape-warning">
+        <div class="landscape-warning-icon">📱</div>
+        <h1>Please Rotate Device</h1>
+        <p>This game requires portrait mode</p>
+    </div>
+
+    <script>
+        // Landscape Orientation Detection
+        (function() {
+            const landscapeWarning = document.getElementById('landscape-warning');
+            
+            function checkOrientation() {
+                if (window.innerHeight < window.innerWidth) {
+                    landscapeWarning.classList.add('visible');
+                } else {
+                    landscapeWarning.classList.remove('visible');
+                }
+            }
+            
+            // Check on load and resize
+            window.addEventListener('resize', checkOrientation);
+            window.addEventListener('orientationchange', checkOrientation);
+            checkOrientation();
+        })();
     </script>
 </body>
 </html>
