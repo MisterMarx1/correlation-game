@@ -33,7 +33,7 @@
   - Canvas API (native)
   
   Author: Mister Marx
-  Version: v1.810
+  Version: v1.811
   Last Modified: 2026-04-17
 -->
 <!DOCTYPE html>
@@ -2973,7 +2973,7 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
         // IMPORTANT: Before you git push origin main you MUST update this timestamp
         // Format: YYYY-MM-DDTHH:MM:SSZ (UTC)
         // This ensures you know if you need to hard refresh to see the latest version
-        console.log("=== MATH IN SPACE v1.810 [2026-04-16T22:25:00Z] DEPLOYED ===");
+        console.log("=== MATH IN SPACE v1.811 [2026-04-16T22:25:00Z] DEPLOYED ===");
         
         root.render(
             <Provider store={store}>
@@ -3084,15 +3084,18 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
                 
                 // Only update if ad height is not 100px
                 if (heightValue !== 100) {
+                    // Get container height instead of iframe height
+                    const containerStyles = window.getComputedStyle(container);
+                    const containerHeight = parseFloat(containerStyles.height);
                     const bannerHeight = 100;
-                    const adOffset = bannerHeight - heightValue;
-                    console.log("BANNER HEIGHT, but may be the initial 100px nothing placeholder:", bannerHeight + "px");
-                    console.log("AD HEIGHT, but may be the initial 100px nothing placeholder:", heightValue + "px"); 
-                    console.log("CALCULATED OFFSET, but may be the initial 100px nothing placeholder:", adOffset + "px");
+                    const adOffset = bannerHeight - containerHeight;
+                    console.log("BANNER HEIGHT:", bannerHeight + "px");
+                    console.log("CONTAINER HEIGHT (actual):", containerHeight + "px"); 
+                    console.log("CALCULATED OFFSET:", adOffset + "px");
 
                     // Update the root variable
                     document.documentElement.style.setProperty('--ad-height-offset-from-hundred', adOffset + 'px');
-                    console.log("CSS variable --ad-height-offset-from-hundred updated to, but may be the initial 100px nothing placeholder:", adOffset + "px");
+                    console.log("CSS variable --ad-height-offset-from-hundred updated to:", adOffset + "px");
                 } else {
                     console.log("AD height is 100px, no offset needed. also this may be the placehodler offset so ignore this always pay attention if it changed to a diff number earlier, that is good and the actual ad height not 100px, but may be the initial 100px nothing placeholder");
                 }
