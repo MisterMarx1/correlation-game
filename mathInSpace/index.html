@@ -33,7 +33,7 @@
   - Canvas API (native)
   
   Author: Mister Marx
-  Version: v1.812
+  Version: v1.79
   Last Modified: 2026-04-17
 -->
 <!DOCTYPE html>
@@ -66,7 +66,6 @@
             --safe-area-inset-right: 0px;
             --safe-area-inset-bottom: 0px;
             --safe-area-inset-left: 0px;
-            --ad-height-offset-from-hundred: 0px;
         }
 
         /* Remove default browser margins and white border */
@@ -88,7 +87,6 @@
             overflow: hidden;
             width: 100%;
             height: 100%;
-            bottom:0;
             background-color: #001f3f;
             -webkit-text-size-adjust: 100%;
             -webkit-tap-highlight-color: transparent;
@@ -119,9 +117,7 @@
             justify-content: space-between;
             text-align: center;
             width: 100%;
-            height: calc(100vh - var(--safe-area-inset-bottom) - var(--ad-height-offset-from-hundred));
-            bottom: 0;
-            top: var(--ad-height-offset-from-hundred);
+            height: calc(100vh - 100px - var(--safe-area-inset-bottom));
             padding-top: max(24px, var(--safe-area-inset-top));
             padding-left: var(--safe-area-inset-left);
             padding-right: var(--safe-area-inset-right);
@@ -436,10 +432,8 @@
             max-width: 600px;
             width: 90%;
             flex-direction: column;
-            height: calc(100vh - var(--safe-area-inset-bottom) - var(--ad-height-offset-from-hundred));
-            bottom: 0;
-            top: var(--ad-height-offset-from-hundred);
-            max-height: calc(100vh - var(--ad-height-offset-from-hundred));
+            height: calc(100vh - 100px - 50px);
+            max-height: calc(100vh - 100px - 50px);
             overflow-y: auto;
         }
         .results-ops {
@@ -735,9 +729,7 @@
             top: 0;
             left: 0;
             right: 0;
-            height: calc(100vh - var(--safe-area-inset-bottom) - var(--ad-height-offset-from-hundred));
-            bottom: 0;
-            top: var(--ad-height-offset-from-hundred);
+            height: 100vh;
             background-color: rgba(0, 31, 63, 0.98);
             display: flex;
             flex-direction: column;
@@ -808,9 +800,7 @@
             top: 0;
             left: 0;
             width: 100%;
-            height: calc(100vh - var(--safe-area-inset-bottom) - var(--ad-height-offset-from-hundred));
-            bottom: 0;
-            top: var(--ad-height-offset-from-hundred);
+            height: calc(100vh - 100px);
             background: radial-gradient(ellipse at center, 
                 rgba(20, 25, 40, 0.95) 0%, 
                 rgba(10, 15, 30, 0.98) 40%, 
@@ -954,7 +944,7 @@
 
         @keyframes floatParticle {
             0% {
-                transform: translateX(-100px) translateY(calc(100vh - var(--safe-area-inset-bottom) - var(--ad-height-offset-from-hundred))) scale(0.5);
+                transform: translateX(-100px) translateY(100vh) scale(0.5);
                 opacity: 0;
             }
             10% {
@@ -1045,15 +1035,29 @@
             z-index: 5;
         }
 
+        /* Android always starts at 118px */
+        body.android .banner-ad-space {
+            height: calc(100px + 18px) !important;
+            max-height: calc(100px + 18px) !important;
+            min-height: calc(100px + 18px) !important;
+        }
+
+        
+        /* Non-Android (Web) starts at 100px */
+        body:not(.android) .banner-ad-space {
+            height: 100px !important;
+            max-height: 100px !important;
+            min-height: 100px !important;
+        }
+
         /* --- Banner Ad Space --- */
         .banner-ad-space {
             position: fixed;
-            top: 0;
+            bottom: 0;
             left: 0;
             width: 100%;
-            height: calc(100vh - var(--safe-area-inset-bottom));
-            top: 0;
-            background: transparent;
+            background: linear-gradient(135deg, #1a1a2e, #0f0f1e);
+            border-top: 2px solid #00ccff;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -1065,14 +1069,103 @@
             letter-spacing: 2px;
         }
 
+        
+        /* Android always starts at 118px */
+        body.android #ad-container {
+            height: calc(100px + 18px) !important;
+            max-height: calc(100px + 18px) !important;
+            min-height: calc(100px + 18px) !important;
+        }
+
+        
+        /* Non-Android (Web) starts at 100px */
+        body:not(.android) #ad-container {
+            height: 100px !important;
+            max-height: 100px !important;
+            min-height: 100px !important;
+        }
+
         #ad-container {
             width: 100%;
             overflow: hidden;
+            background: linear-gradient(135deg, #1a1a2e, #0f0f1e);
+        }
+
+        /* Android always starts at 118px */
+        body.android #ad-container ins {
+            height: calc(100px + 18px) !important;
+            max-height: calc(100px + 18px) !important;
+            min-height: calc(100px + 18px) !important;
+        }
+        
+        /* Non-Android (Web) starts at 100px */
+        body:not(.android) #ad-container ins {
+            height: 100px !important;
+            max-height: 100px !important;
+            min-height: 100px !important;
         }
 
         #ad-container ins {
             display: block !important;
             width: 100% !important;
+        }
+
+        /* Android always starts at 118px */
+        body.android #ad-container iframe {
+            height: calc(100px + 18px) !important;
+            max-height: calc(100px + 18px) !important;
+            min-height: calc(100px + 18px) !important;
+        }
+        
+        /* Non-Android (Web) starts at 100px */
+        body:not(.android) #ad-container iframe {
+            height: 100px !important;
+            max-height: 100px !important;
+            min-height: 100px !important;
+        }
+
+        .banner-ad-space.admob-shifted {
+            height: calc(100px + 18px) !important;
+            max-height: calc(100px + 18px) !important;
+            min-height: calc(100px + 18px) !important;
+        }
+
+        #ad-container.admob-shifted ins {
+            height: calc(100px + 18px) !important;
+            max-height: calc(100px + 18px) !important;
+            min-height: calc(100px + 18px) !important;
+        }
+
+        #ad-container.admob-shifted iframe {
+            height: calc(100px + 18px) !important;
+            max-height: calc(100px + 18px) !important;
+            min-height: calc(100px + 18px) !important;
+        }
+
+        .math-in-space-container.admob-shifted {
+            height: calc(100vh - 100px - var(--safe-area-inset-bottom) - 18px);
+        }
+
+        .banner-ad-space.admob-failed {
+            height: 100px !important;
+            max-height: 100px !important;
+            min-height: 100px !important;
+        }
+
+        #ad-container.admob-failed ins {
+            height: 100px !important;
+            max-height: 100px !important;
+            min-height: 100px !important;
+        }
+
+        #ad-container.admob-failed iframe {
+            height: 100px !important;
+            max-height: 100px !important;
+            min-height: 100px !important;
+        }
+
+        .math-in-space-container.admob-failed {
+            height: calc(100vh - 100px - var(--safe-area-inset-bottom));
         }
             </style>
 </head>
@@ -1729,10 +1822,10 @@
                     {showCompanionPage && (
                         <div style={{
                             position: "fixed",
-                            top: "var(--ad-height-offset-from-hundred)",
+                            top: 0,
                             left: 0,
                             right: 0,
-                            bottom: 0,
+                            bottom: 100,
                             backgroundColor: "rgba(3,7,18,0.98)",
                             display: "flex",
                             flexDirection: "column",
@@ -2881,7 +2974,7 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
         // IMPORTANT: Before you git push origin main you MUST update this timestamp
         // Format: YYYY-MM-DDTHH:MM:SSZ (UTC)
         // This ensures you know if you need to hard refresh to see the latest version
-        console.log("=== MATH IN SPACE v1.812 [2026-04-16T22:25:00Z] DEPLOYED ===");
+        console.log("=== MATH IN SPACE v1.78 [2026-04-16T22:25:00Z] DEPLOYED ===");
         
         root.render(
             <Provider store={store}>
@@ -2927,7 +3020,10 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
             min-height: 100px !important;
             overflow: hidden !important;
         `;
-    
+        
+        // Show fallback immediately to prevent white flash during 403 errors
+        showFallbackAd(container);
+        
         // Try AdSense anyway (will replace fallback if successful)
         setTimeout(() => {
             tryLoadAdSense(container);
@@ -2973,89 +3069,19 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
         // Check if ad filled after 3 seconds
         setTimeout(() => {
             const ins = container.querySelector("ins.adsbygoogle");
-            // Get ALL iframes and use the LAST one (100px one)
-            const iframes = container.querySelectorAll("iframe");
-            const iframe = iframes.length > 1 ? iframes[iframes.length - 1] : iframes[0];
+            const iframe = container.querySelector("iframe");
             const bannerSpace = document.querySelector(".banner-ad-space");
             
             console.log("Ad check - iframe exists:", !!iframe);
             if (iframe) {
-                console.log("=== SUCCESSFUL GOOGLE AD LOADED, but may be the initial 100px nothing placeholder. beware ===");
                 console.log("Ad iframe dimensions:", iframe.offsetWidth + "x" + iframe.offsetHeight);
                 const styleAttr = iframe.getAttribute("style");
-                console.log("Ad iframe style, but may be the initial 100px nothing placeholder. beware:", styleAttr);
+                console.log("Ad iframe style:", styleAttr);
                 
                 // Extract height from style attribute string
                 const heightMatch = styleAttr.match(/height:(\d+)px/);
                 const heightValue = heightMatch ? parseInt(heightMatch[1]) : 0;
-                console.log("GOOGLE AD HEIGHT (parsed from style), but may be the initial 100px nothing placeholder:", heightValue + "px");
-                
-                // Only update if ad height is not 100px
-                if (heightValue !== 100) {
-                    // Get container height instead of iframe height
-                    const containerStyles = window.getComputedStyle(container);
-                    const containerHeight = parseFloat(containerStyles.height);
-                    const bannerHeight = 100;
-                    const adOffset = bannerHeight - containerHeight;
-                    console.log("BANNER HEIGHT:", bannerHeight + "px");
-                    console.log("CONTAINER HEIGHT (actual):", containerHeight + "px"); 
-                    console.log("CALCULATED OFFSET:", adOffset + "px");
-
-                    // Update the root variable
-                    document.documentElement.style.setProperty('--ad-height-offset-from-hundred', adOffset + 'px');
-                    console.log("CSS variable --ad-height-offset-from-hundred updated to:", adOffset + "px");
-                } else {
-                    console.log("AD height is 100px, no offset needed. also this may be the placehodler offset so ignore this always pay attention if it changed to a diff number earlier, that is good and the actual ad height not 100px, but may be the initial 100px nothing placeholder");
-                }
-                
-                // Log container hierarchy and CSS details
-                console.log("=== CONTAINER HIERARCHY & CSS , but may be the initial 100px nothing placeholder===");
-                
-                // Banner Ad Space (outermost)
-                if (bannerSpace) {
-                    const bannerStyles = window.getComputedStyle(bannerSpace);
-                    console.log("1. BANNER-AD-SPACE (outermost):");
-                    console.log("   - Element:", bannerSpace);
-                    console.log("   - Display:", bannerStyles.display);
-                    console.log("   - Position:", bannerStyles.position);
-                    console.log("   - Height:", bannerStyles.height);
-                    console.log("   - Align-items:", bannerStyles.alignItems);
-                    console.log("   - Justify-content:", bannerStyles.justifyContent);
-                    console.log("   - Classes:", bannerSpace.className);
-                }
-                
-                // Ad Container (middle)
-                if (container) {
-                    const containerStyles = window.getComputedStyle(container);
-                    console.log("2. AD-CONTAINER (middle):");
-                    console.log("   - Element:", container);
-                    console.log("   - Display:", containerStyles.display);
-                    console.log("   - Height:", containerStyles.height);
-                    console.log("   - Overflow:", containerStyles.overflow);
-                    console.log("   - Classes:", container.className);
-                }
-                
-                // INS Element (AdSense wrapper)
-                if (ins) {
-                    const insStyles = window.getComputedStyle(ins);
-                    console.log("3. INS.ADSBYGOOGLE (AdSense wrapper):");
-                    console.log("   - Element:", ins);
-                    console.log("   - Display:", insStyles.display);
-                    console.log("   - Height:", insStyles.height);
-                    console.log("   - Width:", insStyles.width);
-                    console.log("   - Ad Status:", ins.dataset.adStatus);
-                    console.log("   - Classes:", ins.className);
-                }
-                
-                // Iframe (actual Google ad)
-                console.log("4. IFRAME (actual Google ad):");
-                console.log("   - Element:", iframe);
-                console.log("   - Offset dimensions:", iframe.offsetWidth + "x" + iframe.offsetHeight);
-                console.log("   - Client dimensions:", iframe.clientWidth + "x" + iframe.clientHeight);
-                console.log("   - Style attribute:", iframe.getAttribute("style"));
-                console.log("   - Classes:", iframe.className);
-                
-                console.log("=== END CONTAINER DEBUG ===");
+                console.log("GOOGLE AD HEIGHT (parsed from style):", heightValue + "px");
             }
             if (ins) {
                 console.log("Ad ins status:", ins.dataset.adStatus);
@@ -3066,7 +3092,7 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
             const isUnfilled = ins && ins.dataset.adStatus === 'unfilled';
             const shouldShowFallback = !hasIframe || isUnfilled;
             
-            console.log("Fallback condition debug, it was in fact the initial placeholder:", {
+            console.log("Fallback condition debug:", {
                 hasIframe,
                 isUnfilled,
                 shouldShowFallback
@@ -3079,26 +3105,6 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
                     console.log("Showing fallback - ad unfilled (no inventory)");
                 }
                 showFallbackAd(container);
-            } else {
-                console.log("Ad loaded successfully, no fallback needed, it is not the fake 100px initial placeholder.");
-                
-                // Log container heights and root variable
-                if (bannerSpace) {
-                    const bannerStyles = window.getComputedStyle(bannerSpace);
-                    console.log("Banner Ad Space Height:", bannerStyles.height);
-                }
-                if (container) {
-                    const containerStyles = window.getComputedStyle(container);
-                    console.log("Ad Container Height:", containerStyles.height);
-                }
-                if (ins) {
-                    const insStyles = window.getComputedStyle(ins);
-                    console.log("INS Element Height:", insStyles.height);
-                }
-                
-                // Log root variable value
-                const rootVar = getComputedStyle(document.documentElement).getPropertyValue('--ad-height-offset-from-hundred');
-                console.log("Root Variable --ad-height-offset-from-hundred:", rootVar || "not set");
             }
         }, 3000);
     }
@@ -3168,10 +3174,6 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
     }
 
     function showFallbackAd(container) {
-        // Set offset to 100px for fallback
-        document.documentElement.style.setProperty('--ad-height-offset-from-hundred', '100px');
-        console.log("Fallback triggered: CSS variable --ad-height-offset-from-hundred set to 100px");
-        
         document.body.classList.add('admob-failed');
         container.innerHTML = "";
         
@@ -3189,10 +3191,6 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
             font-size: 14px;
             letter-spacing: 1px;
             cursor: pointer;
-            background: linear-gradient(135deg, #1a1a2e, #0f0f1e);
-            border-bottom: 2px solid #00ccff;
-
-
         `;
         fallback.innerHTML = `
             <span style="font-size: 18px; color: #ff9900;">YOUR AD HERE</span>
