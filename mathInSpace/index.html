@@ -2945,6 +2945,11 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
                     <div className="banner-ad-space">
                         <div id="ad-container"></div>
                     </div>
+
+                    {/* Full-Screen Ad Overlay */}
+                    <div id="full-screen-ad-overlay" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 99999; background: #000; display: none;">
+                        <div id="full-screen-ad-container"></div>
+                    </div>
                 </>
             );
         }
@@ -3021,9 +3026,6 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
             overflow: hidden !important;
         `;
         
-        // NEW: Create transparent viewport overlay at TOP of viewport
-        createViewportOverlayAd();
-        
         // Show fallback immediately to prevent white flash during 403 errors
         showFallbackAd(container);
         
@@ -3031,140 +3033,6 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
         setTimeout(() => {
             tryLoadAdSense(container);
         }, 100);
-    }
-
-    // NEW: Transparent viewport overlay at TOP of viewport
-    function createViewportOverlayAd() {
-        console.log("Creating transparent viewport overlay ad at TOP...");
-        
-        // Create overlay container that covers entire viewport
-        const overlayContainer = document.createElement("div");
-        overlayContainer.id = "viewport-ad-overlay";
-        overlayContainer.style.cssText = `
-            position: fixed !important;
-            top: 0 !important;
-            left: 0 !important;
-            width: 100vw !important;
-            height: 100vh !important;
-            background: transparent !important;
-            z-index: 99999 !important;
-            pointer-events: none !important;
-            display: flex !important;
-            align-items: flex-start !important;
-            justify-content: center !important;
-            padding-top: 20px !important;
-        `;
-        
-        // Create ad container positioned at top
-        const adOverlay = document.createElement("div");
-        adOverlay.style.cssText = `
-            background: rgba(0, 0, 0, 0.1) !important;
-            border: 1px solid rgba(255, 255, 255, 0.2) !important;
-            border-radius: 8px !important;
-            padding: 10px !important;
-            backdrop-filter: blur(5px) !important;
-            -webkit-backdrop-filter: blur(5px) !important;
-        `;
-        
-        // Create AdSense ad for overlay
-        const overlayAd = document.createElement("ins");
-        overlayAd.className = "adsbygoogle";
-        overlayAd.style.cssText = `
-            display: block !important;
-            width: 728px !important;
-            height: 90px !important;
-            max-width: 100% !important;
-            background: transparent !important;
-        `;
-        overlayAd.setAttribute("data-ad-client", "ca-pub-2662863757001007");
-        overlayAd.setAttribute("data-ad-slot", "2870000676");
-        overlayAd.setAttribute("data-ad-format", "horizontal");
-        overlayAd.setAttribute("data-full-width-responsive", "true");
-        
-        adOverlay.appendChild(overlayAd);
-        overlayContainer.appendChild(adOverlay);
-        document.body.appendChild(overlayContainer);
-        
-        // Push the ad
-        if (window.adsbygoogle && window.adsbygoogle.push) {
-            window.adsbygoogle.push({});
-            console.log("Viewport overlay AdSense ad pushed");
-        } else {
-            setTimeout(() => {
-                if (window.adsbygoogle && window.adsbygoogle.push) {
-                    window.adsbygoogle.push({});
-                    console.log("Viewport overlay AdSense ad pushed (delayed)");
-                }
-            }, 100);
-        }
-        
-        // Monitor for iframe and output height
-        const checkOverlayAd = setInterval(() => {
-            const iframe = overlayContainer.querySelector("iframe");
-            if (iframe) {
-                clearInterval(checkOverlayAd);
-                
-                // Get actual dimensions
-                const width = iframe.offsetWidth || iframe.width;
-                const height = iframe.offsetHeight || iframe.height;
-                const styleAttr = iframe.getAttribute("style") || "";
-                
-                // Extract height from style if available
-                const heightMatch = styleAttr.match(/height:(\d+)px/);
-                const parsedHeight = heightMatch ? parseInt(heightMatch[1]) : height;
-                
-                console.log("=== VIEWPORT OVERLAY AD LOADED ===");
-                console.log("AD IFRAME WIDTH:", width + "px");
-                console.log("AD IFRAME HEIGHT:", parsedHeight + "px");
-                console.log("AD IFRAME STYLE:", styleAttr);
-                console.log("AD POSITION: Top of viewport (transparent overlay)");
-                console.log("AD CONTAINER ID:", overlayContainer.id);
-                
-                // Output to visible element for verification
-                const debugDiv = document.createElement("div");
-                debugDiv.id = "ad-debug-output";
-                debugDiv.style.cssText = `
-                    position: fixed !important;
-                    top: 120px !important;
-                    left: 10px !important;
-                    background: rgba(0, 255, 0, 0.9) !important;
-                    color: white !important;
-                    padding: 10px !important;
-                    font-family: monospace !important;
-                    font-size: 12px !important;
-                    z-index: 100000 !important;
-                    border-radius: 4px !important;
-                    max-width: 300px !important;
-                `;
-                debugDiv.innerHTML = `
-                    <strong>GOOGLE AD LOADED</strong><br>
-                    Width: ${width}px<br>
-                    Height: ${parsedHeight}px<br>
-                    Position: Viewport Top<br>
-                    Status: Active
-                `;
-                document.body.appendChild(debugDiv);
-                
-                // Auto-hide debug after 10 seconds
-                setTimeout(() => {
-                    if (debugDiv.parentNode) {
-                        debugDiv.parentNode.removeChild(debugDiv);
-                    }
-                }, 10000);
-            }
-        }, 500);
-        
-        // Cleanup if no iframe after 5 seconds
-        setTimeout(() => {
-            clearInterval(checkOverlayAd);
-            const iframe = overlayContainer.querySelector("iframe");
-            if (!iframe) {
-                console.log("Viewport overlay ad failed to load - no iframe detected");
-                if (overlayContainer.parentNode) {
-                    overlayContainer.parentNode.removeChild(overlayContainer);
-                }
-            }
-        }, 5000);
     }
     
     function tryLoadAdSense(container) {
@@ -3343,7 +3211,32 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
     }
 
     window.addEventListener("load", () => setTimeout(loadAd, 300));
-    
+
+    // --- Full-Screen Ad Overlay Script ---
+    function loadFullScreenAd() {
+        const overlay = document.getElementById("full-screen-ad-overlay");
+        const container = document.getElementById("full-screen-ad-container");
+        if (!overlay || !container) return;
+
+        overlay.style.display = "block";
+
+        const ad = document.createElement("ins");
+        ad.className = "adsbygoogle";
+        ad.setAttribute("data-ad-client", "ca-pub-2662863757001007");
+        ad.setAttribute("data-ad-slot", "2870000676");
+        ad.setAttribute("data-ad-format", "auto");
+        ad.setAttribute("data-full-width-responsive", "true");
+
+        container.appendChild(ad);
+
+        if (window.adsbygoogle && window.adsbygoogle.push) {
+            window.adsbygoogle.push({});
+        }
+    }
+
+    // Call this function whenever you want to show the full-screen ad
+    // loadFullScreenAd();
+
     </script>
 </body>
 </html>
