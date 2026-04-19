@@ -33,7 +33,7 @@
   - Canvas API (native)
   
   Author: Mister Marx
-  Version: v1.797
+  Version: v1.798
   Last Modified: 2026-04-17
 -->
 <!DOCTYPE html>
@@ -749,11 +749,10 @@
         /* --- Credits Popup --- */
         .credits-popup {
             position: fixed;
-            top: 0;
+            bottom: 0;
             left: 0;
             right: 0;
             height: calc(100vh - var(--safe-area-inset-bottom) - var(--ad-height));
-            bottom:0;
             background-color: rgba(0, 31, 63, 0.98);
             display: flex;
             flex-direction: column;
@@ -821,7 +820,6 @@
         /* Smokey Fog Overlay */
         .fog-overlay {
             position: fixed;
-            top: 0;
             left: 0;
             width: 100%;
             height: calc(100vh - var(--safe-area-inset-bottom) - var(--ad-height));
@@ -3010,7 +3008,7 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
         // IMPORTANT: Before you git push origin main you MUST update this timestamp
         // Format: YYYY-MM-DDTHH:MM:SSZ (UTC)
         // This ensures you know if you need to hard refresh to see the latest version
-        console.log("=== MATH IN SPACE v1.797 [2026-04-16T22:25:00Z] DEPLOYED ===");
+        console.log("=== MATH IN SPACE v1.798 [2026-04-16T22:25:00Z] DEPLOYED ===");
         
         root.render(
             <Provider store={store}>
