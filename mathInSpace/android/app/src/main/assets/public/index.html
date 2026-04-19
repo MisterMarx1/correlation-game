@@ -2513,12 +2513,10 @@
                     console.log("=== INITIALIZING ADMOB ===");
 
                     try {
-                        const { AdMob, BannerAdSize, BannerAdPosition } = window.Capacitor.Plugins;
+                        const { AdMob } = window.Capacitor.Plugins;
 
                         console.log("AdMob plugins available:", {
-                            hasAdMob: !!AdMob,
-                            hasBannerAdSize: !!BannerAdSize,
-                            hasBannerAdPosition: !!BannerAdPosition
+                            hasAdMob: !!AdMob
                         });
 
                         console.log("Calling AdMob.initialize()...");
@@ -2543,8 +2541,8 @@
 
                         const options = {
                             adId: 'ca-app-pub-2662863757001007/4499823296',
-                            adSize: BannerAdSize.ADAPTIVE_BANNER,   // ← fixes left-align / centering
-                            position: BannerAdPosition.TOP_CENTER,
+                            adSize: 'ADAPTIVE_BANNER',   // ← use string value
+                            position: 'TOP_CENTER',
                             margin: 0,
                             overlap: true,          // important
                             isTesting: false
