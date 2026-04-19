@@ -88,6 +88,7 @@
             overflow: hidden;
             width: 100%;
             height: 100%;
+            bottom:0;
             background-color: #001f3f;
             -webkit-text-size-adjust: 100%;
             -webkit-tap-highlight-color: transparent;
@@ -118,7 +119,9 @@
             justify-content: space-between;
             text-align: center;
             width: 100%;
-            height: calc(100vh - var(--safe-area-inset-bottom));
+            height: calc(100vh - var(--safe-area-inset-bottom) - var(--ad-height-offset-from-hundred));
+            bottom: 0;
+            top: var(--ad-height-offset-from-hundred);
             padding-top: max(24px, var(--safe-area-inset-top));
             padding-left: var(--safe-area-inset-left);
             padding-right: var(--safe-area-inset-right);
@@ -434,6 +437,7 @@
             width: 90%;
             flex-direction: column;
             height: calc(100vh - 50px);
+            bottom: 0;
             max-height: calc(100vh - 50px);
             overflow-y: auto;
         }
@@ -730,7 +734,8 @@
             top: 0;
             left: 0;
             right: 0;
-            height: 100vh;
+            height: calc(100vh - var(--safe-area-inset-bottom) - var(--ad-height-offset-from-hundred));
+            bottom: 0;
             background-color: rgba(0, 31, 63, 0.98);
             display: flex;
             flex-direction: column;
@@ -801,7 +806,8 @@
             top: 0;
             left: 0;
             width: 100%;
-            height: calc(100vh);
+            height: calc(100vh - var(--safe-area-inset-bottom) - var(--ad-height-offset-from-hundred));
+            bottom: 0;
             background: radial-gradient(ellipse at center, 
                 rgba(20, 25, 40, 0.95) 0%, 
                 rgba(10, 15, 30, 0.98) 40%, 
@@ -945,7 +951,7 @@
 
         @keyframes floatParticle {
             0% {
-                transform: translateX(-100px) translateY(100vh) scale(0.5);
+                transform: translateX(-100px) translateY(calc(100vh - var(--safe-area-inset-bottom) - var(--ad-height-offset-from-hundred))) scale(0.5);
                 opacity: 0;
             }
             10% {
@@ -3260,6 +3266,10 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
     }
 
     function showFallbackAd(container) {
+        // Set offset to 100px for fallback
+        document.documentElement.style.setProperty('--ad-height-offset-from-hundred', '100px');
+        console.log("Fallback triggered: CSS variable --ad-height-offset-from-hundred set to 100px");
+        
         document.body.classList.add('admob-failed');
         container.innerHTML = "";
         
@@ -3297,14 +3307,6 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
 
     window.addEventListener("load", () => setTimeout(loadAd, 300));
     
-    // Emergency fallback - show after 5 seconds if nothing else worked
-    setTimeout(() => {
-        const container = document.getElementById("ad-container");
-        if (container && !container.querySelector("div")) {
-            console.log("Emergency fallback triggered");
-            showFallbackAd(container);
-        }
-    }, 5000);
     </script>
 </body>
 </html>
