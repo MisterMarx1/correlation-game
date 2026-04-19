@@ -33,7 +33,7 @@
   - Canvas API (native)
   
   Author: Mister Marx
-  Version: v1.811
+  Version: v1.812
   Last Modified: 2026-04-17
 -->
 <!DOCTYPE html>
@@ -1045,27 +1045,14 @@
             z-index: 5;
         }
 
-        /* Android always starts at 118px */
-        body.android .banner-ad-space {
-            height: calc(100px + 18px) !important;
-            max-height: calc(100px + 18px) !important;
-            min-height: calc(100px + 18px) !important;
-        }
-
-        
-        /* Non-Android (Web) starts at 100px */
-        body:not(.android) .banner-ad-space {
-            height: 100px !important;
-            max-height: 100px !important;
-            min-height: 100px !important;
-        }
-
         /* --- Banner Ad Space --- */
         .banner-ad-space {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
+            height: calc(100vh - var(--safe-area-inset-bottom));
+            top: 0;
             background: transparent;
             display: flex;
             align-items: center;
@@ -1078,102 +1065,14 @@
             letter-spacing: 2px;
         }
 
-        
-        /* Android always starts at 118px */
-        body.android #ad-container {
-            height: calc(100px + 18px) !important;
-            max-height: calc(100px + 18px) !important;
-            min-height: calc(100px + 18px) !important;
-        }
-
-        
-        /* Non-Android (Web) starts at 100px */
-        body:not(.android) #ad-container {
-            height: 100px !important;
-            max-height: 100px !important;
-            min-height: 100px !important;
-        }
-
         #ad-container {
             width: 100%;
             overflow: hidden;
         }
 
-        /* Android always starts at 118px */
-        body.android #ad-container ins {
-            height: calc(100px + 18px) !important;
-            max-height: calc(100px + 18px) !important;
-            min-height: calc(100px + 18px) !important;
-        }
-        
-        /* Non-Android (Web) starts at 100px */
-        body:not(.android) #ad-container ins {
-            height: 100px !important;
-            max-height: 100px !important;
-            min-height: 100px !important;
-        }
-
         #ad-container ins {
             display: block !important;
             width: 100% !important;
-        }
-
-        /* Android always starts at 118px */
-        body.android #ad-container iframe {
-            height: calc(100px + 18px) !important;
-            max-height: calc(100px + 18px) !important;
-            min-height: calc(100px + 18px) !important;
-        }
-        
-        /* Non-Android (Web) starts at 100px */
-        body:not(.android) #ad-container iframe {
-            height: 100px !important;
-            max-height: 100px !important;
-            min-height: 100px !important;
-        }
-
-        .banner-ad-space.admob-shifted {
-            height: calc(100px + 18px) !important;
-            max-height: calc(100px + 18px) !important;
-            min-height: calc(100px + 18px) !important;
-        }
-
-        #ad-container.admob-shifted ins {
-            height: calc(100px + 18px) !important;
-            max-height: calc(100px + 18px) !important;
-            min-height: calc(100px + 18px) !important;
-        }
-
-        #ad-container.admob-shifted iframe {
-            height: calc(100px + 18px) !important;
-            max-height: calc(100px + 18px) !important;
-            min-height: calc(100px + 18px) !important;
-        }
-
-        .math-in-space-container.admob-shifted {
-            height: calc(100vh - var(--safe-area-inset-bottom) - 18px);
-        }
-
-        .banner-ad-space.admob-failed {
-            height: 100px !important;
-            max-height: 100px !important;
-            min-height: 100px !important;
-        }
-
-        #ad-container.admob-failed ins {
-            height: 100px !important;
-            max-height: 100px !important;
-            min-height: 100px !important;
-        }
-
-        #ad-container.admob-failed iframe {
-            height: 100px !important;
-            max-height: 100px !important;
-            min-height: 100px !important;
-        }
-
-        .math-in-space-container.admob-failed {
-            height: calc(100vh - var(--safe-area-inset-bottom));
         }
             </style>
 </head>
@@ -2982,7 +2881,7 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
         // IMPORTANT: Before you git push origin main you MUST update this timestamp
         // Format: YYYY-MM-DDTHH:MM:SSZ (UTC)
         // This ensures you know if you need to hard refresh to see the latest version
-        console.log("=== MATH IN SPACE v1.811 [2026-04-16T22:25:00Z] DEPLOYED ===");
+        console.log("=== MATH IN SPACE v1.812 [2026-04-16T22:25:00Z] DEPLOYED ===");
         
         root.render(
             <Provider store={store}>
