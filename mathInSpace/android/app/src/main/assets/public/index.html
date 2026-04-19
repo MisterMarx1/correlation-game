@@ -2670,14 +2670,14 @@
                         await AdMob.initialize();
                         console.log("AdMob initialized successfully");
 
-                        // Show banner ad
+                        // Show banner ad at top
                         await AdMob.showBanner({
                             adId: 'ca-app-pub-2662863757001007/4499823296',
-                            position: 'top',
+                            position: 'TOP',
                             margin: 0,
                             isTesting: false
                         });
-                        console.log("AdMob banner shown successfully");
+                        console.log("AdMob banner shown successfully at TOP");
 
                         setIsReady(true);
 
@@ -2714,10 +2714,15 @@
                         position: 'fixed',
                         top: 0,
                         left: 0,
+                        right: 0,
                         width: '100vw',
                         height: '100vh',
                         zIndex: 1,
-                        pointerEvents: 'none'
+                        pointerEvents: 'none',
+                        backgroundColor: 'black',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center'
                     }}
                 >
                     {isReady && (

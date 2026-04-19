@@ -23,5 +23,8 @@
     "SystemBars": {
       "insetsHandling": "disable"
     }
+  },
+  "android": {
+    "adjustMarginsForEdgeToEdge": "disable"
   }
 }
