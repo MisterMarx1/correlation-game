@@ -33,7 +33,7 @@
   - Canvas API (native)
   
   Author: Mister Marx
-  Version: v1.815
+  Version: v1.816
   Last Modified: 2026-04-17
 -->
 <!DOCTYPE html>
@@ -169,12 +169,9 @@
             justify-content: space-between;
             text-align: center;
             width: 100%;
-            height: calc(100vh - var(--safe-area-inset-bottom) - var(--ad-height));
+            height: calc(100vh);
             bottom:0;
             position: absolute;  /* ADD THIS */
-            padding-top: max(24px, var(--safe-area-inset-top));
-            padding-left: var(--safe-area-inset-left);
-            padding-right: var(--safe-area-inset-right);
             color: #e0e0e0;
             box-sizing: border-box;
             overflow: hidden;
@@ -1129,7 +1126,7 @@
             bottom: 0;
             left: 0;
             right: 0;
-            height: calc(100vh - var(--safe-area-inset-bottom) - var(--ad-height));
+            height: calc(100vh);
             background-color: rgba(0, 31, 63, 0.98);
             display: flex;
             flex-direction: column;
@@ -1199,7 +1196,7 @@
             position: fixed;
             left: 0;
             width: 100%;
-            height: calc(100vh - var(--safe-area-inset-bottom) - var(--ad-height));
+            height: calc(100vh);
             bottom:0;
             background: radial-gradient(ellipse at center, 
                 rgba(20, 25, 40, 0.95) 0%, 
@@ -2395,14 +2392,15 @@
                             left: 0,
                             right: 0,
                             bottom: 0,
-                            height: "calc(100vh - var(--safe-area-inset-bottom) - var(--ad-height))",
+                            height: "calc(100vh)",
                             backgroundColor: "rgba(3,7,18,0.98)",
                             display: "flex",
                             flexDirection: "column",
                             alignItems: "center",
                             justifyContent: "center",
                             zIndex: 3000,
-                            padding: "20px"
+                            padding: "20px",
+                            paddingBottom: "calc(var(--ad-height) + 20px)"
                         }}>
                             <div style={{
                                 width: "95%",
@@ -2520,7 +2518,7 @@
                     const blankDiv = document.createElement('div');
                     blankDiv.style.width = '100vw';
                     blankDiv.style.height = '100px';
-                    blankDiv.style.position = 'fixed';
+                    blankDiv.style.position = 'absolute';
                     blankDiv.style.bottom = '0';
                     blankDiv.style.left = '0';
                     blankDiv.style.background = 'transparent';
@@ -2528,7 +2526,7 @@
 
                     // Create wrapper with proper layout context
                     const wrapper = document.createElement('div');
-                    wrapper.style.position = 'fixed';
+                    wrapper.style.position = 'absolute';
                     wrapper.style.bottom = '0';
                     wrapper.style.left = '50%';
                     wrapper.style.transform = 'translateX(-50%)';
@@ -2667,7 +2665,7 @@
                 canvas.style.bottom = '0';
                 canvas.style.left = '0';
                 canvas.style.width = '100%';
-                canvas.style.height = 'calc(100vh - var(--safe-area-inset-bottom) - var(--ad-height))';
+                canvas.style.height = 'calc(100vh)';
                 canvas.style.zIndex = '1';
                 canvas.style.pointerEvents = 'none';
                 document.body.appendChild(canvas);
@@ -2686,9 +2684,8 @@
                 function resizeCanvas() {
                     width = canvas.width = window.innerWidth;
                     const viewportHeight = window.innerHeight;
-                    const safeAreaBottom = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--safe-area-inset-bottom')) || 0;
                     const adHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ad-height')) || 0;
-                    height = canvas.height = viewportHeight - safeAreaBottom - adHeight;
+                    height = canvas.height = viewportHeight;
                 }
 
                 function drawWaveField() {
@@ -3722,7 +3719,7 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
         // IMPORTANT: Before you git push origin main you MUST update this timestamp
         // Format: YYYY-MM-DDTHH:MM:SSZ (UTC)
         // This ensures you know if you need to hard refresh to see the latest version
-        console.log("=== MATH IN SPACE v1.815 [2026-04-16T22:25:00Z] DEPLOYED ===");
+        console.log("=== MATH IN SPACE v1.816 [2026-04-16T22:25:00Z] DEPLOYED ===");
         
         root.render(
             <Provider store={store}>
