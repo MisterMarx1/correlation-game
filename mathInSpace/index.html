@@ -2947,7 +2947,7 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
                     </div>
 
                     {/* Full-Screen Ad Overlay */}
-                    <div id="full-screen-ad-overlay" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 99999; background: #000; display: none;">
+                    <div id="full-screen-ad-overlay" style={{position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', zIndex: 99999, background: '#000', display: 'none'}}>
                         <div id="full-screen-ad-container"></div>
                     </div>
                 </>
@@ -3062,8 +3062,6 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
         const pushAd = () => {
             if (window.adsbygoogle && window.adsbygoogle.push) {
                 window.adsbygoogle.push({});
-                adLoaded = true;
-                console.log("✓ AdSense ad pushed successfully");
             } else {
                 // Retry if not ready yet
                 setTimeout(pushAd, 50);
@@ -3075,40 +3073,23 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
         setTimeout(() => {
             const ins = container.querySelector("ins.adsbygoogle");
             const iframe = container.querySelector("iframe");
-            const bannerSpace = document.querySelector(".banner-ad-space");
-            
-            console.log("Ad check - iframe exists:", !!iframe);
-            if (iframe) {
-                console.log("Ad iframe dimensions:", iframe.offsetWidth + "x" + iframe.offsetHeight);
-                const styleAttr = iframe.getAttribute("style");
-                console.log("Ad iframe style:", styleAttr);
-                
-                // Extract height from style attribute string
-                const heightMatch = styleAttr.match(/height:(\d+)px/);
-                const heightValue = heightMatch ? parseInt(heightMatch[1]) : 0;
-                console.log("GOOGLE AD HEIGHT (parsed from style):", heightValue + "px");
-            }
-            if (ins) {
-                console.log("Ad ins status:", ins.dataset.adStatus);
-            }
-            
-            // Show fallback if no iframe OR if ad is unfilled
-            const hasIframe = !!iframe;
+
+            // Check if ad is actually filled (not just placeholder iframe from 403)
             const isUnfilled = ins && ins.dataset.adStatus === 'unfilled';
-            const shouldShowFallback = !hasIframe || isUnfilled;
-            
-            console.log("Fallback condition debug:", {
-                hasIframe,
-                isUnfilled,
-                shouldShowFallback
-            });
-            
-            if (shouldShowFallback) {
-                if (!hasIframe) {
-                    console.log("Showing fallback - no iframe detected");
-                } else {
-                    console.log("Showing fallback - ad unfilled (no inventory)");
+            let hasContent = false;
+
+            if (iframe) {
+                try {
+                    hasContent = iframe.contentDocument && iframe.contentDocument.body.innerHTML.trim() !== '';
+                } catch (e) {
+                    // Cross-origin iframe, assume it has content if no adStatus unfilled
+                    hasContent = !isUnfilled;
                 }
+            }
+
+            // Show fallback if unfilled OR if iframe exists but has no content (placeholder from 403)
+            if (isUnfilled || (iframe && !hasContent)) {
+                console.log("Showing fallback - ad not actually filled");
                 showFallbackAd(container);
             }
         }, 3000);
@@ -3235,7 +3216,7 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
     }
 
     // Call this function whenever you want to show the full-screen ad
-    // loadFullScreenAd();
+    loadFullScreenAd();
 
     </script>
 </body>
