@@ -227,7 +227,7 @@
         .game-hud {
             display: flex;
             justify-content: space-between;
-            width: 95%;
+            width: 100%;
             max-width: 500px;
             font-size: clamp(1.1em, 1.5vw, 1.3em);
             padding: 5px 10px;
@@ -551,6 +551,24 @@
         .quit-button:hover {
             transform: scale(1.05);
             box-shadow: 0 0 25px rgba(255, 68, 68, 0.6);
+        }
+
+        .hud-question-area {
+            width: 100%;
+            text-align: center;
+            margin-top:0px;
+            margin-bottom: 0px;
+            z-index: 10;
+            position: relative;
+            align-self: flex-start;  /* Add this line */
+        }
+
+        .hud-question {
+            font-size: clamp(2.2em, 2.5vw, 2.5em);
+            font-weight: 700;
+            color: #fff;
+            text-shadow: 0 0 8px #00ccff;
+            margin: 0;
         }
 
         .setting-group .operation-toggles {
@@ -2176,12 +2194,17 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
             speedBonusDisplay,
         }) => (
             <>
-                <div className="game-hud">
-                    <span>Score: {score}</span>
-                    <span>Time: {timeLeft}s</span>
-                    <button onClick={() => { soundManager.play('QUIT_BUTTON'); handleQuit(); }} className="quit-button">
-                        Quit
-                    </button>
+                <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                    <div className="game-hud">
+                        <span>Score: {score}</span>
+                        <span>Time: {timeLeft}s</span>
+                        <button onClick={() => { soundManager.play('QUIT_BUTTON'); handleQuit(); }} className="quit-button">
+                            Quit
+                        </button>
+                    </div>
+                    <div className="hud-question-area">
+                        <p className="hud-question">{currentProblem.question}</p>
+                    </div>
                 </div>
 
                 {speedBonusDisplay && (
