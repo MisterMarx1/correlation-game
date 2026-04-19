@@ -2679,7 +2679,7 @@
                     width = canvas.width = window.innerWidth;
                     const viewportHeight = window.innerHeight;
                     const adHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ad-height')) || 0;
-                    height = canvas.height = viewportHeight - safeAreaBottom - adHeight;
+                    height = canvas.height = viewportHeight - adHeight;
                 }
 
                 function drawWaveField() {
