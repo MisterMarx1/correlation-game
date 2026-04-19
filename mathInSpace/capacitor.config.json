@@ -1,6 +1,6 @@
 {
   "appId": "com.mistermarx.mathinspace",
-  "appName": "Math In Space", 
+  "appName": "Math In Space",
   "webDir": "www",
   "server": {
     "androidScheme": "https",
@@ -12,7 +12,13 @@
       "backgroundColor": "#000428"
     },
     "AdMob": {
-      "initializeForTesting": false
+      "initializeForTesting": false,
+      "appId": "ca-app-pub-2662863757001007~6977812828",
+      "adUnits": {
+        "banner": {
+          "id": "ca-app-pub-2662863757001007/4499823296"
+        }
+      }
     }
   }
 }

@@ -33,7 +33,7 @@
   - Canvas API (native)
   
   Author: Mister Marx
-  Version: v1.806
+  Version: v1.814
   Last Modified: 2026-04-17
 -->
 <!DOCTYPE html>
@@ -268,10 +268,12 @@
             text-transform: uppercase;
             letter-spacing: 1px;
             box-shadow: 0 0 15px rgba(255, 153, 0, 0.4);
+            animation: pulse 2s ease-in-out infinite;
         }
         .start-button:hover {
             transform: scale(1.05);
             box-shadow: 0 0 25px rgba(255, 153, 0, 0.6);
+            animation: none;
         }
 
         /* --- Playing Screen --- */
@@ -475,7 +477,7 @@
         /* --- Results Screen --- */
         .math-in-space-container.results-screen {
             justify-content: center;
-            gap: 20px;
+            padding-top: 0;
         }
 
         .results-content {
@@ -485,25 +487,26 @@
             max-width: 600px;
             width: 90%;
             flex-direction: column;
-            height: calc(100vh - var(--safe-area-inset-bottom) - var(--ad-height));
-            max-height: calc(100vh - var(--safe-area-inset-bottom) - var(--ad-height));
+            display: flex;
+            height: 100%;
             bottom: 0;
             overflow-y: auto;
         }
         .results-ops {
-            font-size: 1.2em;
+            font-size: clamp(.5em, 5vw, .7em);
             margin: 0px 0 10px 0;
         }
         .results-content h1 {
             color: #00ccff;
             margin: -0.5em 0em 0em;
             padding: 0em 0;
-            font-size: clamp(1.4em, 7vw, 2em);
+            font-size: clamp(1.2em, 5vw, 1.5em);
+            white-space: nowrap;
         }
 
         .results-content h2 {
             color: #ff9900;
-            font-size: 1.5em;
+            font-size: clamp(1.1em, 5vw, 1.4em);
             margin: 10px 0 10px 0;
         }
         .results-bars {
@@ -533,34 +536,358 @@
             text-transform: uppercase;
             letter-spacing: 1px;
             box-shadow: 0 0 15px rgba(0, 204, 255, 0.4);
+            animation: pulse 2s ease-in-out infinite;
         }
         .play-again-button:hover {
             transform: scale(1.05);
             box-shadow: 0 0 25px rgba(0, 204, 255, 0.6);
+            animation: none;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+                box-shadow: 0 0 15px rgba(0, 204, 255, 0.4);
+            }
+            50% {
+                transform: scale(1.03);
+                box-shadow: 0 0 30px rgba(0, 204, 255, 0.7);
+            }
         }
         .log-output {
-            margin-top: 10px;
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            border: none;
+            padding: 0;
+            background: transparent;
+            min-height: 250px;
         }
-        .log-output h3 {
-            color: #ccc;
-            margin-top: -5px;
-            margin-bottom: 10px;
+
+        /* --- Debrief Viewer Component --- */
+        .debrief-viewer, .debrief-viewer * { box-sizing: border-box; }
+
+        .debrief-viewer {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            background:
+              radial-gradient(ellipse at top left, rgba(56, 189, 248, 0.08), transparent 50%),
+              radial-gradient(ellipse at bottom right, rgba(217, 70, 239, 0.08), transparent 50%),
+              linear-gradient(180deg, #0a0f1f 0%, #070914 100%);
+            color: #e6eefc;
+            font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+            font-size: 14px;
+            line-height: 1.4;
+            border-radius: inherit;
+            overflow: hidden;
+            min-height: 0;
+            border-radius: 16px;
+            border: 1px solid rgba(125, 211, 252, 0.3);
+            box-shadow: 0 0 15px rgba(125, 211, 252, 0.2), inset 0 0 20px rgba(125, 211, 252, 0.05);
         }
-        .log-output textarea {
+
+        .dv-header {
+            flex: 0 0 auto;
+            padding: 7px 18px;
+            border-bottom: 1px solid rgba(56, 189, 248, 0.2);
+            background: linear-gradient(180deg, rgba(56, 189, 248, 0.08), transparent);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            flex-wrap: wrap;
+        }
+        .dv-stats-row {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .dv-stat-item {
+            font-size: 0.65rem;
+            color: #94a3b8;
+            font-weight: 500;
+        }
+        .dv-final-score {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #fde68a;
+            text-shadow: 0 0 10px rgba(253, 230, 138, 0.3);
+        }
+        .dv-divider {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(125, 211, 252, 0.3), transparent);
+            margin: 4px 0;
+            width: 100%;
+        }
+        .dv-choices-label {
+            font-size: 0.65rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: #94a3b8;
+            text-align: center;
+        }
+        .dv-choices-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+            margin-top: 2px;
+        }
+        .dv-choice-item {
+            font-size: 0.6rem;
+            color: #64748b;
+            font-weight: 500;
+        }
+        .dv-title {
+            font-size: clamp(0.8rem, 3vw, 1.1rem);
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: #7dd3fc;
+            text-shadow: 0 0 12px rgba(125, 211, 252, 0.4);
+            white-space: nowrap;
+        }
+        .dv-title::before { content: "◈ "; color: #f0abfc; }
+        .dv-score-badge {
+            padding: 6px 14px;
+            border-radius: 999px;
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid rgba(125, 211, 252, 0.4);
+            font-weight: 700;
+            font-size: 0.9rem;
+            color: #fde68a;
+        }
+        .dv-score-badge .lbl {
+            color: #94a3b8;
+            font-weight: 500;
+            margin-right: 6px;
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .dv-filters {
+            flex: 0 0 auto;
+            display: flex;
+            gap: 2px;
+            padding: 6px 18px;
+            border-bottom: 1px solid rgba(125, 211, 252, 0.12);
+            flex-wrap: nowrap;
             width: 100%;
             box-sizing: border-box;
-            border: 1px solid rgba(0, 204, 255, 0.3);
-            background-color: rgba(0, 0, 0, 0.3);
-            color: #0f0;
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 0.8em;
-            padding: 10px;
+        }
+        .dv-filter-btn {
+            flex: 1;
+            padding: 3px 6px;
             border-radius: 4px;
-            height: 100px;
-            min-height: 100px;
-            max-height: 100%;
-            resize: vertical;
-            overflow: auto;
+            border: 1px solid rgba(125, 211, 252, 0.2);
+            background: transparent;
+            color: #cbd5e1;
+            cursor: pointer;
+            font-size: 0.55rem;
+            font-weight: 600;
+            letter-spacing: 0.01em;
+            transition: all 0.15s ease;
+            white-space: nowrap;
+            text-align: center;
+            min-width: 0;
+        }
+        .dv-filter-btn:hover { background: rgba(125, 211, 252, 0.08); color: #fff; }
+        .dv-filter-btn.active {
+            background: rgba(125, 211, 252, 0.18);
+            border-color: rgba(125, 211, 252, 0.6);
+            color: #fff;
+            box-shadow: 0 0 10px rgba(125, 211, 252, 0.25);
+        }
+        .dv-filter-btn .count {
+            margin-left: 3px;
+            padding: 1px 3px;
+            border-radius: 6px;
+            background: rgba(15, 23, 42, 0.7);
+            font-size: 0.5rem;
+        }
+
+        .dv-list {
+            flex: 1 1 auto;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding: 12px 18px 18px;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(125, 211, 252, 0.4) transparent;
+        }
+        .dv-list::-webkit-scrollbar { width: 8px; }
+        .dv-list::-webkit-scrollbar-thumb {
+            background: rgba(125, 211, 252, 0.3);
+            border-radius: 4px;
+        }
+        .dv-list::-webkit-scrollbar-thumb:hover { background: rgba(125, 211, 252, 0.5); }
+
+        .dv-card {
+            margin-bottom: 8px;
+            border-radius: 10px;
+            background: rgba(15, 23, 42, 0.55);
+            border: 1px solid rgba(148, 163, 184, 0.15);
+            overflow: hidden;
+            transition: border-color 0.15s, transform 0.15s;
+        }
+        .dv-card:hover { border-color: rgba(125, 211, 252, 0.4); }
+        .dv-card.correct { border-left: 3px solid #4ade80; }
+        .dv-card.incorrect { border-left: 3px solid #f87171; }
+        .dv-card.timeout { border-left: 3px solid #fbbf24; }
+
+        .dv-card-head {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 14px;
+            cursor: pointer;
+            user-select: none;
+        }
+        .dv-icon {
+            /* width: 28px; */
+            /* height: 28px; */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: clamp(0.6rem, 2vw, .9rem);
+            flex-shrink: 0;
+        }
+        .dv-card.correct   .dv-icon { color: #4ade80; }
+        .dv-card.incorrect .dv-icon {  color: #f87171; }
+        .dv-card.timeout   .dv-icon {  color: #fbbf24; }
+
+        .dv-q-num {
+            font-size: 0.75rem;
+            color: #94a3b8;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            min-width: 12px;
+        }
+        .dv-q-text {
+            flex: 1;
+            font-size: clamp(0.6rem, 2vw, .9rem);
+            font-weight: 600;
+            color: #f1f5f9;
+        }
+        .dv-q-points {
+            font-weight: 700;
+            font-size: clamp(0.6rem, 2vw, .9rem);
+            white-space: nowrap;
+        }
+        .dv-q-points.pos { color: #4ade80; }
+        .dv-q-points.neg { color: #f87171; }
+        .dv-q-points.zero { color: #94a3b8; }
+        .dv-caret {
+            color: #64748b;
+            transition: transform 0.2s;
+            font-size: 0.8rem;
+            animation: textPulse 2s ease-in-out infinite;
+        }
+        .dv-card.open .dv-caret { transform: rotate(90deg); animation: none; }
+
+        @keyframes textPulse {
+            0%, 100% {
+                text-shadow: 0 0 5px rgba(100, 116, 139, 0.4);
+                opacity: 1;
+            }
+            50% {
+                text-shadow: 0 0 15px rgba(100, 116, 139, 0.8);
+                opacity: 0.7;
+            }
+        }
+
+        .dv-card-body {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.25s ease;
+        }
+        .dv-card.open .dv-card-body { max-height: 500px; }
+
+        .dv-card-body-inner {
+            padding: 4px 14px 14px 14px;
+            border-top: 1px dashed rgba(148, 163, 184, 0.15);
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            font-size: 0.85rem;
+        }
+        .dv-field {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 8px;
+        }
+        .dv-field .fk {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #94a3b8;
+        }
+        .dv-field .fv {
+            font-weight: 600;
+            color: #e2e8f0;
+            word-break: break-word;
+        }
+
+        .dv-options {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-top: 4px;
+            justify-content: center;
+        }
+        .dv-opt {
+            padding: 5px 10px;
+            border-radius: 6px;
+            background: rgba(30, 41, 59, 0.8);
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: #cbd5e1;
+        }
+        .dv-opt.is-correct {
+            background: rgba(74, 222, 128, 0.15);
+            border-color: rgba(74, 222, 128, 0.6);
+            color: #86efac;
+        }
+        .dv-opt.is-user-wrong {
+            background: rgba(248, 113, 113, 0.15);
+            border-color: rgba(248, 113, 113, 0.6);
+            color: #fca5a5;
+            text-decoration: line-through;
+        }
+        .dv-opt.is-user-right {
+            box-shadow: 0 0 0 2px rgba(74, 222, 128, 0.5);
+        }
+
+        .dv-empty {
+            text-align: center;
+            padding: 40px 20px;
+            color: #64748b;
+            font-style: italic;
+        }
+
+        .dv-footer {
+            flex: 0 0 auto;
+            padding: 8px 18px;
+            border-top: 1px solid rgba(125, 211, 252, 0.12);
+            font-size: 0.72rem;
+            color: #64748b;
+            display: flex;
+            justify-content: center;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
+        .dv-legend { display: flex; gap: 12px; flex-wrap: wrap; }
+        .dv-legend-item { display: inline-flex; align-items: center; gap: 4px; }
+        .dv-legend-dot {
+            width: 8px; height: 8px; border-radius: 50%;
         }
 
         /* --- Ship Feedback Colors --- */
@@ -890,8 +1217,11 @@
 
         .fog-overlay.disappearing {
             opacity: 0;
-            transform: scale(1.1) rotate(2deg);
             pointer-events: none;
+        }
+
+        .fog-overlay.active {
+            pointer-events: auto;
         }
 
         @keyframes fogDrift {
@@ -1111,7 +1441,308 @@
 </head>
 <body>
     <div id="root"></div>
-    
+
+    <script>
+    /* ================================================================
+       DebriefViewer — drop-in, size-agnostic, data-driven component.
+       ================================================================ */
+    class DebriefViewer {
+      constructor(host, data) {
+        this.host = host;
+        this.data = Array.isArray(data) ? data : [];
+        this.filter = 'all';
+        this.headerStats = { username: '', finalScore: 0, timeoutCount: 0, speedBonusCount: 0, gameSettings: null };
+        this._render();
+      }
+
+      setData(data) {
+        this.data = Array.isArray(data) ? data : [];
+        this._render();
+      }
+
+      setHeaderStats(username, finalScore, timeoutCount, speedBonusCount, gameSettings) {
+        this.headerStats = { username, finalScore, timeoutCount, speedBonusCount, gameSettings };
+        this._render();
+      }
+
+      destroy() {
+        this.host.innerHTML = '';
+      }
+
+      _splitData() {
+        const summary = this.data.find(x => x && x.type === 'summary') || null;
+        const questions = this.data.filter(x => x && x.type !== 'summary');
+        return { summary, questions };
+      }
+
+      _opSymbol(op) {
+        if (op === '*' || op === '×') return '×';
+        if (op === '/' || op === '÷') return '÷';
+        return op;
+      }
+
+      _fmtMs(ms) {
+        if (typeof ms !== 'number') return '—';
+        if (ms < 1000) return `${Math.round(ms)} ms`;
+        return `${(ms / 1000).toFixed(2)} s`;
+      }
+
+      _fmtTimestamp(iso) {
+        if (!iso) return '—';
+        try {
+          const d = new Date(iso);
+          return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        } catch (e) { return iso; }
+      }
+
+      _fmtFullTimestamp(iso) {
+        if (!iso) return '—';
+        try {
+          return new Date(iso).toLocaleString();
+        } catch (e) { return iso; }
+      }
+
+      _classify(q) {
+        if (q.timedOut === true || q.userAnswer === 'TIMEOUT' || q.submittedAnswerParsed === 'TIMEOUT') return 'timeout';
+        if (q.isCorrect) return 'correct';
+        return 'incorrect';
+      }
+
+      _escape(s) {
+        if (s === null || s === undefined) return '';
+        return String(s).replace(/[&<>"']/g, c => ({
+          '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+        }[c]));
+      }
+
+      _render() {
+        const { summary, questions } = this._splitData();
+
+        this.host.innerHTML = '';
+        const root = document.createElement('div');
+        root.className = 'debrief-viewer';
+
+        root.appendChild(this._renderHeader(summary, questions, this.headerStats.username, this.headerStats.finalScore, this.headerStats.timeoutCount, this.headerStats.speedBonusCount, this.headerStats.gameSettings));
+        root.appendChild(this._renderFilters(questions));
+        root.appendChild(this._renderList(questions));
+        root.appendChild(this._renderFooter());
+
+        this.host.appendChild(root);
+        this._root = root;
+      }
+
+      _renderHeader(summary, questions, username, finalScore, timeoutCount, speedBonusCount, gameSettings) {
+        const h = document.createElement('div');
+        h.className = 'dv-header';
+
+        let choicesHtml = '';
+        if (gameSettings) {
+          const opsStr = (gameSettings.operations || [])
+            .map(sym => sym === '+' ? '+' : sym === '-' ? '-' : sym === '*' ? '×' : '÷')
+            .join('  ');
+          choicesHtml = `
+            <div class="dv-divider"></div>
+            <div class="dv-choices-label">CHOICES:</div>
+            <div class="dv-choices-row">
+              <span class="dv-choice-item">Max Digits: ${this._escape(gameSettings.maxDigits)}</span>
+              <span class="dv-choice-item">Max Options: ${this._escape(gameSettings.maxOptions)}</span>
+            </div>
+            <div class="dv-choices-row">
+              <span class="dv-choice-item">Duration: ${this._escape(gameSettings.duration)}s</span>
+              <span class="dv-choice-item">Operations: ${this._escape(opsStr)}</span>
+            </div>
+          `;
+        }
+
+        h.innerHTML = `
+          <div class="dv-title">Mission Debrief, ${this._escape(username)}!</div>
+          <div class="dv-final-score">Final Score: ${this._escape(finalScore)}</div>
+          <div class="dv-stats-row">
+            <span class="dv-stat-item">Timeouts: ${this._escape(timeoutCount)}</span>
+            <span class="dv-stat-item">Speed Bonuses: ${this._escape(speedBonusCount)}</span>
+          </div>
+          ${choicesHtml}
+        `;
+        return h;
+      }
+
+      _renderFilters(questions) {
+        const wrap = document.createElement('div');
+        wrap.className = 'dv-filters';
+
+        const counts = {
+          all: questions.length,
+          correct: questions.filter(q => q.isCorrect).length,
+          incorrect: questions.filter(q => !q.isCorrect && !(q.timedOut || q.userAnswer === 'TIMEOUT')).length,
+          timeout: questions.filter(q => q.timedOut || q.userAnswer === 'TIMEOUT').length,
+        };
+
+        const buttons = [
+          { key: 'all',       label: 'All' },
+          { key: 'correct',   label: 'Correct' },
+          { key: 'incorrect', label: 'Incorrect' },
+          { key: 'timeout',   label: 'Timeouts' },
+        ];
+
+        buttons.forEach(b => {
+          const btn = document.createElement('button');
+          btn.className = 'dv-filter-btn' + (this.filter === b.key ? ' active' : '');
+          btn.innerHTML = `${b.label}<span class="count">${counts[b.key]}</span>`;
+          btn.addEventListener('click', () => {
+            this.filter = b.key;
+            this._render();
+          });
+          wrap.appendChild(btn);
+        });
+
+        return wrap;
+      }
+
+      _renderList(questions) {
+        const list = document.createElement('div');
+        list.className = 'dv-list';
+
+        const filtered = questions.filter((q, i) => {
+          const cls = this._classify(q);
+          if (this.filter === 'all') return true;
+          return cls === this.filter;
+        });
+
+        if (filtered.length === 0) {
+          const empty = document.createElement('div');
+          empty.className = 'dv-empty';
+          empty.textContent = 'No entries match this filter.';
+          list.appendChild(empty);
+          return list;
+        }
+
+        filtered.forEach((q) => {
+          const originalIndex = questions.indexOf(q) + 1;
+          list.appendChild(this._renderCard(q, originalIndex));
+        });
+
+        return list;
+      }
+
+      _renderCard(q, qNum) {
+        const cls = this._classify(q);
+        const card = document.createElement('div');
+        card.className = `dv-card ${cls}`;
+
+        const icon = cls === 'correct' ? '✓' : cls === 'timeout' ? '⏱' : '✗';
+        const pts = q.pointsChange;
+        const ptsCls = pts > 0 ? 'pos' : pts < 0 ? 'neg' : 'zero';
+        const ptsStr = pts > 0 ? `+${pts}` : `${pts ?? 0}`;
+
+        const questionText = q.problem?.question
+          ?? `${q.problem?.num1 ?? '?'} ${this._opSymbol(q.problem?.operation)} ${q.problem?.num2 ?? '?'}`;
+
+        const head = document.createElement('div');
+        head.className = 'dv-card-head';
+        head.innerHTML = `
+          <div
+            style="display: flex; align-items: center; gap: 4px;"
+          >
+            <span class="dv-icon">${icon}</span>
+            <span class="dv-q-num">Q${qNum}</span>
+          </div>
+          <span class="dv-q-text">${this._escape(questionText)}</span>
+          <span class="dv-q-points ${ptsCls}">${this._escape(ptsStr)} pts</span>
+          <span class="dv-caret">▶</span>
+        `;
+        head.addEventListener('click', () => card.classList.toggle('open'));
+
+        const body = document.createElement('div');
+        body.className = 'dv-card-body';
+        const inner = document.createElement('div');
+        inner.className = 'dv-card-body-inner';
+
+        const userAns = q.userAnswer;
+        const parsedAns = q.submittedAnswerParsed;
+
+        // Options Presented - at top
+        if (Array.isArray(q.optionsPresented) && q.optionsPresented.length) {
+          const optsWrap = document.createElement('div');
+          optsWrap.style.display = 'flex';
+          optsWrap.style.flexDirection = 'column';
+          optsWrap.style.gap = '4px';
+
+          const fk = document.createElement('span');
+          fk.className = 'fk';
+          fk.textContent = 'Options Presented';
+
+          const optsRow = document.createElement('div');
+          optsRow.className = 'dv-options';
+          q.optionsPresented.forEach(opt => {
+            const chip = document.createElement('span');
+            chip.className = 'dv-opt';
+            const isCorrectOpt = opt === q.problem?.answer;
+            const isUserPick = opt === userAns || opt === parsedAns;
+            if (isCorrectOpt) chip.classList.add('is-correct');
+            if (isUserPick && !q.isCorrect) chip.classList.add('is-user-wrong');
+            if (isUserPick && q.isCorrect) chip.classList.add('is-user-right');
+            chip.textContent = opt;
+            optsRow.appendChild(chip);
+          });
+          optsWrap.appendChild(fk);
+          optsWrap.appendChild(optsRow);
+          inner.appendChild(optsWrap);
+        }
+
+        // Regular fields (middle)
+        const fields = [
+          { k: 'Your Answer',      v: userAns === 'TIMEOUT' ? 'TIMED OUT' : this._escape(userAns) },
+          { k: 'Correct Answer',   v: this._escape(q.problem?.answer) },
+          { k: 'Parsed Answer',    v: parsedAns === 'TIMEOUT' ? 'TIMED OUT' : this._escape(parsedAns) },
+          { k: 'Operation',        v: this._escape(this._opSymbol(q.problem?.operation)) },
+          { k: 'Operand 1',        v: this._escape(q.problem?.num1) },
+          { k: 'Operand 2',        v: this._escape(q.problem?.num2) },
+          { k: 'Time Taken',       v: this._fmtMs(q.timeTakenMs) },
+          { k: 'Speed Bonus',      v: this._escape(q.awardedSpeedBonus === false ? 0 : (q.awardedSpeedBonus ?? 0)) },
+          { k: 'Points Change',    v: ptsStr },
+          { k: 'Score After',      v: this._escape(q.scoreAfter ?? '—') },
+          { k: 'Is Correct',       v: q.isCorrect ? 'Yes' : 'No' },
+          { k: 'Timed Out',        v: (q.timedOut === true || userAns === 'TIMEOUT') ? 'Yes' : 'No' },
+        ];
+
+        fields.forEach(f => {
+          const el = document.createElement('div');
+          el.className = 'dv-field';
+          el.innerHTML = `<span class="fk">${f.k}</span><span class="fv">${f.v}</span>`;
+          inner.appendChild(el);
+        });
+
+        // Timestamp - at bottom
+        const timestampEl = document.createElement('div');
+        timestampEl.className = 'dv-field';
+        timestampEl.style.flexDirection = 'column';
+        timestampEl.style.alignItems = 'center';
+        timestampEl.style.textAlign = 'center';
+        timestampEl.innerHTML = `<span class="fk">Timestamp</span><span class="fv">${this._escape(this._fmtFullTimestamp(q.timestamp))}</span>`;
+        inner.appendChild(timestampEl);
+
+        body.appendChild(inner);
+        card.appendChild(head);
+        card.appendChild(body);
+        return card;
+      }
+
+      _renderFooter() {
+        const f = document.createElement('div');
+        f.className = 'dv-footer';
+        f.innerHTML = `
+          <div class="dv-legend">
+            <span class="dv-legend-item"><span class="dv-legend-dot" style="background:#4ade80"></span>Correct</span>
+            <span class="dv-legend-item"><span class="dv-legend-dot" style="background:#f87171"></span>Incorrect</span>
+            <span class="dv-legend-item"><span class="dv-legend-dot" style="background:#fbbf24"></span>Timeout</span>
+          </div>
+          <div>Tap any question to expand details</div>
+        `;
+        return f;
+      }
+    }
+    </script>
+
     <script type="text/babel">
         const { useState, useEffect, useRef, useCallback, useMemo } = React;
         const { useSelector, useDispatch } = ReactRedux;
@@ -1885,47 +2516,15 @@
 
                 // Only load AdSense if NOT on Android app
                 if (!isAndroidApp) {
-                    // Inject AdSense script tag
-                    const script = document.createElement('script');
-                    script.id = 'adsense-script';
-                    script.async = true;
-                    script.crossOrigin = 'anonymous';
-                    script.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2662863757001007';
-                    script.onload = () => {
-                        console.log("AdSense script loaded");
-                        // Push ad to display
-                        (window.adsbygoogle = window.adsbygoogle || []).push({});
-                        
-                        // Debug check for iframe height
-                        setTimeout(() => {
-                            const iframe = document.querySelector('iframe');
-                            const ins = document.querySelector('ins.adsbygoogle');
-                            console.log("=== IFRAME DEBUG CHECK ===");
-                            console.log("iframe exists:", !!iframe);
-                            console.log("ins exists:", !!ins);
-                            
-                            if (ins) {
-                                console.log("ad status:", ins.dataset.adStatus);
-                            }
-                            
-                            if (iframe) {
-                                console.log("iframe height:", iframe.offsetHeight);
-                                console.log("iframe width:", iframe.offsetWidth);
-                                
-                                // Only set height if ad is actually filled (not unfilled/blank)
-                                const isFilled = ins && ins.dataset.adStatus !== 'unfilled';
-                                if (iframe.offsetHeight > 0 && isFilled) {
-                                    adSenseFinalReceivedHeight = iframe.offsetHeight;
-                                    console.log("adSenseFinalReceivedHeight set to:", adSenseFinalReceivedHeight);
-                                    // Update CSS variable
-                                    document.documentElement.style.setProperty('--ad-height', adSenseFinalReceivedHeight + 'px');
-                                } else {
-                                    console.log("Ad not filled or blank - not setting height");
-                                }
-                            }
-                        }, 2000);
-                    };
-                    document.head.appendChild(script);
+                    // Create blank div wrapper (100vw width)
+                    const blankDiv = document.createElement('div');
+                    blankDiv.style.width = '100vw';
+                    blankDiv.style.height = '100px';
+                    blankDiv.style.position = 'fixed';
+                    blankDiv.style.top = '0';
+                    blankDiv.style.left = '0';
+                    blankDiv.style.background = 'transparent';
+                    blankDiv.style.pointerEvents = 'none';
 
                     // Create wrapper with proper layout context
                     const wrapper = document.createElement('div');
@@ -1947,7 +2546,7 @@
                     adContainer.style.height = '100px';
                     adContainer.setAttribute('data-ad-client', 'ca-pub-2662863757001007');
                     adContainer.setAttribute('data-ad-slot', '2870000676');
-                    
+
                     console.log("=== AD CONTAINER CREATED ===");
                     console.log("Dimensions: 320px × 100px");
                     console.log("Display: inline-block");
@@ -1955,13 +2554,85 @@
                     console.log("Wrapper: fixed bottom center");
                     console.log("Ad client: ca-pub-2662863757001007");
                     console.log("Ad slot: 2870000676");
-                    
+
                     wrapper.appendChild(adContainer);
-                    
+                    blankDiv.appendChild(wrapper);
+
                     if (adRef.current) {
-                        adRef.current.appendChild(wrapper);
-                        console.log("Wrapper with ad container appended to overlay");
+                        adRef.current.appendChild(blankDiv);
+                        console.log("Blank div with wrapper and ad container appended to overlay");
                     }
+
+                    // Inject AdSense script tag
+                    const script = document.createElement('script');
+                    script.id = 'adsense-script';
+                    script.async = true;
+                    script.crossOrigin = 'anonymous';
+                    script.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2662863757001007';
+                    script.onload = () => {
+                        console.log("AdSense script loaded");
+                        // Push ad to display
+                        (window.adsbygoogle = window.adsbygoogle || []).push({});
+
+                        // Debug check for iframe height
+                        setTimeout(() => {
+                            const iframe = document.querySelector('iframe');
+                            const ins = document.querySelector('ins.adsbygoogle');
+                            console.log("=== IFRAME DEBUG CHECK ===");
+                            console.log("iframe exists:", !!iframe);
+                            console.log("ins exists:", !!ins);
+
+                            if (ins) {
+                                console.log("ad status:", ins.dataset.adStatus);
+                            }
+
+                            if (iframe) {
+                                console.log("iframe height:", iframe.offsetHeight);
+                                console.log("iframe width:", iframe.offsetWidth);
+
+                                // Only set height if ad is actually filled (not unfilled/blank)
+                                const isFilled = ins && ins.dataset.adStatus !== 'unfilled';
+                                if (iframe.offsetHeight > 0 && isFilled) {
+                                    adSenseFinalReceivedHeight = iframe.offsetHeight;
+                                    console.log("adSenseFinalReceivedHeight set to:", adSenseFinalReceivedHeight);
+                                    // Update CSS variable
+                                    document.documentElement.style.setProperty('--ad-height', adSenseFinalReceivedHeight + 'px');
+                                    // Add border to blankDiv when ad loads
+                                    blankDiv.style.borderBottom = '3px solid rgba(147, 197, 253, 0.8)';
+                                } else {
+                                    console.log("Ad not filled or blank - not setting height");
+                                    // Allow clicks to pass through the transparent wrapper
+                                    wrapper.style.pointerEvents = 'none';
+                                }
+                            }
+                        }, 2000);
+                    };
+                    document.head.appendChild(script);
+                } else {
+                    // Android app - use AdMob instead of AdSense
+                    console.log("=== ANDROID APP - USING ADMOB ===");
+                    
+                    // Initialize AdMob
+                    const { AdMob } = window.Capacitor.Plugins;
+                    
+                    // Show banner ad
+                    AdMob.showBanner({
+                        adId: 'ca-app-pub-2662863757001007/4499823296',
+                        position: 'top',
+                        margin: 0,
+                        isTesting: false,
+                        npa: true
+                    }).then(() => {
+                        console.log("AdMob banner shown successfully");
+                        
+                        // Set default height for banner (typical banner height is 100px)
+                        setTimeout(() => {
+                            document.documentElement.style.setProperty('--ad-height', '100px');
+                            console.log("AdMob height set to 100px");
+                        }, 500);
+                    }).catch(error => {
+                        console.error("AdMob banner error:", error);
+                    });
                 }
 
                 return () => {
@@ -2006,13 +2677,19 @@
             difficultyMultiplier,
             setDifficultyMultiplier,
             onStart,
+            setGameLog,
+            setScore,
+            setCorrectCount,
+            setIncorrectCount,
+            setTimeoutCount,
+            setGameState,
         }) => {
             // Initialize wave field effect
             useEffect(() => {
                 const canvas = document.createElement('canvas');
                 canvas.id = 'waveFieldCanvas';
                 canvas.style.position = 'fixed';
-                canvas.style.top = '0';
+                canvas.style.bottom = '0';
                 canvas.style.left = '0';
                 canvas.style.width = '100%';
                 canvas.style.height = 'calc(100vh - var(--safe-area-inset-bottom) - var(--ad-height))';
@@ -2352,52 +3029,55 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
             speedBonusCount,
             playAgain,
             gameLog,
-        }) => (
+        }) => {
+            const debriefHostRef = useRef(null);
+            const viewerRef = useRef(null);
+
+            useEffect(() => {
+                if (debriefHostRef.current && gameLog) {
+                    const gameSettings = {
+                        maxDigits: selectedMaxDigits,
+                        maxOptions: selectedNumOptions,
+                        duration: selectedDuration,
+                        operations: selectedOperations,
+                    };
+                    if (viewerRef.current) {
+                        viewerRef.current.setData(gameLog);
+                        viewerRef.current.setHeaderStats(username, score, timeoutCount, speedBonusCount, gameSettings);
+                    } else {
+                        viewerRef.current = new DebriefViewer(debriefHostRef.current, gameLog);
+                        viewerRef.current.setHeaderStats(username, score, timeoutCount, speedBonusCount, gameSettings);
+                    }
+                }
+                return () => {
+                    if (viewerRef.current) {
+                        viewerRef.current.destroy();
+                        viewerRef.current = null;
+                    }
+                };
+            }, [gameLog, username, score, timeoutCount, speedBonusCount, selectedMaxDigits, selectedNumOptions, selectedDuration, selectedOperations]);
+
+            return (
             <div className="results-content">
-                <h1>Mission Debrief, {username}!</h1>
-                <h2>Final Score: {score}</h2>
+                <div className="log-output">
+                    <div ref={debriefHostRef} style={{
+                        flex: 1,
+                        minHeight: 0,
+                    }}></div>
+                </div>
                 <div
                     style={{
-                        display: 'flex',
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        gap: '30px',
-                        fontSize: '.9em',
+                        bottom: 0,
+                        paddingTop: 20
                     }}
                 >
-                    <p className="results-ops">Max Digits: {selectedMaxDigits}</p>
-                    <p className="results-ops">Max Options: {selectedNumOptions}</p>
-                </div>
-                <p className="results-ops" style={{ fontSize: '1.1em' }}>
-                    Duration: {selectedDuration} seconds
-                </p>
-
-                <p className="results-ops" style={{ fontSize: '1.1em' }}>
-                    Operations used:&nbsp;
-                    {`${selectedOperations
-                        .map((sym) => (sym === '+' ? '+' : sym === '-' ? '-' : sym === '*' ? '×' : '÷'))
-                        .join('  ')}`}
-                </p>
-
-                <div className="progress-bar-container results-bars">
-                    <div className="progress-bar correct" style={{ width: `${correctWidth}%` }} title={`Correct: ${correctCount}`}></div>
-                    <div className="progress-bar timeout" style={{ width: `${timeoutWidth}%` }} title={`Timeout: ${timeoutCount}`}></div>
-                    <div className="progress-bar incorrect" style={{ width: `${incorrectWidth}%` }} title={`Incorrect: ${incorrectCount}`}></div>
-                </div>
-                <p className="results-summary">
-                    Total Questions: {totalQuestionsAnswered} | Correct: {correctCount} | Incorrect: {incorrectCount} | Timeouts: {timeoutCount} |{' '}
-                    <strong>Speed Bonuses: {speedBonusCount}</strong>
-                </p>
-                <button onClick={() => { soundManager.play('QUIT_BUTTON'); playAgain(); }} className="play-again-button">
-                    New Mission
-                </button>
-                <hr className="results-divider" />
-                <div className="log-output">
-                    <h3>Mission Log</h3>
-                    <textarea readOnly value={JSON.stringify(gameLog, null, 2)} rows={8} />
+                    <button onClick={() => { soundManager.play('QUIT_BUTTON'); playAgain(); }} className="play-again-button">
+                        New Mission
+                    </button>
                 </div>
             </div>
-        );
+            );
+        };
 
         // --- Main Game Component ---
         function MathInSpace() {
@@ -2965,6 +3645,12 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
                                 difficultyMultiplier={difficultyMultiplier}
                                 setDifficultyMultiplier={setDifficultyMultiplier}
                                 onStart={startGame}
+                                setGameLog={setGameLog}
+                                setScore={setScore}
+                                setCorrectCount={setCorrectCount}
+                                setIncorrectCount={setIncorrectCount}
+                                setTimeoutCount={setTimeoutCount}
+                                setGameState={setGameState}
                             />
                         )}
 
@@ -3061,7 +3747,7 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
         // IMPORTANT: Before you git push origin main you MUST update this timestamp
         // Format: YYYY-MM-DDTHH:MM:SSZ (UTC)
         // This ensures you know if you need to hard refresh to see the latest version
-        console.log("=== MATH IN SPACE v1.806 [2026-04-16T22:25:00Z] DEPLOYED ===");
+        console.log("=== MATH IN SPACE v1.814 [2026-04-16T22:25:00Z] DEPLOYED ===");
         
         root.render(
             <Provider store={store}>
@@ -3084,18 +3770,33 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
         (function() {
             const landscapeWarning = document.getElementById('landscape-warning');
             
+            function isMobileDevice() {
+                // Check for touch support or small screen width
+                return ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || (window.innerWidth <= 1024);
+            }
+            
             function checkOrientation() {
-                if (window.innerHeight < window.innerWidth) {
+                if (isMobileDevice() && window.innerHeight < window.innerWidth) {
                     landscapeWarning.classList.add('visible');
                 } else {
                     landscapeWarning.classList.remove('visible');
                 }
             }
             
-            // Check on load and resize
-            window.addEventListener('resize', checkOrientation);
-            window.addEventListener('orientationchange', checkOrientation);
-            checkOrientation();
+            // Wait for fonts to load before checking orientation
+            if (document.fonts && document.fonts.ready) {
+                document.fonts.ready.then(() => {
+                    // Check on load and resize
+                    window.addEventListener('resize', checkOrientation);
+                    window.addEventListener('orientationchange', checkOrientation);
+                    checkOrientation();
+                });
+            } else {
+                // Fallback if fonts API not available
+                window.addEventListener('resize', checkOrientation);
+                window.addEventListener('orientationchange', checkOrientation);
+                checkOrientation();
+            }
         })();
     </script>
 </body>
