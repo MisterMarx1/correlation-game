@@ -33,7 +33,7 @@
   - Canvas API (native)
   
   Author: Mister Marx
-  Version: v1.816
+  Version: v1.814
   Last Modified: 2026-04-17
 -->
 <!DOCTYPE html>
@@ -172,7 +172,7 @@
             height: calc(100vh - var(--safe-area-inset-bottom) - var(--ad-height));
             bottom:0;
             position: absolute;  /* ADD THIS */
-            padding-top: var(--safe-area-inset-top);
+            padding-top: max(24px, var(--safe-area-inset-top));
             padding-left: var(--safe-area-inset-left);
             padding-right: var(--safe-area-inset-right);
             color: #e0e0e0;
@@ -2608,49 +2608,6 @@
                         }, 2000);
                     };
                     document.head.appendChild(script);
-                } else {
-                    console.log("=== ANDROID APP - USING ADMOB ===");
-
-                    const { AdMob } = window.Capacitor.Plugins;
-                    const originalSafeAreaTop = getComputedStyle(document.documentElement)
-                        .getPropertyValue('--safe-area-inset-top').trim();
-
-                    AdMob.initialize().then(() => {
-                        // Permanently force safe-area-inset-top to 0 while the banner is shown
-                        // (we'll only restore it if the banner fails or on cleanup)
-                        document.documentElement.style.setProperty('--safe-area-inset-top', '0px');
-
-                        AdMob.showBanner({
-                            adId: 'ca-app-pub-2662863757001007/4499823296',
-                            position: 'TOP_CENTER',
-                            margin: 0,           // important
-                            padding: 0,
-                            isTesting: false,
-                            npa: true,
-                            overlap: true        // keep this so it doesn't push content
-                        }).then(() => {
-                            console.log("AdMob banner shown at TOP_CENTER with forced safe-area 0");
-
-                            // Optional: small delay + tiny offset if still not flush on some devices
-                            setTimeout(() => {
-                                // Some devices need a tiny push (try 0 first, then 2-5 if needed)
-                                AdMob.showBanner({
-                                    adId: 'ca-app-pub-2662863757001007/4499823296',
-                                    position: 'TOP_CENTER',
-                                    margin: 0,
-                                    // y: 0  // some older plugins support y offset instead of margin
-                                });
-                            }, 800);
-
-                        }).catch(err => {
-                            console.error("AdMob banner error:", err);
-                            // Restore on failure
-                            document.documentElement.style.setProperty('--safe-area-inset-top', originalSafeAreaTop);
-                        });
-                    }).catch(err => {
-                        console.error("AdMob init error:", err);
-                        document.documentElement.style.setProperty('--safe-area-inset-top', originalSafeAreaTop);
-                    });
                 }
 
                 return () => {
@@ -2678,6 +2635,105 @@
                         pointerEvents: "none"
                     }}
                 />
+            );
+        };
+
+        // --- AdMob Banner Component (Android Only) ---
+        const AdMobBanner = () => {
+            const [isReady, setIsReady] = React.useState(false);
+
+            React.useEffect(() => {
+                // Only run on Android Capacitor app
+                const isAndroidApp = window.Capacitor && window.Capacitor.platform === 'android';
+                
+                if (!isAndroidApp) {
+                    console.log("AdMobBanner: Not on Android, skipping");
+                    return;
+                }
+
+                console.log("=== ADMOB BANNER INITIALIZING ===");
+
+                // Initialize AdMob
+                const initializeAdMob = async () => {
+                    try {
+                        // Import AdMob plugin dynamically
+                        const { AdMob } = window.Capacitor.Plugins;
+                        
+                        if (!AdMob) {
+                            console.error("AdMob plugin not found");
+                            return;
+                        }
+
+                        console.log("AdMob plugin found, initializing...");
+
+                        // Initialize AdMob with configuration from capacitor.config.json
+                        await AdMob.initialize();
+                        console.log("AdMob initialized successfully");
+
+                        // Show banner ad
+                        await AdMob.showBanner({
+                            adId: 'ca-app-pub-2662863757001007/4499823296',
+                            position: 'top',
+                            margin: 0,
+                            isTesting: false
+                        });
+                        console.log("AdMob banner shown successfully");
+
+                        setIsReady(true);
+
+                    } catch (error) {
+                        console.error("AdMob initialization error:", error);
+                    }
+                };
+
+                // Delay initialization slightly to ensure Capacitor is ready
+                const timer = setTimeout(() => {
+                    initializeAdMob();
+                }, 1000);
+
+                return () => {
+                    clearTimeout(timer);
+                    // Cleanup: hide banner on unmount
+                    const isAndroidApp = window.Capacitor && window.Capacitor.platform === 'android';
+                    if (isAndroidApp && window.Capacitor.Plugins.AdMob) {
+                        window.Capacitor.Plugins.AdMob.hideBanner().catch(console.error);
+                    }
+                };
+            }, []);
+
+            // Only render on Android
+            const isAndroidApp = window.Capacitor && window.Capacitor.platform === 'android';
+            
+            if (!isAndroidApp) {
+                return null;
+            }
+
+            return (
+                <div
+                    style={{
+                        position: 'fixed',
+                        top: 0,
+                        left: 0,
+                        width: '100vw',
+                        height: '100vh',
+                        zIndex: 1,
+                        pointerEvents: 'none'
+                    }}
+                >
+                    {isReady && (
+                        <div style={{
+                            position: 'absolute',
+                            top: '50%',
+                            left: '50%',
+                            transform: 'translate(-50%, -50%)',
+                            color: 'rgba(255,255,255,0.3)',
+                            fontSize: '12px',
+                            fontFamily: 'Orbitron, sans-serif'
+                        }}>
+                            Ad Loaded
+                        </div>
+                    )}
+                </div>
             );
         };
 
@@ -3599,9 +3655,6 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
 
             return (
                 <>
-                    {/* Ad Overlay - transparent full-screen overlay - OUTSIDE container */}
-                    <AdOverlay />
-
                     <div
                         className={`math-in-space-container ${gameState}-screen ${showFeedbackFlash ? `flash-${feedbackType}` : ''}`}
                         ref={gameAreaRef}
@@ -3734,6 +3787,9 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
                         
                         {/* Companion Page popup */}
                         <CompanionPage />
+                        
+                        {/* Ad Overlay - transparent full-screen overlay */}
+                        <AdOverlay />
                     </div>
                     
                 </>
@@ -3765,10 +3821,11 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
         // IMPORTANT: Before you git push origin main you MUST update this timestamp
         // Format: YYYY-MM-DDTHH:MM:SSZ (UTC)
         // This ensures you know if you need to hard refresh to see the latest version
-        console.log("=== MATH IN SPACE v1.816 [2026-04-16T22:25:00Z] DEPLOYED ===");
+        console.log("=== MATH IN SPACE v1.814 [2026-04-16T22:25:00Z] DEPLOYED ===");
         
         root.render(
             <Provider store={store}>
+                <AdMobBanner />
                 <MathInSpace />
             </Provider>
         );

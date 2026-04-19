@@ -19,6 +19,9 @@
           "id": "ca-app-pub-2662863757001007/4499823296"
         }
       }
+    },
+    "SystemBars": {
+      "insetsHandling": "disable"
     }
   }
 }

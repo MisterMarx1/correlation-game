@@ -172,7 +172,7 @@
             height: calc(100vh - var(--safe-area-inset-bottom) - var(--ad-height));
             bottom:0;
             position: absolute;  /* ADD THIS */
-            padding-top: max(24px, var(--safe-area-inset-top));
+            padding-top: var(--safe-area-inset-top);
             padding-left: var(--safe-area-inset-left);
             padding-right: var(--safe-area-inset-right);
             color: #e0e0e0;
@@ -2609,50 +2609,49 @@
                     };
                     document.head.appendChild(script);
                 } else {
-                    // Android app - use AdMob instead of AdSense
                     console.log("=== ANDROID APP - USING ADMOB ===");
-                    
-                    // Initialize AdMob
+
                     const { AdMob } = window.Capacitor.Plugins;
-                    
-                    // Store original safe area inset top value
-                    const originalSafeAreaTop = getComputedStyle(document.documentElement).getPropertyValue('--safe-area-inset-top');
-                    console.log("Original safe-area-inset-top:", originalSafeAreaTop);
-                    
-                    // Temporarily set safe-area-inset-top to 0px so AdMob positions at absolute top
-                    document.documentElement.style.setProperty('--safe-area-inset-top', '0px');
-                    console.log("Temporarily set safe-area-inset-top to 0px for AdMob positioning");
-                    
-                    // Initialize AdMob first
+                    const originalSafeAreaTop = getComputedStyle(document.documentElement)
+                        .getPropertyValue('--safe-area-inset-top').trim();
+
                     AdMob.initialize().then(() => {
-                        console.log("AdMob initialized successfully");
-                        
-                        // Show banner ad
+                        // Permanently force safe-area-inset-top to 0 while the banner is shown
+                        // (we'll only restore it if the banner fails or on cleanup)
+                        document.documentElement.style.setProperty('--safe-area-inset-top', '0px');
+
                         AdMob.showBanner({
                             adId: 'ca-app-pub-2662863757001007/4499823296',
                             position: 'TOP_CENTER',
-                            margin: 0,
+                            margin: 0,           // important
+                            padding: 0,
                             isTesting: false,
                             npa: true,
-                            overlap: true
+                            overlap: true,        // keep this so it doesn't push content
+                            adSize: {
+                                height: 100
+                            }
                         }).then(() => {
-                            console.log("AdMob banner shown successfully");
-                            
-                            // Restore original safe area inset top value after banner is positioned
-                            document.documentElement.style.setProperty('--safe-area-inset-top', originalSafeAreaTop);
-                            console.log("Restored safe-area-inset-top to:", originalSafeAreaTop);
-                            
-                            // Don't set ad-height for Android since overlap: true makes it overlay the webview
-                            // No space needs to be reserved in the container
-                            console.log("AdMob using overlap mode, not reserving space in container");
-                        }).catch(error => {
-                            console.error("AdMob banner error:", error);
-                            // Restore safe area even on error
+                            console.log("AdMob banner shown at TOP_CENTER with forced safe-area 0");
+
+                            // Optional: small delay + tiny offset if still not flush on some devices
+                            setTimeout(() => {
+                                // Some devices need a tiny push (try 0 first, then 2-5 if needed)
+                                AdMob.showBanner({
+                                    adId: 'ca-app-pub-2662863757001007/4499823296',
+                                    position: 'TOP_CENTER',
+                                    margin: 0,
+                                    // y: 0  // some older plugins support y offset instead of margin
+                                });
+                            }, 800);
+
+                        }).catch(err => {
+                            console.error("AdMob banner error:", err);
+                            // Restore on failure
                             document.documentElement.style.setProperty('--safe-area-inset-top', originalSafeAreaTop);
                         });
-                    }).catch(error => {
-                        console.error("AdMob initialization error:", error);
-                        // Restore safe area even on error
+                    }).catch(err => {
+                        console.error("AdMob init error:", err);
                         document.documentElement.style.setProperty('--safe-area-inset-top', originalSafeAreaTop);
                     });
                 }
