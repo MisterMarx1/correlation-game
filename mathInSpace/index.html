@@ -33,7 +33,7 @@
   - Canvas API (native)
   
   Author: Mister Marx
-  Version: v1.813
+  Version: v1.814
   Last Modified: 2026-04-17
 -->
 <!DOCTYPE html>
@@ -2516,50 +2516,6 @@
 
                 // Only load AdSense if NOT on Android app
                 if (!isAndroidApp) {
-                    // Inject AdSense script tag
-                    const script = document.createElement('script');
-                    script.id = 'adsense-script';
-                    script.async = true;
-                    script.crossOrigin = 'anonymous';
-                    script.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2662863757001007';
-                    script.onload = () => {
-                        console.log("AdSense script loaded");
-                        // Push ad to display
-                        (window.adsbygoogle = window.adsbygoogle || []).push({});
-                        
-                        // Debug check for iframe height
-                        setTimeout(() => {
-                            const iframe = document.querySelector('iframe');
-                            const ins = document.querySelector('ins.adsbygoogle');
-                            console.log("=== IFRAME DEBUG CHECK ===");
-                            console.log("iframe exists:", !!iframe);
-                            console.log("ins exists:", !!ins);
-                            
-                            if (ins) {
-                                console.log("ad status:", ins.dataset.adStatus);
-                            }
-                            
-                            if (iframe) {
-                                console.log("iframe height:", iframe.offsetHeight);
-                                console.log("iframe width:", iframe.offsetWidth);
-                                
-                                // Only set height if ad is actually filled (not unfilled/blank)
-                                const isFilled = ins && ins.dataset.adStatus !== 'unfilled';
-                                if (iframe.offsetHeight > 0 && isFilled) {
-                                    adSenseFinalReceivedHeight = iframe.offsetHeight;
-                                    console.log("adSenseFinalReceivedHeight set to:", adSenseFinalReceivedHeight);
-                                    // Update CSS variable
-                                    document.documentElement.style.setProperty('--ad-height', adSenseFinalReceivedHeight + 'px');
-                                    // Add border to blankDiv when ad loads
-                                    blankDiv.style.borderBottom = '3px solid rgba(147, 197, 253, 0.8)';
-                                } else {
-                                    console.log("Ad not filled or blank - not setting height");
-                                }
-                            }
-                        }, 2000);
-                    };
-                    document.head.appendChild(script);
-
                     // Create blank div wrapper (100vw width)
                     const blankDiv = document.createElement('div');
                     blankDiv.style.width = '100vw';
@@ -2590,7 +2546,7 @@
                     adContainer.style.height = '100px';
                     adContainer.setAttribute('data-ad-client', 'ca-pub-2662863757001007');
                     adContainer.setAttribute('data-ad-slot', '2870000676');
-                    
+
                     console.log("=== AD CONTAINER CREATED ===");
                     console.log("Dimensions: 320px × 100px");
                     console.log("Display: inline-block");
@@ -2598,14 +2554,60 @@
                     console.log("Wrapper: fixed bottom center");
                     console.log("Ad client: ca-pub-2662863757001007");
                     console.log("Ad slot: 2870000676");
-                    
+
                     wrapper.appendChild(adContainer);
                     blankDiv.appendChild(wrapper);
-                    
+
                     if (adRef.current) {
                         adRef.current.appendChild(blankDiv);
                         console.log("Blank div with wrapper and ad container appended to overlay");
                     }
+
+                    // Inject AdSense script tag
+                    const script = document.createElement('script');
+                    script.id = 'adsense-script';
+                    script.async = true;
+                    script.crossOrigin = 'anonymous';
+                    script.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2662863757001007';
+                    script.onload = () => {
+                        console.log("AdSense script loaded");
+                        // Push ad to display
+                        (window.adsbygoogle = window.adsbygoogle || []).push({});
+
+                        // Debug check for iframe height
+                        setTimeout(() => {
+                            const iframe = document.querySelector('iframe');
+                            const ins = document.querySelector('ins.adsbygoogle');
+                            console.log("=== IFRAME DEBUG CHECK ===");
+                            console.log("iframe exists:", !!iframe);
+                            console.log("ins exists:", !!ins);
+
+                            if (ins) {
+                                console.log("ad status:", ins.dataset.adStatus);
+                            }
+
+                            if (iframe) {
+                                console.log("iframe height:", iframe.offsetHeight);
+                                console.log("iframe width:", iframe.offsetWidth);
+
+                                // Only set height if ad is actually filled (not unfilled/blank)
+                                const isFilled = ins && ins.dataset.adStatus !== 'unfilled';
+                                if (iframe.offsetHeight > 0 && isFilled) {
+                                    adSenseFinalReceivedHeight = iframe.offsetHeight;
+                                    console.log("adSenseFinalReceivedHeight set to:", adSenseFinalReceivedHeight);
+                                    // Update CSS variable
+                                    document.documentElement.style.setProperty('--ad-height', adSenseFinalReceivedHeight + 'px');
+                                    // Add border to blankDiv when ad loads
+                                    blankDiv.style.borderBottom = '3px solid rgba(147, 197, 253, 0.8)';
+                                } else {
+                                    console.log("Ad not filled or blank - not setting height");
+                                    // Allow clicks to pass through the transparent wrapper
+                                    wrapper.style.pointerEvents = 'none';
+                                }
+                            }
+                        }, 2000);
+                    };
+                    document.head.appendChild(script);
                 }
 
                 return () => {
@@ -3720,7 +3722,7 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
         // IMPORTANT: Before you git push origin main you MUST update this timestamp
         // Format: YYYY-MM-DDTHH:MM:SSZ (UTC)
         // This ensures you know if you need to hard refresh to see the latest version
-        console.log("=== MATH IN SPACE v1.813 [2026-04-16T22:25:00Z] DEPLOYED ===");
+        console.log("=== MATH IN SPACE v1.814 [2026-04-16T22:25:00Z] DEPLOYED ===");
         
         root.render(
             <Provider store={store}>
