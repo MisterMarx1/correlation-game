@@ -2513,23 +2513,22 @@
                     console.log("=== INITIALIZING ADMOB ===");
 
                     try {
-                        const { AdMob, BannerAdSize, BannerAdPosition, BannerAdPluginEvents } = window.Capacitor.Plugins;
+                        const { AdMob, BannerAdSize, BannerAdPosition } = window.Capacitor.Plugins;
 
                         console.log("AdMob plugins available:", {
                             hasAdMob: !!AdMob,
                             hasBannerAdSize: !!BannerAdSize,
-                            hasBannerAdPosition: !!BannerAdPosition,
-                            hasBannerAdPluginEvents: !!BannerAdPluginEvents
+                            hasBannerAdPosition: !!BannerAdPosition
                         });
 
                         console.log("Calling AdMob.initialize()...");
                         await AdMob.initialize();
                         console.log("✅ AdMob initialized successfully");
 
-                        // ← THIS IS THE FIX
+                        // ← THIS IS THE FIX - use string event name
                         console.log("Setting up SizeChanged listener...");
                         sizeListener = await AdMob.addListener(
-                            BannerAdPluginEvents.SizeChanged,
+                            'onAdSizeChanged',
                             (size) => {
                                 console.log('=== ADMOB BANNER SIZE CHANGED ===');
                                 console.log('Size object:', size);
