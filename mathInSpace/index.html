@@ -54,6 +54,11 @@
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
     
+    <script>
+        // --- AdSense Height Tracking ---
+        let adSenseFinalReceivedHeight = 0;
+    </script>
+    
     <style>
         /* Safe Area CSS Variables - injected by @capacitor-community/safe-area */
         :root {
@@ -1034,14 +1039,10 @@
 <body>
     <div id="root"></div>
     
-        
     <script type="text/babel">
         const { useState, useEffect, useRef, useCallback, useMemo } = React;
         const { useSelector, useDispatch } = ReactRedux;
         const { createStore } = RTK;
-
-        // --- AdSense Height Tracking ---
-        let adSenseFinalReceivedHeight = 0;
 
         // --- Safe Area Plugin ---
         // @capacitor-community/safe-area automatically injects CSS variables
