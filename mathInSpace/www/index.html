@@ -33,7 +33,7 @@
   - Canvas API (native)
   
   Author: Mister Marx
-  Version: v1.79
+  Version: v1.806
   Last Modified: 2026-04-17
 -->
 <!DOCTYPE html>
@@ -54,11 +54,11 @@
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
     
-    <!-- AdSense Script -->
-    <script async
-      src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2662863757001007"
-      crossorigin="anonymous">
+    <script>
+        // --- AdSense Height Tracking ---
+        let adSenseFinalReceivedHeight = 0;
     </script>
+    
     <style>
         /* Safe Area CSS Variables - injected by @capacitor-community/safe-area */
         :root {
@@ -66,6 +66,7 @@
             --safe-area-inset-right: 0px;
             --safe-area-inset-bottom: 0px;
             --safe-area-inset-left: 0px;
+            --ad-height: 0px;
         }
 
         /* Remove default browser margins and white border */
@@ -109,6 +110,57 @@
             cursor: pointer;
         }
 
+        /* --- Landscape Orientation Warning --- */
+        .landscape-warning {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #001f3f;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 99999;
+            color: #00ccff;
+            font-family: 'Orbitron', sans-serif;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .landscape-warning.visible {
+            display: flex;
+        }
+
+        .landscape-warning-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+            animation: rotateIcon 2s ease-in-out infinite;
+        }
+
+        @keyframes rotateIcon {
+            0%, 100% {
+                transform: rotate(0deg);
+            }
+            25% {
+                transform: rotate(-90deg);
+            }
+            75% {
+                transform: rotate(-90deg);
+            }
+        }
+
+        .landscape-warning h1 {
+            font-size: 1.5em;
+            margin-bottom: 10px;
+        }
+
+        .landscape-warning p {
+            font-size: 1em;
+            opacity: 0.8;
+        }
+
         /* --- Base Container --- */
         .math-in-space-container {
             display: flex;
@@ -117,14 +169,15 @@
             justify-content: space-between;
             text-align: center;
             width: 100%;
-            height: calc(100vh - 100px - var(--safe-area-inset-bottom));
+            height: calc(100vh - var(--safe-area-inset-bottom) - var(--ad-height));
+            bottom:0;
+            position: absolute;  /* ADD THIS */
             padding-top: max(24px, var(--safe-area-inset-top));
             padding-left: var(--safe-area-inset-left);
             padding-right: var(--safe-area-inset-right);
             color: #e0e0e0;
             box-sizing: border-box;
             overflow: hidden;
-            position: relative;
             font-family: 'Orbitron', sans-serif;
         }
 
@@ -225,7 +278,7 @@
         .game-hud {
             display: flex;
             justify-content: space-between;
-            width: 95%;
+            width: 100%;
             max-width: 500px;
             font-size: clamp(1.1em, 1.5vw, 1.3em);
             padding: 5px 10px;
@@ -432,8 +485,9 @@
             max-width: 600px;
             width: 90%;
             flex-direction: column;
-            height: calc(100vh - 100px - 50px);
-            max-height: calc(100vh - 100px - 50px);
+            height: calc(100vh - var(--safe-area-inset-bottom) - var(--ad-height));
+            max-height: calc(100vh - var(--safe-area-inset-bottom) - var(--ad-height));
+            bottom: 0;
             overflow-y: auto;
         }
         .results-ops {
@@ -504,6 +558,7 @@
             border-radius: 4px;
             height: 100px;
             min-height: 100px;
+            max-height: 100%;
             resize: vertical;
             overflow: auto;
         }
@@ -547,6 +602,24 @@
         .quit-button:hover {
             transform: scale(1.05);
             box-shadow: 0 0 25px rgba(255, 68, 68, 0.6);
+        }
+
+        .hud-question-area {
+            width: 100%;
+            text-align: center;
+            margin-top:0px;
+            margin-bottom: 0px;
+            z-index: 10;
+            position: relative;
+            align-self: flex-start;  /* Add this line */
+        }
+
+        .hud-question {
+            font-size: clamp(2.2em, 2.5vw, 2.5em);
+            font-weight: 700;
+            color: #fff;
+            text-shadow: 0 0 8px #00ccff;
+            margin: 0;
         }
 
         .setting-group .operation-toggles {
@@ -726,10 +799,10 @@
         /* --- Credits Popup --- */
         .credits-popup {
             position: fixed;
-            top: 0;
+            bottom: 0;
             left: 0;
             right: 0;
-            height: 100vh;
+            height: calc(100vh - var(--safe-area-inset-bottom) - var(--ad-height));
             background-color: rgba(0, 31, 63, 0.98);
             display: flex;
             flex-direction: column;
@@ -797,10 +870,10 @@
         /* Smokey Fog Overlay */
         .fog-overlay {
             position: fixed;
-            top: 0;
             left: 0;
             width: 100%;
-            height: calc(100vh - 100px);
+            height: calc(100vh - var(--safe-area-inset-bottom) - var(--ad-height));
+            bottom:0;
             background: radial-gradient(ellipse at center, 
                 rgba(20, 25, 40, 0.95) 0%, 
                 rgba(10, 15, 30, 0.98) 40%, 
@@ -880,7 +953,7 @@
 
         .fog-text.disappearing {
             opacity: 0;
-            transform: scale(1.5) translateY(-20px);
+            transform: scale(1.5);
             filter: blur(8px);
         }
 
@@ -962,9 +1035,9 @@
         /* --- Circular Progress Spinner --- */
         .fog-progress-container {
             position: absolute;
-            top: 65%;
+            top: 50%;
             left: 50%;
-            transform: translateX(-50%);
+            transform: translate(-50%, -50%);
             z-index: 10000;
         }
 
@@ -1034,145 +1107,11 @@
             pointer-events: none;
             z-index: 5;
         }
-
-        /* Android always starts at 118px */
-        body.android .banner-ad-space {
-            height: calc(100px + 18px) !important;
-            max-height: calc(100px + 18px) !important;
-            min-height: calc(100px + 18px) !important;
-        }
-
-        
-        /* Non-Android (Web) starts at 100px */
-        body:not(.android) .banner-ad-space {
-            height: 100px !important;
-            max-height: 100px !important;
-            min-height: 100px !important;
-        }
-
-        /* --- Banner Ad Space --- */
-        .banner-ad-space {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            background: linear-gradient(135deg, #1a1a2e, #0f0f1e);
-            border-top: 2px solid #00ccff;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 10000;
-            font-family: 'Orbitron', sans-serif;
-            color: #666;
-            font-size: 12px;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-        }
-
-        
-        /* Android always starts at 118px */
-        body.android #ad-container {
-            height: calc(100px + 18px) !important;
-            max-height: calc(100px + 18px) !important;
-            min-height: calc(100px + 18px) !important;
-        }
-
-        
-        /* Non-Android (Web) starts at 100px */
-        body:not(.android) #ad-container {
-            height: 100px !important;
-            max-height: 100px !important;
-            min-height: 100px !important;
-        }
-
-        #ad-container {
-            width: 100%;
-            overflow: hidden;
-            background: linear-gradient(135deg, #1a1a2e, #0f0f1e);
-        }
-
-        /* Android always starts at 118px */
-        body.android #ad-container ins {
-            height: calc(100px + 18px) !important;
-            max-height: calc(100px + 18px) !important;
-            min-height: calc(100px + 18px) !important;
-        }
-        
-        /* Non-Android (Web) starts at 100px */
-        body:not(.android) #ad-container ins {
-            height: 100px !important;
-            max-height: 100px !important;
-            min-height: 100px !important;
-        }
-
-        #ad-container ins {
-            display: block !important;
-            width: 100% !important;
-        }
-
-        /* Android always starts at 118px */
-        body.android #ad-container iframe {
-            height: calc(100px + 18px) !important;
-            max-height: calc(100px + 18px) !important;
-            min-height: calc(100px + 18px) !important;
-        }
-        
-        /* Non-Android (Web) starts at 100px */
-        body:not(.android) #ad-container iframe {
-            height: 100px !important;
-            max-height: 100px !important;
-            min-height: 100px !important;
-        }
-
-        .banner-ad-space.admob-shifted {
-            height: calc(100px + 18px) !important;
-            max-height: calc(100px + 18px) !important;
-            min-height: calc(100px + 18px) !important;
-        }
-
-        #ad-container.admob-shifted ins {
-            height: calc(100px + 18px) !important;
-            max-height: calc(100px + 18px) !important;
-            min-height: calc(100px + 18px) !important;
-        }
-
-        #ad-container.admob-shifted iframe {
-            height: calc(100px + 18px) !important;
-            max-height: calc(100px + 18px) !important;
-            min-height: calc(100px + 18px) !important;
-        }
-
-        .math-in-space-container.admob-shifted {
-            height: calc(100vh - 100px - var(--safe-area-inset-bottom) - 18px);
-        }
-
-        .banner-ad-space.admob-failed {
-            height: 100px !important;
-            max-height: 100px !important;
-            min-height: 100px !important;
-        }
-
-        #ad-container.admob-failed ins {
-            height: 100px !important;
-            max-height: 100px !important;
-            min-height: 100px !important;
-        }
-
-        #ad-container.admob-failed iframe {
-            height: 100px !important;
-            max-height: 100px !important;
-            min-height: 100px !important;
-        }
-
-        .math-in-space-container.admob-failed {
-            height: calc(100vh - 100px - var(--safe-area-inset-bottom));
-        }
             </style>
 </head>
 <body>
     <div id="root"></div>
     
-        
     <script type="text/babel">
         const { useState, useEffect, useRef, useCallback, useMemo } = React;
         const { useSelector, useDispatch } = ReactRedux;
@@ -1822,10 +1761,10 @@
                     {showCompanionPage && (
                         <div style={{
                             position: "fixed",
-                            top: 0,
                             left: 0,
                             right: 0,
-                            bottom: 100,
+                            bottom: 0,
+                            height: "calc(100vh - var(--safe-area-inset-bottom) - var(--ad-height))",
                             backgroundColor: "rgba(3,7,18,0.98)",
                             display: "flex",
                             flexDirection: "column",
@@ -1918,6 +1857,141 @@
             );
         };
 
+        // --- Ad Overlay Component ---
+        const AdOverlay = () => {
+            const adRef = useRef(null);
+
+            useEffect(() => {
+                // Detect if running in Android Capacitor app
+                const isAndroidApp = window.Capacitor && window.Capacitor.platform === 'android';
+
+                if (adRef.current) {
+                    const rect = adRef.current.getBoundingClientRect();
+                    console.log("=== AD OVERLAY MOUNTED ===");
+                    console.log("Position: fixed, covering full viewport");
+                    console.log("Dimensions:", {
+                        width: rect.width,
+                        height: rect.height,
+                        top: rect.top,
+                        left: rect.left,
+                        right: rect.right,
+                        bottom: rect.bottom
+                    });
+                    console.log("z-Index: 5000");
+                    console.log("Background: transparent");
+                    console.log("Pointer events: none (passes through, ad wrapper has auto)");
+                    console.log("Platform:", isAndroidApp ? "Android App (skipping AdSense)" : "Web (loading AdSense)");
+                }
+
+                // Only load AdSense if NOT on Android app
+                if (!isAndroidApp) {
+                    // Inject AdSense script tag
+                    const script = document.createElement('script');
+                    script.id = 'adsense-script';
+                    script.async = true;
+                    script.crossOrigin = 'anonymous';
+                    script.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2662863757001007';
+                    script.onload = () => {
+                        console.log("AdSense script loaded");
+                        // Push ad to display
+                        (window.adsbygoogle = window.adsbygoogle || []).push({});
+                        
+                        // Debug check for iframe height
+                        setTimeout(() => {
+                            const iframe = document.querySelector('iframe');
+                            const ins = document.querySelector('ins.adsbygoogle');
+                            console.log("=== IFRAME DEBUG CHECK ===");
+                            console.log("iframe exists:", !!iframe);
+                            console.log("ins exists:", !!ins);
+                            
+                            if (ins) {
+                                console.log("ad status:", ins.dataset.adStatus);
+                            }
+                            
+                            if (iframe) {
+                                console.log("iframe height:", iframe.offsetHeight);
+                                console.log("iframe width:", iframe.offsetWidth);
+                                
+                                // Only set height if ad is actually filled (not unfilled/blank)
+                                const isFilled = ins && ins.dataset.adStatus !== 'unfilled';
+                                if (iframe.offsetHeight > 0 && isFilled) {
+                                    adSenseFinalReceivedHeight = iframe.offsetHeight;
+                                    console.log("adSenseFinalReceivedHeight set to:", adSenseFinalReceivedHeight);
+                                    // Update CSS variable
+                                    document.documentElement.style.setProperty('--ad-height', adSenseFinalReceivedHeight + 'px');
+                                } else {
+                                    console.log("Ad not filled or blank - not setting height");
+                                }
+                            }
+                        }, 2000);
+                    };
+                    document.head.appendChild(script);
+
+                    // Create wrapper with proper layout context
+                    const wrapper = document.createElement('div');
+                    wrapper.style.position = 'fixed';
+                    wrapper.style.top = '0';
+                    wrapper.style.left = '50%';
+                    wrapper.style.transform = 'translateX(-50%)';
+                    wrapper.style.width = '320px';
+                    wrapper.style.height = '100px';
+                    wrapper.style.zIndex = '5000';
+                    wrapper.style.background = 'transparent';
+                    wrapper.style.pointerEvents = 'auto';
+
+                    // Create ad container
+                    const adContainer = document.createElement('ins');
+                    adContainer.className = 'adsbygoogle';
+                    adContainer.style.display = 'inline-block';
+                    adContainer.style.width = '320px';
+                    adContainer.style.height = '100px';
+                    adContainer.setAttribute('data-ad-client', 'ca-pub-2662863757001007');
+                    adContainer.setAttribute('data-ad-slot', '2870000676');
+                    
+                    console.log("=== AD CONTAINER CREATED ===");
+                    console.log("Dimensions: 320px × 100px");
+                    console.log("Display: inline-block");
+                    console.log("Format: auto (removed rectangle)");
+                    console.log("Wrapper: fixed bottom center");
+                    console.log("Ad client: ca-pub-2662863757001007");
+                    console.log("Ad slot: 2870000676");
+                    
+                    wrapper.appendChild(adContainer);
+                    
+                    if (adRef.current) {
+                        adRef.current.appendChild(wrapper);
+                        console.log("Wrapper with ad container appended to overlay");
+                    }
+                }
+
+                return () => {
+                    // Cleanup on unmount
+                    const existingScript = document.getElementById('adsense-script');
+                    if (existingScript) {
+                        document.head.removeChild(existingScript);
+                    }
+                };
+            }, []);
+
+            return (
+                <div
+                    ref={adRef}
+                    style={{
+                        position: "fixed",
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        width: "100vw",
+                        height: "100vh",
+                        backgroundColor: "transparent",
+                        zIndex: 5000,
+                        pointerEvents: "none"
+                    }}
+                />
+            );
+        };
+
         // --- View Components ---
         const SetupScreen = ({
             username,
@@ -1941,7 +2015,7 @@
                 canvas.style.top = '0';
                 canvas.style.left = '0';
                 canvas.style.width = '100%';
-                canvas.style.height = '100%';
+                canvas.style.height = 'calc(100vh - var(--safe-area-inset-bottom) - var(--ad-height))';
                 canvas.style.zIndex = '1';
                 canvas.style.pointerEvents = 'none';
                 document.body.appendChild(canvas);
@@ -1959,7 +2033,10 @@
 
                 function resizeCanvas() {
                     width = canvas.width = window.innerWidth;
-                    height = canvas.height = window.innerHeight;
+                    const viewportHeight = window.innerHeight;
+                    const safeAreaBottom = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--safe-area-inset-bottom')) || 0;
+                    const adHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ad-height')) || 0;
+                    height = canvas.height = viewportHeight - safeAreaBottom - adHeight;
                 }
 
                 function drawWaveField() {
@@ -2169,12 +2246,17 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
             speedBonusDisplay,
         }) => (
             <>
-                <div className="game-hud">
-                    <span>Score: {score}</span>
-                    <span>Time: {timeLeft}s</span>
-                    <button onClick={() => { soundManager.play('QUIT_BUTTON'); handleQuit(); }} className="quit-button">
-                        Quit
-                    </button>
+                <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                    <div className="game-hud">
+                        <span>Score: {score}</span>
+                        <span>Time: {timeLeft}s</span>
+                        <button onClick={() => { soundManager.play('QUIT_BUTTON'); handleQuit(); }} className="quit-button">
+                            Quit
+                        </button>
+                    </div>
+                    <div className="hud-question-area">
+                        <p className="hud-question">{currentProblem.question}</p>
+                    </div>
                 </div>
 
                 {speedBonusDisplay && (
@@ -2198,10 +2280,6 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
                         {speedBonusDisplay.value}
                     </div>
                 )}
-
-                <div className="question-area">
-                    <p className="question">{currentProblem.question}</p>
-                </div>
 
                 <div className="answer-options-container">
                     {answerOptions.map((option) => (
@@ -2841,11 +2919,21 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
                                 }
                             }}>
                                 <div className="fog-particles">
-                                    <div className={`fog-particle ${isFogDisappearing ? 'disappearing' : ''}`} style={{left: '10%', animationDelay: '0s'}}></div>
-                                    <div className={`fog-particle ${isFogDisappearing ? 'disappearing' : ''}`} style={{left: '30%', animationDelay: '3s'}}></div>
-                                    <div className={`fog-particle ${isFogDisappearing ? 'disappearing' : ''}`} style={{left: '50%', animationDelay: '6s'}}></div>
-                                    <div className={`fog-particle ${isFogDisappearing ? 'disappearing' : ''}`} style={{left: '70%', animationDelay: '9s'}}></div>
-                                    <div className={`fog-particle ${isFogDisappearing ? 'disappearing' : ''}`} style={{left: '90%', animationDelay: '12s'}}></div>
+                                    {(() => {
+                                        const particles = [];
+                                        for (let i = 0; i < 5; i++) {
+                                            const left = Math.random() * 90 + 5; // 5% to 95% to stay on screen
+                                            const top = Math.random() * 80 + 10; // 10% to 90% to stay on screen
+                                            particles.push(
+                                                <div 
+                                                    key={i}
+                                                    className={`fog-particle ${isFogDisappearing ? 'disappearing' : ''}`} 
+                                                    style={{left: `${left}%`, top: `${top}%`, animationDelay: '0s'}}
+                                                />
+                                            );
+                                        }
+                                        return particles;
+                                    })()}
                                 </div>
                                 <div className={`fog-text ${isFogDisappearing ? 'disappearing' : ''} ${isPageLoaded ? 'loaded' : ''}`}>
                                     PRESS ANYWHERE TO BEGIN<br/>MATH IN SPACE
@@ -2939,12 +3027,11 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
                         
                         {/* Companion Page popup */}
                         <CompanionPage />
+                        
+                        {/* Ad Overlay - transparent full-screen overlay */}
+                        <AdOverlay />
                     </div>
                     
-                    {/* Banner Ad Space */}
-                    <div className="banner-ad-space">
-                        <div id="ad-container"></div>
-                    </div>
                 </>
             );
         }
@@ -2974,7 +3061,7 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
         // IMPORTANT: Before you git push origin main you MUST update this timestamp
         // Format: YYYY-MM-DDTHH:MM:SSZ (UTC)
         // This ensures you know if you need to hard refresh to see the latest version
-        console.log("=== MATH IN SPACE v1.78 [2026-04-16T22:25:00Z] DEPLOYED ===");
+        console.log("=== MATH IN SPACE v1.806 [2026-04-16T22:25:00Z] DEPLOYED ===");
         
         root.render(
             <Provider store={store}>
@@ -2983,238 +3070,33 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
         );
         
     </script>
-    
-    <!-- AdSense Control Script -->
+    </script>
+
+    <!-- Landscape Orientation Warning -->
+    <div id="landscape-warning" class="landscape-warning">
+        <div class="landscape-warning-icon">📱</div>
+        <h1>Please Rotate Device</h1>
+        <p>This game requires portrait mode</p>
+    </div>
+
     <script>
-    console.log("Ad script loading...");
-    let adLoaded = false;
-
-    // Platform detection using existing Capacitor pattern
-    const isAndroidApp = window.Capacitor && window.Capacitor.platform === 'android';
-
-    function loadAd() {
-        console.log("loadAd() called, adLoaded:", adLoaded, "platform:", isAndroidApp ? "Android" : "Web");
-        if (adLoaded) return;
-        
-        // Choose ad implementation based on platform
-        if (isAndroidApp) {
-            loadAndroidAd();
-        } else {
-            loadWebAd();
-        }
-    }
-
-    function loadWebAd() {
-        console.log("Loading web AdSense ad...");
-        if (adLoaded) return;
-        
-        const container = document.getElementById("ad-container");
-        if (!container) return;
-        if (container.offsetWidth === 0) return;
-        
-        // Force container height immediately and show fallback during loading
-        container.style.cssText = `
-            width: 100% !important;
-            height: 100px !important;
-            max-height: 100px !important;
-            min-height: 100px !important;
-            overflow: hidden !important;
-        `;
-        
-        // Show fallback immediately to prevent white flash during 403 errors
-        showFallbackAd(container);
-        
-        // Try AdSense anyway (will replace fallback if successful)
-        setTimeout(() => {
-            tryLoadAdSense(container);
-        }, 100);
-    }
-    
-    function tryLoadAdSense(container) {
-        if (adLoaded) return;
-
-        // Clear fallback so AdSense can show
-        container.innerHTML = "";
-
-        const ad = document.createElement("ins");
-        ad.className = "adsbygoogle";
-        ad.style.cssText = `
-            display: block !important;
-            width: 100% !important;
-            height: 100px !important;
-            max-height: 100px !important;
-            min-height: 100px !important;
-            overflow: hidden !important;
-        `;
-        ad.setAttribute("data-ad-client", "ca-pub-2662863757001007");
-        ad.setAttribute("data-ad-slot", "2870000676");
-        ad.setAttribute("data-ad-format", "horizontal");
-        ad.setAttribute("data-full-width-responsive", "false");
-        
-        container.appendChild(ad);
-        
-        // Wait for adsbygoogle to be available, then push
-        const pushAd = () => {
-            if (window.adsbygoogle && window.adsbygoogle.push) {
-                window.adsbygoogle.push({});
-                adLoaded = true;
-                console.log("✓ AdSense ad pushed successfully");
-            } else {
-                // Retry if not ready yet
-                setTimeout(pushAd, 50);
-            }
-        };
-        pushAd();
-
-        // Check if ad filled after 3 seconds
-        setTimeout(() => {
-            const ins = container.querySelector("ins.adsbygoogle");
-            const iframe = container.querySelector("iframe");
-            const bannerSpace = document.querySelector(".banner-ad-space");
+        // Landscape Orientation Detection
+        (function() {
+            const landscapeWarning = document.getElementById('landscape-warning');
             
-            console.log("Ad check - iframe exists:", !!iframe);
-            if (iframe) {
-                console.log("Ad iframe dimensions:", iframe.offsetWidth + "x" + iframe.offsetHeight);
-                const styleAttr = iframe.getAttribute("style");
-                console.log("Ad iframe style:", styleAttr);
-                
-                // Extract height from style attribute string
-                const heightMatch = styleAttr.match(/height:(\d+)px/);
-                const heightValue = heightMatch ? parseInt(heightMatch[1]) : 0;
-                console.log("GOOGLE AD HEIGHT (parsed from style):", heightValue + "px");
-            }
-            if (ins) {
-                console.log("Ad ins status:", ins.dataset.adStatus);
-            }
-            
-            // Show fallback if no iframe OR if ad is unfilled
-            const hasIframe = !!iframe;
-            const isUnfilled = ins && ins.dataset.adStatus === 'unfilled';
-            const shouldShowFallback = !hasIframe || isUnfilled;
-            
-            console.log("Fallback condition debug:", {
-                hasIframe,
-                isUnfilled,
-                shouldShowFallback
-            });
-            
-            if (shouldShowFallback) {
-                if (!hasIframe) {
-                    console.log("Showing fallback - no iframe detected");
+            function checkOrientation() {
+                if (window.innerHeight < window.innerWidth) {
+                    landscapeWarning.classList.add('visible');
                 } else {
-                    console.log("Showing fallback - ad unfilled (no inventory)");
+                    landscapeWarning.classList.remove('visible');
                 }
-                showFallbackAd(container);
             }
-        }, 3000);
-    }
-
-    function loadAndroidAd() {
-        console.log("Loading Android AdMob ad...");
-        
-        // AdMob configuration
-        const ADMOB_APP_ID = 'ca-app-pub-2662863757001007~6977812828';
-        const ADMOB_BANNER_AD_UNIT_ID = 'ca-app-pub-2662863757001007/4499823296';
-        
-        // Simple bridge call - AdMob logic handled by native plugin
-        if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.AdMob) {
-            const { AdMob } = window.Capacitor.Plugins;
             
-            AdMob.initialize({ requestTrackingAuthorization: true })
-                .then(() => {
-                    console.log("AdMob initialized with App ID:", ADMOB_APP_ID);
-                    return AdMob.showBanner({
-                        adId: ADMOB_BANNER_AD_UNIT_ID,
-                        position: 'bottom',
-                        size: 'BANNER',
-                    });
-                })
-                .then(() => {
-                    console.log("✓ Android AdMob banner shown - Ad Unit:", ADMOB_BANNER_AD_UNIT_ID);
-                    adLoaded = true;
-                    // Hide the web ad container since native AdMob is handling it
-                    const container = document.getElementById("ad-container");
-                    if (container) {
-                        container.style.display = 'none';
-                    }
-                    // Shift banner and game container up by 18px
-                    const bannerSpace = document.querySelector('.banner-ad-space');
-                    const gameContainer = document.querySelector('.math-in-space-container');
-                    if (bannerSpace) {
-                        bannerSpace.classList.add('admob-shifted');
-                    }
-                    if (gameContainer) {
-                        gameContainer.classList.add('admob-shifted');
-                    }
-                    // Watch for React re-renders and re-apply class
-                    const observer = new MutationObserver(() => {
-                        const banner = document.querySelector('.banner-ad-space');
-                        const game = document.querySelector('.math-in-space-container');
-                        if (banner && !banner.classList.contains('admob-shifted')) {
-                            banner.classList.add('admob-shifted');
-                        }
-                        if (game && !game.classList.contains('admob-shifted')) {
-                            game.classList.add('admob-shifted');
-                        }
-                    });
-                    if (gameContainer) {
-                        observer.observe(gameContainer, { attributes: true, attributeFilter: ['class'] });
-                    }
-                })
-                .catch((error) => {
-                    console.error("❌ AdMob failed:", error);
-                    console.error("App ID:", ADMOB_APP_ID);
-                    console.error("Ad Unit ID:", ADMOB_BANNER_AD_UNIT_ID);
-                    showFallbackAd(document.getElementById("ad-container"));
-                });
-        } else {
-            console.log("⚠ AdMob plugin not available, showing fallback");
-            showFallbackAd(document.getElementById("ad-container"));
-        }
-    }
-
-    function showFallbackAd(container) {
-        document.body.classList.add('admob-failed');
-        container.innerHTML = "";
-        
-        const fallback = document.createElement("div");
-        fallback.style.cssText = `
-            width: 100%;
-            height: 100px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 4px;
-            font-family: 'Orbitron', sans-serif;
-            color: #00ccff;
-            font-size: 14px;
-            letter-spacing: 1px;
-            cursor: pointer;
-        `;
-        fallback.innerHTML = `
-            <span style="font-size: 18px; color: #ff9900;">YOUR AD HERE</span>
-            <span style="color: #888; font-size: 11px;">&#9658; mistermarx+ads@mistermarx.com</span>
-        `;
-        fallback.addEventListener("click", () => {
-            if (confirm("You are about to leave the page to open your email client. Continue?")) {
-                window.location.href = "mailto:mistermarx+ads@mistermarx.com?subject=Ad Inquiry - Math In Space";
-            }
-        });
-        
-        container.appendChild(fallback);
-    }
-
-    window.addEventListener("load", () => setTimeout(loadAd, 300));
-    
-    // Emergency fallback - show after 5 seconds if nothing else worked
-    setTimeout(() => {
-        const container = document.getElementById("ad-container");
-        if (container && !container.querySelector("div")) {
-            console.log("Emergency fallback triggered");
-            showFallbackAd(container);
-        }
-    }, 5000);
+            // Check on load and resize
+            window.addEventListener('resize', checkOrientation);
+            window.addEventListener('orientationchange', checkOrientation);
+            checkOrientation();
+        })();
     </script>
 </body>
 </html>

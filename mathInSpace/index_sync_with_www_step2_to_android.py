@@ -353,10 +353,24 @@ def copy_resized_pngs_to_android():
                 manifest_content
             )
         
+        # Ensure portrait orientation lock on activity
+        if 'android:screenOrientation=' in manifest_content:
+            manifest_content = re.sub(
+                r'android:screenOrientation="[^"]*"',
+                'android:screenOrientation="portrait"',
+                manifest_content
+            )
+        else:
+            manifest_content = re.sub(
+                r'(<activity[^>]*?)(\s*>)',
+                r'\1\n        android:screenOrientation="portrait"\2',
+                manifest_content
+            )
+        
         with open(manifest_path, 'w', encoding='utf-8') as f:
             f.write(manifest_content)
         
-        print("Updated AndroidManifest.xml with adaptive icon references")
+        print("Updated AndroidManifest.xml with adaptive icon references and portrait orientation lock")
         return True
     except Exception as e:
         print(f"ERROR: Failed to update AndroidManifest.xml: {e}")
