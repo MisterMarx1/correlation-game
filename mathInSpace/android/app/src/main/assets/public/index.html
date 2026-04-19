@@ -33,7 +33,7 @@
   - Canvas API (native)
   
   Author: Mister Marx
-  Version: v1.834
+  Version: v1.835
   Last Modified: 2026-04-17
 -->
 <!DOCTYPE html>
@@ -60,6 +60,12 @@
         let adSenseSettledPromiseResolve = null;
         const adSenseSettledPromise = new Promise(resolve => {
             adSenseSettledPromiseResolve = resolve;
+        });
+
+        // --- AdMob Settled Tracking ---
+        let adMobSettledPromiseResolve = null;
+        const adMobSettledPromise = new Promise(resolve => {
+            adMobSettledPromiseResolve = resolve;
         });
     </script>
     
@@ -1993,16 +1999,47 @@
 
         // --- AdMob Initialization ---
         if (isNativeAndroid) {
-            window.Capacitor.Plugins.AdMob.initialize({ requestTrackingAuthorization: true });
+            console.log("=== ADMOB INITIALIZATION START ===");
+            window.Capacitor.Plugins.AdMob.initialize({ requestTrackingAuthorization: true })
+                .then(() => {
+                    console.log("✅ ADMOB INITIALIZATION SUCCESS");
+                })
+                .catch((error) => {
+                    console.error("❌ ADMOB INITIALIZATION FAILED:", error);
+                });
         }
 
         // --- Show Banner Ad ---
         if (isNativeAndroid) {
+            console.log("=== ADMOB BANNER SHOW START ===");
+            console.log("Ad Unit ID:", ADMOB_BANNER_AD_UNIT_ID);
             window.Capacitor.Plugins.AdMob.showBanner({
                 adId: ADMOB_BANNER_AD_UNIT_ID,
                 position: 'bottom',
                 size: 'BANNER',
-            });
+            })
+                .then(() => {
+                    console.log("✅ ADMOB BANNER SUCCESS - AD DISPLAYED AT BOTTOM");
+                    console.log("✅ ADMOB BANNER LOADED AND VISIBLE");
+                    // Set ad height CSS variable
+                    document.documentElement.style.setProperty('--ad-height', '100px');
+                    console.log("✅ --ad-height set to 100px");
+                    // Resolve AdMob settled promise
+                    if (window.adMobSettledPromiseResolve) {
+                        window.adMobSettledPromiseResolve();
+                        window.adMobSettledPromiseResolve = null;
+                        console.log("✅ AdMob settled promise resolved");
+                    }
+                })
+                .catch((error) => {
+                    console.error("❌ ADMOB BANNER FAILED:", error);
+                    // Resolve AdMob settled promise even on failure (so app doesn't hang)
+                    if (window.adMobSettledPromiseResolve) {
+                        window.adMobSettledPromiseResolve();
+                        window.adMobSettledPromiseResolve = null;
+                        console.log("⚠️ AdMob settled promise resolved (after failure)");
+                    }
+                });
         }
 
         // --- Mark Ad Loaded ---
@@ -3172,6 +3209,15 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
                             console.log('AdSense settling failed:', e);
                         }
                     }
+                    // Wait for AdMob to settle
+                    if (window.adMobSettledPromise) {
+                        try {
+                            await window.adMobSettledPromise;
+                            console.log('AdMob settled');
+                        } catch (e) {
+                            console.log('AdMob settling failed:', e);
+                        }
+                    }
                     setIsPageLoaded(true);
                 };
 
@@ -3771,7 +3817,7 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
         // IMPORTANT: Before you git push origin main you MUST update this timestamp
         // Format: YYYY-MM-DDTHH:MM:SSZ (UTC)
         // This ensures you know if you need to hard refresh to see the latest version
-        console.log("=== MATH IN SPACE v1.834 [2026-04-16T22:25:00Z] DEPLOYED ===");
+        console.log("=== MATH IN SPACE v1.835 [2026-04-16T22:25:00Z] DEPLOYED ===");
         
         root.render(
             <Provider store={store}>
