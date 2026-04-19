@@ -1802,7 +1802,7 @@
                     });
                     console.log("z-Index: 5000");
                     console.log("Background: transparent");
-                    console.log("Pointer events: none (passes through)");
+                    console.log("Pointer events: auto (allows ad clicks)");
                     console.log("Platform:", isAndroidApp ? "Android App (skipping AdSense)" : "Web (loading AdSense)");
                 }
 
@@ -1818,30 +1818,53 @@
                         console.log("AdSense script loaded");
                         // Push ad to display
                         (window.adsbygoogle = window.adsbygoogle || []).push({});
+                        
+                        // Debug check for iframe height
+                        setTimeout(() => {
+                            const iframe = document.querySelector('iframe');
+                            console.log("=== IFRAME DEBUG CHECK ===");
+                            console.log("iframe exists:", !!iframe);
+                            if (iframe) {
+                                console.log("iframe height:", iframe.offsetHeight);
+                                console.log("iframe width:", iframe.offsetWidth);
+                            }
+                        }, 2000);
                     };
                     document.head.appendChild(script);
 
-                    // Create ad container inside overlay
+                    // Create wrapper with proper layout context
+                    const wrapper = document.createElement('div');
+                    wrapper.style.position = 'fixed';
+                    wrapper.style.bottom = '0';
+                    wrapper.style.left = '50%';
+                    wrapper.style.transform = 'translateX(-50%)';
+                    wrapper.style.width = '320px';
+                    wrapper.style.height = '100px';
+                    wrapper.style.zIndex = '5000';
+                    wrapper.style.background = 'transparent';
+
+                    // Create ad container
                     const adContainer = document.createElement('ins');
                     adContainer.className = 'adsbygoogle';
-                    adContainer.style.display = 'block';
+                    adContainer.style.display = 'inline-block';
                     adContainer.style.width = '320px';
                     adContainer.style.height = '100px';
                     adContainer.setAttribute('data-ad-client', 'ca-pub-2662863757001007');
                     adContainer.setAttribute('data-ad-slot', '2870000676');
-                    adContainer.setAttribute('data-ad-format', 'rectangle');
-                    adContainer.setAttribute('data-full-width-responsive', 'false');
                     
                     console.log("=== AD CONTAINER CREATED ===");
                     console.log("Dimensions: 320px × 100px");
-                    console.log("Format: rectangle");
-                    console.log("Full-width-responsive: false");
+                    console.log("Display: inline-block");
+                    console.log("Format: auto (removed rectangle)");
+                    console.log("Wrapper: fixed bottom center");
                     console.log("Ad client: ca-pub-2662863757001007");
                     console.log("Ad slot: 2870000676");
                     
+                    wrapper.appendChild(adContainer);
+                    
                     if (adRef.current) {
-                        adRef.current.appendChild(adContainer);
-                        console.log("Ad container appended to overlay");
+                        adRef.current.appendChild(wrapper);
+                        console.log("Wrapper with ad container appended to overlay");
                     }
                 }
 
@@ -1867,7 +1890,7 @@
                         height: "100vh",
                         backgroundColor: "transparent",
                         zIndex: 5000,
-                        pointerEvents: "none"
+                        pointerEvents: "auto"
                     }}
                 />
             );
