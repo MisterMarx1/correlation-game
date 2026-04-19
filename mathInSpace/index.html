@@ -33,7 +33,7 @@
   - Canvas API (native)
   
   Author: Mister Marx
-  Version: v1.821
+  Version: v1.822
   Last Modified: 2026-04-17
 -->
 <!DOCTYPE html>
@@ -1118,7 +1118,7 @@
         /* --- Credits Popup --- */
         .credits-popup {
             position: fixed;
-            bottom: calc(0 + var(--ad-height));
+            top: 0;
             left: 0;
             right: 0;
             height: 100vh;
@@ -1129,6 +1129,7 @@
             justify-content: center;
             gap: 20px;
             z-index: 2000;
+            padding-bottom: calc(0px + var(--ad-height));
         }
 
         .credits-title {
@@ -1973,6 +1974,10 @@
 
         // Initialize sound manager
         const soundManager = new SoundManager();
+
+        // --- AdMob Configuration ---
+        const ADMOB_APP_ID = 'ca-app-pub-2662863757001007~6977812828';
+        const ADMOB_BANNER_AD_UNIT_ID = 'ca-app-pub-2662863757001007/4499823296';
 
         // --- Configuration ---
         const DEFAULT_DURATION = 60;
@@ -3707,7 +3712,7 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
         // IMPORTANT: Before you git push origin main you MUST update this timestamp
         // Format: YYYY-MM-DDTHH:MM:SSZ (UTC)
         // This ensures you know if you need to hard refresh to see the latest version
-        console.log("=== MATH IN SPACE v1.821 [2026-04-16T22:25:00Z] DEPLOYED ===");
+        console.log("=== MATH IN SPACE v1.822 [2026-04-16T22:25:00Z] DEPLOYED ===");
         
         root.render(
             <Provider store={store}>
