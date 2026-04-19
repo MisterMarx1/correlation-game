@@ -33,7 +33,7 @@
   - Canvas API (native)
   
   Author: Mister Marx
-  Version: v1.816
+  Version: v1.817
   Last Modified: 2026-04-17
 -->
 <!DOCTYPE html>
@@ -60,12 +60,7 @@
     </script>
     
     <style>
-        /* Safe Area CSS Variables - injected by @capacitor-community/safe-area */
         :root {
-            --safe-area-inset-top: 0px;
-            --safe-area-inset-right: 0px;
-            --safe-area-inset-bottom: 0px;
-            --safe-area-inset-left: 0px;
             --ad-height: 0px;
         }
 
@@ -1745,11 +1740,6 @@
         const { useSelector, useDispatch } = ReactRedux;
         const { createStore } = RTK;
 
-        // --- Safe Area Plugin ---
-        // @capacitor-community/safe-area automatically injects CSS variables
-        // No JS API calls needed - plugin handles it all
-        console.log("✓ Safe-area plugin CSS variables ready (injected by @capacitor-community/safe-area)");
-
         // --- Sound Management System ---
         const SoundRoles = {
             // Background music track (will loop and overlap with itself)
@@ -2684,7 +2674,6 @@
                 function resizeCanvas() {
                     width = canvas.width = window.innerWidth;
                     const viewportHeight = window.innerHeight;
-                    const adHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ad-height')) || 0;
                     height = canvas.height = viewportHeight;
                 }
 
@@ -3719,7 +3708,7 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
         // IMPORTANT: Before you git push origin main you MUST update this timestamp
         // Format: YYYY-MM-DDTHH:MM:SSZ (UTC)
         // This ensures you know if you need to hard refresh to see the latest version
-        console.log("=== MATH IN SPACE v1.816 [2026-04-16T22:25:00Z] DEPLOYED ===");
+        console.log("=== MATH IN SPACE v1.817 [2026-04-16T22:25:00Z] DEPLOYED ===");
         
         root.render(
             <Provider store={store}>
