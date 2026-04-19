@@ -33,7 +33,7 @@
   - Canvas API (native)
   
   Author: Mister Marx
-  Version: v1.831
+  Version: v1.832
   Last Modified: 2026-04-17
 -->
 <!DOCTYPE html>
@@ -57,6 +57,10 @@
     <script>
         // --- AdSense Height Tracking ---
         let adSenseFinalReceivedHeight = 0;
+        let adSenseSettledPromiseResolve = null;
+        const adSenseSettledPromise = new Promise(resolve => {
+            adSenseSettledPromiseResolve = resolve;
+        });
     </script>
     
     <style>
@@ -2635,6 +2639,11 @@
                                     // Allow clicks to pass through the transparent wrapper
                                     wrapper.style.pointerEvents = 'none';
                                 }
+                                // Resolve promise regardless of outcome
+                                if (adSenseSettledPromiseResolve) {
+                                    adSenseSettledPromiseResolve();
+                                    adSenseSettledPromiseResolve = null;
+                                }
                             }
                         }, 2000);
                     };
@@ -3152,9 +3161,18 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
                             console.log('Music loading failed:', e);
                         }
                     }
+                    // Wait for AdSense to settle
+                    if (window.adSenseSettledPromise) {
+                        try {
+                            await window.adSenseSettledPromise;
+                            console.log('AdSense settled');
+                        } catch (e) {
+                            console.log('AdSense settling failed:', e);
+                        }
+                    }
                     setIsPageLoaded(true);
                 };
-                
+
                 if (document.readyState === 'complete') {
                     handleLoad();
                 } else {
@@ -3751,7 +3769,7 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
         // IMPORTANT: Before you git push origin main you MUST update this timestamp
         // Format: YYYY-MM-DDTHH:MM:SSZ (UTC)
         // This ensures you know if you need to hard refresh to see the latest version
-        console.log("=== MATH IN SPACE v1.831 [2026-04-16T22:25:00Z] DEPLOYED ===");
+        console.log("=== MATH IN SPACE v1.832 [2026-04-16T22:25:00Z] DEPLOYED ===");
         
         root.render(
             <Provider store={store}>
