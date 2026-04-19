@@ -33,7 +33,7 @@
   - Canvas API (native)
   
   Author: Mister Marx
-  Version: v1.820
+  Version: v1.821
   Last Modified: 2026-04-17
 -->
 <!DOCTYPE html>
@@ -481,7 +481,7 @@
             flex-direction: column;
             display: flex;
             height: 100%;
-            bottom: calc(0px + var(--ad-height));
+            padding-bottom: calc(25px + var(--ad-height));
             overflow-y: auto;
         }
         .results-ops {
@@ -1034,7 +1034,7 @@
         }
 
         .multiplier-label {
-            font-size: 0.5rem;
+            font-size: clamp(0.3rem, 2vw, .5rem);
             color: #ffffff;
             margin-bottom: 0.25rem;
         }
@@ -1419,10 +1419,11 @@
             position: absolute;
             bottom: calc(0px + var(--ad-height));
             padding-right: 2px;
+            padding-bottom: 2px;
             right: 0px;
-            font-size: 8px;
+            font-size: clamp(5px, 4vw, 8px);
             font-family: 'Orbitron', sans-serif;
-            color: rgba(255, 255, 255, 0.2);
+            color: rgba(255, 255, 255, 0.651);
             font-weight: 400;
             letter-spacing: 0.05em;
             text-transform: uppercase;
@@ -2414,7 +2415,7 @@
                                     backgroundColor: "rgba(15,23,42,0.82)"
                                 }}>
                                     <span style={{
-                                        fontSize: "24px",
+                                        fontSize: "clamp(14px, 4vw, 24px)",
                                         fontWeight: 900,
                                         letterSpacing: "0.08em",
                                         textTransform: "uppercase",
@@ -3706,7 +3707,7 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
         // IMPORTANT: Before you git push origin main you MUST update this timestamp
         // Format: YYYY-MM-DDTHH:MM:SSZ (UTC)
         // This ensures you know if you need to hard refresh to see the latest version
-        console.log("=== MATH IN SPACE v1.820 [2026-04-16T22:25:00Z] DEPLOYED ===");
+        console.log("=== MATH IN SPACE v1.821 [2026-04-16T22:25:00Z] DEPLOYED ===");
         
         root.render(
             <Provider store={store}>
