@@ -2488,6 +2488,139 @@
             );
         };
 
+        // --- AdMob Banner Component ---
+        const AdMobBanner = () => {
+            const [isReady, setIsReady] = React.useState(false);
+
+            React.useEffect(() => {
+                console.log("=== ADMOB BANNER COMPONENT MOUNTING ===");
+
+                const isAndroidApp = window.Capacitor && window.Capacitor.platform === 'android';
+                console.log("Platform detection:", {
+                    hasCapacitor: !!window.Capacitor,
+                    platform: window.Capacitor?.platform,
+                    isAndroidApp: isAndroidApp
+                });
+
+                if (!isAndroidApp) {
+                    console.log("Skipping AdMob - not on Android app");
+                    return;
+                }
+
+                let sizeListener = null;
+
+                const initializeAdMob = async () => {
+                    console.log("=== INITIALIZING ADMOB ===");
+
+                    try {
+                        const { AdMob, BannerAdSize, BannerAdPosition, BannerAdPluginEvents } = window.Capacitor.Plugins;
+
+                        console.log("AdMob plugins available:", {
+                            hasAdMob: !!AdMob,
+                            hasBannerAdSize: !!BannerAdSize,
+                            hasBannerAdPosition: !!BannerAdPosition,
+                            hasBannerAdPluginEvents: !!BannerAdPluginEvents
+                        });
+
+                        console.log("Calling AdMob.initialize()...");
+                        await AdMob.initialize();
+                        console.log("✅ AdMob initialized successfully");
+
+                        // ← THIS IS THE FIX
+                        console.log("Setting up SizeChanged listener...");
+                        sizeListener = await AdMob.addListener(
+                            BannerAdPluginEvents.SizeChanged,
+                            (size) => {
+                                console.log('=== ADMOB BANNER SIZE CHANGED ===');
+                                console.log('Size object:', size);
+                                console.log('Banner height:', size.height);
+                                console.log('Banner width:', size.width);
+                                // Tell the game exactly how tall the banner is
+                        document.documentElement.style.setProperty('--ad-height', `${size.height}px`);
+                                console.log('✅ CSS variable --ad-height updated to:', size.height + 'px');
+                            }
+                        );
+                        console.log("✅ SizeChanged listener registered");
+
+                        const options = {
+                            adId: 'ca-app-pub-2662863757001007/4499823296',
+                            adSize: BannerAdSize.ADAPTIVE_BANNER,   // ← fixes left-align / centering
+                            position: BannerAdPosition.TOP_CENTER,
+                            margin: 0,
+                            overlap: true,          // important
+                            isTesting: false
+                        };
+
+                        console.log("Banner options:", options);
+                        console.log("Calling AdMob.showBanner()...");
+
+                        await AdMob.showBanner(options);
+                        console.log("✅ AdMob adaptive banner shown at TOP_CENTER");
+
+                        setIsReady(true);
+                        console.log("=== ADMOB BANNER READY ===");
+
+                    } catch (error) {
+                        console.error("=== ADMOB ERROR ===");
+                        console.error("Error details:", error);
+                        console.error("Error message:", error.message);
+                        console.error("Error stack:", error.stack);
+                    }
+                };
+
+                console.log("Scheduling AdMob initialization in 800ms...");
+                const timer = setTimeout(initializeAdMob, 800);
+
+                return () => {
+                    console.log("=== ADMOB BANNER COMPONENT UNMOUNTING ===");
+                    clearTimeout(timer);
+                    if (sizeListener) {
+                        console.log("Removing SizeChanged listener...");
+                        sizeListener.remove();
+                        console.log("✅ SizeChanged listener removed");
+                    }
+                    if (window.Capacitor?.Plugins?.AdMob) {
+                        console.log("Hiding AdMob banner...");
+                        window.Capacitor.Plugins.AdMob.hideBanner().catch((err) => {
+                            console.error("Error hiding banner:", err);
+                        });
+                        console.log("✅ AdMob banner hidden");
+                    }
+                };
+            }, []);
+
+            const isAndroidApp = window.Capacitor && window.Capacitor.platform === 'android';
+            if (!isAndroidApp) return null;
+
+            return (
+                <div style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    width: '100vw',
+                    height: '100vh',
+                    zIndex: 1,
+                    pointerEvents: 'none',
+                    backgroundColor: 'transparent'
+                }}>
+                    {isReady && (
+                        <div style={{
+                            position: 'absolute',
+                            top: '50%',
+                            left: '50%',
+                            transform: 'translate(-50%, -50%)',
+                            color: 'rgba(255,255,255,0.3)',
+                            fontSize: '12px',
+                            fontFamily: 'Orbitron, sans-serif'
+                        }}>
+                            Ad Loaded
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
         // --- Ad Overlay Component ---
         const AdOverlay = () => {
             const adRef = useRef(null);
@@ -3688,7 +3821,10 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
                         
                         {/* Companion Page popup */}
                         <CompanionPage />
-                        
+
+                        {/* AdMob Banner - for Android app */}
+                        <AdMobBanner />
+
                         {/* Ad Overlay - transparent full-screen overlay */}
                         <AdOverlay />
                     </div>
