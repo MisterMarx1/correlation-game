@@ -33,7 +33,7 @@
   - Canvas API (native)
   
   Author: Mister Marx
-  Version: v1.819
+  Version: v1.820
   Last Modified: 2026-04-17
 -->
 <!DOCTYPE html>
@@ -164,7 +164,7 @@
             justify-content: space-between;
             text-align: center;
             width: 100%;
-            height: calc(100vh);
+            height: 100vh;
             bottom:0;
             position: absolute;  /* ADD THIS */
             color: #e0e0e0;
@@ -445,7 +445,7 @@
         /* --- Progress Bars --- */
         .progress-bar-container {
             position: absolute;
-            bottom: 5px;
+            bottom: calc(5px + var(--ad-height));
             left: 50%;
             transform: translateX(-50%);
             width: 80%;
@@ -481,7 +481,7 @@
             flex-direction: column;
             display: flex;
             height: 100%;
-            bottom: 0;
+            bottom: calc(0px + var(--ad-height));
             overflow-y: auto;
         }
         .results-ops {
@@ -980,7 +980,7 @@
 
         .question-timer-container {
             position: absolute;
-            bottom: 5px;
+            bottom: calc(5px + var(--ad-height));
             width: 100px;
             height: 6px;
             background: rgba(255,255,255,0.2);
@@ -1118,10 +1118,10 @@
         /* --- Credits Popup --- */
         .credits-popup {
             position: fixed;
-            bottom: 0;
+            bottom: calc(0 + var(--ad-height));
             left: 0;
             right: 0;
-            height: calc(100vh);
+            height: 100vh;
             background-color: rgba(0, 31, 63, 0.98);
             display: flex;
             flex-direction: column;
@@ -1191,7 +1191,7 @@
             position: fixed;
             left: 0;
             width: 100%;
-            height: calc(100vh);
+            height: 100vh;
             bottom:0;
             background: radial-gradient(ellipse at center, 
                 rgba(20, 25, 40, 0.95) 0%, 
@@ -1386,7 +1386,7 @@
         /* --- Bottom Left Controls Stack --- */
         .bottom-controls-stack {
             position: absolute;
-            bottom: 0px;
+            bottom: calc(0px + var(--ad-height));
             left: 0px;
             display: flex;
             flex-direction: column;
@@ -1417,7 +1417,7 @@
         /* --- Bottom Right Copyright --- */
         .copyright-text {
             position: absolute;
-            bottom: 0px;
+            bottom: calc(0px + var(--ad-height));
             padding-right: 2px;
             right: 0px;
             font-size: 8px;
@@ -3706,7 +3706,7 @@ ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';  // Pure white
         // IMPORTANT: Before you git push origin main you MUST update this timestamp
         // Format: YYYY-MM-DDTHH:MM:SSZ (UTC)
         // This ensures you know if you need to hard refresh to see the latest version
-        console.log("=== MATH IN SPACE v1.819 [2026-04-16T22:25:00Z] DEPLOYED ===");
+        console.log("=== MATH IN SPACE v1.820 [2026-04-16T22:25:00Z] DEPLOYED ===");
         
         root.render(
             <Provider store={store}>
