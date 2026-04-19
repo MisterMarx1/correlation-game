@@ -66,6 +66,7 @@
             --safe-area-inset-right: 0px;
             --safe-area-inset-bottom: 0px;
             --safe-area-inset-left: 0px;
+            --ad-height: 0px;
         }
 
         /* Remove default browser margins and white border */
@@ -117,7 +118,9 @@
             justify-content: space-between;
             text-align: center;
             width: 100%;
-            height: calc(100vh - var(--safe-area-inset-bottom));
+            height: calc(100vh - var(--safe-area-inset-bottom) - var(--ad-height));
+            top:0;
+            bottom:0;
             padding-top: max(24px, var(--safe-area-inset-top));
             padding-left: var(--safe-area-inset-left);
             padding-right: var(--safe-area-inset-right);
@@ -432,8 +435,10 @@
             max-width: 600px;
             width: 90%;
             flex-direction: column;
-            height: calc(100vh - 50px);
-            max-height: calc(100vh - 50px);
+            height: calc(100vh - var(--safe-area-inset-bottom) - var(--ad-height));
+            max-height: calc(100vh - var(--safe-area-inset-bottom) - var(--ad-height));
+            bottom: 0;
+            top: 0;
             overflow-y: auto;
         }
         .results-ops {
@@ -729,7 +734,9 @@
             top: 0;
             left: 0;
             right: 0;
-            height: 100vh;
+            height: calc(100vh - var(--safe-area-inset-bottom) - var(--ad-height));
+            top:0;
+            bottom:0;
             background-color: rgba(0, 31, 63, 0.98);
             display: flex;
             flex-direction: column;
@@ -800,7 +807,9 @@
             top: 0;
             left: 0;
             width: 100%;
-            height: calc(100vh);
+            height: calc(100vh - var(--safe-area-inset-bottom) - var(--ad-height));
+            top:0;
+            bottom:0;
             background: radial-gradient(ellipse at center, 
                 rgba(20, 25, 40, 0.95) 0%, 
                 rgba(10, 15, 30, 0.98) 40%, 
@@ -1844,6 +1853,8 @@
                                 if (iframe.offsetHeight > 0 && isFilled) {
                                     adSenseFinalReceivedHeight = iframe.offsetHeight;
                                     console.log("adSenseFinalReceivedHeight set to:", adSenseFinalReceivedHeight);
+                                    // Update CSS variable
+                                    document.documentElement.style.setProperty('--ad-height', adSenseFinalReceivedHeight + 'px');
                                 } else {
                                     console.log("Ad not filled or blank - not setting height");
                                 }
